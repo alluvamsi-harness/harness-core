@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import io.harness.accesscontrol.AccessControlCoreTestBase;
 import io.harness.accesscontrol.principals.usergroups.persistence.UserGroupDao;
 import io.harness.accesscontrol.roleassignments.RoleAssignmentService;
+import io.harness.accesscontrol.scopes.core.ScopeService;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
