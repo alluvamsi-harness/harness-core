@@ -131,7 +131,6 @@ public class AggregateUserServiceImpl implements AggregateUserService {
 
   private Map<String, List<RoleAssignmentMetadataDTO>> getPrincipalRoleAssignmentMap(String accountIdentifier,
       String orgIdentifier, String projectIdentifier, RoleAssignmentFilterDTO roleAssignmentFilterDTO) {
-    // todo
     RoleAssignmentAggregateResponseDTO roleAssignmentAggregateResponseDTO =
         getResponse(accessControlAdminClient.getAggregatedFilteredRoleAssignments(
             accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
