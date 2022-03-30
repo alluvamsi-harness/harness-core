@@ -150,22 +150,13 @@ public class RoleAssignmentDaoImpl implements RoleAssignmentDao {
     else if (!roleAssignmentFilter.getPrincipalFilter().isEmpty()) {
       criteria.orOperator(roleAssignmentFilter.getPrincipalFilter()
                               .stream()
-                              .map(principal -> {
-                                // remove this condition in next release
-                                if (principal.getPrincipalScopeLevel() == null
-                                    && !PrincipalType.USER.equals(principal.getPrincipalType())) {
-                                  return Criteria.where(RoleAssignmentDBOKeys.principalIdentifier)
-                                      .is(principal.getPrincipalIdentifier())
-                                      .and(RoleAssignmentDBOKeys.principalType)
-                                      .is(principal.getPrincipalType());
-                                }
-                                return Criteria.where(RoleAssignmentDBOKeys.principalIdentifier)
-                                    .is(principal.getPrincipalIdentifier())
-                                    .and(RoleAssignmentDBOKeys.principalType)
-                                    .is(principal.getPrincipalType())
-                                    .and(RoleAssignmentDBOKeys.principalScopeLevel)
-                                    .is(principal.getPrincipalScopeLevel());
-                              })
+                              .map(principal
+                                  -> Criteria.where(RoleAssignmentDBOKeys.principalIdentifier)
+                                         .is(principal.getPrincipalIdentifier())
+                                         .and(RoleAssignmentDBOKeys.principalType)
+                                         .is(principal.getPrincipalType())
+                                         .and(RoleAssignmentDBOKeys.principalScopeLevel)
+                                         .is(principal.getPrincipalScopeLevel()))
                               .toArray(Criteria[] ::new));
     }
     return criteria;
