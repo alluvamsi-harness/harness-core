@@ -52,6 +52,7 @@ import io.harness.ng.core.dto.UserGroupAggregateDTO;
 import io.harness.ng.core.entities.Organization.OrganizationKeys;
 import io.harness.ng.core.entities.Project.ProjectKeys;
 import io.harness.ng.core.services.OrganizationService;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 import io.harness.security.annotations.NextGenManagerAuth;
 
 import com.google.common.collect.ImmutableList;
@@ -178,6 +179,7 @@ public class NGAggregateResource {
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, @BeanParam PageRequest pageRequest,
       @QueryParam(NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
+      @QueryParam("filterType") @DefaultValue("EXCLUDE_INHERITED_GROUPS") UserGroupFilterType filterType,
       @QueryParam("userSize") @DefaultValue("6") @Max(20) int userSize) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
@@ -187,7 +189,7 @@ public class NGAggregateResource {
       pageRequest.setSortOrders(ImmutableList.of(order));
     }
     return ResponseDTO.newResponse(aggregateUserGroupService.listAggregateUserGroups(
-        pageRequest, accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, userSize));
+        pageRequest, accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, userSize, filterType));
   }
 
   @POST
@@ -197,11 +199,12 @@ public class NGAggregateResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam("filterType") @DefaultValue("EXCLUDE_INHERITED_GROUPS") UserGroupFilterType filterType,
       @Body AggregateACLRequest aggregateACLRequest) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
     return ResponseDTO.newResponse(aggregateUserGroupService.listAggregateUserGroups(
-        accountIdentifier, orgIdentifier, projectIdentifier, aggregateACLRequest));
+        accountIdentifier, orgIdentifier, projectIdentifier, filterType, aggregateACLRequest));
   }
 
   @GET

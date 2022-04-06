@@ -19,6 +19,7 @@ import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.user.entities.UserGroup;
 import io.harness.ng.core.user.remote.dto.UserFilter;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 
 import software.wings.beans.sso.SSOType;
 
@@ -49,8 +50,8 @@ public interface UserGroupService {
 
   UserGroup update(UserGroupDTO userGroupDTO);
 
-  Page<UserGroup> list(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm, Pageable pageable);
+  Page<UserGroup> list(String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm,
+      UserGroupFilterType filterType, Pageable pageable);
 
   List<UserGroup> list(Criteria criteria);
 

@@ -14,6 +14,7 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.AggregateACLRequest;
 import io.harness.ng.core.dto.UserGroupAggregateDTO;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -23,10 +24,10 @@ import org.hibernate.validator.constraints.NotEmpty;
 public interface AggregateUserGroupService {
   PageResponse<UserGroupAggregateDTO> listAggregateUserGroups(@NotNull PageRequest pageRequest,
       @NotEmpty String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm,
-      int userSize);
+      int userSize, UserGroupFilterType filterType);
 
   List<UserGroupAggregateDTO> listAggregateUserGroups(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, @NotNull AggregateACLRequest aggregateACLRequest);
+      String projectIdentifier, UserGroupFilterType filterType, @NotNull AggregateACLRequest aggregateACLRequest);
 
   UserGroupAggregateDTO getAggregatedUserGroup(@NotEmpty String accountIdentifier, String orgIdentifier,
       String projectIdentifier, @NotEmpty String userGroupIdentifier);

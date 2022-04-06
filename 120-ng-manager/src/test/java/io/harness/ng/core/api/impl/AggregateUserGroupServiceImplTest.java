@@ -33,6 +33,7 @@ import io.harness.ng.core.entities.NotificationSettingConfig;
 import io.harness.ng.core.user.entities.UserGroup;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
 import io.harness.ng.core.user.service.NgUserService;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 import io.harness.secretmanagerclient.dto.SecretManagerConfigDTO;
@@ -88,7 +89,8 @@ public class AggregateUserGroupServiceImplTest extends CategoryTest {
                  UserGroup.builder().identifier("UG3").users(users3).notificationConfigs(notificationConfigs).build(),
                  UserGroup.builder().identifier("UG4").users(users4).notificationConfigs(notificationConfigs).build())))
         .when(userGroupService)
-        .list(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, null, getPageRequest(pageRequest));
+        .list(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, null,
+            UserGroupFilterType.EXCLUDE_INHERITED_GROUPS, getPageRequest(pageRequest));
 
     doReturn(users).when(ngUserService).getUserMetadata(anyList());
 
@@ -105,8 +107,8 @@ public class AggregateUserGroupServiceImplTest extends CategoryTest {
         .when(request)
         .execute();
 
-    PageResponse<UserGroupAggregateDTO> response = aggregateUserGroupService.listAggregateUserGroups(
-        pageRequest, ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, null, 2);
+    PageResponse<UserGroupAggregateDTO> response = aggregateUserGroupService.listAggregateUserGroups(pageRequest,
+        ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, null, 2, UserGroupFilterType.EXCLUDE_INHERITED_GROUPS);
 
     assertThat(response.getContent()).hasSize(4);
     assertThat(response.getContent().get(0).getUsers().size()).isEqualTo(2);

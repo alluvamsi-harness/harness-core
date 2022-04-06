@@ -43,6 +43,7 @@ import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.user.entities.UserGroup;
 import io.harness.ng.core.user.remote.dto.UserFilter;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 import io.harness.ng.core.utils.UserGroupMapper;
 import io.harness.rest.RestResponse;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -71,6 +72,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -254,18 +256,20 @@ public class UserGroupResource {
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @Parameter(description = "Search filter which matches by user group name/identifier")
-      @QueryParam(NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm, @BeanParam PageRequest pageRequest) {
+      @Parameter(description = "Search filter which matches by user group name/identifier") @QueryParam(
+          NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
+      @QueryParam("filterType") @DefaultValue("EXCLUDE_INHERITED_GROUPS") UserGroupFilterType filterType,
+      @BeanParam PageRequest pageRequest) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
     if (isEmpty(pageRequest.getSortOrders())) {
       SortOrder order = SortOrder.Builder.aSortOrder().withField("lastModifiedAt", SortOrder.OrderType.DESC).build();
       pageRequest.setSortOrders(ImmutableList.of(order));
     }
-    Page<UserGroupDTO> page =
-        userGroupService
-            .list(accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, getPageRequest(pageRequest))
-            .map(UserGroupMapper::toDTO);
+    Page<UserGroupDTO> page = userGroupService
+                                  .list(accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, filterType,
+                                      getPageRequest(pageRequest))
+                                  .map(UserGroupMapper::toDTO);
     return ResponseDTO.newResponse(getNGPageResponse(page));
   }
 

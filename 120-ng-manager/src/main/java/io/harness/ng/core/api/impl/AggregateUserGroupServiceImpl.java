@@ -10,6 +10,7 @@ package io.harness.ng.core.api.impl;
 import static io.harness.accesscontrol.principals.PrincipalType.USER_GROUP;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.ng.core.usergroups.filter.UserGroupFilterType.INCLUDE_INHERITED_GROUPS;
 import static io.harness.remote.client.NGRestUtils.getResponse;
 import static io.harness.utils.PageUtils.getPageRequest;
 
@@ -36,6 +37,7 @@ import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.user.entities.UserGroup;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
 import io.harness.ng.core.user.service.NgUserService;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 import io.harness.ng.core.utils.UserGroupMapper;
 import io.harness.utils.PageUtils;
 
@@ -71,9 +73,9 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
 
   @Override
   public PageResponse<UserGroupAggregateDTO> listAggregateUserGroups(PageRequest pageRequest, String accountIdentifier,
-      String orgIdentifier, String projectIdentifier, String searchTerm, int userSize) {
+      String orgIdentifier, String projectIdentifier, String searchTerm, int userSize, UserGroupFilterType filterType) {
     Page<UserGroup> userGroupPageResponse = userGroupService.list(
-        accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, getPageRequest(pageRequest));
+        accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, filterType, getPageRequest(pageRequest));
 
     List<String> userIdentifiers = userGroupPageResponse.stream()
                                        .map(ug -> getLastNElementsReversed(ug.getUsers(), userSize))
@@ -92,8 +94,11 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
                 -> PrincipalDTO.builder()
                        .identifier(userGroup.getIdentifier())
                        .type(USER_GROUP)
-                       .scopeLevel(
-                           ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase())
+                       .scopeLevel(ScopeLevel
+                                       .of(userGroup.getAccountIdentifier(), userGroup.getOrgIdentifier(),
+                                           userGroup.getProjectIdentifier())
+                                       .toString()
+                                       .toLowerCase())
                        .build())
             .collect(Collectors.toSet());
     RoleAssignmentFilterDTO roleAssignmentFilterDTO =
@@ -123,14 +128,16 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
 
   @Override
   public List<UserGroupAggregateDTO> listAggregateUserGroups(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, AggregateACLRequest aggregateACLRequest) {
+      String projectIdentifier, UserGroupFilterType filterType, AggregateACLRequest aggregateACLRequest) {
     RoleAssignmentFilterDTO roleAssignmentFilterDTO =
         RoleAssignmentFilterDTO.builder()
             .roleFilter(aggregateACLRequest.getRoleFilter())
             .resourceGroupFilter(aggregateACLRequest.getResourceGroupFilter())
             .principalTypeFilter(Collections.singleton(USER_GROUP))
-            .principalScopeLevelFilter(Collections.singleton(
-                ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase()))
+            .principalScopeLevelFilter(INCLUDE_INHERITED_GROUPS.equals(filterType)
+                    ? Collections.singleton(
+                        ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase())
+                    : null)
             .build();
 
     Map<String, List<RoleAssignmentMetadataDTO>> userGroupRoleAssignmentsMap =
@@ -139,6 +146,8 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
     if (userGroupRoleAssignmentsMap.keySet().isEmpty()) {
       return Collections.emptyList();
     }
+
+    // multiple filters
 
     UserGroupFilterDTO userGroupFilterDTO = UserGroupFilterDTO.builder()
                                                 .accountIdentifier(accountIdentifier)
@@ -226,6 +235,7 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
                 && resourceGroupMap.containsKey(roleAssignmentDTO.getResourceGroupIdentifier()))
         .collect(Collectors.groupingBy(roleAssignment
             -> roleAssignment.getPrincipal().getIdentifier(),
+            // pair of scope level and identifier
             Collectors.mapping(roleAssignment
                 -> RoleAssignmentMetadataDTO.builder()
                        .identifier(roleAssignment.getIdentifier())

@@ -53,6 +53,7 @@ import io.harness.ng.core.user.remote.dto.UserFilter;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
 import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.ng.core.user.service.NgUserService;
+import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 import io.harness.notification.NotificationChannelType;
 import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.ng.core.spring.UserGroupRepository;
@@ -197,10 +198,11 @@ public class UserGroupServiceImpl implements UserGroupService {
   }
 
   @Override
-  public Page<UserGroup> list(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm, Pageable pageable) {
+  public Page<UserGroup> list(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String searchTerm, UserGroupFilterType filterType, Pageable pageable) {
     return userGroupRepository.findAll(
-        createUserGroupFilterCriteria(accountIdentifier, orgIdentifier, projectIdentifier, searchTerm), pageable);
+        createUserGroupFilterCriteria(accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, filterType),
+        pageable);
   }
 
   @Override
@@ -211,9 +213,10 @@ public class UserGroupServiceImpl implements UserGroupService {
   @Override
   public List<UserGroup> list(UserGroupFilterDTO userGroupFilterDTO) {
     validateFilter(userGroupFilterDTO);
-    Criteria criteria =
-        createUserGroupFilterCriteria(userGroupFilterDTO.getAccountIdentifier(), userGroupFilterDTO.getOrgIdentifier(),
-            userGroupFilterDTO.getProjectIdentifier(), userGroupFilterDTO.getSearchTerm());
+    Criteria criteria = createUserGroupFilterCriteria(userGroupFilterDTO.getAccountIdentifier(),
+        userGroupFilterDTO.getOrgIdentifier(), userGroupFilterDTO.getProjectIdentifier(),
+        userGroupFilterDTO.getSearchTerm(), userGroupFilterDTO.getFilterType());
+    // consider inherited user groups
     if (isNotEmpty(userGroupFilterDTO.getDatabaseIdFilter())) {
       criteria.and(UserGroupKeys.id).in(userGroupFilterDTO.getDatabaseIdFilter());
     } else if (isNotEmpty(userGroupFilterDTO.getIdentifierFilter())) {
@@ -484,13 +487,14 @@ public class UserGroupServiceImpl implements UserGroupService {
     return criteria;
   }
 
-  private Criteria createUserGroupFilterCriteria(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm) {
+  private Criteria createUserGroupFilterCriteria(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, String searchTerm, UserGroupFilterType filterType) {
     Criteria criteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
     if (isNotBlank(searchTerm)) {
       criteria.orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
           Criteria.where(UserGroupKeys.tags).regex(searchTerm, "i"));
     }
+    // call access control and get inherited user group ids
     return criteria;
   }
 
