@@ -20,6 +20,14 @@ import io.harness.gitsync.common.beans.ScmApis;
 import io.harness.gitsync.common.dtos.GitBranchDetailsDTO;
 import io.harness.gitsync.common.dtos.GitBranchesResponseDTO;
 import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
+import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
+import io.harness.gitsync.common.dtos.ScmCreateBranchRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
+import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
+import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.scmerrorhandling.ScmApiErrorHandlingHelper;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
@@ -70,6 +78,29 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
 
     return prepareListRepoResponse(scmConnector, response);
   }
+
+  @Override
+  public ScmCommitFileResponseDTO createFile(ScmCreateFileRequestDTO scmCommitRequestDTO) {
+    return null;
+  }
+
+  @Override
+  public ScmCommitFileResponseDTO updateFile(ScmUpdateFileRequestDTO scmUpdateFileRequestDTO) {
+    return null;
+  }
+
+  @Override
+  public ScmCreatePRResponseDTO createPR(ScmCreatePRRequestDTO scmCreatePRRequestDTO) {
+    return null;
+  }
+
+  @Override
+  public ScmGetFileResponseDTO getFile(ScmGetFileRequestDTO scmGetFileRequestDTO) {
+    return null;
+  }
+
+  @Override
+  public void createBranch(ScmCreateBranchRequestDTO scmCreateBranchRequestDTO) {}
 
   @Override
   public GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
