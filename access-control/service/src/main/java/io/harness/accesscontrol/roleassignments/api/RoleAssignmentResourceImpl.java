@@ -260,6 +260,9 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
 
   private RoleAssignment buildRoleAssignmentWithPrincipalScopeLevel(RoleAssignment roleAssignment, Scope scope) {
     String principalScopeLevel = null;
+    if (USER_GROUP.equals(roleAssignment.getPrincipalType()) && !isEmpty(roleAssignment.getPrincipalScopeLevel())) {
+      principalScopeLevel = roleAssignment.getPrincipalScopeLevel();
+    }
     if (USER_GROUP.equals(roleAssignment.getPrincipalType()) && isEmpty(roleAssignment.getPrincipalScopeLevel())) {
       principalScopeLevel = roleAssignment.getScopeLevel();
     }
