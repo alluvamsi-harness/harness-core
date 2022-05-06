@@ -51,6 +51,7 @@ import io.harness.persistence.NoopUserProvider;
 import io.harness.persistence.Store;
 import io.harness.persistence.UserProvider;
 import io.harness.pms.contracts.plan.JsonExpansionInfo;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.events.base.PipelineEventConsumerController;
 import io.harness.pms.listener.NgOrchestrationNotifyEventListener;
 import io.harness.pms.sdk.PmsSdkConfiguration;
@@ -58,6 +59,7 @@ import io.harness.pms.sdk.PmsSdkInitHelper;
 import io.harness.pms.sdk.PmsSdkModule;
 import io.harness.pms.sdk.core.SdkDeployMode;
 import io.harness.pms.sdk.core.governance.JsonExpansionHandlerInfo;
+import io.harness.pms.sdk.core.steps.Step;
 import io.harness.pms.sdk.execution.events.facilitators.FacilitatorEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.interrupts.InterruptEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.node.advise.NodeAdviseEventRedisConsumer;
@@ -72,6 +74,7 @@ import io.harness.queue.QueueListenerController;
 import io.harness.queue.QueuePublisher;
 import io.harness.registrars.ExecutionAdvisers;
 import io.harness.registrars.ExecutionRegistrar;
+import io.harness.registrars.STOExecutionRegistrar;
 import io.harness.resource.VersionInfoResource;
 import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -278,8 +281,14 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
     modules.add(YamlSdkModule.getInstance());
 
     // Pipeline Service Modules
-    PmsSdkConfiguration pmsSdkConfiguration = getPmsSdkConfiguration(configuration);
-    modules.add(PmsSdkModule.getInstance(pmsSdkConfiguration));
+    PmsSdkConfiguration ciPmsSdkConfiguration =
+        getPmsSdkConfiguration(configuration, ModuleType.CI, ExecutionRegistrar.getEngineSteps());
+    modules.add(PmsSdkModule.getInstance(ciPmsSdkConfiguration));
+
+    PmsSdkConfiguration stoPmsSdkConfiguration =
+        getPmsSdkConfiguration(configuration, ModuleType.STO, STOExecutionRegistrar.getEngineSteps());
+    modules.add(PmsSdkModule.getInstance(stoPmsSdkConfiguration));
+
     modules.add(PipelineServiceUtilityModule.getInstance());
 
     Injector injector = Guice.createInjector(modules);
@@ -344,17 +353,29 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
   }
 
   private void registerPMSSDK(CIManagerConfiguration config, Injector injector) {
-    PmsSdkConfiguration sdkConfig = getPmsSdkConfiguration(config);
-    if (sdkConfig.getDeploymentMode().equals(SdkDeployMode.REMOTE)) {
+    PmsSdkConfiguration ciSDKConfig =
+        getPmsSdkConfiguration(config, ModuleType.CI, ExecutionRegistrar.getEngineSteps());
+    if (ciSDKConfig.getDeploymentMode().equals(SdkDeployMode.REMOTE)) {
       try {
-        PmsSdkInitHelper.initializeSDKInstance(injector, sdkConfig);
+        PmsSdkInitHelper.initializeSDKInstance(injector, ciSDKConfig);
       } catch (Exception e) {
         throw new GeneralException("Fail to start ci manager because pms sdk registration failed", e);
       }
     }
+
+    PmsSdkConfiguration stoSDKConfig =
+        getPmsSdkConfiguration(config, ModuleType.STO, STOExecutionRegistrar.getEngineSteps());
+    if (stoSDKConfig.getDeploymentMode().equals(SdkDeployMode.REMOTE)) {
+      try {
+        PmsSdkInitHelper.initializeSDKInstance(injector, stoSDKConfig);
+      } catch (Exception e) {
+        throw new GeneralException("Fail to start STO manager because pms sdk registration failed", e);
+      }
+    }
   }
 
-  private PmsSdkConfiguration getPmsSdkConfiguration(CIManagerConfiguration config) {
+  private PmsSdkConfiguration getPmsSdkConfiguration(
+      CIManagerConfiguration config, ModuleType moduleType, Map<StepType, Class<? extends Step>> engineSteps) {
     boolean remote = false;
     if (config.getShouldConfigureWithPMS() != null && config.getShouldConfigureWithPMS()) {
       remote = true;
@@ -362,12 +383,12 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
 
     return PmsSdkConfiguration.builder()
         .deploymentMode(remote ? SdkDeployMode.REMOTE : SdkDeployMode.LOCAL)
-        .moduleType(ModuleType.CI)
+        .moduleType(moduleType)
         .pipelineServiceInfoProviderClass(CIPipelineServiceInfoProvider.class)
         .grpcServerConfig(config.getPmsSdkGrpcServerConfig())
         .pmsGrpcClientConfig(config.getPmsGrpcClientConfig())
         .filterCreationResponseMerger(new CIFilterCreationResponseMerger())
-        .engineSteps(ExecutionRegistrar.getEngineSteps())
+        .engineSteps(engineSteps)
         .executionSummaryModuleInfoProviderClass(CIModuleInfoProvider.class)
         .engineAdvisers(ExecutionAdvisers.getEngineAdvisers())
         .engineEventHandlersMap(OrchestrationExecutionEventHandlerRegistrar.getEngineEventHandlers())
