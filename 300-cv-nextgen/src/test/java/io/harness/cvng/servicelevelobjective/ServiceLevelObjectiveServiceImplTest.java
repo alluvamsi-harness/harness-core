@@ -101,6 +101,7 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
   List<ServiceLevelIndicatorDTO> serviceLevelIndicators;
   SLOTarget sloTarget;
   SLOTarget calendarSloTarget;
+  SLOTarget updatedSloTarget;
   String userJourneyIdentifier;
   String description;
   String monitoredServiceIdentifier;
@@ -153,6 +154,11 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
 
                                       .build())
                             .build();
+    updatedSloTarget = SLOTarget.builder()
+                           .type(SLOTargetType.ROLLING)
+                           .sloTargetPercentage(80.0)
+                           .spec(RollingSLOTargetSpec.builder().periodLength("60d").build())
+                           .build();
     userJourneyIdentifier = "userJourney";
 
     projectParams = ProjectParams.builder()
@@ -427,6 +433,80 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
             .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId)
             .get();
     assertThat(analysisOrchestrator.getAnalysisStateMachineQueue().size()).isEqualTo(14);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testUpdate_UpdateSLOTarget() {
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    createMonitoredService();
+    ServiceLevelObjectiveResponse serviceLevelObjectiveResponse =
+        serviceLevelObjectiveService.create(projectParams, sloDTO);
+    assertThat(serviceLevelObjectiveResponse.getServiceLevelObjectiveDTO()).isEqualTo(sloDTO);
+    ServiceLevelIndicatorDTO responseSLIDTO =
+        serviceLevelObjectiveResponse.getServiceLevelObjectiveDTO().getServiceLevelIndicators().get(0);
+    String sliIndicator =
+        serviceLevelIndicatorService
+            .getServiceLevelIndicator(builderFactory.getProjectParams(), responseSLIDTO.getIdentifier())
+            .getUuid();
+    sloDTO.setTarget(updatedSloTarget);
+    ServiceLevelObjectiveResponse updateServiceLevelObjectiveResponse =
+        serviceLevelObjectiveService.update(projectParams, sloDTO.getIdentifier(), sloDTO);
+    String updatedSliIndicator = serviceLevelIndicatorService
+                                     .getServiceLevelIndicator(builderFactory.getProjectParams(),
+                                         updateServiceLevelObjectiveResponse.getServiceLevelObjectiveDTO()
+                                             .getServiceLevelIndicators()
+                                             .get(0)
+                                             .getIdentifier())
+                                     .getUuid();
+    assertThat(updateServiceLevelObjectiveResponse.getServiceLevelObjectiveDTO().getTarget())
+        .isEqualTo(updatedSloTarget);
+    assertThat(sliIndicator).isEqualTo(updatedSliIndicator);
+    String verificationTaskId =
+        verificationTaskService.createSLIVerificationTask(builderFactory.getContext().getAccountId(), sliIndicator);
+    AnalysisOrchestrator analysisOrchestrator =
+        hPersistence.createQuery(AnalysisOrchestrator.class)
+            .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId)
+            .get();
+    assertThat(analysisOrchestrator.getAnalysisStateMachineQueue().size()).isEqualTo(121);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testUpdate_UpdateSLOTargetAfterCurrentStartTime() {
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    createMonitoredService();
+    ServiceLevelObjectiveResponse serviceLevelObjectiveResponse =
+        serviceLevelObjectiveService.create(projectParams, sloDTO);
+    assertThat(serviceLevelObjectiveResponse.getServiceLevelObjectiveDTO()).isEqualTo(sloDTO);
+    ServiceLevelIndicatorDTO responseSLIDTO =
+        serviceLevelObjectiveResponse.getServiceLevelObjectiveDTO().getServiceLevelIndicators().get(0);
+    String sliIndicator =
+        serviceLevelIndicatorService
+            .getServiceLevelIndicator(builderFactory.getProjectParams(), responseSLIDTO.getIdentifier())
+            .getUuid();
+    sloDTO.setTarget(calendarSloTarget);
+    ServiceLevelObjectiveResponse updateServiceLevelObjectiveResponse =
+        serviceLevelObjectiveService.update(projectParams, sloDTO.getIdentifier(), sloDTO);
+    String updatedSliIndicator = serviceLevelIndicatorService
+                                     .getServiceLevelIndicator(builderFactory.getProjectParams(),
+                                         updateServiceLevelObjectiveResponse.getServiceLevelObjectiveDTO()
+                                             .getServiceLevelIndicators()
+                                             .get(0)
+                                             .getIdentifier())
+                                     .getUuid();
+    assertThat(updateServiceLevelObjectiveResponse.getServiceLevelObjectiveDTO().getTarget())
+        .isEqualTo(calendarSloTarget);
+    assertThat(sliIndicator).isEqualTo(updatedSliIndicator);
+    String verificationTaskId =
+        verificationTaskService.createSLIVerificationTask(builderFactory.getContext().getAccountId(), sliIndicator);
+    AnalysisOrchestrator analysisOrchestrator =
+        hPersistence.createQuery(AnalysisOrchestrator.class)
+            .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId)
+            .get();
+    assertThat(analysisOrchestrator).isNull();
   }
 
   @Test

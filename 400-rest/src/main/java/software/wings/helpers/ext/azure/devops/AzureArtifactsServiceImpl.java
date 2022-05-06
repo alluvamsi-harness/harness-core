@@ -39,7 +39,7 @@ import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.AzureArtifactsArtifactStream.ProtocolType;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsConfig;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionCommonTaskHelper;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.utils.ArtifactType;
@@ -74,7 +74,7 @@ public class AzureArtifactsServiceImpl implements AzureArtifactsService {
   private static final String INVALID_PROTOCOL_TYPE_MESSAGE = "protocolType is invalid";
 
   @Inject private EncryptionService encryptionService;
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
 
   @Override
   public boolean validateArtifactServer(
@@ -370,7 +370,7 @@ public class AzureArtifactsServiceImpl implements AzureArtifactsService {
       ListNotifyResponseData notifyResponseData, String artifactFileName, String artifactDownloadUrl,
       String authHeader) {
     try {
-      artifactCollectionTaskHelper.addDataToResponse(
+      artifactCollectionCommonTaskHelper.addDataToResponse(
           ImmutablePair.of(artifactFileName, downloadArtifactByUrl(artifactDownloadUrl, authHeader)),
           artifactDownloadUrl, notifyResponseData, delegateId, taskId, accountId);
     } catch (IOException e) {

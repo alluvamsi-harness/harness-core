@@ -152,6 +152,15 @@ public class FQN {
     if (fqnList.size() < 2) {
       return null;
     }
+    if (fqnList.size() > 3 && fqnList.get(1).getKey().equals(YAMLFieldNameConstants.TEMPLATE)
+        && fqnList.get(2).getKey().equals(YAMLFieldNameConstants.TEMPLATE_INPUTS)
+        && fqnList.get(3).getKey().equals(YAMLFieldNameConstants.STAGES)) {
+      FQNNode stageNode = fqnList.get(4);
+      if (stageNode.getNodeType().equals(NodeType.PARALLEL)) {
+        stageNode = fqnList.get(5);
+      }
+      return stageNode.getUuidValue();
+    }
     if (!fqnList.get(1).getKey().equals(YAMLFieldNameConstants.STAGES)) {
       return null;
     }

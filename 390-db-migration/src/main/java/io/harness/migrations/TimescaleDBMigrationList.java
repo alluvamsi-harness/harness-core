@@ -45,6 +45,7 @@ import io.harness.migrations.timescaledb.CreateBillingData;
 import io.harness.migrations.timescaledb.CreateBillingDataHourly;
 import io.harness.migrations.timescaledb.CreateBudgetAlerts;
 import io.harness.migrations.timescaledb.CreateCeRecommendationTable;
+import io.harness.migrations.timescaledb.CreateCloudProviderTable;
 import io.harness.migrations.timescaledb.CreateDeploymentParentTable;
 import io.harness.migrations.timescaledb.CreateDeploymentStageTable;
 import io.harness.migrations.timescaledb.CreateEnvironmentTable;
@@ -150,6 +151,7 @@ public class TimescaleDBMigrationList {
         .add(Pair.of(63, CreateTaglinksTables.class))
         .add(Pair.of(64, CreateEnvironmentTable.class))
         .add(Pair.of(65, CreateUserTable.class))
+        .add(Pair.of(66, CreateCloudProviderTable.class))
         .build();
   }
 }

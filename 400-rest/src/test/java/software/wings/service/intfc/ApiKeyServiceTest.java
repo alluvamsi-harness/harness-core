@@ -9,6 +9,7 @@ package software.wings.service.intfc;
 
 import static io.harness.beans.PageResponse.PageResponseBuilder.aPageResponse;
 import static io.harness.rule.OwnerRule.NIKOLA;
+import static io.harness.rule.OwnerRule.PRATEEK;
 import static io.harness.rule.OwnerRule.RAMA;
 import static io.harness.rule.OwnerRule.SATYAM;
 import static io.harness.rule.OwnerRule.UJJAWAL;
@@ -48,11 +49,14 @@ import software.wings.beans.ApiKeyEntry;
 import software.wings.beans.Event.Type;
 import software.wings.beans.User;
 import software.wings.beans.security.UserGroup;
+import software.wings.security.UserPermissionInfo;
 import software.wings.security.UserRequestContext;
+import software.wings.security.UserRestrictionInfo;
 import software.wings.security.UserThreadLocal;
 import software.wings.service.impl.AuditServiceHelper;
 
 import com.google.inject.Inject;
+import javax.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,6 +69,9 @@ public class ApiKeyServiceTest extends WingsBaseTest {
   @Mock private AccountService accountService;
   @Mock private UserGroupService userGroupService;
   @Mock private AuditServiceHelper auditServiceHelper;
+  @Mock private Cache<String, ApiKeyEntry> apiKeyCache;
+  @Mock private Cache<String, UserPermissionInfo> apiKeyPermissionInfoCache;
+  @Mock private Cache<String, UserRestrictionInfo> apiKeyRestrictionInfoCache;
   @Inject @InjectMocks private ApiKeyService apiKeyService;
 
   @Before
@@ -138,6 +145,29 @@ public class ApiKeyServiceTest extends WingsBaseTest {
     verify(auditServiceHelper, times(1))
         .reportForAuditingUsingAccountId(
             eq(apiKeyEntry.getAccountId()), eq(null), any(ApiKeyEntry.class), eq(Type.UPDATE));
+  }
+
+  @Test
+  @Owner(developers = PRATEEK)
+  @Category(UnitTests.class)
+  public void testUpdateWithCache() {
+    ApiKeyEntry apiKeyEntry = generateKey("name");
+
+    ApiKeyEntry apiKeyEntryForUpdate =
+        ApiKeyEntry.builder().name("newName").userGroupIds(asList(USER_GROUP_ID + "2")).build();
+    ApiKeyEntry updatedApiKeyEntry =
+        apiKeyService.update(apiKeyEntry.getUuid(), apiKeyEntry.getAccountId(), apiKeyEntryForUpdate);
+    assertThat(updatedApiKeyEntry).isNotNull();
+    assertThat(updatedApiKeyEntry.getUuid()).isEqualTo(apiKeyEntry.getUuid());
+    assertThat(updatedApiKeyEntry.getUserGroupIds()).isNotEmpty();
+    verify(auditServiceHelper, times(1))
+        .reportForAuditingUsingAccountId(
+            eq(apiKeyEntry.getAccountId()), eq(null), any(ApiKeyEntry.class), eq(Type.CREATE));
+    verify(apiKeyCache, times(1)).remove(updatedApiKeyEntry.getAccountId() + updatedApiKeyEntry.getDecryptedKey());
+    verify(apiKeyPermissionInfoCache, times(1))
+        .remove(updatedApiKeyEntry.getAccountId() + updatedApiKeyEntry.getDecryptedKey());
+    verify(apiKeyRestrictionInfoCache, times(1))
+        .remove(updatedApiKeyEntry.getAccountId() + updatedApiKeyEntry.getDecryptedKey());
   }
 
   @Test

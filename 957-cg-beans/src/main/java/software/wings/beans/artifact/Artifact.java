@@ -17,40 +17,50 @@ import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.EmbeddedUser;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
+import io.harness.expression.LateBindingMap;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.mongo.index.SortCompoundMongoIndex;
+import io.harness.persistence.CreatedAtAware;
+import io.harness.persistence.CreatedByAware;
+import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.UpdatedAtAware;
+import io.harness.persistence.UpdatedByAware;
+import io.harness.persistence.UuidAware;
+import io.harness.validation.Update;
 
-import software.wings.beans.Base;
-import software.wings.beans.Service;
-import software.wings.expression.ArtifactLabelEvaluator;
+import software.wings.beans.entityinterface.ApplicationAccess;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.github.reinert.jjschema.SchemaIgnore;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.UtilityClass;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Transient;
 
 @OwnedBy(CDC)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
-@EqualsAndHashCode(callSuper = true)
 @FieldNameConstants(innerTypeName = "ArtifactKeys")
 @Entity(value = "artifacts", noClassnameStored = true)
 @HarnessEntity(exportable = true)
 @TargetModule(HarnessModule._957_CG_BEANS)
-public class Artifact extends Base {
+public class Artifact implements PersistentEntity, UuidAware, CreatedAtAware, CreatedByAware, UpdatedAtAware,
+                                 UpdatedByAware, ApplicationAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -100,15 +110,49 @@ public class Artifact extends Base {
     public static final String metadata_artifactPath = metadata + "." + ArtifactMetadataKeys.artifactPath;
   }
 
+  @EqualsAndHashCode.Exclude @Deprecated public static final String ID_KEY2 = "_id";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String APP_ID_KEY2 = "appId";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String ACCOUNT_ID_KEY2 = "accountId";
+  @EqualsAndHashCode.Exclude @Deprecated public static final String LAST_UPDATED_AT_KEY2 = "lastUpdatedAt";
+
+  @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
+  @FdIndex @NotNull @SchemaIgnore protected String appId;
+  @EqualsAndHashCode.Exclude @SchemaIgnore private EmbeddedUser createdBy;
+  @EqualsAndHashCode.Exclude @SchemaIgnore @FdIndex private long createdAt;
+
+  @EqualsAndHashCode.Exclude @SchemaIgnore private EmbeddedUser lastUpdatedBy;
+  @EqualsAndHashCode.Exclude @SchemaIgnore @NotNull private long lastUpdatedAt;
+
+  /**
+   * TODO: Add isDeleted boolean field to enable soft delete. @swagat
+   */
+
+  @JsonIgnore
+  @SchemaIgnore
+  @Transient
+  private transient String entityYamlPath; // TODO:: remove it with changeSet batching
+
+  @JsonIgnore
+  @SchemaIgnore
+  public String getEntityYamlPath() {
+    return entityYamlPath;
+  }
+
+  @EqualsAndHashCode.Exclude @Setter @JsonIgnore @SchemaIgnore private transient boolean syncFromGit;
+
+  @JsonIgnore
+  @SchemaIgnore
+  public boolean isSyncFromGit() {
+    return syncFromGit;
+  }
   private String artifactStreamId;
   private String artifactSourceName;
   @Transient private String artifactStreamName;
   private ArtifactMetadata metadata = new ArtifactMetadata(new HashMap<>());
-  @Transient @JsonIgnore public ArtifactLabelEvaluator label;
+  @Transient @JsonIgnore public LateBindingMap label;
   @NotEmpty private String displayName;
   private String revision;
   private List<String> serviceIds = new ArrayList<>();
-  @Transient private List<Service> services;
   private List<ArtifactFile> artifactFiles = Lists.newArrayList();
   private List<ArtifactFileMetadata> artifactFileMetadata = Lists.newArrayList();
   private Status status;
@@ -340,12 +384,11 @@ public class Artifact extends Base {
     private String artifactStreamId;
     private String artifactSourceName;
     private ArtifactMetadata metadata = new ArtifactMetadata();
-    private ArtifactLabelEvaluator label;
+    private LateBindingMap label;
     private String displayName;
     private String revision;
     private List<String> serviceIds = new ArrayList<>();
     private String uuid;
-    private List<Service> services;
     private List<ArtifactFile> artifactFiles = Lists.newArrayList();
     private List<ArtifactFileMetadata> artifactFileMetadata = Lists.newArrayList();
     private EmbeddedUser createdBy;
@@ -407,11 +450,6 @@ public class Artifact extends Base {
       return this;
     }
 
-    public Builder withServices(List<Service> services) {
-      this.services = services;
-      return this;
-    }
-
     public Builder withArtifactFiles(List<ArtifactFile> artifactFiles) {
       this.artifactFiles = artifactFiles;
       return this;
@@ -452,7 +490,7 @@ public class Artifact extends Base {
       return this;
     }
 
-    public Builder withLabel(ArtifactLabelEvaluator label) {
+    public Builder withLabel(LateBindingMap label) {
       this.label = label;
       return this;
     }
@@ -503,7 +541,6 @@ public class Artifact extends Base {
           .withServiceIds(serviceIds)
           .withUuid(uuid)
           .withAppId(appId)
-          .withServices(services)
           .withArtifactFiles(artifactFiles)
           .withArtifactDownloadMetadata(artifactFileMetadata)
           .withCreatedBy(createdBy)
@@ -532,7 +569,6 @@ public class Artifact extends Base {
       artifact.setServiceIds(serviceIds);
       artifact.setUuid(uuid);
       artifact.setAppId(appId);
-      artifact.setServices(services);
       artifact.setArtifactFiles(artifactFiles);
       artifact.setArtifactFileMetadata(artifactFileMetadata);
       artifact.setCreatedBy(createdBy);

@@ -7,6 +7,11 @@
 
 package io.harness.ng.core.filestore.remote;
 
+import static io.harness.EntityType.PIPELINES;
+import static io.harness.EntityType.PIPELINE_STEPS;
+import static io.harness.EntityType.SECRETS;
+import static io.harness.EntityType.SERVICE;
+import static io.harness.EntityType.TEMPLATE;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filestore.FilePermissionConstants.FILE_ACCESS_PERMISSION;
 import static io.harness.filestore.FilePermissionConstants.FILE_DELETE_PERMISSION;
@@ -42,10 +47,11 @@ import io.harness.ng.core.filestore.api.impl.FileStoreServiceImpl;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.rule.Owner;
 
-import com.google.api.client.util.Lists;
+import com.google.common.collect.Lists;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.Response;
 import jersey.repackaged.com.google.common.collect.Sets;
@@ -239,6 +245,20 @@ public class FileStoreResourceTest extends CategoryTest {
   @Test
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
+  public void testGetReferencedByTypes() {
+    when(fileStoreService.getSupportedEntityTypes())
+        .thenReturn(Lists.newArrayList(PIPELINES, PIPELINE_STEPS, SERVICE, SECRETS, TEMPLATE));
+    ResponseDTO<List<EntityType>> response = fileStoreResource.getSupportedEntityTypes();
+    List<EntityType> pageResponse = response.getData();
+
+    assertThat(pageResponse).isNotNull();
+    assertThat(pageResponse.isEmpty()).isFalse();
+    assertThat(pageResponse.size()).isEqualTo(5);
+  }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
   public void testListFilesWithFilterException() {
     doNothing().when(accessControlClient).checkForAccessOrThrow(any(), any(), eq(FILE_VIEW_PERMISSION));
     when(fileStoreService.listFilesWithFilter(any(), any(), any(), any(), any(), any(), any()))
@@ -293,5 +313,25 @@ public class FileStoreResourceTest extends CategoryTest {
     assertThatThrownBy(() -> fileStoreResource.getCreatedByList(ACCOUNT, ORG, PROJECT))
         .isInstanceOf(NGAccessDeniedException.class)
         .hasMessage("Principal doesn't have file view permission");
+  }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
+  public void testListReferencedByInScope() {
+    doNothing().when(accessControlClient).checkForAccessOrThrow(any(), any(), eq(FILE_VIEW_PERMISSION));
+    EntitySetupUsageDTO entitySetupUsage = EntitySetupUsageDTO.builder().build();
+    final Page<EntitySetupUsageDTO> entityServiceUsageList =
+        new PageImpl<>(Collections.singletonList(entitySetupUsage));
+    when(fileStoreService.listReferencedByInScope(any(), any(), any(), any(), any()))
+        .thenReturn(entityServiceUsageList);
+
+    ResponseDTO<Page<EntitySetupUsageDTO>> response =
+        fileStoreResource.getReferencedByInScope(1, 10, ACCOUNT, ORG, PROJECT, EntityType.PIPELINES);
+    Page<EntitySetupUsageDTO> returnedList = response.getData();
+
+    assertThat(returnedList).isNotNull();
+    assertThat(returnedList.getContent().size()).isEqualTo(1);
+    assertThat(returnedList.getContent()).containsExactly(entitySetupUsage);
   }
 }

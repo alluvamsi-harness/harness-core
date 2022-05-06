@@ -196,7 +196,6 @@ import software.wings.beans.ApprovalDetails;
 import software.wings.beans.ArtifactStreamMetadata;
 import software.wings.beans.ArtifactVariable;
 import software.wings.beans.AwsLambdaExecutionSummary;
-import software.wings.beans.Base;
 import software.wings.beans.BuildExecutionSummary;
 import software.wings.beans.CanaryOrchestrationWorkflow;
 import software.wings.beans.CanaryWorkflowExecutionAdvisor;
@@ -2211,7 +2210,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       if (newArtifact.getUuid() == null) {
         artifacts.add(newArtifact);
       } else {
-        if (artifacts.stream().map(Base::getUuid).noneMatch(newArtifact.getUuid()::equals)) {
+        if (artifacts.stream().map(Artifact::getUuid).noneMatch(newArtifact.getUuid()::equals)) {
           artifacts.add(newArtifact);
         }
       }
@@ -2219,7 +2218,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     workflowExecution.setArtifacts(artifacts);
     executionArgs.setArtifacts(artifacts);
-    List<String> artifactIds = artifacts.stream().map(Base::getUuid).collect(toList());
+    List<String> artifactIds = artifacts.stream().map(Artifact::getUuid).collect(toList());
     stdParams.setArtifactIds(artifactIds);
   }
 
@@ -5571,7 +5570,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     }
 
     collectedArtifacts.addAll(artifacts);
-    collectedArtifacts = collectedArtifacts.stream().filter(distinctByKey(Base::getUuid)).collect(toList());
+    collectedArtifacts = collectedArtifacts.stream().filter(distinctByKey(Artifact::getUuid)).collect(toList());
 
     Query<WorkflowExecution> updatedQuery = wingsPersistence.createQuery(WorkflowExecution.class)
                                                 .project(WorkflowExecutionKeys.artifacts, true)

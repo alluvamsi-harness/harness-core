@@ -14,9 +14,16 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.sdk.core.data.Outcome;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.TypeAlias;
 
+@Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 @OwnedBy(CDC)
 @JsonTypeName("ServiceNowTicketOutcome")
@@ -25,4 +32,5 @@ import org.springframework.data.annotation.TypeAlias;
 public class ServiceNowTicketOutcome implements Outcome {
   String ticketUrl;
   String ticketNumber;
+  Map<String, String> fields;
 }

@@ -224,8 +224,9 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
                         .addAllBranches(Arrays.asList(branch))
                         .setDefaultBranch(defaultBranch)
                         .build());
-    final ListBranchesWithDefaultResponse listBranchesWithDefaultResponse = scmManagerFacilitatorService.listBranches(
-        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName, PageRequestDTO.builder().build());
+    final ListBranchesWithDefaultResponse listBranchesWithDefaultResponse =
+        scmManagerFacilitatorService.listBranches(accountIdentifier, orgIdentifier, projectIdentifier,
+            (ScmConnector) connectorInfo.getConnectorConfig(), PageRequestDTO.builder().build());
     assertThat(listBranchesWithDefaultResponse.getBranchesCount()).isEqualTo(1);
     assertThat(listBranchesWithDefaultResponse.getDefaultBranch()).isEqualTo(defaultBranch);
     assertThat(listBranchesWithDefaultResponse.getBranchesList().get(0)).isEqualTo(branch);

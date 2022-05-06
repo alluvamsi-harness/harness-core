@@ -39,12 +39,15 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepUtils;
 import io.harness.steps.servicenow.ServiceNowStepHelperService;
 import io.harness.steps.servicenow.ServiceNowTicketOutcome;
+import io.harness.steps.servicenow.ServiceNowTicketOutcome.ServiceNowTicketOutcomeBuilder;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -53,6 +56,7 @@ public class ServiceNowStepHelperServiceImpl implements ServiceNowStepHelperServ
   private final ConnectorResourceClient connectorResourceClient;
   private final SecretManagerClientService secretManagerClientService;
   private final KryoSerializer kryoSerializer;
+  private static final String NULL_VALUE = "null";
 
   @Inject
   public ServiceNowStepHelperServiceImpl(ConnectorResourceClient connectorResourceClient,
@@ -68,6 +72,12 @@ public class ServiceNowStepHelperServiceImpl implements ServiceNowStepHelperServ
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(
         connectorRef, ngAccess.getAccountIdentifier(), ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier());
+    if (NULL_VALUE.equals(identifierRef.getIdentifier())) {
+      throw new InvalidRequestException(
+          String.format(
+              "Invalid identifier for Connector: [%s]. Please check the expression/value for the field", connectorRef),
+          WingsException.USER);
+    }
     Optional<ConnectorDTO> connectorDTOOptional = NGRestUtils.getResponse(
         connectorResourceClient.get(identifierRef.getIdentifier(), identifierRef.getAccountIdentifier(),
             identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier()));
@@ -106,13 +116,19 @@ public class ServiceNowStepHelperServiceImpl implements ServiceNowStepHelperServ
   public StepResponse prepareStepResponse(ThrowingSupplier<ServiceNowTaskNGResponse> responseSupplier)
       throws Exception {
     ServiceNowTaskNGResponse taskResponse = responseSupplier.get();
+    ServiceNowTicketOutcomeBuilder serviceNowTicketOutcomeBuilder =
+        ServiceNowTicketOutcome.builder()
+            .ticketNumber(taskResponse.getTicket().getNumber())
+            .ticketUrl(taskResponse.getTicket().getUrl());
+    if (taskResponse.getTicket().getFields() != null) {
+      Map<String, String> fields = new HashMap<>();
+      taskResponse.getTicket().getFields().forEach((k, v) -> fields.put(k, v.getDisplayValue()));
+      serviceNowTicketOutcomeBuilder.fields(fields);
+    }
     return StepResponse.builder()
         .status(Status.SUCCEEDED)
-        .stepOutcome(StepResponse.StepOutcome.builder()
-                         .name("ticket")
-                         .outcome(new ServiceNowTicketOutcome(
-                             taskResponse.getTicket().getUrl(), taskResponse.getTicket().getNumber()))
-                         .build())
+        .stepOutcome(
+            StepResponse.StepOutcome.builder().name("ticket").outcome(serviceNowTicketOutcomeBuilder.build()).build())
         .build();
   }
 }

@@ -47,7 +47,7 @@ import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.common.BuildDetailsComparatorAscending;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionCommonTaskHelper;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryType;
 
@@ -89,7 +89,7 @@ public class ArtifactoryServiceImpl implements ArtifactoryService {
 
   private static final String DOWNLOAD_FILE_FOR_GENERIC_REPO = "Downloading the file for generic repo";
 
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
   @Inject private ArtifactoryClientImpl artifactoryClient;
 
   @Override
@@ -232,7 +232,7 @@ public class ArtifactoryServiceImpl implements ArtifactoryService {
     try {
       log.info(DOWNLOAD_FILE_FOR_GENERIC_REPO);
       InputStream inputStream = downloadArtifacts(artifactoryConfig, repositoryName, metadata);
-      artifactCollectionTaskHelper.addDataToResponse(
+      artifactCollectionCommonTaskHelper.addDataToResponse(
           new ImmutablePair<>(artifactName, inputStream), artifactPath, res, delegateId, taskId, accountId);
       return res;
     } catch (Exception e) {

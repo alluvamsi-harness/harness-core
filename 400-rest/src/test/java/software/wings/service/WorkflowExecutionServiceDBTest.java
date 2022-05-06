@@ -465,6 +465,7 @@ public class WorkflowExecutionServiceDBTest extends WingsBaseTest {
 
     Artifact artifact = Artifact.Builder.anArtifact()
                             .withAppId(workflowExecution.getAppId())
+                            .withUuid(generateUuid())
                             .withArtifactStreamId(generateUuid())
                             .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "1.2")))
                             .withDisplayName("Some artifact")
@@ -472,6 +473,7 @@ public class WorkflowExecutionServiceDBTest extends WingsBaseTest {
 
     Artifact artifact1 = Artifact.Builder.anArtifact()
                              .withAppId(workflowExecution.getAppId())
+                             .withUuid(generateUuid())
                              .withArtifactStreamId(generateUuid())
                              .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "1.2")))
                              .withDisplayName("Some artifact")

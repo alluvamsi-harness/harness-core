@@ -17,6 +17,7 @@ endpoint-exclusion: io.harness.ng.core.smtp.resources.SmtpNgResource.save
 endpoint-exclusion: io.harness.gitsync.common.remote.ScmFacilitatorResource.createPR
 endpoint-exclusion: io.harness.ng.core.remote.TokenResource.createToken
 endpoint-exclusion: io.harness.ng.core.remote.TokenResource.updateToken
+endpoint-exclusion: io.harness.ng.core.filestore.remote.FileStoreResource.getSupportedEntityTypes
 endpoint-exclusion: io.harness.ng.core.filestore.remote.FileStoreResource.update
 endpoint-exclusion: io.harness.ng.core.delegate.resources.DelegateMtlsEndpointNgResource.isDomainPrefixAvailable
 dto-exclusion: io.harness.ng.core.invites.dto.InviteDTO

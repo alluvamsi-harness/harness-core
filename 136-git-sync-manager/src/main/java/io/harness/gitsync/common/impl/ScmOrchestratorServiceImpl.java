@@ -91,11 +91,11 @@ public class ScmOrchestratorServiceImpl implements ScmOrchestratorService {
       String projectIdentifier, String orgIdentifier, String accountId, String connectorIdentifierRef) {
     final ScmConnector scmConnector =
         gitSyncConnectorHelper.getScmConnector(accountId, orgIdentifier, projectIdentifier, connectorIdentifierRef);
-    return processScmRequestUsingConnector(scmRequest, scmConnector);
+    return processScmRequestUsingConnectorSettings(scmRequest, scmConnector);
   }
 
   @Override
-  public <R> R processScmRequestUsingConnector(
+  public <R> R processScmRequestUsingConnectorSettings(
       Function<ScmClientFacilitatorService, R> scmRequest, ScmConnector scmConnector) {
     if (scmConnector instanceof ManagerExecutable) {
       final Boolean executeOnDelegate = ((ManagerExecutable) scmConnector).getExecuteOnDelegate();

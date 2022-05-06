@@ -61,4 +61,6 @@ public class YAMLFieldNameConstants {
   public final String DELEGATE_SELECTORS = "delegateSelectors";
 
   public final String CONFIGURATION = "configuration";
+  public final String TEMPLATE = "template";
+  public final String TEMPLATE_INPUTS = "templateInputs";
 }

@@ -102,22 +102,6 @@ public class ServiceNowResource {
   }
 
   @GET
-  @Path("applicationStatus")
-  @ApiOperation(value = "Check if harness application is added to ServiceNow instance",
-      nickname = "getServiceNowApplicationStatus")
-  public ResponseDTO<Boolean>
-  getApplicationStatus(@NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
-      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
-      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
-    IdentifierRef connectorRef =
-        IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
-    // mock response to disable template section
-    return ResponseDTO.newResponse(false);
-  }
-
-  @GET
   @Path("getTemplate")
   @ApiOperation(value = "Get ServiceNow template metadata", nickname = "getServiceNowTemplateMetadata")
   public ResponseDTO<List<ServiceNowTemplate>> getTemplateMetadata(

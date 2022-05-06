@@ -26,7 +26,9 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidRequestException;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.security.encryption.EncryptedDataDetail;
 
@@ -70,6 +72,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 @Singleton
 @NoArgsConstructor
@@ -274,17 +277,11 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     String errorMsg;
     Stack stack = null;
     while (System.currentTimeMillis() < endTime) {
-      DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(result.getStackId());
-      List<Stack> stacks = awsHelperService.getAllStacks(createRequest.getRegion(), describeStacksRequest,
-          AwsConfigToInternalMapper.toAwsInternalConfig(createRequest.getAwsConfig()));
-      if (stacks.size() < 1) {
-        String errorMessage = "# Error: received empty stack list from AWS";
-        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-        builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
+      stack = getStack(createRequest, builder, result.getStackId(), executionLogCallback);
+      if (stack == null) {
         return;
       }
 
-      stack = stacks.get(0);
       stackEventsTs = printStackEvents(createRequest, stackEventsTs, stack, executionLogCallback);
 
       switch (stack.getStackStatus()) {
@@ -372,71 +369,40 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
         getExistingStackInfo(request.getAwsConfig(), request.getRegion(), originalStack);
     executionLogCallback.saveExecutionLog(
         format("# Calling Aws API to Update stack: %s", originalStack.getStackName()));
+
     long stackEventsTs = System.currentTimeMillis();
 
-    UpdateStackResult updateStackResult = awsHelperService.updateStack(
-        request.getRegion(), updateStackRequest, AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
-    executionLogCallback.saveExecutionLog(
-        format("# Update Stack Request submitted for stack: %s. Now polling for status", originalStack.getStackName()));
+    boolean noStackUpdated;
 
-    boolean noStackUpdated = false;
-    if (updateStackResult == null || updateStackResult.getStackId() == null) {
-      noStackUpdated = true;
-      executionLogCallback.saveExecutionLog(
-          format("# Update Stack Request Failed. There is nothing to be updated in the stack with name: %s",
-              originalStack.getStackName()));
+    if (request.isDeploy()) {
+      noStackUpdated = deployStack(request, updateStackRequest, originalStack, executionLogCallback);
+    } else {
+      noStackUpdated = updateStack(request, updateStackRequest, originalStack, executionLogCallback);
     }
 
+    if (noStackUpdated) {
+      handleNoStackUpdate(request, builder, originalStack, executionLogCallback, existingStackInfo);
+    } else {
+      handleAndWaitForStackUpdate(
+          request, builder, originalStack, executionLogCallback, existingStackInfo, stackEventsTs);
+    }
+  }
+
+  private boolean deployStack(CloudFormationCreateStackRequest request, UpdateStackRequest updateStackRequest,
+      Stack originalStack, LogCallback executionLogCallback) {
+    throw new InvalidRequestException("Not yet implemented!");
+  }
+
+  private void handleAndWaitForStackUpdate(CloudFormationCreateStackRequest request,
+      CloudFormationCommandExecutionResponseBuilder builder, Stack originalStack,
+      ExecutionLogCallback executionLogCallback, ExistingStackInfo existingStackInfo, long stackEventsTs) {
     int timeOutMs = remainingTimeoutMs;
     long endTime = System.currentTimeMillis() + timeOutMs;
-    Stack stack = null;
-    while (System.currentTimeMillis() < endTime) {
-      DescribeStacksRequest describeStacksRequest =
-          new DescribeStacksRequest().withStackName(originalStack.getStackId());
-      List<Stack> stacks = awsHelperService.getAllStacks(request.getRegion(), describeStacksRequest,
-          AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
-      if (stacks.size() < 1) {
-        String errorMessage = "# Error: received empty stack list from AWS";
-        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-        builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-        return;
-      }
-      stack = stacks.get(0);
 
-      if (noStackUpdated) {
-        switch (stack.getStackStatus()) {
-          case "CREATE_COMPLETE":
-          case "UPDATE_COMPLETE": {
-            executionLogCallback.saveExecutionLog(format("# Stack is already in %s state.", stack.getStackStatus()));
-            populateInfraMappingPropertiesFromStack(builder, stack, existingStackInfo, executionLogCallback, request);
-            CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
-                getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
-            builder.commandResponse(cloudFormationCreateStackResponse);
-            printStackResources(request, stack, executionLogCallback);
-            return;
-          }
-          case "UPDATE_ROLLBACK_COMPLETE": {
-            executionLogCallback.saveExecutionLog(format("# Stack is already in %s state.", stack.getStackStatus()));
-            CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
-                getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
-            builder.commandResponse(cloudFormationCreateStackResponse);
-            builder.commandExecutionStatus(SUCCESS);
-            printStackResources(request, stack, executionLogCallback);
-            return;
-          }
-          default: {
-            String errorMessage =
-                format("# Existing stack with name %s is already in status: %s, therefore exiting with failure",
-                    stack.getStackName(), stack.getStackStatus());
-            executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
-            builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-            CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
-                getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
-            builder.commandResponse(cloudFormationCreateStackResponse);
-            printStackResources(request, stack, executionLogCallback);
-            return;
-          }
-        }
+    while (System.currentTimeMillis() < endTime) {
+      Stack stack = getStack(request, builder, originalStack.getStackId(), executionLogCallback);
+      if (stack == null) {
+        return;
       }
 
       stackEventsTs = printStackEvents(request, stackEventsTs, stack, executionLogCallback);
@@ -510,11 +476,92 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     }
     String errorMessage = format("# Timing out while Updating stack: %s", originalStack.getStackName());
     executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+
+    Stack stack = getStack(request, builder, originalStack.getStackId(), executionLogCallback);
+    if (null == stack) {
+      return;
+    }
     CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
         getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
     builder.commandResponse(cloudFormationCreateStackResponse);
     builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
     printStackResources(request, stack, executionLogCallback);
+  }
+
+  private void handleNoStackUpdate(CloudFormationCreateStackRequest request,
+      CloudFormationCommandExecutionResponseBuilder builder, Stack originalStack,
+      ExecutionLogCallback executionLogCallback, ExistingStackInfo existingStackInfo) {
+    Stack stack = getStack(request, builder, originalStack.getStackId(), executionLogCallback);
+    if (stack == null) {
+      return;
+    }
+
+    switch (stack.getStackStatus()) {
+      case "CREATE_COMPLETE":
+      case "UPDATE_COMPLETE": {
+        executionLogCallback.saveExecutionLog(format("# Stack is already in %s state.", stack.getStackStatus()));
+        populateInfraMappingPropertiesFromStack(builder, stack, existingStackInfo, executionLogCallback, request);
+        CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
+            getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
+        builder.commandResponse(cloudFormationCreateStackResponse);
+        printStackResources(request, stack, executionLogCallback);
+        return;
+      }
+      case "UPDATE_ROLLBACK_COMPLETE": {
+        executionLogCallback.saveExecutionLog(format("# Stack is already in %s state.", stack.getStackStatus()));
+        CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
+            getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
+        builder.commandResponse(cloudFormationCreateStackResponse);
+        builder.commandExecutionStatus(SUCCESS);
+        printStackResources(request, stack, executionLogCallback);
+        return;
+      }
+
+      default: {
+        String errorMessage =
+            format("# Existing stack with name %s is already in status: %s, therefore exiting with failure",
+                stack.getStackName(), stack.getStackStatus());
+        executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+        builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
+        CloudFormationCreateStackResponse cloudFormationCreateStackResponse =
+            getCloudFormationCreateStackResponse(builder, stack, existingStackInfo, request);
+        builder.commandResponse(cloudFormationCreateStackResponse);
+        printStackResources(request, stack, executionLogCallback);
+      }
+    }
+  }
+
+  @Nullable
+  private Stack getStack(CloudFormationCreateStackRequest request,
+      CloudFormationCommandExecutionResponseBuilder builder, String stackId,
+      ExecutionLogCallback executionLogCallback) {
+    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackId);
+    Optional<Stack> stackOptional = awsHelperService.getStack(request.getRegion(), describeStacksRequest,
+        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
+    if (!stackOptional.isPresent()) {
+      String errorMessage = "# Error: received empty stack list from AWS";
+      executionLogCallback.saveExecutionLog(errorMessage, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
+      return null;
+    }
+    return stackOptional.get();
+  }
+
+  private boolean updateStack(CloudFormationCreateStackRequest request, UpdateStackRequest updateStackRequest,
+      Stack originalStack, ExecutionLogCallback executionLogCallback) {
+    UpdateStackResult updateStackResult = awsHelperService.updateStack(
+        request.getRegion(), updateStackRequest, AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
+    executionLogCallback.saveExecutionLog(
+        format("# Update Stack Request submitted for stack: %s. Now polling for status", originalStack.getStackName()));
+
+    boolean noStackUpdated = false;
+    if (updateStackResult == null || updateStackResult.getStackId() == null) {
+      noStackUpdated = true;
+      executionLogCallback.saveExecutionLog(
+          format("# Update Stack Request Failed. There is nothing to be updated in the stack with name: %s",
+              originalStack.getStackName()));
+    }
+    return noStackUpdated;
   }
 
   private void populateInfraMappingPropertiesFromStack(CloudFormationCommandExecutionResponseBuilder builder,

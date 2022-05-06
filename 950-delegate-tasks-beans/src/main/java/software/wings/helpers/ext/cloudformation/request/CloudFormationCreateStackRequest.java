@@ -48,6 +48,7 @@ public class CloudFormationCreateStackRequest extends CloudFormationCommandReque
   private List<String> capabilities;
   private String tags;
   private List<StackStatus> stackStatusesToMarkAsSuccess;
+  private boolean deploy;
 
   @Builder
   public CloudFormationCreateStackRequest(CloudFormationCommandType commandType, String accountId, String appId,
@@ -56,7 +57,7 @@ public class CloudFormationCreateStackRequest extends CloudFormationCommandReque
       String customStackName, GitFileConfig gitFileConfig, GitConfig gitConfig,
       List<StackStatus> stackStatusesToMarkAsSuccess, List<EncryptedDataDetail> encryptedDataDetails,
       Map<String, EncryptedDataDetail> encryptedVariables, List<String> capabilities, String tags,
-      boolean skipWaitForResources) {
+      boolean skipWaitForResources, boolean deploy) {
     super(commandType, accountId, appId, activityId, commandName, awsConfig, timeoutInMs, region, cloudFormationRoleArn,
         skipWaitForResources);
     this.createType = createType;
@@ -71,6 +72,7 @@ public class CloudFormationCreateStackRequest extends CloudFormationCommandReque
     this.encryptedVariables = encryptedVariables;
     this.capabilities = capabilities;
     this.tags = tags;
+    this.deploy = deploy;
   }
 
   @Override

@@ -221,6 +221,19 @@ public class ServiceNowTaskNGHelperTest extends CategoryTest {
     JsonNode successResponse = JsonUtils.asTree(Collections.singletonMap("result", responseMap));
     Response<JsonNode> jsonNodeResponse = Response.success(successResponse);
     when(mockCall.execute()).thenReturn(jsonNodeResponse);
+
+    Call mockFetchIssueCall = Mockito.mock(Call.class);
+    when(serviceNowRestClient.getIssue(anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(mockFetchIssueCall);
+    Map<String, Map<String, String>> getIssueResponseMap =
+        ImmutableMap.of("parent", ImmutableMap.of("value", "", "display_value", ""), "description",
+            ImmutableMap.of("value", "BEvalue2", "display_value", "UIvalue2"), "number",
+            ImmutableMap.of("value", "INC00001", "display_value", "INC00001"));
+
+    JsonNode fetchIssueResponse =
+        JsonUtils.asTree(Collections.singletonMap("result", Collections.singletonList(getIssueResponseMap)));
+    Response<JsonNode> jsonNodeFetchIssueResponse = Response.success(fetchIssueResponse);
+    when(mockFetchIssueCall.execute()).thenReturn(jsonNodeFetchIssueResponse);
     PowerMockito.whenNew(Retrofit.class).withAnyArguments().thenReturn(retrofit);
     PowerMockito.when(retrofit.create(ServiceNowRestClient.class)).thenReturn(serviceNowRestClient);
 
@@ -240,6 +253,7 @@ public class ServiceNowTaskNGHelperTest extends CategoryTest {
     assertThat(response.getTicket().getNumber()).isEqualTo(TICKET_NUMBER);
     assertThat(response.getTicket().getUrl())
         .isEqualTo("https://harness.service-now.com/nav_to.do?uri=/incident.do?sysparm_query=number=INC00001");
+    assertThat(response.getTicket().getFields()).hasSize(2);
     verify(secretDecryptionService).decrypt(any(), any());
     verify(serviceNowRestClient).createUsingTemplate(anyString(), eq("incident"), eq(TEMPLATE_NAME));
   }
@@ -305,6 +319,20 @@ public class ServiceNowTaskNGHelperTest extends CategoryTest {
     JsonNode successResponse = JsonUtils.asTree(Collections.singletonMap("result", responseMap));
     Response<JsonNode> jsonNodeResponse = Response.success(successResponse);
     when(mockCall.execute()).thenReturn(jsonNodeResponse);
+
+    Call mockFetchIssueCall = Mockito.mock(Call.class);
+    when(serviceNowRestClient.getIssue(anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(mockFetchIssueCall);
+    Map<String, Map<String, String>> getIssueResponseMap =
+        ImmutableMap.of("parent", ImmutableMap.of("value", "", "display_value", ""), "description",
+            ImmutableMap.of("value", "BEvalue2", "display_value", "UIvalue2"), "number",
+            ImmutableMap.of("value", "INC00001", "display_value", "INC00001"));
+
+    JsonNode fetchIssueResponse =
+        JsonUtils.asTree(Collections.singletonMap("result", Collections.singletonList(getIssueResponseMap)));
+    Response<JsonNode> jsonNodeFetchIssueResponse = Response.success(fetchIssueResponse);
+    when(mockFetchIssueCall.execute()).thenReturn(jsonNodeFetchIssueResponse);
+
     PowerMockito.whenNew(Retrofit.class).withAnyArguments().thenReturn(retrofit);
     PowerMockito.when(retrofit.create(ServiceNowRestClient.class)).thenReturn(serviceNowRestClient);
 
@@ -325,6 +353,7 @@ public class ServiceNowTaskNGHelperTest extends CategoryTest {
     assertThat(response.getTicket().getNumber()).isEqualTo(TICKET_NUMBER);
     assertThat(response.getTicket().getUrl())
         .isEqualTo("https://harness.service-now.com/nav_to.do?uri=/incident.do?sysparm_query=number=INC00001");
+    assertThat(response.getTicket().getFields()).hasSize(2);
     verify(secretDecryptionService).decrypt(any(), any());
     verify(serviceNowRestClient).updateUsingTemplate(anyString(), eq("incident"), eq(TEMPLATE_NAME), eq(TICKET_NUMBER));
   }

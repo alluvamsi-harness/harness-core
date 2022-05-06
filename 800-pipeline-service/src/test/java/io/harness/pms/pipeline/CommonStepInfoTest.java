@@ -14,7 +14,6 @@ import static junit.framework.TestCase.assertTrue;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
 import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.pms.contracts.steps.StepInfo;
@@ -97,7 +96,6 @@ public class CommonStepInfoTest extends CategoryTest {
                                .addFolderPaths("Approval")
                                .build())
           .setFeatureRestrictionName(FeatureRestrictionName.INTEGRATED_APPROVALS_WITH_SERVICE_NOW.name())
-          .setFeatureFlag(FeatureName.SERVICENOW_NG_INTEGRATION.name())
           .build();
 
   @Before
@@ -124,5 +122,6 @@ public class CommonStepInfoTest extends CategoryTest {
     assertTrue(stepInfos.contains(jiraUpdateStepInfo));
     assertTrue(stepInfos.contains(barrierStepInfo));
     assertTrue(stepInfos.contains(shellScriptStepInfo));
+    assertTrue(stepInfos.contains(serviceNowApprovalStepInfo));
   }
 }

@@ -28,7 +28,8 @@ public interface ScmOrchestratorService {
   <R> R processScmRequestUsingConnectorSettings(Function<ScmClientFacilitatorService, R> scmRequest,
       String projectIdentifier, String orgIdentifier, String accountId, String connectorIdentifierRef);
 
-  <R> R processScmRequestUsingConnector(Function<ScmClientFacilitatorService, R> scmRequest, ScmConnector scmConnector);
+  <R> R processScmRequestUsingConnectorSettings(
+      Function<ScmClientFacilitatorService, R> scmRequest, ScmConnector scmConnector);
 
   boolean isExecuteOnDelegate(String projectIdentifier, String orgIdentifier, String accountId);
 }

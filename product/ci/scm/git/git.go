@@ -372,7 +372,7 @@ func ListBranchesWithDefault(ctx context.Context, request *pb.ListBranchesWithDe
 		branches = append(branches, v.Name)
 	}
 
-	if len(branches) == 0 && int(request.GetPagination().GetPage()) == 0 {
+	if len(branches) == 0 && int(request.GetPagination().GetPage()) == 1 {
 		out := &pb.ListBranchesWithDefaultResponse{
 			Branches: branches,
 			Pagination: &pb.PageResponse{

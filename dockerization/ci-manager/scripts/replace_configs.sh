@@ -188,6 +188,10 @@ if [[ "" != "$TI_SERVICE_ENDPOINT" ]]; then
   yq write -i $CONFIG_FILE tiServiceConfig.baseUrl "$TI_SERVICE_ENDPOINT"
 fi
 
+if [[ "" != "$STO_SERVICE_ENDPOINT" ]]; then
+  yq write -i $CONFIG_FILE stoServiceConfig.baseUrl "$STO_SERVICE_ENDPOINT"
+fi
+
 if [[ "" != "$API_URL" ]]; then
   yq write -i $CONFIG_FILE apiUrl "$API_URL"
 fi
@@ -214,6 +218,10 @@ fi
 
 if [[ "" != "$TI_SERVICE_GLOBAL_TOKEN" ]]; then
   yq write -i $CONFIG_FILE tiServiceConfig.globalToken "$TI_SERVICE_GLOBAL_TOKEN"
+fi
+
+if [[ "" != "$STO_SERVICE_GLOBAL_TOKEN" ]]; then
+  yq write -i $CONFIG_FILE stoServiceConfig.globalToken "$STO_SERVICE_GLOBAL_TOKEN"
 fi
 
 if [[ "" != "$NEXT_GEN_MANAGER_SECRET" ]]; then

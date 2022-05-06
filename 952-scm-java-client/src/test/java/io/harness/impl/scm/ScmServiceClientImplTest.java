@@ -13,6 +13,7 @@ import static io.harness.constants.Constants.SCM_INTERNAL_SERVER_ERROR_CODE;
 import static io.harness.constants.Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE;
 import static io.harness.delegate.beans.connector.ConnectorType.BITBUCKET;
 import static io.harness.delegate.beans.connector.ConnectorType.GITHUB;
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.DEEPAK;
 import static io.harness.rule.OwnerRule.MEET;
 
@@ -32,7 +33,11 @@ import io.harness.beans.PageRequestDTO;
 import io.harness.beans.gitsync.GitFileDetails;
 import io.harness.beans.gitsync.GitWebhookDetails;
 import io.harness.category.element.UnitTests;
+import io.harness.connector.ConnectorInfoDTO;
+import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.exception.UnexpectedException;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
@@ -41,9 +46,11 @@ import io.harness.product.ci.scm.proto.CreateWebhookRequest;
 import io.harness.product.ci.scm.proto.CreateWebhookResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultRequest;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.Provider;
+import io.harness.product.ci.scm.proto.Repository;
 import io.harness.product.ci.scm.proto.SCMGrpc;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.rule.Owner;
@@ -89,8 +96,17 @@ public class ScmServiceClientImplTest extends CategoryTest {
   String userName = "userName";
   String target = "target";
 
+  String repoUrl = "https://github.com/harness/platform";
+
   @Before
   public void setup() {
+    GithubConnectorDTO githubConnector = GithubConnectorDTO.builder()
+                                             .apiAccess(GithubApiAccessDTO.builder().build())
+                                             .url(repoUrl)
+                                             .connectionType(GitConnectionType.REPO)
+                                             .build();
+    ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
+    scmConnector = (ScmConnector) connectorInfo.getConnectorConfig();
     MockitoAnnotations.initMocks(this);
   }
 
@@ -234,6 +250,19 @@ public class ScmServiceClientImplTest extends CategoryTest {
     when(scmBlockingStub.createWebhook(any())).thenReturn(CreateWebhookResponse.newBuilder().setStatus(300).build());
     assertThatThrownBy(() -> scmService.createWebhook(scmConnector, getGitWebhookDetails(), scmBlockingStub))
         .isInstanceOf(UnexpectedException.class);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testGetRepoDetails() {
+    when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
+    when(scmGitProviderMapper.mapToSCMGitProvider(any())).thenReturn(getGitProviderDefault());
+    when(scmBlockingStub.getUserRepo(any()))
+        .thenReturn(
+            GetUserRepoResponse.newBuilder().setRepo(Repository.newBuilder().setBranch(branch).build()).build());
+    GetUserRepoResponse getUserRepoResponse = scmServiceClient.getRepoDetails(scmConnector, scmBlockingStub);
+    assertThat(getUserRepoResponse.getRepo().getBranch()).isEqualTo(branch);
   }
 
   private GitFileDetails getGitFileDetailsDefault() {
