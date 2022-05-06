@@ -42,13 +42,11 @@ import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.GithubStore;
-import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
 import io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig;
 import io.harness.cdng.manifest.yaml.K8sManifestOutcome;
 import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
 import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
-import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
@@ -70,7 +68,6 @@ import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig;
 import io.harness.encryption.SecretRefData;
-import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.logging.UnitProgress;
@@ -740,11 +737,14 @@ public class CDStepHelperTest extends CategoryTest {
             .paths((ParameterField.createValueField(asList(folderPath.getValue() + "path1.yaml"))))
             .build();
     String folderPathValue = (String) folderPath.getValue();
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.K8Manifest).equals(folderPathValue));
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.HelmChart).equals(folderPathValue));
-    assertThat(
-        CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.OpenshiftTemplate).equals(folderPathValue));
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.Kustomize).equals(folderPathValue));
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.K8Manifest))
+        .isEqualTo(folderPathValue);
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.HelmChart))
+        .isEqualTo(folderPathValue);
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.OpenshiftTemplate))
+        .isEqualTo(folderPathValue);
+    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.Kustomize))
+        .isEqualTo(folderPathValue);
     assertThatThrownBy(() -> CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.VALUES))
         .isInstanceOf(UnsupportedOperationException.class);
   }
@@ -758,14 +758,14 @@ public class CDStepHelperTest extends CategoryTest {
     for (String path : paths) {
       filePathValues.add(folderPathValue + path);
     }
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.K8Manifest, paths, folderPathValue)
-                   .equals(filePathValues));
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.HelmChart, paths, folderPathValue)
-                   .equals(filePathValues));
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftTemplate, paths, folderPathValue)
-                   .equals(filePathValues));
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.Kustomize, paths, folderPathValue)
-                   .equals(filePathValues));
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.K8Manifest, paths, folderPathValue))
+        .isEqualTo(filePathValues);
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.HelmChart, paths, folderPathValue))
+        .isEqualTo(filePathValues);
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftTemplate, paths, folderPathValue))
+        .isEqualTo(filePathValues);
+    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.Kustomize, paths, folderPathValue))
+        .isEqualTo(filePathValues);
     assertThatThrownBy(
         () -> CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftParam, paths, folderPathValue))
         .isInstanceOf(UnsupportedOperationException.class);
