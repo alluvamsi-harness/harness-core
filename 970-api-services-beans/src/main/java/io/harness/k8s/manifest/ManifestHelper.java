@@ -487,7 +487,8 @@ public class ManifestHelper {
     Stack<String> stack = new Stack<>();
     List<String> fileDirectories = Arrays.asList(filePath.split("/"));
     Integer level = 0;
-    for (int index = 0; index < fileDirectories.size(); index++) {
+    int index = 0;
+    while (index < fileDirectories.size()) {
       if (isBlank(fileDirectories.get(index))) {
         throw new WingsException("Invalid files path");
       }
@@ -507,6 +508,7 @@ public class ManifestHelper {
       }
       level = 0;
       stack.push(fileDirectories.get(index));
+      index++;
     }
     return String.join("/", stack);
   }

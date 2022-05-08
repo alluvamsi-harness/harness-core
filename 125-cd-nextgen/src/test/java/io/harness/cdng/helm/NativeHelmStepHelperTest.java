@@ -165,7 +165,6 @@ public class NativeHelmStepHelperTest extends CategoryTest {
   @Mock private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Mock private EngineExpressionService engineExpressionService;
   @Mock private SdkGraphVisualizationDataService sdkGraphVisualizationDataService;
-  @Mock private CDStepHelper cdStepHelper;
 
   // internally used fields -- don't remove
   @Mock private PipelineRbacHelper pipelineRbacHelper;
@@ -845,7 +844,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(HelmDeployStepParams.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
+    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload"));
     Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
     inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
     NativeHelmStepPassThroughData passThroughData =
@@ -890,7 +889,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(HelmDeployStepParams.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload", "values yaml payload"));
+    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload", "values yaml payload"));
     Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
     inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
     inheritFromManifestFileMapContent.put("helmOverride2", asList("values yaml payload"));
@@ -974,7 +973,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(HelmDeployStepParams.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload", "values yaml payload"));
+    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload", "values yaml payload"));
     Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
     inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
     inheritFromManifestFileMapContent.put("helmOverride2", asList("values yaml payload"));

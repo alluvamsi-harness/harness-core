@@ -1062,7 +1062,7 @@ public class K8sStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(K8sRollingStepParameters.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList("values yaml payload"));
+    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload"));
     Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
     inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
     K8sStepPassThroughData passThroughData =

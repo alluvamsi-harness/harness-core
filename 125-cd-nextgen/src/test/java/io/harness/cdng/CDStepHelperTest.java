@@ -734,7 +734,7 @@ public class CDStepHelperTest extends CategoryTest {
     GitStoreConfig githubStore =
         GithubStore.builder()
             .folderPath(folderPath)
-            .paths((ParameterField.createValueField(asList(folderPath.getValue() + "path1.yaml"))))
+            .paths(ParameterField.createValueField(asList(folderPath.getValue() + "path1.yaml")))
             .build();
     String folderPathValue = (String) folderPath.getValue();
     assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.K8Manifest))
