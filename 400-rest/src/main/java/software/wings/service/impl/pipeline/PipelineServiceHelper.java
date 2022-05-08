@@ -87,6 +87,9 @@ public class PipelineServiceHelper {
   }
 
   public static void updatePipelineWithLoopedState(Pipeline pipeline) {
+    if (pipeline.getInfraDefinitionIds() == null) {
+      pipeline.setInfraDefinitionIds(new ArrayList<>());
+    }
     for (PipelineStage pipelineStage : pipeline.getPipelineStages()) {
       if (pipelineStage.isLooped()) {
         PipelineStageElement pse = pipelineStage.getPipelineStageElements().get(0);
@@ -118,6 +121,7 @@ public class PipelineServiceHelper {
           pse.setType(ENV_LOOP_STATE.getType());
           pse.getProperties().put("loopedValues", loopedValues);
           pse.getProperties().put("loopedVarName", varLooped);
+          pipeline.getInfraDefinitionIds().addAll(loopedValues);
         }
       }
     }
