@@ -16,7 +16,6 @@ import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.StepCategory;
 import io.harness.pms.pipeline.StepPalleteFilterWrapper;
-import io.harness.pms.variables.VariableMergeServiceResponse;
 
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -60,10 +59,6 @@ public interface PMSPipelineService {
   StepCategory getSteps(String module, String category, String accountId);
 
   StepCategory getStepsV2(String accountId, StepPalleteFilterWrapper stepPalleteFilterWrapper);
-
-  VariableMergeServiceResponse createVariablesResponse(String yaml, boolean newVersion);
-
-  VariableMergeServiceResponse createVariablesResponseV2(String accountId, String orgId, String projectId, String yaml);
 
   boolean deleteAllPipelinesInAProject(String accountId, String orgId, String projectId);
 

@@ -21,6 +21,7 @@ import io.harness.delegate.DelegateServiceResourceClientModule;
 import io.harness.envgroup.EnvironmentGroupResourceClientModule;
 import io.harness.envgroup.remote.EnvironmentGroupResourceClient;
 import io.harness.environment.EnvironmentResourceClientModule;
+import io.harness.filestore.FileStoreClientModule;
 import io.harness.gitops.GitopsResourceClientModule;
 import io.harness.gitops.remote.GitopsResourceClient;
 import io.harness.migration.NGMigrationSdkModule;
@@ -154,5 +155,6 @@ public class ResourceGroupModule extends AbstractModule {
     install(new GitopsResourceClientModule(
         ServiceHttpClientConfig.builder().baseUrl(resourceClients.getGitopsService().getBaseUrl()).build(),
         resourceClients.getGitopsService().getSecret(), RESOUCE_GROUP_SERVICE.toString()));
+    install(new FileStoreClientModule(ngManagerHttpClientConfig, ngManagerSecret, RESOUCE_GROUP_SERVICE.toString()));
   }
 }

@@ -627,9 +627,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public ListBranchesWithDefaultResponse listBranches(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, String connectorRef, String repoName, PageRequestDTO pageRequest) {
-    final ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
-        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
+      String projectIdentifier, ScmConnector scmConnector, PageRequestDTO pageRequest) {
     final List<EncryptedDataDetail> encryptionDetails =
         getEncryptedDataDetails(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector);
     final ScmGitRefTaskParams scmGitRefTaskParams = ScmGitRefTaskParams.builder()

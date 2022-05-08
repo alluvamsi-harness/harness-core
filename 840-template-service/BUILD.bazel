@@ -6,7 +6,6 @@ shared_dependencies = [
     "@maven//:com_google_guava_guava",
     "@maven//:io_netty_netty_all",
 ] + [
-    "//889-yaml-commons:module",
     "//890-sm-core:module",
     "//900-git-sync-sdk:module",
     "//930-ng-core-clients:module",
@@ -15,6 +14,7 @@ shared_dependencies = [
     "//clients/audit:module",
     "//950-ng-core:module",
     "//953-events-api:module",
+    "//953-yaml-commons:module",
     "//955-filters-sdk:module",
     "//955-outbox-sdk:module",
     "//958-migration-sdk:module",

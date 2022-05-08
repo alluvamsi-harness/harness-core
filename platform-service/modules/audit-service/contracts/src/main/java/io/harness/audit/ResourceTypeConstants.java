@@ -41,5 +41,6 @@ public class ResourceTypeConstants {
   public static final String DELEGATE_TOKEN = "DELEGATE_TOKEN";
   public static final String GOVERNANCE_POLICY = "GOVERNANCE_POLICY";
   public static final String GOVERNANCE_POLICY_SET = "GOVERNANCE_POLICY_SET";
+  public static final String FILE = "FILE";
   public static final String VARIABLE = "VARIABLE";
 }

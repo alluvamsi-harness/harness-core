@@ -45,6 +45,7 @@ import software.wings.WingsBaseTest;
 import software.wings.api.HostElement;
 import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.Application;
+import software.wings.beans.LogCollectionInfo;
 import software.wings.beans.SettingAttribute;
 import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
@@ -55,7 +56,6 @@ import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
-import software.wings.sm.states.CustomLogVerificationState.LogCollectionInfo;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
 import com.fasterxml.jackson.core.type.TypeReference;

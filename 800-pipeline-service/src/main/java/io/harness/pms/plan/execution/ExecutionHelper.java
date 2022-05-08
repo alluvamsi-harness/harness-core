@@ -159,6 +159,12 @@ public class ExecutionHelper {
                                                     .allowStagesExecution(pipelineEntity.shouldAllowStageExecutions())
                                                     .build();
       if (EmptyPredicate.isNotEmpty(stagesToRun)) {
+        BasicPipeline basicPipeline = YamlUtils.read(pipelineYaml, BasicPipeline.class);
+        if (!basicPipeline.isAllowStageExecutions()) {
+          throw new InvalidRequestException(
+              String.format("Stage executions are not allowed for pipeline [%s]", basicPipeline.getIdentifier()));
+        }
+
         StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(pipelineYaml, stagesToRun);
         pipelineYaml = StagesExpressionExtractor.replaceExpressions(pipelineYaml, expressionValues);
         stagesExecutionInfo = StagesExecutionHelper.getStagesExecutionInfo(pipelineYaml, stagesToRun, expressionValues);

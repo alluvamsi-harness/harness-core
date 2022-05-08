@@ -63,6 +63,7 @@ BAZEL_MODULES="\
   //300-cv-nextgen:module \
   //310-ci-manager:module \
   //320-ci-execution:module \
+  //323-sto-execution:module \
   //325-sto-beans:module \
   //330-ci-beans:module \
   //340-ce-nextgen:module \
@@ -109,8 +110,6 @@ BAZEL_MODULES="\
   //879-pms-sdk:module \
   //882-pms-sdk-core:module \
   //884-pms-commons:module \
-  //889-yaml-commons:module \
-  //890-pms-contracts:module \
   //890-sm-core:module \
   //900-git-sync-sdk:module \
   //910-delegate-service-driver:module \
@@ -154,14 +153,15 @@ BAZEL_MODULES="\
   //950-ng-signup-beans:module \
   //950-telemetry:module \
   //950-wait-engine:module \
-  //950-walktree-visitor:module \
   //952-remote-observers:module \
   //952-scm-java-client:module \
   //953-events-api/src/main/proto:all \
   //953-events-api:module \
   //953-git-sync-commons/src/main/proto:all \
   //953-git-sync-commons:module \
+  //953-yaml-commons:module \
   //954-connector-beans:module \
+  //954-pms-contracts:module \
   //955-cg-yaml:module \
   //955-delegate-beans/src/main/proto:all \
   //955-delegate-beans:module \
@@ -184,6 +184,7 @@ BAZEL_MODULES="\
   //960-persistence:module \
   //960-persistence:supporter-test \
   //960-yaml-sdk:module \
+  //967-walktree-visitor:module \
   //970-api-services-beans:module \
   //970-grpc:module \
   //970-ng-commons:module \
@@ -321,8 +322,6 @@ build_bazel_module 878-ng-common-utilities
 build_bazel_module 879-pms-sdk
 build_bazel_module 882-pms-sdk-core
 build_bazel_module 884-pms-commons
-build_bazel_module 889-yaml-commons
-build_bazel_module 890-pms-contracts
 build_bazel_module 890-sm-core
 build_bazel_module 900-git-sync-sdk
 build_bazel_module 910-delegate-service-driver
@@ -343,13 +342,14 @@ build_bazel_module 950-log-client
 build_bazel_module 950-ng-core
 build_bazel_module 950-ng-project-n-orgs
 build_bazel_module 950-wait-engine
-build_bazel_module 950-walktree-visitor
 build_bazel_module 951-cg-git-sync
 build_bazel_module 952-remote-observers
 build_bazel_module 952-scm-java-client
 build_bazel_module 953-events-api
 build_bazel_module 953-git-sync-commons
+build_bazel_module 953-yaml-commons
 build_bazel_module 954-connector-beans
+build_bazel_module 954-pms-contracts
 build_bazel_module 955-cg-yaml
 build_bazel_module 955-delegate-beans
 build_bazel_module 955-filters-sdk
@@ -367,6 +367,7 @@ build_bazel_module 960-expression-service
 build_bazel_module 960-ng-core-beans
 build_bazel_module 960-persistence
 build_bazel_module 960-yaml-sdk
+build_bazel_module 967-walktree-visitor
 build_bazel_module 970-api-services-beans
 build_bazel_module 970-grpc
 build_bazel_module 970-ng-commons

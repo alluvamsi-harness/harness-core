@@ -35,6 +35,7 @@ import io.harness.tasks.ResponseData;
 
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
@@ -99,7 +100,7 @@ public class AsyncStrategy extends ProgressableStrategy {
         AsyncSdkSingleCallback singleCallback = AsyncSdkSingleCallback.builder()
                                                     .ambianceBytes(ambianceBytes)
                                                     .stepParameters(parameterBytes)
-                                                    .allCallbackIds(response.getCallbackIdsList())
+                                                    .allCallbackIds(new ArrayList<>(response.getCallbackIdsList()))
                                                     .build();
         asyncWaitEngine.waitForAllOn(singleCallback, null, callbackId);
       }

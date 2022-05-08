@@ -27,9 +27,9 @@ public class SLONotificationRuleCondition extends NotificationRuleCondition {
   @NonNull SLONotificationRuleConditionSpec spec;
 
   public enum SLONotificationRuleConditionType {
-    @JsonProperty("errorBudgetRemainingPercentage") ERROR_BUDGET_REMAINING_PERCENTAGE,
-    @JsonProperty("errorBudgetRemainingMinutes") ERROR_BUDGET_REMAINING_MINUTES,
-    @JsonProperty("errorBudgetBurnRate") ERROR_BUDGET_BURN_RATE;
+    @JsonProperty("ErrorBudgetRemainingPercentage") ERROR_BUDGET_REMAINING_PERCENTAGE,
+    @JsonProperty("ErrorBudgetRemainingMinutes") ERROR_BUDGET_REMAINING_MINUTES,
+    @JsonProperty("ErrorBudgetBurnRate") ERROR_BUDGET_BURN_RATE;
   }
 
   @Data

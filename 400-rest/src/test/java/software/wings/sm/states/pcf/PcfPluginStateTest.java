@@ -99,7 +99,7 @@ import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.Service;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.beans.WorkflowExecution;
@@ -224,13 +224,21 @@ public class PcfPluginStateTest extends WingsBaseTest {
   private StateExecutionInstance stateExecutionInstance =
       pcfStateTestHelper.getStateExecutionInstanceForPluginState(workflowStandardParams, phaseElement, serviceElement);
 
-  private List<ServiceVariable> serviceVariableList =
-      asList(ServiceVariable.builder().type(Type.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
-          ServiceVariable.builder().type(Type.ENCRYPTED_TEXT).name("VAR_2").value("value2".toCharArray()).build());
+  private List<ServiceVariable> serviceVariableList = asList(
+      ServiceVariable.builder().type(ServiceVariableType.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
+      ServiceVariable.builder()
+          .type(ServiceVariableType.ENCRYPTED_TEXT)
+          .name("VAR_2")
+          .value("value2".toCharArray())
+          .build());
 
-  private List<ServiceVariable> safeDisplayServiceVariableList =
-      asList(ServiceVariable.builder().type(Type.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
-          ServiceVariable.builder().type(Type.ENCRYPTED_TEXT).name("VAR_2").value("*******".toCharArray()).build());
+  private List<ServiceVariable> safeDisplayServiceVariableList = asList(
+      ServiceVariable.builder().type(ServiceVariableType.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
+      ServiceVariable.builder()
+          .type(ServiceVariableType.ENCRYPTED_TEXT)
+          .name("VAR_2")
+          .value("*******".toCharArray())
+          .build());
 
   private Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
 

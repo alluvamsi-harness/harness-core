@@ -857,15 +857,15 @@ public class CommandState extends State {
           throw new InvalidRequestException(
               format("ArtifactStreamAttributes not found for artifact: %s", artifactVariableName));
         }
-        if (isNotEmpty(artifact.getArtifactFiles())) {
-          String name = artifact.getArtifactFiles().get(0).getName();
-          if (isNotEmpty(name)) {
-            artifactFileName = name;
-          }
-        } else if (artifactStreamAttributes.getMetadata() != null) {
+        if (artifactStreamAttributes.getMetadata() != null) {
           String value = artifactStreamAttributes.getMetadata().get(ArtifactMetadataKeys.artifactFileName);
           if (isNotEmpty(value)) {
             artifactFileName = value;
+          }
+        } else if (isNotEmpty(artifact.getArtifactFiles())) {
+          String name = artifact.getArtifactFiles().get(0).getName();
+          if (isNotEmpty(name)) {
+            artifactFileName = name;
           }
         }
       }

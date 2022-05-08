@@ -46,6 +46,7 @@ import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.StepUtils;
+import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 import io.harness.util.CIVmSecretEvaluator;
 import io.harness.yaml.utils.NGVariablesUtils;
@@ -72,6 +73,7 @@ public class VmInitializeTaskUtils {
   @Inject CILogServiceUtils logServiceUtils;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject TIServiceUtils tiServiceUtils;
+  @Inject STOServiceUtils stoServiceUtils;
   @Inject CodebaseUtils codebaseUtils;
   @Inject ConnectorUtils connectorUtils;
   @Inject CIVmSecretEvaluator ciVmSecretEvaluator;
@@ -147,6 +149,8 @@ public class VmInitializeTaskUtils {
         .logSvcIndirectUpload(featureFlagService.isEnabled(FeatureName.CI_INDIRECT_LOG_UPLOAD, accountID))
         .tiUrl(tiServiceUtils.getTiServiceConfig().getBaseUrl())
         .tiSvcToken(getTISvcToken(accountID))
+        .stoUrl(stoServiceUtils.getStoServiceConfig().getBaseUrl())
+        .stoSvcToken(getSTOSvcToken(accountID))
         .secrets(new ArrayList<>(secrets))
         .volToMountPath(vmBuildJobInfo.getVolToMountPath())
         .serviceDependencies(getServiceDependencies(ambiance, vmBuildJobInfo.getServiceDependencies()))
@@ -254,6 +258,18 @@ public class VmInitializeTaskUtils {
       return tiServiceUtils.getTIServiceToken(accountID);
     } catch (Exception e) {
       log.error("Could not call token endpoint for TI service", e);
+    }
+
+    return "";
+  }
+
+  private String getSTOSvcToken(String accountID) {
+    // Make a call to the STO service and get back the token. We do not need STO service token for all steps,
+    // so we can continue even if the service is down.
+    try {
+      return stoServiceUtils.getSTOServiceToken(accountID);
+    } catch (Exception e) {
+      log.error("Could not call token endpoint for STO service", e);
     }
 
     return "";

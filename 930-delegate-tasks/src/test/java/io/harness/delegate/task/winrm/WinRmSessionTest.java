@@ -30,12 +30,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.delegate.configuration.InstallUtils;
+import io.harness.delegate.clienttools.InstallUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
@@ -90,6 +91,8 @@ public class WinRmSessionTest extends CategoryTest {
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
+    mockStatic(InstallUtils.class);
+    PowerMockito.when(InstallUtils.getPath(any(), any())).thenReturn("/tmp/dummypath/tool");
   }
 
   @Test

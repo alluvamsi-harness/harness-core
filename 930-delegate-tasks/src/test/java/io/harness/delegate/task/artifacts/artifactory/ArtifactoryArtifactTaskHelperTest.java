@@ -50,9 +50,9 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   public void testGetArtifactCollectResponseGetLastSuccessfulBuild() {
     doNothing()
         .when(artifactoryArtifactTaskHandler)
-        .decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest.builder().build());
-    ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
-        ArtifactoryDockerArtifactDelegateRequest.builder()
+        .decryptRequestDTOs(ArtifactoryArtifactDelegateRequest.builder().build());
+    ArtifactoryArtifactDelegateRequest artifactoryArtifactDelegateRequest =
+        ArtifactoryArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
                 ArtifactoryConnectorDTO.builder().auth(ArtifactoryAuthenticationDTO.builder().build()).build())
             .build();
@@ -79,9 +79,9 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   public void testGetArtifactCollectResponseGetBuilds() {
     doNothing()
         .when(artifactoryArtifactTaskHandler)
-        .decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest.builder().build());
-    ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
-        ArtifactoryDockerArtifactDelegateRequest.builder()
+        .decryptRequestDTOs(ArtifactoryArtifactDelegateRequest.builder().build());
+    ArtifactoryArtifactDelegateRequest artifactoryArtifactDelegateRequest =
+        ArtifactoryArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
                 ArtifactoryConnectorDTO.builder().auth(ArtifactoryAuthenticationDTO.builder().build()).build())
             .build();
@@ -108,9 +108,9 @@ public class ArtifactoryArtifactTaskHelperTest extends CategoryTest {
   public void testGetArtifactCollectResponseValidateArtifactServers() {
     doNothing()
         .when(artifactoryArtifactTaskHandler)
-        .decryptRequestDTOs(ArtifactoryDockerArtifactDelegateRequest.builder().build());
-    ArtifactoryDockerArtifactDelegateRequest artifactoryArtifactDelegateRequest =
-        ArtifactoryDockerArtifactDelegateRequest.builder()
+        .decryptRequestDTOs(ArtifactoryArtifactDelegateRequest.builder().build());
+    ArtifactoryArtifactDelegateRequest artifactoryArtifactDelegateRequest =
+        ArtifactoryArtifactDelegateRequest.builder()
             .artifactoryConnectorDTO(
                 ArtifactoryConnectorDTO.builder().auth(ArtifactoryAuthenticationDTO.builder().build()).build())
             .build();

@@ -23,6 +23,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filter.service.FilterService;
+import io.harness.ng.core.common.beans.NGTag;
 import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.execution.TimeRange;
@@ -142,7 +143,7 @@ public class QuickFilterTest extends CategoryTest {
   @Test
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
-  public void testFormCriteriaTagsFilter() {
+  public void testFormCriteriaTimeRangeFilter() {
     // Testing the execution in Time Range.
     Criteria form = pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
         PipelineExecutionFilterPropertiesDTO.builder()
@@ -184,5 +185,21 @@ public class QuickFilterTest extends CategoryTest {
     // TimeRange Filter should not be present in Criteria.
     assertEquals(
         form.getCriteriaObject().get("$and").toString(), "[Document{{}}, Document{{}}, Document{{}}, Document{{}}]");
+  }
+
+  @Test
+  @Owner(developers = BRIJESH)
+  @Category(UnitTests.class)
+  public void testFormCriteriaTagsFilter() {
+    // Testing the execution list by tags
+    Criteria form = pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
+        PipelineExecutionFilterPropertiesDTO.builder()
+            .pipelineTags(Collections.singletonList(NGTag.builder().key("key1").value("val1").build()))
+            .build(),
+        null, null, null, false, false, null, true);
+
+    // Verify that tags are present in criteria.
+    assertEquals(form.getCriteriaObject().get("$and").toString(),
+        "[Document{{$and=[Document{{$or=[Document{{tags.key=Document{{$in=[key1, val1]}}}}, Document{{tags.value=Document{{$in=[key1, val1]}}}}]}}]}}, Document{{}}, Document{{}}, Document{{}}]");
   }
 }

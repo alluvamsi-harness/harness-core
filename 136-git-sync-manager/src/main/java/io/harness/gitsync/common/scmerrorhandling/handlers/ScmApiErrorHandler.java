@@ -14,5 +14,7 @@ import io.harness.exception.WingsException;
 
 @OwnedBy(PL)
 public interface ScmApiErrorHandler {
+  String GITHUB = "Github";
+  String BITBUCKET = "Bitbucket";
   void handleError(int statusCode, String errorMessage) throws WingsException;
 }

@@ -25,6 +25,7 @@ import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
 import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
+import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelObjectiveDTO;
@@ -345,7 +346,8 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
   @Owner(developers = KAPIL)
   @Category(UnitTests.class)
   public void testCreate_withNotificationRules() throws IOException {
-    NotificationRuleDTO notificationRuleDTO = builderFactory.getNotificationRuleDTOBuilder().build();
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
     List<NotificationRuleRefDTO> notificationRuleRefs =
         notificationRuleService.create(builderFactory.getProjectParams(), Arrays.asList(notificationRuleDTO));
 
@@ -366,7 +368,8 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
   @Owner(developers = KAPIL)
   @Category(UnitTests.class)
   public void testUpdateSLOData_withNotificationRules() throws IOException {
-    NotificationRuleDTO notificationRuleDTO = builderFactory.getNotificationRuleDTOBuilder().build();
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
     List<NotificationRuleRefDTO> notificationRuleRefs =
         notificationRuleService.create(builderFactory.getProjectParams(), Arrays.asList(notificationRuleDTO));
     String sloYaml = getYAML("slo/slo-with-notification-rule.yaml");

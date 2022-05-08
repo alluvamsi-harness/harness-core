@@ -138,7 +138,6 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.Application;
-import software.wings.beans.Base;
 import software.wings.beans.CanaryOrchestrationWorkflow;
 import software.wings.beans.ExecutionArgs;
 import software.wings.beans.GitConfig;
@@ -3710,7 +3709,7 @@ public class TriggerServiceTest extends WingsBaseTest {
                                    .stream()
                                    .flatMap(executionArgs -> executionArgs.getArtifacts().stream())
                                    .collect(Collectors.toList());
-    assertThat(artifacts.stream().map(Base::getUuid).collect(Collectors.toList()))
+    assertThat(artifacts.stream().map(Artifact::getUuid).collect(Collectors.toList()))
         .containsExactlyInAnyOrder(ARTIFACT_ID, ARTIFACT_ID + 2);
   }
 

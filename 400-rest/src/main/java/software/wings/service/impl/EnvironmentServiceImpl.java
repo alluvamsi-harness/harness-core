@@ -30,7 +30,7 @@ import static software.wings.beans.Service.ServiceKeys;
 import static software.wings.beans.ServiceTemplate.ServiceTemplateKeys;
 import static software.wings.beans.ServiceVariable.DEFAULT_TEMPLATE_ID;
 import static software.wings.beans.ServiceVariable.ServiceVariableKeys;
-import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
+import static software.wings.beans.ServiceVariableType.ENCRYPTED_TEXT;
 import static software.wings.beans.appmanifest.ManifestFile.VALUES_YAML_KEY;
 import static software.wings.beans.yaml.YamlConstants.CONN_STRINGS_FILE;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.MASKED;

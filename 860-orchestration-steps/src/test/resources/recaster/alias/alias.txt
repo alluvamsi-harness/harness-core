@@ -50,6 +50,7 @@ io.harness.steps.approval.step.harness.HarnessApprovalStepNode
 io.harness.plancreator.steps.barrier.BarrierStepNode
 io.harness.steps.shellscript.ShellScriptStepNode
 io.harness.steps.template.TemplateStepNode
+io.harness.steps.template.stage.TemplateStageNode
 io.harness.steps.approval.step.jira.JiraApprovalStepInfo
 io.harness.advisers.rollback.OnFailRollbackParameters
 io.harness.steps.shellscript.ShellScriptSourceWrapper

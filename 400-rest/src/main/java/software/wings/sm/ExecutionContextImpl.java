@@ -24,7 +24,7 @@ import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.CGConstants.GLOBAL_ENV_ID;
-import static software.wings.beans.ServiceVariable.Type.TEXT;
+import static software.wings.beans.ServiceVariableType.TEXT;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.MASKED;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.OBTAIN_VALUE;
 import static software.wings.sm.ContextElement.ARTIFACT;
@@ -104,7 +104,7 @@ import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.Variable;
 import software.wings.beans.appmanifest.HelmChart;
@@ -931,10 +931,10 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
       Map<String, Object> variables, boolean adoptDelegateDecryption, int expressionFunctorToken) {
     String variableName = renderExpression(serviceVariable.getName());
 
-    if (!variables.containsKey(variableName) && Type.ARTIFACT != serviceVariable.getType()) {
+    if (!variables.containsKey(variableName) && ServiceVariableType.ARTIFACT != serviceVariable.getType()) {
       if (serviceVariable.getType() == TEXT || encryptedFieldMode == MASKED) {
         variables.put(variableName, renderExpression(new String(serviceVariable.getValue())));
-      } else if (Type.ARTIFACT != serviceVariable.getType()) {
+      } else if (ServiceVariableType.ARTIFACT != serviceVariable.getType()) {
         if (isEmpty(serviceVariable.getAccountId())) {
           Application app = getApp();
           notNullCheck("app", app);
@@ -1224,7 +1224,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     Map<String, Object> variables = new HashMap<>();
     if (isNotEmpty(serviceVariables)) {
       serviceVariables.forEach(serviceVariable -> {
-        if (Type.ARTIFACT != serviceVariable.getType()) {
+        if (ServiceVariableType.ARTIFACT != serviceVariable.getType()) {
           String name = renderExpression(serviceVariable.getName());
           if (serviceVariable.isDecrypted()) {
             variables.put(name, SecretString.builder().value(new String(serviceVariable.getValue())).build());

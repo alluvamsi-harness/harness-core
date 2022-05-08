@@ -12,9 +12,9 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupWrapperConfig;
 import io.harness.morphia.MorphiaRegistrar;
-import io.harness.ng.core.dto.filestore.FileDtoYamlWrapper;
 import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
+import io.harness.ng.core.filestore.dto.FileStoreRequest;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.serializer.morphia.FeedbackMorphiaRegistrars;
 import io.harness.serializer.morphia.InvitesMorphiaRegistrar;
@@ -113,7 +113,7 @@ public class NextGenRegistrars {
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(true)
                    .availableAtAccountLevel(true)
-                   .clazz(FileDtoYamlWrapper.class)
+                   .clazz(FileStoreRequest.class)
                    .build())
           .build();
 

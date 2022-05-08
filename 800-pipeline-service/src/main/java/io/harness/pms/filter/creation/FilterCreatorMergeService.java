@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.helpers.GitContextHelper;
@@ -30,6 +31,7 @@ import io.harness.pms.filter.creation.FilterCreationResponseWrapper.FilterCreati
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineSetupUsageHelper;
+import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.plan.creation.PlanCreatorServiceInfo;
 import io.harness.pms.sdk.PmsSdkHelper;
 import io.harness.pms.utils.CompletableFutures;
@@ -59,16 +61,18 @@ public class FilterCreatorMergeService {
   private final PmsSdkHelper pmsSdkHelper;
   private final PipelineSetupUsageHelper pipelineSetupUsageHelper;
   private final PmsGitSyncHelper pmsGitSyncHelper;
+  private final PMSPipelineTemplateHelper pmsPipelineTemplateHelper;
 
   public static final int MAX_DEPTH = 10;
   private final Executor executor = Executors.newFixedThreadPool(5);
 
   @Inject
-  public FilterCreatorMergeService(
-      PmsSdkHelper pmsSdkHelper, PipelineSetupUsageHelper pipelineSetupUsageHelper, PmsGitSyncHelper pmsGitSyncHelper) {
+  public FilterCreatorMergeService(PmsSdkHelper pmsSdkHelper, PipelineSetupUsageHelper pipelineSetupUsageHelper,
+      PmsGitSyncHelper pmsGitSyncHelper, PMSPipelineTemplateHelper pmsPipelineTemplateHelper) {
     this.pmsSdkHelper = pmsSdkHelper;
     this.pipelineSetupUsageHelper = pipelineSetupUsageHelper;
     this.pmsGitSyncHelper = pmsGitSyncHelper;
+    this.pmsPipelineTemplateHelper = pmsPipelineTemplateHelper;
   }
 
   public FilterCreatorMergeServiceResponse getPipelineInfo(PipelineEntity pipelineEntity) throws IOException {
@@ -88,6 +92,10 @@ public class FilterCreatorMergeService {
     if (GitContextHelper.isFullSyncFlow()) {
       deleteExistingSetupUsages(pipelineEntity);
     }
+    List<EntityDetailProtoDTO> templateReferences =
+        pmsPipelineTemplateHelper.getTemplateReferencesForGivenYaml(pipelineEntity.getAccountId(),
+            pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getYaml());
+    response = response.toBuilder().addAllReferredEntities(templateReferences).build();
     pipelineSetupUsageHelper.publishSetupUsageEvent(pipelineEntity, response.getReferredEntitiesList());
     return FilterCreatorMergeServiceResponse.builder()
         .filters(filters)

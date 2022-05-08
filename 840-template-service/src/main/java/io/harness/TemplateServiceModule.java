@@ -15,6 +15,7 @@ import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
 import static io.harness.outbox.OutboxSDKConstants.DEFAULT_OUTBOX_POLL_CONFIGURATION;
 
+import io.harness.account.AccountClientModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.PrimaryVersionManagerModule;
 import io.harness.audit.client.remote.AuditClientModule;
@@ -143,6 +144,8 @@ public class TemplateServiceModule extends AbstractModule {
     install(AccessControlClientModule.getInstance(
         this.templateServiceConfiguration.getAccessControlClientConfiguration(), TEMPLATE_SERVICE.getServiceId()));
     install(new TemplateEventsFrameworkModule(this.templateServiceConfiguration.getEventsFrameworkConfiguration()));
+    install(new AccountClientModule(templateServiceConfiguration.getManagerClientConfig(),
+        templateServiceConfiguration.getManagerServiceSecret(), TEMPLATE_SERVICE.toString()));
 
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("taskPollExecutor"))

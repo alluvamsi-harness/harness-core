@@ -28,7 +28,8 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.configuration.InstallUtils;
+import io.harness.delegate.clienttools.ClientTool;
+import io.harness.delegate.clienttools.InstallUtils;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.k8s.model.HelmVersion;
@@ -133,13 +134,13 @@ public class HelmValuesFetchTask extends AbstractDelegateRunnableTask {
     }
     switch (helmVersion) {
       case V3:
-        helmPath = InstallUtils.getHelm3Path();
+        helmPath = InstallUtils.getPath(ClientTool.HELM, io.harness.delegate.clienttools.HelmVersion.V3);
         break;
       case V380:
-        helmPath = InstallUtils.getHelm380Path();
+        helmPath = InstallUtils.getPath(ClientTool.HELM, io.harness.delegate.clienttools.HelmVersion.V3_8);
         break;
       default:
-        helmPath = InstallUtils.getHelm2Path();
+        helmPath = InstallUtils.getPath(ClientTool.HELM, io.harness.delegate.clienttools.HelmVersion.V2);
     }
     logCallback.saveExecutionLog("Path of helm binary picked up: " + helmPath);
 

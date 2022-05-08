@@ -984,7 +984,7 @@ public class AccountServiceImpl implements AccountService {
       // Prefer using delegateConfiguration from DelegateRing.
       List<String> delegateVersionFromRing = delegateVersionService.getDelegateJarVersions(accountId);
       if (isNotEmpty(delegateVersionFromRing)) {
-        return DelegateConfiguration.builder().delegateVersions(delegateVersionFromRing).build();
+        return DelegateConfiguration.builder().delegateVersions(new ArrayList<>(delegateVersionFromRing)).build();
       }
       log.warn("Unable to get Delegate version from ring, falling back to regular flow");
     }

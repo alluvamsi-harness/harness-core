@@ -78,7 +78,7 @@ public class ConfigFile extends BaseFile implements EncryptableSetting {
                  .build())
         .add(CompoundMongoIndex.builder()
                  .name("app_template_entityId")
-                 .field(BaseKeys.appId)
+                 .field(BaseFileKeys.appId)
                  .field(ConfigFileKeys.templateId)
                  .field(ConfigFileKeys.entityId)
                  .build())

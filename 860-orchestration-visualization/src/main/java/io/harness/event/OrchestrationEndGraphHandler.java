@@ -57,9 +57,6 @@ public class OrchestrationEndGraphHandler implements AsyncInformObserver, Orches
             "[GRAPH_ERROR] Exception occurred while updating graph through logs. Regenerating the graph from nodeExecutions");
         graphGenerationService.buildOrchestrationGraph(ambiance.getPlanExecutionId());
       }
-      // We are not deleting logs pro-actively if exception occurred, they will be helpful in debugging.
-      orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
-
       // Todo: Check if this is required
       OrchestrationGraph orchestrationGraph =
           graphGenerationService.getCachedOrchestrationGraph(ambiance.getPlanExecutionId());

@@ -108,6 +108,10 @@ import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapBuilder;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapResolution;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
+import io.harness.cvng.notification.beans.MonitoredServiceHealthScoreConditionSpec;
+import io.harness.cvng.notification.beans.MonitoredServiceNotificationRuleCondition;
+import io.harness.cvng.notification.beans.MonitoredServiceNotificationRuleConditionType;
+import io.harness.cvng.notification.beans.NotificationRuleCondition;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
 import io.harness.cvng.notification.beans.NotificationRuleDTO.NotificationRuleDTOBuilder;
 import io.harness.cvng.notification.beans.NotificationRuleType;
@@ -1099,18 +1103,15 @@ public class BuilderFactory {
         .traceableType(TraceableType.VERIFICATION_TASK);
   }
 
-  public NotificationRuleDTOBuilder getNotificationRuleDTOBuilder() {
+  public NotificationRuleDTOBuilder getNotificationRuleDTOBuilder(NotificationRuleType type) {
     return NotificationRuleDTO.builder()
         .name("rule")
         .identifier("rule")
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
         .enabled(false)
-        .type(NotificationRuleType.SLO)
-        .conditions(Arrays.asList(SLONotificationRuleCondition.builder()
-                                      .conditionType(SLONotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
-                                      .spec(SLONotificationRuleConditionSpec.builder().threshold(10.0).build())
-                                      .build()))
+        .type(type)
+        .conditions(getNotificationRuleConditions(type))
         .notificationMethod(CVNGNotificationChannel.builder()
                                 .type(CVNGNotificationChannelType.EMAIL)
                                 .spec(CVNGEmailChannelSpec.builder()
@@ -1118,5 +1119,20 @@ public class BuilderFactory {
                                           .userGroups(Arrays.asList("testUserGroup"))
                                           .build())
                                 .build());
+  }
+
+  private List<NotificationRuleCondition> getNotificationRuleConditions(NotificationRuleType type) {
+    if (type.equals(NotificationRuleType.SLO)) {
+      return Arrays.asList(SLONotificationRuleCondition.builder()
+                               .conditionType(SLONotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
+                               .spec(SLONotificationRuleConditionSpec.builder().threshold(10.0).build())
+                               .build());
+    } else {
+      return Arrays.asList(
+          MonitoredServiceNotificationRuleCondition.builder()
+              .conditionType(MonitoredServiceNotificationRuleConditionType.HEALTH_SCORE)
+              .spec(MonitoredServiceHealthScoreConditionSpec.builder().threshold(20.0).period("10m").build())
+              .build());
+    }
   }
 }

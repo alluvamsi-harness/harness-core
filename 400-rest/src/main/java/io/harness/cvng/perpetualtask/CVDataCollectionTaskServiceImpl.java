@@ -265,6 +265,8 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
         return CVNGPerpetualTaskUnassignedReason.NO_ELIGIBLE_DELEGATES;
       case MULTIPLE_FAILED_PERPETUAL_TASK:
         return CVNGPerpetualTaskUnassignedReason.MULTIPLE_FAILED_PERPETUAL_TASK;
+      case VALIDATION_TASK_FAILED:
+        return CVNGPerpetualTaskUnassignedReason.VALIDATION_TASK_FAILED;
       default:
         throw new UnknownEnumTypeException("Task Unassigned Reason", String.valueOf(perpetualTaskUnassignedReason));
     }

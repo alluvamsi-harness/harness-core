@@ -22,8 +22,11 @@ import com.amazonaws.services.cloudformation.model.StackResource;
 import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
 import com.amazonaws.services.cloudformation.model.UpdateStackResult;
 import java.util.List;
+import java.util.Optional;
 
 public interface AWSCloudformationClient {
+  Optional<Stack> getStack(String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);
+
   List<Stack> getAllStacks(String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);
 
   void deleteStack(String region, DeleteStackRequest deleteStackRequest, AwsInternalConfig awsConfig);
@@ -37,6 +40,8 @@ public interface AWSCloudformationClient {
   CreateStackResult createStack(String region, CreateStackRequest createStackRequest, AwsInternalConfig awsConfig);
 
   UpdateStackResult updateStack(String region, UpdateStackRequest updateStackRequest, AwsInternalConfig awsConfig);
+
+  DeployStackResult deployStack(String region, DeployStackRequest deployStackRequest, AwsInternalConfig awsConfig);
 
   DescribeStacksResult describeStacks(
       String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);

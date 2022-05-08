@@ -86,7 +86,7 @@ import software.wings.beans.LogColor;
 import software.wings.beans.LogHelper;
 import software.wings.beans.LogWeight;
 import software.wings.beans.NameValuePair;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.beans.yaml.GitFetchFilesRequest;
@@ -730,14 +730,14 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
     List<NameValuePair> allVars = new ArrayList<>();
     if (isNotEmpty(variables)) {
       for (Entry<String, String> entry : variables.entrySet()) {
-        allVars.add(new NameValuePair(entry.getKey(), entry.getValue(), Type.TEXT.name()));
+        allVars.add(new NameValuePair(entry.getKey(), entry.getValue(), ServiceVariableType.TEXT.name()));
       }
     }
 
     if (isNotEmpty(encryptedVariables)) {
       for (Entry<String, EncryptedDataDetail> entry : encryptedVariables.entrySet()) {
         allVars.add(new NameValuePair(
-            entry.getKey(), entry.getValue().getEncryptedData().getUuid(), Type.ENCRYPTED_TEXT.name()));
+            entry.getKey(), entry.getValue().getEncryptedData().getUuid(), ServiceVariableType.ENCRYPTED_TEXT.name()));
       }
     }
     return allVars;

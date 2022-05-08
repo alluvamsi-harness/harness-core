@@ -82,6 +82,11 @@ public class TerraformApplyTaskHandler extends TerraformAbstractTaskHandler {
             format("%nInheriting git state at commit id: [%s]", conFileFileGitStore.getCommitId()), INFO,
             CommandExecutionStatus.RUNNING);
       }
+
+      if (taskParameters.isTfModuleSourceInheritSSH()) {
+        terraformBaseHelper.configureCredentialsForModuleSource(taskParameters, conFileFileGitStore, logCallback);
+      }
+
       GitBaseRequest gitBaseRequestForConfigFile = terraformBaseHelper.getGitBaseRequestForConfigFile(
           taskParameters.getAccountId(), conFileFileGitStore, (GitConfigDTO) conFileFileGitStore.getGitConfigDTO());
 

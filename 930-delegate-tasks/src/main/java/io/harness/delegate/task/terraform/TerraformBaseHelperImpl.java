@@ -36,6 +36,8 @@ import static io.harness.provision.TerraformConstants.TF_WORKING_DIR;
 import static io.harness.provision.TerraformConstants.USER_DIR_KEY;
 import static io.harness.provision.TerraformConstants.WORKSPACE_STATE_FILE_PATH_FORMAT;
 
+import static software.wings.beans.LogColor.White;
+import static software.wings.beans.LogColor.Yellow;
 import static software.wings.beans.LogHelper.color;
 
 import static java.lang.String.format;
@@ -95,6 +97,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -122,6 +125,12 @@ import org.jetbrains.annotations.NotNull;
 public class TerraformBaseHelperImpl implements TerraformBaseHelper {
   private static final String ARTIFACT_PATH_METADATA_KEY = "artifactPath";
   private static final String ARTIFACT_NAME_METADATA_KEY = "artifactName";
+  public static final String SSH_KEY_DIR = ".ssh";
+  public static final String SSH_KEY_FILENAME = "ssh.key";
+  public static final String SSH_COMMAND_PREFIX = "ssh";
+  public static final String GIT_SSH_COMMAND = "GIT_SSH_COMMAND";
+  public static final String TF_SSH_COMMAND_ARG =
+      " -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i ";
 
   @Inject DelegateFileManagerBase delegateFileManagerBase;
   @Inject TerraformClient terraformClient;
@@ -814,6 +823,61 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     }
     return sshSessionConfigMapper.getSSHSessionConfig(
         gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
+  }
+
+  public void configureCredentialsForModuleSource(TerraformTaskNGParameters taskParameters,
+      GitStoreDelegateConfig conFileFileGitStore, LogCallback logCallback) throws IOException {
+    GitConfigDTO gitConfigDTO = (GitConfigDTO) conFileFileGitStore.getGitConfigDTO();
+    if (gitConfigDTO.getGitAuthType() == SSH) {
+      String sshKeyPath;
+      SshSessionConfig sshSessionConfig = getSshSessionConfig(conFileFileGitStore);
+      if (isNotEmpty(sshSessionConfig.getKeyPassphrase())) {
+        logCallback.saveExecutionLog(
+            color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
+        return;
+      }
+      if (!sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKey())) {
+        String sshKey = String.valueOf(sshSessionConfig.getKey());
+        String workingDir = getBaseDir(taskParameters.getEntityId());
+        Files.createDirectories(Paths.get(workingDir, SSH_KEY_DIR));
+        sshKeyPath = Paths.get(workingDir, SSH_KEY_DIR, SSH_KEY_FILENAME).toAbsolutePath().toString();
+        FileIo.writeUtf8StringToFile(sshKeyPath, sshKey);
+
+      } else if (sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKeyPath())) {
+        sshKeyPath = sshSessionConfig.getKeyPath();
+
+      } else {
+        logCallback.saveExecutionLog(
+            color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
+        return;
+      }
+      exportSSHKey(taskParameters, sshKeyPath, logCallback);
+    } else {
+      logCallback.saveExecutionLog(
+          color("\nExporting Username and Password for Module Source is not Supported", Yellow), WARN);
+    }
+  }
+
+  public void exportSSHKey(TerraformTaskNGParameters taskParameters, String sshKeyPath, LogCallback logCallback)
+      throws IOException {
+    logCallback.saveExecutionLog(color("\nExporting SSH Key:", White), INFO);
+
+    File file = new File(Paths.get(sshKeyPath).toString());
+
+    // Giving Read Only Permission to ownerOnly for the SSH File, This is needed to avoided security attack
+    file.setWritable(false);
+    file.setReadable(false, false);
+    file.setExecutable(false);
+    file.setReadable(true);
+
+    String newSSHArg = TF_SSH_COMMAND_ARG + sshKeyPath;
+
+    String sshCommand = System.getenv(GIT_SSH_COMMAND) == null ? SSH_COMMAND_PREFIX + newSSHArg
+                                                               : System.getenv(GIT_SSH_COMMAND) + newSSHArg;
+
+    taskParameters.getEnvironmentVariables().put(GIT_SSH_COMMAND, sshCommand);
+
+    logCallback.saveExecutionLog(color("\n   Successfully Exported SSH Key:", White), INFO);
   }
 
   public void performCleanupOfTfDirs(TerraformTaskNGParameters parameters, LogCallback logCallback) {

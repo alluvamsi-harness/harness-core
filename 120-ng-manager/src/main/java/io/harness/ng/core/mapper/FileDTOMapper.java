@@ -12,8 +12,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.entities.NGFile;
+import io.harness.ng.core.filestore.dto.FileDTO;
 
 import java.util.Collections;
 import lombok.experimental.UtilityClass;
@@ -31,6 +31,7 @@ public class FileDTOMapper {
           .parentIdentifier(fileDto.getParentIdentifier())
           .name(fileDto.getName())
           .type(fileDto.getType())
+          .createdBy(fileDto.getCreatedBy())
           .build();
     }
 
@@ -61,6 +62,7 @@ public class FileDTOMapper {
           .name(ngFile.getName())
           .type(ngFile.getType())
           .parentIdentifier(ngFile.getParentIdentifier())
+          .createdBy(ngFile.getCreatedBy())
           .build();
     }
 
@@ -86,6 +88,7 @@ public class FileDTOMapper {
       file.setType(fileDto.getType());
       file.setParentIdentifier(fileDto.getParentIdentifier());
       file.setName(fileDto.getName());
+      file.setCreatedBy(fileDto.getCreatedBy());
       return file;
     }
 

@@ -25,6 +25,7 @@ import io.harness.threading.ThreadPoolConfig;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.Level;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
@@ -158,6 +159,7 @@ public class PlatformConfiguration extends Configuration {
     return logbackAccessRequestLogFactory;
   }
 
+  @JsonIgnore
   public OpenAPIConfiguration getOasConfig() {
     OpenAPI oas = new OpenAPI();
     Info info =

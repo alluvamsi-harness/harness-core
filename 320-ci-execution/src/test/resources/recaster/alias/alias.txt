@@ -92,6 +92,7 @@ io.harness.steps.approval.step.harness.HarnessApprovalStepNode
 io.harness.plancreator.steps.barrier.BarrierStepNode
 io.harness.steps.shellscript.ShellScriptStepNode
 io.harness.steps.template.TemplateStepNode
+io.harness.steps.template.stage.TemplateStageNode
 io.harness.ci.stdvars.BuildStandardVariables
 io.harness.steps.jira.JiraIssueOutcome
 io.harness.steps.jira.create.JiraCreateSpecParameters
@@ -118,6 +119,7 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.servicenow.approval.ServiceNowApprovalStepNode
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.beans.stages.IntegrationStageNode
+io.harness.beans.stages.SecurityStageNode
 io.harness.steps.approval.stage.ApprovalStageNode
 io.harness.cf.pipeline.FeatureFlagStageNode
 io.harness.plancreator.steps.internal.FlagConfigurationStepNode

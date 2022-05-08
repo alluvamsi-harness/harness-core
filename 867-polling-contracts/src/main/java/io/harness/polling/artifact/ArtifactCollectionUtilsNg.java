@@ -9,7 +9,7 @@ package io.harness.polling.artifact;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
@@ -38,7 +38,7 @@ public class ArtifactCollectionUtilsNg {
         if (artifactDelegateResponse instanceof ArtifactoryGenericArtifactDelegateResponse) {
           return ((ArtifactoryGenericArtifactDelegateResponse) artifactDelegateResponse).getArtifactPath();
         } else {
-          return ((ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse).getTag();
+          return ((ArtifactoryArtifactDelegateResponse) artifactDelegateResponse).getTag();
         }
       default:
         throw new InvalidRequestException(

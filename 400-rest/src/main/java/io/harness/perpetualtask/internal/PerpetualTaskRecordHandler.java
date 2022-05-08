@@ -57,7 +57,6 @@ import software.wings.beans.TaskType;
 import software.wings.service.InstanceSyncConstants;
 import software.wings.service.impl.PerpetualTaskCapabilityCheckResponse;
 import software.wings.service.intfc.AccountService;
-import software.wings.service.intfc.AlertService;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.perpetualtask.PerpetualTaskCrudObserver;
 
@@ -80,7 +79,6 @@ public class PerpetualTaskRecordHandler implements PerpetualTaskCrudObserver {
   @Inject private PerpetualTaskServiceClientRegistry clientRegistry;
   @Inject private MorphiaPersistenceProvider<PerpetualTaskRecord> persistenceProvider;
   @Inject private MorphiaPersistenceProvider<Account> persistenceProviderAccount;
-  @Inject private transient AlertService alertService;
   @Inject private AccountService accountService;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private PerpetualTaskRecordDao perpetualTaskRecordDao;
@@ -182,6 +180,9 @@ public class PerpetualTaskRecordHandler implements PerpetualTaskCrudObserver {
             taskId, PerpetualTaskUnassignedReason.NO_ELIGIBLE_DELEGATES, taskRecord.getAssignTryCount());
       } catch (Exception e) {
         log.error("Failed to assign any Delegate to perpetual task {} ", taskId, e);
+        // although we are updating the reason as VALIDATION_TASK_FAILED, but we should check logs for exact reason.
+        perpetualTaskService.updateTaskUnassignedReason(
+            taskId, PerpetualTaskUnassignedReason.VALIDATION_TASK_FAILED, taskRecord.getAssignTryCount());
       }
     }
   }
@@ -191,8 +192,8 @@ public class PerpetualTaskRecordHandler implements PerpetualTaskCrudObserver {
         perpetualTaskRecordDao.listBatchOfPerpetualTasksToRebalanceForAccount(account.getUuid());
     for (PerpetualTaskRecord taskRecord : perpetualTaskRecordList) {
       if (delegateService.checkDelegateConnected(taskRecord.getAccountId(), taskRecord.getDelegateId())) {
-        perpetualTaskService.appointDelegate(taskRecord.getAccountId(), taskRecord.getUuid(),
-            taskRecord.getDelegateId(), taskRecord.getClientContext().getLastContextUpdated());
+        perpetualTaskService.appointDelegate(
+            taskRecord.getAccountId(), taskRecord.getUuid(), taskRecord.getDelegateId(), System.currentTimeMillis());
         continue;
       }
       assign(taskRecord);

@@ -95,8 +95,8 @@ public class InternalContainerParamsProvider {
   public CIK8ContainerParams getLiteEngineContainerParams(ConnectorDetails harnessInternalImageConnector,
       Map<String, ConnectorDetails> publishArtifactConnectors, K8PodDetails k8PodDetails, Integer stageCpuRequest,
       Integer stageMemoryRequest, Map<String, String> logEnvVars, Map<String, String> tiEnvVars,
-      Map<String, String> volumeToMountPath, String workDirPath, ContainerSecurityContext ctrSecurityContext,
-      String logPrefix, Ambiance ambiance) {
+      Map<String, String> stoEnvVars, Map<String, String> volumeToMountPath, String workDirPath,
+      ContainerSecurityContext ctrSecurityContext, String logPrefix, Ambiance ambiance) {
     String imageName = ciExecutionConfigService.getLiteEngineImage(AmbianceUtils.getAccountId(ambiance));
     String fullyQualifiedImage =
         IntegrationStageUtils.getFullyQualifiedImageName(imageName, harnessInternalImageConnector);
@@ -107,7 +107,7 @@ public class InternalContainerParamsProvider {
         .containerType(CIContainerType.LITE_ENGINE)
         .containerSecrets(ContainerSecrets.builder()
                               .connectorDetailsMap(publishArtifactConnectors)
-                              .plainTextSecretsByName(getLiteEngineSecretVars(logEnvVars, tiEnvVars))
+                              .plainTextSecretsByName(getLiteEngineSecretVars(logEnvVars, tiEnvVars, stoEnvVars))
                               .build())
         .imageDetailsWithConnector(ImageDetailsWithConnector.builder()
                                        .imageDetails(IntegrationStageUtils.getImageInfo(fullyQualifiedImage))
@@ -150,11 +150,12 @@ public class InternalContainerParamsProvider {
     return envVars;
   }
 
-  private Map<String, SecretParams> getLiteEngineSecretVars(
-      Map<String, String> logEnvVars, Map<String, String> tiEnvVars) {
+  public Map<String, SecretParams> getLiteEngineSecretVars(
+      Map<String, String> logEnvVars, Map<String, String> tiEnvVars, Map<String, String> stoEnvVars) {
     Map<String, String> vars = new HashMap<>();
     vars.putAll(logEnvVars);
     vars.putAll(tiEnvVars);
+    vars.putAll(stoEnvVars);
 
     Map<String, SecretParams> secretVars = new HashMap<>();
     for (Map.Entry<String, String> entry : vars.entrySet()) {

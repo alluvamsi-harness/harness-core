@@ -16,8 +16,10 @@ import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_REF;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_VERSION_LABEL;
 
 import io.harness.EntityType;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
 import io.harness.common.NGExpressionUtils;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
@@ -33,6 +35,7 @@ import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
 import io.harness.pms.merger.fqn.FQNNode;
 import io.harness.preflight.PreFlightCheckMetadata;
+import io.harness.remote.client.RestClientUtils;
 import io.harness.template.TemplateReferenceProtoUtils;
 import io.harness.template.entity.TemplateEntity;
 import io.harness.template.services.NGTemplateServiceHelper;
@@ -64,8 +67,24 @@ public class TemplateReferenceHelper {
   PmsGitSyncHelper pmsGitSyncHelper;
   NGTemplateServiceHelper templateServiceHelper;
   TemplateSetupUsageHelper templateSetupUsageHelper;
+  AccountClient accountClient;
+
+  private boolean isFeatureFlagEnabled(String accountId) {
+    return RestClientUtils.getResponse(
+        accountClient.isFeatureFlagEnabled(FeatureName.NG_TEMPLATE_REFERENCES_SUPPORT.name(), accountId));
+  }
+
+  public void deleteTemplateReferences(TemplateEntity templateEntity) {
+    if (!isFeatureFlagEnabled(templateEntity.getAccountId())) {
+      return;
+    }
+    templateSetupUsageHelper.deleteExistingSetupUsages(templateEntity);
+  }
 
   public void populateTemplateReferences(TemplateEntity templateEntity) {
+    if (!isFeatureFlagEnabled(templateEntity.getAccountId())) {
+      return;
+    }
     String pmsUnderstandableYaml =
         templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(templateEntity);
     EntityReferenceRequest.Builder entityReferenceRequestBuilder =

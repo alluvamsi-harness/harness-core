@@ -86,7 +86,7 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
             Repository.newBuilder().setName("repo2").setNamespace("harness").build(),
             Repository.newBuilder().setName("repo3").setNamespace("harnessxy").build());
     GetUserReposResponse getUserReposResponse = GetUserReposResponse.newBuilder().addAllRepos(repositories).build();
-    when(scmOrchestratorService.processScmRequestUsingConnector(any(), any())).thenReturn(getUserReposResponse);
+    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any())).thenReturn(getUserReposResponse);
     List<GitRepositoryResponseDTO> repositoryResponseDTOList = scmFacilitatorService.listReposByRefConnector(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, pageRequest, "");
     assertThat(repositoryResponseDTOList.size()).isEqualTo(2);
@@ -102,7 +102,7 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
                                                                           .setDefaultBranch(defaultBranch)
                                                                           .addAllBranches(Arrays.asList(branch))
                                                                           .build();
-    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any(), any(), any(), any()))
+    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any()))
         .thenReturn(listBranchesWithDefaultResponse);
     GitBranchesResponseDTO gitBranchesResponseDTO = scmFacilitatorService.listBranchesV2(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName, pageRequest, "");

@@ -40,6 +40,7 @@ import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.service.PMSPipelineServiceHelper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
+import io.harness.pms.variables.VariableCreatorMergeService;
 import io.harness.rule.Owner;
 
 import com.google.common.io.Resources;
@@ -69,6 +70,7 @@ public class PipelineResourceTest extends CategoryTest {
   @Mock NodeExecutionService nodeExecutionService;
   @Mock NodeExecutionToExecutioNodeMapper nodeExecutionToExecutioNodeMapper;
   @Mock PMSPipelineTemplateHelper pipelineTemplateHelper;
+  @Mock VariableCreatorMergeService variableCreatorMergeService;
 
   private final String ACCOUNT_ID = "account_id";
   private final String ORG_IDENTIFIER = "orgId";
@@ -86,7 +88,7 @@ public class PipelineResourceTest extends CategoryTest {
   public void setUp() throws IOException {
     MockitoAnnotations.initMocks(this);
     pipelineResource = new PipelineResource(pmsPipelineService, pmsPipelineServiceHelper, nodeExecutionService,
-        nodeExecutionToExecutioNodeMapper, pipelineTemplateHelper, null);
+        nodeExecutionToExecutioNodeMapper, pipelineTemplateHelper, null, variableCreatorMergeService);
     ClassLoader classLoader = this.getClass().getClassLoader();
     String filename = "failure-strategy.yaml";
     yaml = Resources.toString(Objects.requireNonNull(classLoader.getResource(filename)), StandardCharsets.UTF_8);

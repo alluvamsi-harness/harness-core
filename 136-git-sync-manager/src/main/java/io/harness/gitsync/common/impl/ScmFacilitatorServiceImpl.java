@@ -54,7 +54,8 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
       String projectIdentifier, String connectorRef, PageRequest pageRequest, String searchTerm) {
     ScmConnector scmConnector =
         gitSyncConnectorHelper.getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
-    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnector(scmClientFacilitatorService
+    GetUserReposResponse response = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
         -> scmClientFacilitatorService.listUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector,
             PageRequestDTO.builder().pageIndex(pageRequest.getPageIndex()).pageSize(pageRequest.getPageSize()).build()),
         scmConnector);
@@ -69,15 +70,22 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
   @Override
   public GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String connectorRef, String repoName, PageRequest pageRequest, String searchTerm) {
+    final ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     ListBranchesWithDefaultResponse listBranchesWithDefaultResponse =
         scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
             -> scmClientFacilitatorService.listBranches(accountIdentifier, orgIdentifier, projectIdentifier,
-                connectorRef, repoName,
+                scmConnector,
                 PageRequestDTO.builder()
                     .pageIndex(pageRequest.getPageIndex())
                     .pageSize(pageRequest.getPageSize())
                     .build()),
-            projectIdentifier, orgIdentifier, accountIdentifier, connectorRef);
+            scmConnector);
+
+    if (isFailureResponse(listBranchesWithDefaultResponse.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.LIST_BRANCHES, scmConnector.getConnectorType(),
+          listBranchesWithDefaultResponse.getStatus(), listBranchesWithDefaultResponse.getError());
+    }
 
     List<GitBranchDetailsDTO> gitBranches =
         emptyIfNull(listBranchesWithDefaultResponse.getBranchesList())

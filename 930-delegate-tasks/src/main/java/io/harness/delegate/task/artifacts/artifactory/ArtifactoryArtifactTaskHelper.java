@@ -47,8 +47,8 @@ public class ArtifactoryArtifactTaskHelper {
 
   public ArtifactTaskResponse getArtifactCollectResponse(
       ArtifactTaskParameters artifactTaskParameters, LogCallback executionLogCallback) {
-    ArtifactoryDockerArtifactDelegateRequest attributes =
-        (ArtifactoryDockerArtifactDelegateRequest) artifactTaskParameters.getAttributes();
+    ArtifactoryArtifactDelegateRequest attributes =
+        (ArtifactoryArtifactDelegateRequest) artifactTaskParameters.getAttributes();
     String registryUrl = attributes.getArtifactoryConnectorDTO().getArtifactoryServerUrl();
     artifactoryArtifactTaskHandler.decryptRequestDTOs(attributes);
     ArtifactTaskResponse artifactTaskResponse;
@@ -57,13 +57,13 @@ public class ArtifactoryArtifactTaskHelper {
         saveLogs(executionLogCallback, "Fetching Artifact details");
         artifactTaskResponse =
             getSuccessTaskResponse(artifactoryArtifactTaskHandler.getLastSuccessfulBuild(attributes));
-        ArtifactoryDockerArtifactDelegateResponse artifactoryArtifactDelegateResponse =
-            (ArtifactoryDockerArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
-                                                             .getArtifactDelegateResponses()
-                                                             .size()
+        ArtifactoryArtifactDelegateResponse artifactoryArtifactDelegateResponse =
+            (ArtifactoryArtifactDelegateResponse) (artifactTaskResponse.getArtifactTaskExecutionResponse()
+                                                       .getArtifactDelegateResponses()
+                                                       .size()
                         != 0
                     ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
-                    : ArtifactoryDockerArtifactDelegateResponse.builder().build());
+                    : ArtifactoryArtifactDelegateResponse.builder().build());
         String buildMetadataUrl = artifactoryArtifactDelegateResponse.getBuildDetails() != null
             ? artifactoryArtifactDelegateResponse.getBuildDetails().getBuildUrl()
             : null;
@@ -126,7 +126,7 @@ public class ArtifactoryArtifactTaskHelper {
                                                               .size()
                         != 0
                     ? artifactTaskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0)
-                    : ArtifactoryDockerArtifactDelegateResponse.builder().build());
+                    : ArtifactoryArtifactDelegateResponse.builder().build());
         String buildMetadataUrl = artifactoryGenericArtifactDelegateResponse.getBuildDetails() != null
             ? artifactoryGenericArtifactDelegateResponse.getBuildDetails().getBuildUrl()
             : null;

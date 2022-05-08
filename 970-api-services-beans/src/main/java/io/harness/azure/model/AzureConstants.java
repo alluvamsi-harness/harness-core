@@ -336,4 +336,21 @@ public interface AzureConstants {
   String ARTIFACT_PATH_PREFIX = "artifact/";
   String REPOSITORY_DIR_PATH = "./repository";
   String AZURE_APP_SVC_ARTIFACT_DOWNLOAD_DIR_PATH = "./repository/azureappsvcartifacts";
+
+  // Azure REST API field names
+  String TENANT_ID = "tenantId";
+  String GRANT_TYPE = "grant_type";
+  String CLIENT_ID = "client_id";
+  String SCOPE = "scope";
+  String CLIENT_SECRET = "client_secret";
+  String CLIENT_ASSERTION = "client_assertion";
+  String CLIENT_ASSERTION_TYPE = "client_assertion_type";
+  String ACCESS_TOKEN = "access_token";
+  String REFRESH_TOKEN = "refresh_token";
+  String SERVICE = "service";
+  String CLIENT_CREDENTIALS_GRANT_TYPE = "client_credentials";
+  String JWT_BEARER_CLIENT_ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+  String TOKEN_TYPE = "token_type";
+  String TOKEN_EXPIRES_IN = "expires_in";
+  String TOKEN_EXT_EXPIRES_IN = "ext_expires_in";
 }

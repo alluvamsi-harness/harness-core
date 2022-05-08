@@ -20,7 +20,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryDockerBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryGenericBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.rule.Owner;
@@ -39,8 +39,8 @@ public class ArtifactoryResourceMapperTest extends CategoryTest {
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testToArtifactoryDockerResponse() {
-    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
-        Lists.newArrayList(ArtifactoryDockerArtifactDelegateResponse.builder()
+    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
+        Lists.newArrayList(ArtifactoryArtifactDelegateResponse.builder()
                                .buildDetails(ArtifactBuildDetailsNG.builder().build())
                                .artifactPath("/")
                                .build());
@@ -75,7 +75,7 @@ public class ArtifactoryResourceMapperTest extends CategoryTest {
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         ArtifactTaskExecutionResponse.builder()
             .artifactDelegateResponse(
-                ArtifactoryDockerArtifactDelegateResponse.builder()
+                ArtifactoryArtifactDelegateResponse.builder()
                     .buildDetails(
                         ArtifactBuildDetailsNG.builder().number("123").buildUrl("a").metadata(new HashMap<>()).build())
                     .artifactPath("b")

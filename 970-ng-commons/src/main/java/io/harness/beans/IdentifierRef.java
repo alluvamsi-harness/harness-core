@@ -37,6 +37,10 @@ public class IdentifierRef implements EntityReference {
         accountIdentifier, orgIdentifier, projectIdentifier, identifier);
   }
 
+  public String getFullyQualifiedScopeIdentifier() {
+    return FullyQualifiedIdentifierHelper.getFullyQualifiedScope(accountIdentifier, orgIdentifier, projectIdentifier);
+  }
+
   public String buildScopedIdentifier() {
     switch (scope) {
       case ACCOUNT:

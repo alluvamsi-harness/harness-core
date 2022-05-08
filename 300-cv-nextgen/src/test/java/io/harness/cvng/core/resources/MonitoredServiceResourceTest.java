@@ -34,6 +34,10 @@ import io.harness.cvng.core.services.api.CVNGLogService;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
+import io.harness.cvng.notification.beans.NotificationRuleDTO;
+import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
+import io.harness.cvng.notification.beans.NotificationRuleType;
+import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 import io.harness.rule.ResourceTestRule;
@@ -69,6 +73,7 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
   @Inject CVNGLogService cvngLogService;
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private CVConfigService cvConfigService;
+  @Inject NotificationRuleService notificationRuleService;
   private MonitoredServiceDTO monitoredServiceDTO;
 
   @ClassRule
@@ -394,6 +399,82 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
     assertThat(response.getStatus()).isEqualTo(404);
     assertThat(response.readEntity(String.class))
         .contains("Monitored Service with identifier monitoredServiceIdentifier not found.");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testCreate_withNotificationRules() throws IOException {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.MONITORED_SERVICE).build();
+    List<NotificationRuleRefDTO> notificationRuleRefs = notificationRuleService.create(
+        builderFactory.getContext().getProjectParams(), Arrays.asList(notificationRuleDTO));
+
+    String monitoredServiceYaml = getResource("monitoredservice/monitored-service-with-notification-rule.yaml");
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$orgIdentifier", builderFactory.getContext().getOrgIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$enabled", String.valueOf(notificationRuleRefs.get(0).isEnabled()));
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/monitored-service/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(monitoredServiceYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class))
+        .contains("\"notificationRuleRefs\":[{\"notificationRuleRef\":\"rule\",\"enabled\":false}]");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testUpdateMonitoredServiceData_withNotificationRules() throws IOException {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.MONITORED_SERVICE).build();
+    List<NotificationRuleRefDTO> notificationRuleRefs = notificationRuleService.create(
+        builderFactory.getContext().getProjectParams(), Arrays.asList(notificationRuleDTO));
+    String monitoredServiceYaml = getResource("monitoredservice/monitored-service-with-notification-rule.yaml");
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$orgIdentifier", builderFactory.getContext().getOrgIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$enabled", String.valueOf(notificationRuleRefs.get(0).isEnabled()));
+
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/monitored-service/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(monitoredServiceYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class))
+        .contains("\"notificationRuleRefs\":[{\"notificationRuleRef\":\"rule\",\"enabled\":false}]");
+
+    monitoredServiceYaml = getResource("monitoredservice/monitored-service-with-notification-rule.yaml");
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$orgIdentifier", builderFactory.getContext().getOrgIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$enabled", String.valueOf(!notificationRuleRefs.get(0).isEnabled()));
+
+    response = RESOURCES.client()
+                   .target("http://localhost:9998/monitored-service/"
+                       + "MSIdentifier")
+                   .queryParam("accountId", builderFactory.getContext().getAccountId())
+                   .request(MediaType.APPLICATION_JSON_TYPE)
+                   .put(Entity.json(convertToJson(monitoredServiceYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class))
+        .contains("\"notificationRuleRefs\":[{\"notificationRuleRef\":\"rule\",\"enabled\":true}]");
   }
 
   private static String convertToJson(String yamlString) {

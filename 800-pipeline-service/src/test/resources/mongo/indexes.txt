@@ -6,6 +6,15 @@
 approvalInstances {"name": "nodeExecutionId_1", "background": true} {"nodeExecutionId": 1}
 approvalInstances {"name": "status_deadline", "background": true} {"status": 1, "deadline": 1}
 approvalInstances {"name": "status_type_nextIteration", "background": true} {"status": 1, "type": 1, "nextIteration": -1}
+artifacts {"name": "accountId_1", "background": true} {"accountId": 1}
+artifacts {"name": "accountId_artifactStreamId_createdAt", "background": true} {"accountId": 1, "artifactStreamId": 1, "createdAt": -1}
+artifacts {"name": "appId_1", "background": true} {"appId": 1}
+artifacts {"name": "appId_artifactStreamId_status_createdAt", "background": true} {"appId": 1, "artifactStreamId": 1, "status": 1, "createdAt": -1}
+artifacts {"name": "artifactStream_artifactPath", "background": true} {"artifactStreamId": 1, "metadata.artifactPath": 1}
+artifacts {"name": "artifactStream_buildNo", "background": true} {"artifactStreamId": 1, "metadata.buildNo": 1}
+artifacts {"name": "artifactStream_revision", "background": true} {"artifactStreamId": 1, "revision": 1}
+artifacts {"name": "createdAt_1", "background": true} {"createdAt": 1}
+artifacts {"name": "owners", "background": true} {"artifactStreamId": 1, "appId": 1}
 barrierExecutionInstances {"name": "createdAt_1", "background": true} {"createdAt": 1}
 barrierExecutionInstances {"name": "next_iteration_idx", "background": true} {"barrierState": 1, "nextIteration": 1}
 barrierExecutionInstances {"name": "planExecutionId_barrierState_stagesIdentifier_idx", "background": true} {"planExecutionId": 1, "barrierState": 1, "setupInfo.stages.identifier": 1}

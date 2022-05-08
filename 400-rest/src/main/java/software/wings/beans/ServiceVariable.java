@@ -127,7 +127,7 @@ public class ServiceVariable extends Base implements EncryptableSetting {
 
   @Encrypted(fieldName = "value", isReference = true) private char[] value;
 
-  private Type type;
+  private ServiceVariableType type;
 
   // NOTE: This field is used for service variables of type artifact.
   private List<String> allowedList;
@@ -160,50 +160,11 @@ public class ServiceVariable extends Base implements EncryptableSetting {
   @JsonIgnore
   @SchemaIgnore
   public List<java.lang.reflect.Field> getEncryptedFields() {
-    if (type != Type.ENCRYPTED_TEXT) {
+    if (type != ServiceVariableType.ENCRYPTED_TEXT) {
       return Collections.emptyList();
     }
 
     return EncryptionReflectUtils.getEncryptedFields(this.getClass());
-  }
-
-  /**
-   * The enum Type.
-   */
-  public enum Type {
-    /**
-     * Text type.
-     */
-    TEXT,
-    /**
-     * Lb type.
-     */
-    LB(true),
-    /**
-     * Encrypted text type.
-     */
-    ENCRYPTED_TEXT,
-    /**
-     * Artifact type.
-     */
-    ARTIFACT;
-
-    private boolean settingAttribute;
-
-    Type() {}
-
-    Type(boolean settingAttribute) {
-      this.settingAttribute = settingAttribute;
-    }
-
-    /**
-     * Is setting attribute boolean.
-     *
-     * @return the boolean
-     */
-    public boolean isSettingAttribute() {
-      return settingAttribute;
-    }
   }
 
   public enum OverrideType {

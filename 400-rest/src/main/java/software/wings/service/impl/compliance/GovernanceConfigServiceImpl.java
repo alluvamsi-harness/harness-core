@@ -578,6 +578,13 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       return;
     }
 
+    if (isEmpty(user.getUuid())) {
+      log.error(
+          "User id is empty or null when trying to publish to segment. Event will be skipped. Event Type: {}, accountId={}",
+          eventType, accountId);
+      return;
+    }
+
     // repeating=false until repeating blackout windows are implemented
     Builder messageBuilder = TrackMessage.builder(eventType.toString())
                                  .userId(user.getUuid())

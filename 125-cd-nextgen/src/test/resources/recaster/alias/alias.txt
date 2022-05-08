@@ -192,6 +192,7 @@ io.harness.cdng.provision.terraform.TerraformRollbackStepNode
 io.harness.cdng.helm.HelmDeployStepNode
 io.harness.cdng.helm.HelmRollbackStepNode
 io.harness.steps.template.TemplateStepNode
+io.harness.steps.template.stage.TemplateStageNode
 io.harness.cdng.manifest.yaml.GcsStoreConfig
 io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome
 io.harness.steps.jira.JiraIssueOutcome
@@ -292,6 +293,7 @@ io.harness.cdng.envGroup.beans.EnvironmentGroupConfig
 io.harness.cdng.service.beans.WinRmServiceSpec
 io.harness.cdng.artifact.CustomArtifactSummary
 io.harness.cdng.artifact.bean.yaml.CustomArtifactConfig
+io.harness.cdng.manifest.yaml.storeConfig.moduleSource.ModuleSource
 io.harness.cdng.infra.beans.ServerlessAwsLambdaInfraMapping
 io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec
 io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure
@@ -312,3 +314,6 @@ io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome
 io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData
 io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData
 io.harness.steps.servicenow.ServiceNowTicketOutcome
+io.harness.cdng.service.beans.ServiceYamlV2
+io.harness.cdng.environment.yaml.EnvironmentYamlV2
+io.harness.cdng.infra.yaml.InfraStructureDefinition

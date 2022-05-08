@@ -48,8 +48,10 @@ import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.service.PMSPipelineServiceHelper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.rbac.PipelineRbacPermissions;
+import io.harness.pms.variables.VariableCreatorMergeService;
 import io.harness.pms.variables.VariableMergeServiceResponse;
 import io.harness.steps.template.TemplateStepNode;
+import io.harness.steps.template.stage.TemplateStageNode;
 import io.harness.utils.PageUtils;
 import io.harness.yaml.core.StepSpecType;
 import io.harness.yaml.schema.YamlSchemaResource;
@@ -130,6 +132,7 @@ public class PipelineResource implements YamlSchemaResource {
   private final NodeExecutionToExecutioNodeMapper nodeExecutionToExecutioNodeMapper;
   private final PMSPipelineTemplateHelper pipelineTemplateHelper;
   private final PmsFeatureFlagHelper pmsFeatureFlagHelper;
+  private final VariableCreatorMergeService variableCreatorMergeService;
 
   @POST
   @ApiOperation(value = "Create a Pipeline", nickname = "createPipeline")
@@ -233,7 +236,7 @@ public class PipelineResource implements YamlSchemaResource {
     String resolveTemplateRefsInPipeline =
         pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity).getMergedPipelineYaml();
     VariableMergeServiceResponse variablesResponse =
-        pmsPipelineService.createVariablesResponse(resolveTemplateRefsInPipeline, false);
+        variableCreatorMergeService.createVariablesResponses(resolveTemplateRefsInPipeline, false);
 
     return ResponseDTO.newResponse(variablesResponse);
   }
@@ -264,8 +267,8 @@ public class PipelineResource implements YamlSchemaResource {
     // Apply all the templateRefs(if any) then check for variables.
     String resolveTemplateRefsInPipeline =
         pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity).getMergedPipelineYaml();
-    VariableMergeServiceResponse variablesResponse =
-        pmsPipelineService.createVariablesResponseV2(accountId, orgId, projectId, resolveTemplateRefsInPipeline);
+    VariableMergeServiceResponse variablesResponse = variableCreatorMergeService.createVariablesResponsesV2(
+        accountId, orgId, projectId, resolveTemplateRefsInPipeline);
     return ResponseDTO.newResponse(variablesResponse);
   }
 
@@ -615,6 +618,15 @@ public class PipelineResource implements YamlSchemaResource {
   // do not delete this.
   public ResponseDTO<TemplateStepNode> getTemplateStepNode() {
     return ResponseDTO.newResponse(new TemplateStepNode());
+  }
+
+  @GET
+  @Path("/dummy-templateStage-api")
+  @ApiOperation(value = "This is dummy api to expose templateStageNode", nickname = "dummyTemplateStageApi")
+  @Hidden
+  // do not delete this.
+  public ResponseDTO<TemplateStageNode> getTemplateStageNode() {
+    return ResponseDTO.newResponse(new TemplateStageNode());
   }
 
   @GET

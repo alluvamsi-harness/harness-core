@@ -8,6 +8,7 @@ shared_dependencies = [
     "//879-pms-sdk:module",
     "//930-delegate-tasks:module",
     "//960-persistence:module",
+    "//999-annotations:module",
     "//product/ci/engine/proto:ciengine_java_proto",
     "@maven//:aopalliance_aopalliance",
     "@maven//:cglib_cglib_nodep",

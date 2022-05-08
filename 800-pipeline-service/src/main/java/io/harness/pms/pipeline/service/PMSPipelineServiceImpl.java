@@ -48,7 +48,6 @@ import io.harness.pms.pipeline.StepPalleteInfo;
 import io.harness.pms.pipeline.StepPalleteModuleInfo;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.pms.variables.VariableCreatorMergeService;
-import io.harness.pms.variables.VariableMergeServiceResponse;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.repositories.pipeline.PMSPipelineRepository;
 import io.harness.telemetry.TelemetryReporter;
@@ -386,29 +385,6 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     }
 
     return stepCategory;
-  }
-
-  @Override
-  public VariableMergeServiceResponse createVariablesResponse(String yaml, boolean newVersion) {
-    try {
-      return variableCreatorMergeService.createVariablesResponse(yaml, newVersion);
-    } catch (Exception ex) {
-      log.error("Error happened while creating variables for pipeline:", ex);
-      throw new InvalidRequestException(
-          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
-    }
-  }
-
-  @Override
-  public VariableMergeServiceResponse createVariablesResponseV2(
-      String accountId, String orgId, String projectId, String yaml) {
-    try {
-      return variableCreatorMergeService.createVariablesResponseV2(accountId, orgId, projectId, yaml);
-    } catch (Exception ex) {
-      log.error("Error happened while creating variables for pipeline:", ex);
-      throw new InvalidRequestException(
-          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
-    }
   }
 
   // Todo: Remove only if there are no references to the pipeline

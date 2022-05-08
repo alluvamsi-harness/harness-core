@@ -227,7 +227,7 @@ public class AccessControlModule extends AbstractModule {
                                             .parameterNameProvider(new ReflectionParameterNameProvider())
                                             .buildValidatorFactory();
     install(new ValidationModule(validatorFactory));
-
+    install(new MetricsModule());
     install(
         new ServiceAccountClientModule(config.getServiceAccountClientConfiguration().getServiceAccountServiceConfig(),
             config.getServiceAccountClientConfiguration().getServiceAccountServiceSecret(),

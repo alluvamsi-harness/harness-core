@@ -27,7 +27,7 @@ import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
 import io.harness.delegate.task.artifacts.ArtifactDelegateRequestUtils;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateRequest;
@@ -112,7 +112,7 @@ public class ArtifactConfigToDelegateReqMapper {
     }
   }
 
-  private ArtifactoryDockerArtifactDelegateRequest getArtifactoryDockerArtifactDelegateRequest(
+  private ArtifactoryArtifactDelegateRequest getArtifactoryDockerArtifactDelegateRequest(
       ArtifactoryRegistryArtifactConfig artifactConfig, ArtifactoryConnectorDTO artifactoryConnectorDTO,
       List<EncryptedDataDetail> encryptedDataDetails, String connectorRef) {
     // If both are empty, regex is latest among all docker artifacts.
@@ -125,11 +125,10 @@ public class ArtifactConfigToDelegateReqMapper {
     String artifactRepositoryUrl =
         artifactConfig.getRepositoryUrl() != null ? artifactConfig.getRepositoryUrl().getValue() : null;
 
-    return (ArtifactoryDockerArtifactDelegateRequest)
-        ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(artifactConfig.getRepository().getValue(),
-            artifactConfig.getArtifactPath().getValue(), artifactConfig.getRepositoryFormat().getValue(),
-            artifactRepositoryUrl, tag, tagRegex, connectorRef, artifactoryConnectorDTO, encryptedDataDetails,
-            ArtifactSourceType.ARTIFACTORY_REGISTRY);
+    return (ArtifactoryArtifactDelegateRequest) ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(
+        artifactConfig.getRepository().getValue(), artifactConfig.getArtifactPath().getValue(),
+        artifactConfig.getRepositoryFormat().getValue(), artifactRepositoryUrl, tag, tagRegex, connectorRef,
+        artifactoryConnectorDTO, encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
   }
 
   private ArtifactoryGenericArtifactDelegateRequest getArtifactoryGenericArtifactDelegateRequest(

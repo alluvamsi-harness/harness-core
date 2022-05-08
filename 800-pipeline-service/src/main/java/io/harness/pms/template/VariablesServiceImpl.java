@@ -13,7 +13,7 @@ import io.harness.pms.contracts.service.VariableMergeResponseProto;
 import io.harness.pms.contracts.service.VariablesServiceGrpc.VariablesServiceImplBase;
 import io.harness.pms.contracts.service.VariablesServiceRequest;
 import io.harness.pms.mappers.VariablesResponseDtoMapper;
-import io.harness.pms.pipeline.service.PMSPipelineService;
+import io.harness.pms.variables.VariableCreatorMergeService;
 import io.harness.pms.variables.VariableMergeServiceResponse;
 
 import com.google.inject.Inject;
@@ -25,18 +25,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class VariablesServiceImpl extends VariablesServiceImplBase {
-  private final PMSPipelineService pmsPipelineService;
+  private final VariableCreatorMergeService variableCreatorMergeService;
 
   @Inject
-  public VariablesServiceImpl(PMSPipelineService pmsPipelineService) {
-    this.pmsPipelineService = pmsPipelineService;
+  public VariablesServiceImpl(VariableCreatorMergeService variableCreatorMergeService) {
+    this.variableCreatorMergeService = variableCreatorMergeService;
   }
 
   @Override
   public void getVariables(
       VariablesServiceRequest request, StreamObserver<VariableMergeResponseProto> responseObserver) {
     VariableMergeServiceResponse variablesResponse =
-        pmsPipelineService.createVariablesResponse(request.getYaml(), false);
+        variableCreatorMergeService.createVariablesResponses(request.getYaml(), false);
     VariableMergeResponseProto variableMergeResponseProto = VariablesResponseDtoMapper.toProto(variablesResponse);
     responseObserver.onNext(variableMergeResponseProto);
     responseObserver.onCompleted();

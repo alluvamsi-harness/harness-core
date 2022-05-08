@@ -56,7 +56,6 @@ import io.harness.delegate.beans.connector.azureconnector.AzureUserAssignedMSIAu
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.errorhandling.NGErrorHelper;
-import io.harness.exception.HintException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.CommandExecutionStatus;
@@ -488,15 +487,6 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
       assertThat(build.getMetadata().get(ArtifactMetadataKeys.TAG).startsWith("v")).isTrue();
       assertThat(build.getMetadata().get(ArtifactMetadataKeys.REGISTRY_HOSTNAME)).isEqualTo("registry.azurecr.io");
     });
-  }
-
-  @Test(expected = HintException.class)
-  @Owner(developers = BUHA)
-  @Category(UnitTests.class)
-  public void testGetBuildsThrowsExceptionForCert() {
-    AzureConfig azureConfig = getAzureConfigSecret();
-    azureConfig.setAzureAuthenticationType(AzureAuthenticationType.SERVICE_PRINCIPAL_CERT);
-    azureAsyncTaskHelper.getImageTags(azureConfig, "subscriptionId", "registry", "repository");
   }
 
   private AzureConfig getAzureConfigSecret() {

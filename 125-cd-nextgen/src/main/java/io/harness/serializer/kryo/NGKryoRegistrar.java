@@ -106,7 +106,6 @@ import io.harness.cdng.service.beans.KubernetesServiceSpec;
 import io.harness.cdng.service.beans.NativeHelmServiceSpec;
 import io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
-import io.harness.cdng.service.beans.ServiceConfigOutcome;
 import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.cdng.service.beans.ServiceUseFromStage;
@@ -178,7 +177,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
 
     // Starting using 12500 series as 8100 series is also used in 400-rest
     kryo.register(K8sBlueGreenOutcome.class, 12500);
-    kryo.register(ServiceConfigOutcome.class, 12508);
     kryo.register(ArtifactOverrideSetWrapper.class, 12509);
     kryo.register(ManifestOverrideSetWrapper.class, 12510);
     kryo.register(NGVariableOverrideSetWrapper.class, 12511);

@@ -15,6 +15,7 @@ import static io.harness.beans.ExecutionStatus.REJECTED;
 import static io.harness.beans.ExecutionStatus.SKIPPED;
 import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.exception.WingsException.USER;
 import static io.harness.rule.OwnerRule.AGORODETKI;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.DHRUV;
@@ -70,6 +71,7 @@ import static software.wings.utils.WingsTestConstants.WORKFLOW_URL;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.reflect.FieldUtils.writeField;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -93,6 +95,7 @@ import io.harness.beans.WorkflowType;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.rule.Owner;
 import io.harness.serializer.KryoSerializer;
@@ -2184,5 +2187,66 @@ public class ApprovalStateTest extends WingsBaseTest {
     assertThat(approvalState.approvalStateParams.getServiceNowApprovalParams().getApproval().fetchConditions())
         .containsKeys("approval", "state");
     assertThat(approvalState.getApprovalStateType()).isEqualTo(ApprovalStateType.SERVICENOW);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldResolveUserGroupExpression() {
+    String expression = "${userGroupExpression}";
+    approvalState.setUserGroupAsExpression(true);
+    approvalState.setUserGroupExpression(expression);
+
+    when(context.renderExpression(expression)).thenReturn("group1, group2");
+    when(context.getAccountId()).thenReturn(ACCOUNT_ID);
+    when(userGroupService.get(ACCOUNT_ID, "group1")).thenReturn(UserGroup.builder().uuid("A1").build());
+    when(userGroupService.get(ACCOUNT_ID, "group2")).thenReturn(UserGroup.builder().uuid("B2").build());
+
+    approvalState.resolveUserGroupFromExpression(context);
+
+    assertThat(approvalState.getUserGroups()).containsOnly("A1", "B2");
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenUserGroupExpressionNull() {
+    assertThatThrownBy(() -> {
+      approvalState.setUserGroupExpression(null);
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is set but value is not provided")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenUserGroupExpressionEmpty() {
+    assertThatThrownBy(() -> {
+      approvalState.setUserGroupExpression("");
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is set but value is not provided")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenRenderedExpressionEmpty() {
+    String expression = "${userGroupExpression}";
+    approvalState.setUserGroupAsExpression(true);
+    approvalState.setUserGroupExpression(expression);
+
+    assertThatThrownBy(() -> {
+      when(context.renderExpression(expression)).thenReturn("");
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is invalid")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
   }
 }

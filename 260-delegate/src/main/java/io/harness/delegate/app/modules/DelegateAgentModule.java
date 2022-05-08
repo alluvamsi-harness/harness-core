@@ -8,7 +8,6 @@
 package io.harness.delegate.app.modules;
 
 import static io.harness.configuration.DeployMode.DEPLOY_MODE;
-import static io.harness.configuration.DeployMode.ONPREM;
 import static io.harness.configuration.DeployMode.isOnPrem;
 import static io.harness.delegate.service.DelegateAgentServiceImpl.getDelegateId;
 import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractAuthority;
@@ -59,17 +58,9 @@ public class DelegateAgentModule extends AbstractModule {
     install(new LogStreamingModule(configuration.getLogStreamingServiceBaseUrl()));
     install(new DelegateGrpcClientModule(configuration));
 
-    final String deployMode = System.getenv().get(DEPLOY_MODE);
-    if (!ONPREM.name().equals(deployMode)) {
-      install(new PerpetualTaskWorkerModule());
-    }
-
-    if (!isOnPrem(deployMode)) {
-      install(new PingPongModule());
-      configureCcmEventPublishing();
-    } else {
-      log.warn("Skipping event publisher and PingPong configuration for on-prem deployment");
-    }
+    configureCcmEventPublishing();
+    install(new PerpetualTaskWorkerModule());
+    install(new PingPongModule());
 
     install(KubernetesClientFactoryModule.getInstance());
     install(KubernetesApiClientFactoryModule.getInstance());
@@ -86,7 +77,8 @@ public class DelegateAgentModule extends AbstractModule {
   }
 
   private void configureCcmEventPublishing() {
-    if (isImmutableDelegate) {
+    final String deployMode = System.getenv(DEPLOY_MODE);
+    if (!isOnPrem(deployMode) && isImmutableDelegate) {
       final String managerHostAndPort = System.getenv("MANAGER_HOST_AND_PORT");
       if (isNotBlank(managerHostAndPort)) {
         log.info("Running immutable delegate, starting CCM event tailer");
@@ -103,7 +95,7 @@ public class DelegateAgentModule extends AbstractModule {
         log.warn("Unable to configure event publisher configs. Event publisher will be disabled");
       }
     } else {
-      log.info("Running mutable delegate, watcher will be running tailer, so skip creating it in delegate");
+      log.info("Skip running tailer by delegate. For mutable it runs in watcher, for on prem we never run it.");
     }
     final Config appenderConfig = Config.builder().queueFilePath(configuration.getQueueFilePath()).build();
     install(new AppenderModule(appenderConfig, () -> getDelegateId().orElse("UNREGISTERED")));

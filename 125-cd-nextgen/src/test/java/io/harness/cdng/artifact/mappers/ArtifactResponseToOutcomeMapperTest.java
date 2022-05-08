@@ -28,7 +28,7 @@ import io.harness.cdng.artifact.outcome.CustomArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
 import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateResponse;
@@ -91,7 +91,7 @@ public class ArtifactResponseToOutcomeMapperTest extends CategoryTest {
             .artifactPath(ParameterField.createValueField("IMAGE"))
             .repositoryFormat(ParameterField.createValueField(RepositoryFormat.docker.name()))
             .build();
-    ArtifactDelegateResponse artifactDelegateResponse = ArtifactoryDockerArtifactDelegateResponse.builder().build();
+    ArtifactDelegateResponse artifactDelegateResponse = ArtifactoryArtifactDelegateResponse.builder().build();
 
     ArtifactOutcome artifactOutcome =
         ArtifactResponseToOutcomeMapper.toArtifactOutcome(artifactConfig, artifactDelegateResponse, true);
