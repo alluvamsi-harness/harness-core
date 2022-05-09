@@ -36,27 +36,27 @@ import lombok.experimental.FieldDefaults;
 @JsonInclude(NON_NULL)
 @ApiModel(value = "AccountDTO")
 @OwnedBy(PL)
-@Schema(name = "Account", description = "This is the view of an Account defined in Harness")
+@Schema(name = "Account", description = "Account details defined in Harness.")
 public class AccountDTO {
-  @Schema(description = "Identifier of the account.")
+  @Schema(description = "Account Identifier.")
   @EntityIdentifier(allowBlank = false)
   @VariableExpression(skipVariableExpression = true)
   String identifier;
-  @Schema(description = "Name of the account.") @NGEntityName String name;
-  @Schema(description = "Name of the company name.") String companyName;
-  @Schema(description = "Name of the cluster associated with this account.")
+  @Schema(description = "Name of the Account.") @NGEntityName String name;
+  @Schema(description = "Name of the Company.") String companyName;
+  @Schema(description = "Name of the cluster associated with this Account.")
   @VariableExpression(skipVariableExpression = true)
   String cluster;
-  @Schema(description = "Specifies the default experience of the account.")
+  @Schema(description = "Default experience of the Account.")
   @VariableExpression(skipVariableExpression = true)
   DefaultExperience defaultExperience;
   @Schema(description = "Authentication mechanism associated with the account.")
   @VariableExpression(skipVariableExpression = true)
   AuthenticationMechanism authenticationMechanism;
-  @Schema(description = "Configuration of the service account associated with the account.")
+  @Schema(description = "Service Account configuration associated with this Account.")
   @VariableExpression(skipVariableExpression = true)
   ServiceAccountConfig serviceAccountConfig;
-  @Schema(description = "Specifies whether or not Nextgen is enabled to the account.")
+  @Schema(description = "Specifies if NextGen is enabled for this Account.")
   @VariableExpression(skipVariableExpression = true)
   boolean isNextGenEnabled;
 

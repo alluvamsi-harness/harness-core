@@ -39,5 +39,5 @@ public class CreateInviteDTO {
   List<String> users;
   @Schema(description = "Role bindings to be associated with the invited users.") List<RoleBinding> roleBindings;
   @Schema(description = "Specifies the invite type.") @ApiModelProperty(required = true) InviteType inviteType;
-  @Schema(description = "List of the userGroups in the invite.") List<String> userGroups;
+  @Schema(description = "List of the user Groups in the invite.") List<String> userGroups;
 }

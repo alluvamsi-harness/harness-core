@@ -33,7 +33,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(name = "EnvironmentRequest", description = "This is the EnvironmentRequest entity defined in Harness")
+@Schema(name = "EnvironmentRequest", description = "This is the Environment entity defined in Harness")
 public class EnvironmentRequestDTO {
   @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier;
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier;

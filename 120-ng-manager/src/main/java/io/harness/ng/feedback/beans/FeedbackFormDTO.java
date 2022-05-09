@@ -32,7 +32,7 @@ import lombok.experimental.FieldDefaults;
 @Schema(name = "FeedbackForm", description = "This is the view of feedback form defined in Harness")
 public class FeedbackFormDTO {
   @Schema(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId;
-  @Schema(description = "Email id associated with the feedback.") String email;
+  @Schema(description = "The email address for the feedback.") String email;
   @Schema(description = "Specifies the module type.") ModuleType moduleType;
   @Schema(description = "Score given by the user to the module.") Integer score;
   @Schema(description = "Suggestion provided by the user.") String suggestion;
