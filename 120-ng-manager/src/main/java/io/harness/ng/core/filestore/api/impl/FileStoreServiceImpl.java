@@ -31,6 +31,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort
 import io.harness.EntityType;
 import io.harness.FileStoreConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
@@ -39,7 +40,7 @@ import io.harness.file.beans.NGBaseFile;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.ng.core.beans.SearchPageParams;
-import io.harness.ng.core.dto.filestore.CreatedBy;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
@@ -51,6 +52,7 @@ import io.harness.ng.core.filestore.api.FileFailsafeService;
 import io.harness.ng.core.filestore.api.FileStoreService;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.ng.core.filestore.dto.FileFilterDTO;
+import io.harness.ng.core.mapper.EmbeddedUserDTOMapper;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
@@ -96,7 +98,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   private final FileFailsafeService fileFailsafeService;
 
   @Override
-  public FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft) {
+  public FileDTO create(@NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
     if (isFileExistsByIdentifier(fileDto)) {
@@ -107,7 +109,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new DuplicateFieldException(getDuplicateEntityNameMessage(fileDto));
     }
 
-    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, draft);
+    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
 
     if (shouldStoreFileContent(content, ngFile)) {
       log.info("Start creating file in file system, identifier: {}", fileDto.getIdentifier());
@@ -172,7 +174,7 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
 
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-    fileReferenceService.validateIsReferencedBy(file);
+    fileReferenceService.validateReferenceByAndThrow(file);
 
     return deleteFileOrFolder(file);
   }
@@ -243,7 +245,8 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+  public Set<EmbeddedUserDetailsDTO> getCreatedByList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
     Criteria criteria = createScopeCriteria(scope);
     criteria.and(NGFiles.type).is(NGFileType.FILE);
@@ -251,9 +254,12 @@ public class FileStoreServiceImpl implements FileStoreService {
     Aggregation aggregation = Aggregation.newAggregation(
         match(criteria), group(NGFiles.createdBy), sort(Sort.Direction.ASC, NGFiles.createdBy));
 
-    AggregationResults<CreatedBy> aggregate = fileStoreRepository.aggregate(aggregation, CreatedBy.class);
+    AggregationResults<EmbeddedUser> aggregate = fileStoreRepository.aggregate(aggregation, EmbeddedUser.class);
 
-    return aggregate.getMappedResults().stream().map(CreatedBy::getCreatedBy).collect(Collectors.toSet());
+    return aggregate.getMappedResults()
+        .stream()
+        .map(EmbeddedUserDTOMapper::fromEmbeddedUser)
+        .collect(Collectors.toSet());
   }
 
   @Override
@@ -312,7 +318,6 @@ public class FileStoreServiceImpl implements FileStoreService {
     ngFile.setFileUuid(ngBaseFile.getFileUuid());
     ngFile.setChecksumType(ngBaseFile.getChecksumType());
     ngFile.setChecksum(ngBaseFile.getChecksum());
-    ngFile.setDraft(false);
   }
 
   // in the case when we need to return the whole folder structure, create recursion on this method

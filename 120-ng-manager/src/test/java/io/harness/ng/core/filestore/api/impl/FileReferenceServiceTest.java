@@ -21,7 +21,7 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.category.element.UnitTests;
-import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
@@ -121,8 +121,8 @@ public class FileReferenceServiceTest extends CategoryTest {
              folder1.getIdentifier()))
         .thenReturn(Arrays.asList(folder2));
 
-    assertThatThrownBy(() -> fileReferenceService.validateIsReferencedBy(folder1))
-        .isInstanceOf(InvalidArgumentsException.class)
+    assertThatThrownBy(() -> fileReferenceService.validateReferenceByAndThrow(folder1))
+        .isInstanceOf(ReferencedEntityException.class)
         .hasMessage("Folder [testFolder1], or its subfolders, contain file(s) referenced by " + (count1 + count2)
             + " other entities and can not be deleted.");
   }

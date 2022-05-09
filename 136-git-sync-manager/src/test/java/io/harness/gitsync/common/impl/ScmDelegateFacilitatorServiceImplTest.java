@@ -45,6 +45,7 @@ import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.FileContent;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
@@ -222,5 +223,21 @@ public class ScmDelegateFacilitatorServiceImplTest extends GitSyncTestBase {
     assertThat(listBranchesWithDefaultResponse.getBranchesCount()).isEqualTo(1);
     assertThat(listBranchesWithDefaultResponse.getDefaultBranch()).isEqualTo(defaultBranch);
     assertThat(listBranchesWithDefaultResponse.getBranchesList().get(0)).isEqualTo(branch);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testGetRepoDetails() {
+    GetUserRepoResponse getUserRepoResponse =
+        GetUserRepoResponse.newBuilder()
+            .setRepo(Repository.newBuilder().setName(repoName).setBranch(defaultBranch).build())
+            .build();
+    when(delegateGrpcClientWrapper.executeSyncTask(any()))
+        .thenReturn(ScmGitRefTaskResponseData.builder().getUserRepoResponse(getUserRepoResponse.toByteArray()).build());
+    getUserRepoResponse = scmDelegateFacilitatorService.getRepoDetails(
+        accountIdentifier, orgIdentifier, projectIdentifier, (ScmConnector) connectorInfo.getConnectorConfig());
+    assertThat(getUserRepoResponse.getRepo().getName()).isEqualTo(repoName);
+    assertThat(getUserRepoResponse.getRepo().getBranch()).isEqualTo(defaultBranch);
   }
 }

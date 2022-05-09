@@ -12,7 +12,7 @@ java_binary(
         "//platform-service/modules/resource-group-service/src/main/resources:resource",
         "//platform-service/service/src/main/resources:resource",
     ],
-    visibility = ["//visibility:private"],
+    visibility = ["//platform-service/build:__subpackages__"],
     runtime_deps = [
         "//platform-service/modules/notification-service/src/main/resources",
         "//platform-service/modules/resource-group-service/src/main/resources",
@@ -773,8 +773,3 @@ java_library(
 run_tests()
 
 run_analysis()
-
-exports_files([
-    "keystore.jks",
-    "config.yml",
-])

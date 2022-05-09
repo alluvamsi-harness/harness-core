@@ -44,6 +44,7 @@ import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -145,7 +146,7 @@ public class FileStoreResource {
 
     validate(file);
 
-    return ResponseDTO.newResponse(fileStoreService.create(file, content, null));
+    return ResponseDTO.newResponse(fileStoreService.create(file, content));
   }
 
   @PUT
@@ -290,8 +291,9 @@ public class FileStoreResource {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
+    file.setDraft(true);
 
-    return ResponseDTO.newResponse(fileStoreService.create(file, null, true));
+    return ResponseDTO.newResponse(fileStoreService.create(file, null));
   }
 
   @PUT
@@ -316,6 +318,7 @@ public class FileStoreResource {
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
     file.setIdentifier(identifier);
+    file.setDraft(true);
 
     return ResponseDTO.newResponse(fileStoreService.update(file, null, identifier));
   }
@@ -423,7 +426,7 @@ public class FileStoreResource {
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of created by usernames")
       })
-  public ResponseDTO<Set<String>>
+  public ResponseDTO<Set<EmbeddedUserDetailsDTO>>
   getCreatedByList(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier) {

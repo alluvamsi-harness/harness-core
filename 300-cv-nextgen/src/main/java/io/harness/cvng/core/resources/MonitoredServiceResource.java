@@ -89,6 +89,17 @@ public class MonitoredServiceResource {
   public static final String DELETE_PERMISSION = "chi_monitoredservice_delete";
 
   @POST
+  @Path("/yaml")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "saves monitored service from yaml or template", nickname = "saveMonitoredServiceFromYaml")
+  @NGAccessControlClientCheck
+  public RestResponse<MonitoredServiceResponse> saveMonitoredServiceFromYaml(
+      @ApiParam(required = true) @NotNull @BeanParam ProjectParams projectParam, @NotNull @Valid @Body String yaml) {
+    return new RestResponse<>(monitoredServiceService.createFromYaml(projectParam, yaml));
+  }
+
+  @POST
   @Timed
   @ExceptionMetered
   @ApiOperation(value = "saves monitored service data", nickname = "saveMonitoredService")

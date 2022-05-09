@@ -24,6 +24,7 @@ import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.FindCommitResponse;
 import io.harness.product.ci.scm.proto.FindPRResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
@@ -147,7 +148,7 @@ public class ScmGitRefTask extends AbstractDelegateRunnableTask {
             .createBranchResponse(createBranchResponse.toByteArray())
             .build();
       }
-      case REPOSITORY: {
+      case REPOSITORY_LIST: {
         final GetUserReposResponse getUserReposResponse = scmDelegateClient.processScmRequest(c
             -> scmServiceClient.getUserRepos(scmGitRefTaskParams.getScmConnector(),
                 scmGitRefTaskParams.getPageRequest(), SCMGrpc.newBlockingStub(c)));
@@ -163,6 +164,14 @@ public class ScmGitRefTask extends AbstractDelegateRunnableTask {
         return ScmGitRefTaskResponseData.builder()
             .gitRefType(scmGitRefTaskParams.getGitRefType())
             .getListBranchesWithDefaultResponse(listBranchesWithDefaultResponse.toByteArray())
+            .build();
+      }
+      case REPOSITORY_DETAILS: {
+        final GetUserRepoResponse getUserRepoResponse = scmDelegateClient.processScmRequest(
+            c -> scmServiceClient.getRepoDetails(scmGitRefTaskParams.getScmConnector(), SCMGrpc.newBlockingStub(c)));
+        return ScmGitRefTaskResponseData.builder()
+            .gitRefType(scmGitRefTaskParams.getGitRefType())
+            .getUserRepoResponse(getUserRepoResponse.toByteArray())
             .build();
       }
       default:

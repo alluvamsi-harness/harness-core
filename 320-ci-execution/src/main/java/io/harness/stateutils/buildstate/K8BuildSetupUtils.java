@@ -10,6 +10,7 @@ package io.harness.stateutils.buildstate;
 import static io.harness.beans.serializer.RunTimeInputHandler.UNRESOLVED_PARAMETER;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveIntegerParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
+import static io.harness.beans.serializer.RunTimeInputHandler.resolveOSType;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
 import static io.harness.beans.sweepingoutputs.CISweepingOutputNames.CODE_BASE_CONNECTOR_REF;
 import static io.harness.beans.sweepingoutputs.ContainerPortDetails.PORT_DETAILS;
@@ -69,6 +70,7 @@ import io.harness.beans.sweepingoutputs.K8StageInfraDetails;
 import io.harness.beans.sweepingoutputs.PodCleanupDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.Capabilities;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.SecurityContext;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.Toleration;
@@ -198,6 +200,8 @@ public class K8BuildSetupUtils {
     List<PodToleration> podTolerations = getPodTolerations(k8sDirectInfraYaml.getSpec().getTolerations());
     String priorityClassName = k8sDirectInfraYaml.getSpec().getPriorityClassName().getValue();
     Boolean automountServiceAccountToken = k8sDirectInfraYaml.getSpec().getAutomountServiceAccountToken().getValue();
+    OSType os = resolveOSType(k8sDirectInfraYaml.getSpec().getOs());
+
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
 
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
@@ -205,7 +209,7 @@ public class K8BuildSetupUtils {
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
         podSetupInfo.getVolumes(), runtime, k8sDirectInfraYaml.getSpec().getNamespace().getValue(), ctrSecurityContext,
-        automountServiceAccountToken, priorityClassName);
+        automountServiceAccountToken, priorityClassName, os);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 
@@ -243,7 +247,7 @@ public class K8BuildSetupUtils {
 
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
-        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null);
+        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null, OSType.LINUX);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 
@@ -281,8 +285,8 @@ public class K8BuildSetupUtils {
       InitializeStepInfo initializeStepInfo, boolean usePVC, String logPrefix, Ambiance ambiance,
       Map<String, String> annotations, Map<String, String> labels, Integer stageRunAsUser, String serviceAccountName,
       Map<String, String> nodeSelector, List<PodToleration> podTolerations, List<PodVolume> podVolumes, String runtime,
-      String namespace, SecurityContext securityContext, Boolean automountServiceAccountToken,
-      String priorityClassName) {
+      String namespace, SecurityContext securityContext, Boolean automountServiceAccountToken, String priorityClassName,
+      OSType os) {
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
     ConnectorDetails harnessInternalImageConnector = null;
     if (isNotEmpty(ciExecutionServiceConfig.getDefaultInternalImageConnector())) {
@@ -300,7 +304,7 @@ public class K8BuildSetupUtils {
 
     CIK8ContainerParams setupAddOnContainerParams = internalContainerParamsProvider.getSetupAddonContainerParams(
         harnessInternalImageConnector, podSetupInfo.getVolumeToMountPath(), podSetupInfo.getWorkDirPath(),
-        getCtrSecurityContext(securityContext), ngAccess.getAccountIdentifier());
+        getCtrSecurityContext(securityContext), ngAccess.getAccountIdentifier(), os);
 
     // Service identifier usage in host alias requires that service identifier does not have capital letter characters
     // or _. For now, removing host alias usage otherwise pod creation itself fails.

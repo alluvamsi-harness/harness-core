@@ -9,6 +9,7 @@ package io.harness.ng.core.dto.filestore.node;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.filestore.NGFileType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -32,10 +33,11 @@ public abstract class FileStoreNodeDTO {
   @NotNull @Schema(description = "Name of the File Store Node") protected String name;
   @NotNull @Schema(description = "Type of the File Store Node") protected NGFileType type;
   @Schema(description = "Last modified time for the File Store Node") protected Long lastModifiedAt;
-  @Schema(description = "This is the user who last modified the File Store Node") protected String lastModifiedBy;
+  @Schema(description = "This is the user who last modified the File Store Node")
+  protected EmbeddedUserDetailsDTO lastModifiedBy;
 
   protected FileStoreNodeDTO(
-      NGFileType type, String identifier, String name, Long lastModifiedAt, String lastModifiedBy) {
+      NGFileType type, String identifier, String name, Long lastModifiedAt, EmbeddedUserDetailsDTO lastModifiedBy) {
     this.type = type;
     this.identifier = identifier;
     this.name = name;

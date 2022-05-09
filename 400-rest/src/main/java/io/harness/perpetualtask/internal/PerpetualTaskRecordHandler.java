@@ -184,6 +184,10 @@ public class PerpetualTaskRecordHandler implements PerpetualTaskCrudObserver {
         perpetualTaskService.updateTaskUnassignedReason(
             taskId, PerpetualTaskUnassignedReason.VALIDATION_TASK_FAILED, taskRecord.getAssignTryCount());
       }
+    } catch (Exception e) {
+      log.error("Unexpected error occurred during assigning perpetual task {}", taskRecord.getUuid(), e);
+      perpetualTaskService.updateTaskUnassignedReason(
+          taskRecord.getUuid(), PerpetualTaskUnassignedReason.VALIDATION_TASK_FAILED, taskRecord.getAssignTryCount());
     }
   }
 

@@ -18,7 +18,7 @@ import static java.lang.String.format;
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.exception.UnexpectedException;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
@@ -79,26 +79,25 @@ public class FileReferenceServiceImpl implements FileReferenceService {
   }
 
   @Override
-  public Long validateIsReferencedBy(NGFile fileOrFolder) {
+  public void validateReferenceByAndThrow(NGFile fileOrFolder) {
     Long count = countEntitiesReferencingFile(fileOrFolder);
     if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
-      count += anyFileInFolderHasReferences(fileOrFolder);
+      count += countEntitiesReferencingFolder(fileOrFolder);
       if (count > 0L) {
-        throw new InvalidArgumentsException(format(
+        throw new ReferencedEntityException(format(
             "Folder [%s], or its subfolders, contain file(s) referenced by %s other entities and can not be deleted.",
             fileOrFolder.getIdentifier(), count));
       }
     } else {
       if (count > 0L) {
-        throw new InvalidArgumentsException(
+        throw new ReferencedEntityException(
             format("File [%s] is referenced by %s other entities and can not be deleted.", fileOrFolder.getIdentifier(),
                 count));
       }
     }
-    return count;
   }
 
-  private long anyFileInFolderHasReferences(NGFile folder) {
+  private long countEntitiesReferencingFolder(NGFile folder) {
     List<NGFile> childrenFiles = listFilesByParent(folder);
     if (isEmpty(childrenFiles)) {
       return 0L;
@@ -106,7 +105,7 @@ public class FileReferenceServiceImpl implements FileReferenceService {
     return childrenFiles.stream()
         .filter(Objects::nonNull)
         .map(this::countEntitiesReferencingFile)
-        .reduce((i, j) -> i + j)
+        .reduce(Long::sum)
         .orElse(0L);
   }
 

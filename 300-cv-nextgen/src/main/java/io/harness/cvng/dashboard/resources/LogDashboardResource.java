@@ -9,13 +9,16 @@ package io.harness.cvng.dashboard.resources;
 
 import io.harness.annotations.ExposeInternalException;
 import io.harness.cvng.analysis.beans.LiveMonitoringLogAnalysisClusterDTO;
+import io.harness.cvng.analysis.beans.LiveMonitoringLogAnalysisRadarChartClusterDTO;
 import io.harness.cvng.analysis.entities.LogAnalysisResult.LogAnalysisTag;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.LiveMonitoringLogAnalysisFilter;
+import io.harness.cvng.core.beans.params.filterParams.MonitoredServiceLogAnalysisFilter;
 import io.harness.cvng.dashboard.beans.AnalyzedLogDataDTO;
+import io.harness.cvng.dashboard.beans.AnalyzedRadarChartLogDataDTO;
 import io.harness.cvng.dashboard.services.api.LogDashboardService;
 import io.harness.ng.beans.PageResponse;
 import io.harness.rest.RestResponse;
@@ -105,5 +108,47 @@ public class LogDashboardResource {
 
     return new RestResponse<>(logDashboardService.getLogAnalysisClusters(
         serviceEnvironmentParams, timeRangeParams, liveMonitoringLogAnalysisFilter));
+  }
+
+  @GET
+  @Path("/logs-radar-chart-cluster")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(
+      value = "get all log cluster data for a time range and filters", nickname = "getAllRadarChartLogsClusterData")
+  public RestResponse<List<LiveMonitoringLogAnalysisRadarChartClusterDTO>>
+  getLogsRadarChartClusterData(@NotNull @BeanParam ProjectParams projectParams,
+      @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
+      @BeanParam MonitoredServiceLogAnalysisFilter monitoredServiceLogAnalysisFilter) {
+    MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
+                                                        .accountIdentifier(projectParams.getAccountIdentifier())
+                                                        .orgIdentifier(projectParams.getOrgIdentifier())
+                                                        .projectIdentifier(projectParams.getProjectIdentifier())
+                                                        .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                        .build();
+
+    return new RestResponse<>(logDashboardService.getLogAnalysisRadarChartClusters(
+        monitoredServiceParams, monitoredServiceLogAnalysisFilter));
+  }
+
+  @GET
+  @Path("/logs-radar-chart-data")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get all log data for a time range and filters", nickname = "getAllRadarChartLogsData")
+  public RestResponse<PageResponse<AnalyzedRadarChartLogDataDTO>> getAllLogsRadarChartData(
+      @NotNull @BeanParam ProjectParams projectParams,
+      @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
+      @BeanParam MonitoredServiceLogAnalysisFilter monitoredServiceLogAnalysisFilter,
+      @BeanParam PageParams pageParams) {
+    MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
+                                                        .accountIdentifier(projectParams.getAccountIdentifier())
+                                                        .orgIdentifier(projectParams.getOrgIdentifier())
+                                                        .projectIdentifier(projectParams.getProjectIdentifier())
+                                                        .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                        .build();
+
+    return new RestResponse<>(logDashboardService.getAllRadarChartLogsData(
+        monitoredServiceParams, monitoredServiceLogAnalysisFilter, pageParams));
   }
 }

@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VariableResponseDTO {
   @NotNull VariableDTO variable;
-  Long createdAt;
-  Long lastModifiedAt;
+  @Schema(description = VariableConstants.CREATED_AT) Long createdAt;
+  @Schema(description = VariableConstants.LAST_MODIFIED_AT) Long lastModifiedAt;
 }

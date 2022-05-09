@@ -8,9 +8,11 @@
 package io.harness.ng.core.service.mappers;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.ng.core.mapper.TagMapper.convertToMap;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
@@ -32,6 +34,15 @@ public class NGServiceEntityMapper {
   }
 
   public NGServiceConfig toNGServiceConfig(ServiceEntity serviceEntity) {
+    ServiceDefinition sDef = null;
+    if (isNotEmpty(serviceEntity.getYaml())) {
+      try {
+        final NGServiceConfig config = YamlPipelineUtils.read(serviceEntity.getYaml(), NGServiceConfig.class);
+        sDef = config.getNgServiceV2InfoConfig().getServiceDefinition();
+      } catch (IOException e) {
+        throw new InvalidRequestException("Cannot create service ng service config due to " + e.getMessage());
+      }
+    }
     return NGServiceConfig.builder()
         .ngServiceV2InfoConfig(NGServiceV2InfoConfig.builder()
                                    .name(serviceEntity.getName())
@@ -40,6 +51,7 @@ public class NGServiceEntityMapper {
                                    .projectIdentifier(serviceEntity.getProjectIdentifier())
                                    .description(serviceEntity.getDescription())
                                    .tags(convertToMap(serviceEntity.getTags()))
+                                   .serviceDefinition(sDef)
                                    .build())
         .build();
   }

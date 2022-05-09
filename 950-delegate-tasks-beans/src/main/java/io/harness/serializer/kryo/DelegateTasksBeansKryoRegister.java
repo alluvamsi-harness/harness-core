@@ -60,6 +60,7 @@ import io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceConnect
 import io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceSettingConstants;
 import io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceSettingDTO;
 import io.harness.delegate.beans.azure.registry.AzureRegistryType;
+import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
@@ -1321,5 +1322,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServerlessInstallationCapability.class, 563530);
     kryo.register(ArtifactoryBaseArtifactDelegateRequest.class, 563531);
     kryo.register(AzureK8sInfraDelegateConfig.class, 563532);
+    kryo.register(AzureAcrTokenTaskResponse.class, 563533);
   }
 }

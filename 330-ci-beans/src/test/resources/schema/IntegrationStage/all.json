@@ -2511,6 +2511,23 @@
             }
           ]
         },
+        "os": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "Linux",
+                "Osx",
+                "Windows"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
+        },
         "priorityClassName": {
           "type": "string"
         },

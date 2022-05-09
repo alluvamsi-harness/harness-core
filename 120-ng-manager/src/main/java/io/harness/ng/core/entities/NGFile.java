@@ -10,6 +10,7 @@ package io.harness.ng.core.entities;
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.ChecksumType;
 import io.harness.mongo.CollationLocale;
@@ -23,7 +24,9 @@ import io.harness.ng.core.NGProjectAccess;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.filestore.FileUsage;
 import io.harness.ng.core.filestore.NGFileType;
+import io.harness.persistence.CreatedByAware;
 import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.UpdatedByAware;
 import io.harness.persistence.UuidAware;
 
 import com.google.common.collect.ImmutableList;
@@ -57,12 +60,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("ngFiles")
 @HarnessEntity(exportable = true)
 @OwnedBy(HarnessTeam.CDP)
-public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
+public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess,
+                               CreatedByAware, UpdatedByAware {
   @org.springframework.data.annotation.Id @Id String uuid;
   @CreatedDate private Long createdAt;
   @LastModifiedDate private Long lastModifiedAt;
-  @CreatedBy private String createdBy;
-  @LastModifiedBy private String lastModifiedBy;
+  @CreatedBy private EmbeddedUser createdBy;
+  @LastModifiedBy private EmbeddedUser lastUpdatedBy;
 
   @NotEmpty String accountIdentifier;
   @EntityIdentifier(allowBlank = true) String orgIdentifier;

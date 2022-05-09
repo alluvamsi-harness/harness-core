@@ -740,6 +740,18 @@ public class ScmServiceClientImpl implements ScmServiceClient {
         GetUserReposRequest.newBuilder()
             .setPagination(PageRequest.newBuilder().setPage(pageRequest.getPageIndex() + 1).build())
             .setProvider(gitProvider)
+            .setFetchAllRepos(false)
+            .build());
+  }
+
+  @Override
+  public GetUserReposResponse getAllUserRepos(ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+    Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
+    return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::getUserRepos,
+        GetUserReposRequest.newBuilder()
+            .setPagination(PageRequest.newBuilder().build())
+            .setProvider(gitProvider)
+            .setFetchAllRepos(true)
             .build());
   }
 

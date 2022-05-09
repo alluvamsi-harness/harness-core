@@ -13,6 +13,7 @@ shared_dependencies = [
     "//440-connector-nextgen:module",
     "//878-ng-common-utilities:module",
     "//879-pms-sdk:module",
+    "//930-ng-core-clients:module",
     "//950-wait-engine:module",
     "//clients/notification:module",
     "//940-primary-version-manager:module",

@@ -53,6 +53,7 @@ import io.harness.pms.pipeline.service.PMSPipelineServiceHelper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.pipeline.service.PMSYamlSchemaService;
 import io.harness.pms.pipeline.service.PipelineEnforcementService;
+import io.harness.pms.pipeline.service.PipelineMetadataService;
 import io.harness.pms.plan.creation.PlanCreatorMergeService;
 import io.harness.pms.plan.execution.beans.ExecArgs;
 import io.harness.pms.rbac.validator.PipelineRbacService;
@@ -82,6 +83,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class ExecutionHelperTest extends CategoryTest {
   @InjectMocks ExecutionHelper executionHelper;
   @Mock PMSPipelineService pmsPipelineService;
+  @Mock PipelineMetadataService pipelineMetadataService;
   @Mock PMSPipelineServiceHelper pmsPipelineServiceHelper;
   @Mock TriggeredByHelper triggeredByHelper;
   @Mock PlanExecutionService planExecutionService;
@@ -176,7 +178,6 @@ public class ExecutionHelperTest extends CategoryTest {
         ExecutionTriggerInfo.newBuilder().setTriggeredBy(triggeredBy).setTriggerType(MANUAL).setIsRerun(false).build();
     executionPrincipalInfo = ExecutionPrincipalInfo.newBuilder().build();
     doNothing().when(pipelineEnforcementService).validateExecutionEnforcementsBasedOnStage(anyString(), any());
-    doReturn(394).when(pmsPipelineService).incrementRunSequence(accountId, orgId, projectId, pipelineId, false);
   }
 
   @Test
@@ -385,7 +386,7 @@ public class ExecutionHelperTest extends CategoryTest {
     when(UUIDGenerator.generateUuid()).thenReturn(generatedExecutionId);
 
     doReturn(executionPrincipalInfo).when(principalInfoHelper).getPrincipalInfoFromSecurityContext();
-    doReturn(394).when(pmsPipelineService).incrementRunSequence(any());
+    doReturn(394).when(pipelineMetadataService).incrementRunSequence(any());
     doReturn(null).when(pmsGitSyncHelper).getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     doNothing().when(pmsYamlSchemaService).validateYamlSchema(accountId, orgId, projectId, mergedPipelineYaml);
     doNothing()

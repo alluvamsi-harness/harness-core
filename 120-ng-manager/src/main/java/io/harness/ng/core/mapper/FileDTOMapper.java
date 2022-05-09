@@ -8,6 +8,7 @@
 package io.harness.ng.core.mapper;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.ng.core.mapper.EmbeddedUserDTOMapper.fromEmbeddedUser;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
@@ -21,7 +22,7 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(CDP)
 @UtilityClass
 public class FileDTOMapper {
-  public NGFile getNGFileFromDTO(FileDTO fileDto, Boolean draft) {
+  public NGFile getNGFileFromDTO(FileDTO fileDto) {
     if (fileDto.isFolder()) {
       return NGFile.builder()
           .accountIdentifier(fileDto.getAccountIdentifier())
@@ -31,7 +32,6 @@ public class FileDTOMapper {
           .parentIdentifier(fileDto.getParentIdentifier())
           .name(fileDto.getName())
           .type(fileDto.getType())
-          .createdBy(fileDto.getCreatedBy())
           .build();
     }
 
@@ -47,8 +47,7 @@ public class FileDTOMapper {
         .description(fileDto.getDescription())
         .tags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList())
         .mimeType(fileDto.getMimeType())
-        .draft(draft)
-        .createdBy(fileDto.getCreatedBy())
+        .draft(fileDto.getDraft())
         .build();
   }
 
@@ -62,7 +61,8 @@ public class FileDTOMapper {
           .name(ngFile.getName())
           .type(ngFile.getType())
           .parentIdentifier(ngFile.getParentIdentifier())
-          .createdBy(ngFile.getCreatedBy())
+          .createdBy(fromEmbeddedUser(ngFile.getCreatedBy()))
+          .lastUpdatedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
           .build();
     }
 
@@ -79,7 +79,8 @@ public class FileDTOMapper {
         .tags(ngFile.getTags())
         .mimeType(ngFile.getMimeType())
         .draft(ngFile.getDraft())
-        .createdBy(ngFile.getCreatedBy())
+        .createdBy(fromEmbeddedUser(ngFile.getCreatedBy()))
+        .lastUpdatedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
         .build();
   }
 
@@ -88,7 +89,6 @@ public class FileDTOMapper {
       file.setType(fileDto.getType());
       file.setParentIdentifier(fileDto.getParentIdentifier());
       file.setName(fileDto.getName());
-      file.setCreatedBy(fileDto.getCreatedBy());
       return file;
     }
 
@@ -100,7 +100,6 @@ public class FileDTOMapper {
     file.setName(fileDto.getName());
     file.setMimeType(fileDto.getMimeType());
     file.setDraft(fileDto.getDraft());
-    file.setCreatedBy(fileDto.getCreatedBy());
     return file;
   }
 

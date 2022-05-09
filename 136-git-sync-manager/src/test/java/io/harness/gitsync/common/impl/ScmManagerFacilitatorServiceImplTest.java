@@ -41,6 +41,7 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
@@ -230,5 +231,19 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
     assertThat(listBranchesWithDefaultResponse.getBranchesCount()).isEqualTo(1);
     assertThat(listBranchesWithDefaultResponse.getDefaultBranch()).isEqualTo(defaultBranch);
     assertThat(listBranchesWithDefaultResponse.getBranchesList().get(0)).isEqualTo(branch);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testGetRepoDetails() {
+    when(scmClient.getRepoDetails(any()))
+        .thenReturn(GetUserRepoResponse.newBuilder()
+                        .setRepo(Repository.newBuilder().setBranch(defaultBranch).setName(repoName).build())
+                        .build());
+    final GetUserRepoResponse getUserRepoResponse = scmManagerFacilitatorService.getRepoDetails(
+        accountIdentifier, orgIdentifier, projectIdentifier, (ScmConnector) connectorInfo.getConnectorConfig());
+    assertThat(getUserRepoResponse.getRepo().getName()).isEqualTo(repoName);
+    assertThat(getUserRepoResponse.getRepo().getBranch()).isEqualTo(defaultBranch);
   }
 }

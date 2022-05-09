@@ -157,7 +157,7 @@ public class ScmGitProviderMapper {
 
   private GitlabProvider createGitLabProvider(GitlabConnectorDTO gitlabConnector) {
     String accessToken = getAccessToken(gitlabConnector);
-    return GitlabProvider.newBuilder().setPersonalToken(accessToken).build();
+    return GitlabProvider.newBuilder().setAccessToken(accessToken).build();
   }
 
   private String getAccessToken(GitlabConnectorDTO gitlabConnector) {

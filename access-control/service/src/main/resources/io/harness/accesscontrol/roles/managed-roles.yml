@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: rolesConfiguration
-version: 22
+version: 23
 roles:
     - identifier: _project_admin
       name: Project Admin
@@ -109,6 +109,9 @@ roles:
         - core_file_edit
         - core_file_delete
         - core_file_access
+        - core_variable_view
+        - core_variable_edit
+        - core_variable_delete
       allowedScopeLevels:
         - project
       managed: true
@@ -148,6 +151,7 @@ roles:
         - gitops_gpgkey_view
         - gitops_cert_view
         - core_file_view
+        - core_variable_view
       allowedScopeLevels:
         - project
       managed: true
@@ -264,6 +268,9 @@ roles:
         - core_file_edit
         - core_file_delete
         - core_file_access
+        - core_variable_view
+        - core_variable_edit
+        - core_variable_delete
       allowedScopeLevels:
         - organization
       managed: true
@@ -305,6 +312,7 @@ roles:
         - gitops_gpgkey_view
         - gitops_cert_view
         - core_file_view
+        - core_variable_view
       allowedScopeLevels:
         - organization
       managed: true
@@ -428,6 +436,9 @@ roles:
         - core_file_edit
         - core_file_delete
         - core_file_access
+        - core_variable_view
+        - core_variable_edit
+        - core_variable_delete
       allowedScopeLevels:
         - account
       managed: true
@@ -472,6 +483,7 @@ roles:
         - gitops_gpgkey_view
         - gitops_cert_view
         - core_file_view
+        - core_variable_view
       allowedScopeLevels:
         - account
       managed: true
@@ -498,6 +510,7 @@ roles:
         - core_resourcegroup_view
         - core_file_view
         - core_file_access
+        - core_variable_view
       allowedScopeLevels:
         - project
       managed: true

@@ -39,6 +39,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.beans.SearchPageParams;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
@@ -291,12 +292,12 @@ public class FileStoreResourceTest extends CategoryTest {
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
   public void testListCreatedByUserNames() {
-    doNothing().when(accessControlClient).checkForAccessOrThrow(any(), any(), eq(FILE_VIEW_PERMISSION));
     when(fileStoreService.getCreatedByList(any(), any(), any()))
-        .thenReturn(Sets.newHashSet("test@test.com", "test1@test.com"));
+        .thenReturn(Sets.newHashSet(new EmbeddedUserDetailsDTO("test", "test@test.com"),
+            new EmbeddedUserDetailsDTO("test1", "test1@test.com")));
 
-    ResponseDTO<Set<String>> response = fileStoreResource.getCreatedByList(ACCOUNT, ORG, PROJECT);
-    Set<String> returnedList = response.getData();
+    ResponseDTO<Set<EmbeddedUserDetailsDTO>> response = fileStoreResource.getCreatedByList(ACCOUNT, ORG, PROJECT);
+    Set<EmbeddedUserDetailsDTO> returnedList = response.getData();
 
     assertThat(returnedList).isNotNull();
     assertThat(returnedList.isEmpty()).isFalse();

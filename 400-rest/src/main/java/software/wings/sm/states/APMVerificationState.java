@@ -28,17 +28,15 @@ import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.FeatureName;
 import io.harness.delegate.beans.TaskData;
-import io.harness.eraro.ErrorCode;
-import io.harness.exception.VerificationOperationException;
 import io.harness.exception.WingsException;
 
 import software.wings.beans.APMVerificationConfig;
+import software.wings.beans.ApmMetricCollectionInfo;
+import software.wings.beans.ApmResponseMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.beans.apm.Method;
-import software.wings.beans.apm.ResponseType;
 import software.wings.delegatetasks.DelegateStateType;
-import software.wings.metrics.MetricType;
 import software.wings.metrics.TimeSeriesMetricDefinition;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
 import software.wings.service.impl.analysis.AnalysisContext;
@@ -54,13 +52,10 @@ import software.wings.sm.StateType;
 import software.wings.stencils.DefaultValue;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.reinert.jjschema.Attributes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,10 +67,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -92,13 +83,13 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
 
   @Attributes(required = true, title = "APM Server") private String analysisServerConfigId;
 
-  private List<MetricCollectionInfo> metricCollectionInfos;
+  private List<ApmMetricCollectionInfo> metricCollectionInfos;
 
-  public void setMetricCollectionInfos(List<MetricCollectionInfo> metricCollectionInfos) {
+  public void setMetricCollectionInfos(List<ApmMetricCollectionInfo> metricCollectionInfos) {
     this.metricCollectionInfos = metricCollectionInfos;
   }
 
-  public List<MetricCollectionInfo> getMetricCollectionInfos() {
+  public List<ApmMetricCollectionInfo> getMetricCollectionInfos() {
     return this.metricCollectionInfos;
   }
 
@@ -209,7 +200,7 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
 
     boolean isHistorical = true;
     if (isNotEmpty(metricCollectionInfos)) {
-      for (MetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
+      for (ApmMetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
         if ((isNotEmpty(metricCollectionInfo.getCollectionUrl())
                 && metricCollectionInfo.getCollectionUrl().contains(VERIFICATION_HOST_PLACEHOLDER))
             || (isNotEmpty(metricCollectionInfo.getCollectionBody())
@@ -281,7 +272,7 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
         return;
       }
 
-      ResponseMapping mapping = metricCollectionInfo.getResponseMapping();
+      ApmResponseMapping mapping = metricCollectionInfo.getResponseMapping();
 
       if (isEmpty(mapping.getMetricValueJsonPath())) {
         invalidFields.put("metricValueJsonPath/timestampJsonPath",
@@ -458,9 +449,9 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
   }
 
   public static Map<String, List<APMMetricInfo>> buildMetricInfoMap(
-      List<MetricCollectionInfo> metricCollectionInfos, Optional<ExecutionContext> context) {
+      List<ApmMetricCollectionInfo> metricCollectionInfos, Optional<ExecutionContext> context) {
     Map<String, List<APMMetricInfo>> metricInfoMap = new HashMap<>();
-    for (MetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
+    for (ApmMetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
       String evaluatedUrl = context != null && context.isPresent()
           ? context.get().renderExpression(metricCollectionInfo.getCollectionUrl())
           : metricCollectionInfo.getCollectionUrl();
@@ -496,9 +487,9 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
     return metricInfoMap;
   }
 
-  private static ResponseMapping evaluateResponseMappingForExpressions(
-      ExecutionContext context, ResponseMapping responseMapping) {
-    return ResponseMapping.builder()
+  private static ApmResponseMapping evaluateResponseMappingForExpressions(
+      ExecutionContext context, ApmResponseMapping responseMapping) {
+    return ApmResponseMapping.builder()
         .txnNameJsonPath(renderExpressionIfNotEmpty(context, responseMapping.getTxnNameJsonPath()))
         .hostJsonPath(renderExpressionIfNotEmpty(context, responseMapping.getHostJsonPath()))
         .metricValueJsonPath(renderExpressionIfNotEmpty(context, responseMapping.getMetricValueJsonPath()))
@@ -518,9 +509,9 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
   }
 
   public static List<APMMetricInfo> buildMetricInfoList(
-      List<MetricCollectionInfo> metricCollectionInfos, Optional<ExecutionContext> context) {
+      List<ApmMetricCollectionInfo> metricCollectionInfos, Optional<ExecutionContext> context) {
     List<APMMetricInfo> metricInfoList = new ArrayList<>();
-    for (MetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
+    for (ApmMetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
       String evaluatedUrl = context != null && context.isPresent()
           ? context.get().renderExpression(metricCollectionInfo.getCollectionUrl())
           : metricCollectionInfo.getCollectionUrl();
@@ -553,7 +544,7 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
     }
 
     List<APMMetricInfo> metricInfos = new ArrayList<>();
-    for (MetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
+    for (ApmMetricCollectionInfo metricCollectionInfo : metricCollectionInfos) {
       final String collectionUrl = metricCollectionInfo.getCollectionUrl();
       if (collectionUrl != null && collectionUrl.contains("\n") && collectionUrl.split("\n").length == 2) {
         final String[] canaryCollectionUrls = collectionUrl.split("\n");
@@ -598,8 +589,8 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
     return metricInfos;
   }
 
-  private static Map<String, ResponseMapper> getResponseMappers(MetricCollectionInfo metricCollectionInfo) {
-    ResponseMapping responseMapping = metricCollectionInfo.getResponseMapping();
+  private static Map<String, ResponseMapper> getResponseMappers(ApmMetricCollectionInfo metricCollectionInfo) {
+    ApmResponseMapping responseMapping = metricCollectionInfo.getResponseMapping();
     Map<String, ResponseMapper> responseMappers = new HashMap<>();
     List<String> txnRegex =
         responseMapping.getTxnNameRegex() == null ? null : Lists.newArrayList(responseMapping.getTxnNameRegex());
@@ -633,58 +624,5 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
         ResponseMapper.builder().fieldName("value").jsonPath(responseMapping.getMetricValueJsonPath()).build());
 
     return responseMappers;
-  }
-
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class MetricCollectionInfo {
-    private String metricName;
-    private MetricType metricType;
-    private String tag;
-    private String collectionUrl;
-    private String baselineCollectionUrl;
-    private String collectionBody;
-    private ResponseType responseType;
-    private ResponseMapping responseMapping;
-    private Method method;
-
-    public String getCollectionUrl() {
-      try {
-        return collectionUrl == null ? collectionUrl : collectionUrl.replaceAll("`", URLEncoder.encode("`", "UTF-8"));
-      } catch (UnsupportedEncodingException e) {
-        throw new VerificationOperationException(ErrorCode.APM_CONFIGURATION_ERROR,
-            "Unsupported encoding exception while encoding backticks in " + collectionUrl);
-      }
-    }
-
-    public String getBaselineCollectionUrl() {
-      if (isEmpty(baselineCollectionUrl)) {
-        return null;
-      }
-      try {
-        return baselineCollectionUrl.replaceAll("`", URLEncoder.encode("`", "UTF-8"));
-      } catch (UnsupportedEncodingException e) {
-        throw new VerificationOperationException(ErrorCode.APM_CONFIGURATION_ERROR,
-            "Unsupported encoding exception while encoding backticks in " + baselineCollectionUrl);
-      }
-    }
-  }
-
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class ResponseMapping {
-    private String txnNameFieldValue;
-    private String txnNameJsonPath;
-    private String txnNameRegex;
-    private String metricValueJsonPath;
-    private String hostJsonPath;
-    private String hostRegex;
-    private String timestampJsonPath;
-    private String timeStampFormat;
   }
 }

@@ -36,6 +36,7 @@ import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO.S
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources.HealthSourceSummary;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceYamlDTO;
 import io.harness.cvng.core.beans.monitoredService.RiskData;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricHealthSourceSpec;
@@ -59,6 +60,8 @@ import io.harness.cvng.core.services.api.monitoredService.ChangeSourceService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.core.services.api.monitoredService.ServiceDependencyService;
+import io.harness.cvng.core.utils.template.MonitoredServiceYamlExpressionEvaluator;
+import io.harness.cvng.core.utils.template.TemplateFacade;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
 import io.harness.cvng.dashboard.services.api.LogDashboardService;
 import io.harness.cvng.dashboard.services.api.TimeSeriesDashboardService;
@@ -71,6 +74,7 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.mapper.TagMapper;
 import io.harness.persistence.HPersistence;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.utils.PageUtils;
 
 import com.google.common.base.Preconditions;
@@ -98,6 +102,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.NotFoundException;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -137,6 +142,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private CVNGLogService cvngLogService;
   @Inject private NotificationRuleService notificationRuleService;
+  @Inject private TemplateFacade templateFacade;
 
   @Override
   public MonitoredServiceResponse create(String accountId, MonitoredServiceDTO monitoredServiceDTO) {
@@ -179,6 +185,20 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         "Saved monitored service with identifier {} for account {}", monitoredServiceDTO.getIdentifier(), accountId);
     setupUsageEventService.sendCreateEventsForMonitoredService(environmentParams, monitoredServiceDTO);
     return get(environmentParams, monitoredServiceDTO.getIdentifier());
+  }
+
+  @Override
+  @SneakyThrows
+  public MonitoredServiceResponse createFromYaml(ProjectParams projectParams, String yaml) {
+    String templateResolvedYaml = templateFacade.resolveYaml(projectParams, yaml);
+    MonitoredServiceYamlExpressionEvaluator yamlExpressionEvaluator =
+        new MonitoredServiceYamlExpressionEvaluator(templateResolvedYaml);
+    MonitoredServiceDTO monitoredServiceDTO =
+        YamlUtils.read(templateResolvedYaml, MonitoredServiceYamlDTO.class).getMonitoredServiceDTO();
+    monitoredServiceDTO = (MonitoredServiceDTO) yamlExpressionEvaluator.resolve(monitoredServiceDTO, false);
+    monitoredServiceDTO.setProjectIdentifier(projectParams.getProjectIdentifier());
+    monitoredServiceDTO.setOrgIdentifier(projectParams.getOrgIdentifier());
+    return create(projectParams.getAccountIdentifier(), monitoredServiceDTO);
   }
 
   private void validateDependencyMetadata(ProjectParams projectParams, Set<ServiceDependencyDTO> dependencyDTOs) {

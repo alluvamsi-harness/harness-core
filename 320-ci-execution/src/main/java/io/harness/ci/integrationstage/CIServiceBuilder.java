@@ -27,6 +27,7 @@ import io.harness.beans.quantity.unit.DecimalQuantityUnit;
 import io.harness.beans.quantity.unit.StorageQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.utils.QuantityUtils;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
@@ -46,8 +47,8 @@ import java.util.Map;
 @OwnedBy(HarnessTeam.CI)
 public class CIServiceBuilder {
   private static final String SEPARATOR = ",";
-  public static List<ContainerDefinitionInfo> createServicesContainerDefinition(
-      StageElementConfig stageElementConfig, PortFinder portFinder, CIExecutionServiceConfig ciExecutionServiceConfig) {
+  public static List<ContainerDefinitionInfo> createServicesContainerDefinition(StageElementConfig stageElementConfig,
+      PortFinder portFinder, CIExecutionServiceConfig ciExecutionServiceConfig, OSType os) {
     List<ContainerDefinitionInfo> containerDefinitionInfos = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
     if (integrationStage.getServiceDependencies() == null
@@ -64,7 +65,7 @@ public class CIServiceBuilder {
       if (dependencyElement.getDependencySpecType() instanceof CIServiceInfo) {
         ContainerDefinitionInfo containerDefinitionInfo =
             createServiceContainerDefinition((CIServiceInfo) dependencyElement.getDependencySpecType(), portFinder,
-                serviceIdx, ciExecutionServiceConfig, stageElementConfig.getIdentifier());
+                serviceIdx, ciExecutionServiceConfig, stageElementConfig.getIdentifier(), os);
         if (containerDefinitionInfo != null) {
           containerDefinitionInfos.add(containerDefinitionInfo);
         }
@@ -75,7 +76,7 @@ public class CIServiceBuilder {
   }
 
   private static ContainerDefinitionInfo createServiceContainerDefinition(CIServiceInfo service, PortFinder portFinder,
-      int serviceIdx, CIExecutionServiceConfig ciExecutionServiceConfig, String identifier) {
+      int serviceIdx, CIExecutionServiceConfig ciExecutionServiceConfig, String identifier, OSType os) {
     Integer port = portFinder.getNextPort();
     service.setGrpcPort(port);
 
@@ -116,7 +117,7 @@ public class CIServiceBuilder {
 
     return ContainerDefinitionInfo.builder()
         .name(containerName)
-        .commands(ServiceContainerUtils.getCommand())
+        .commands(ServiceContainerUtils.getCommand(os))
         .args(ServiceContainerUtils.getArguments(service.getIdentifier(), image, port))
         .envVars(envVariables)
         .containerImageDetails(ContainerImageDetails.builder()

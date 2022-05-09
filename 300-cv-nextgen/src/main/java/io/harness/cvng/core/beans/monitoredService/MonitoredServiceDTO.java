@@ -14,7 +14,6 @@ import io.harness.cvng.core.beans.dependency.ServiceDependencyMetadata;
 import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.NGEntityName;
-import io.harness.gitsync.beans.YamlDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
@@ -36,7 +35,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MonitoredServiceDTO implements YamlDTO {
+public class MonitoredServiceDTO {
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String orgIdentifier;
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String projectIdentifier;
   @ApiModelProperty(required = true) @NotNull String identifier;

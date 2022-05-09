@@ -197,4 +197,9 @@ public class SCMServiceGitClientImpl implements ScmClient {
   public GetUserRepoResponse getRepoDetails(ScmConnector scmConnector) {
     return scmServiceClient.getRepoDetails(scmConnector, scmBlockingStub);
   }
+
+  @Override
+  public GetUserReposResponse getAllUserRepos(ScmConnector scmConnector) {
+    return scmServiceClient.getAllUserRepos(scmConnector, scmBlockingStub);
+  }
 }

@@ -12,6 +12,7 @@ java_library(
         "//930-delegate-tasks/src/main/proto/io/harness:930_delegate_tasks_java_proto",
     ],
     resources = [
+        "//930-delegate-tasks/src/main/resources:resource",
     ],
     visibility = ["//visibility:public"],
     deps = [

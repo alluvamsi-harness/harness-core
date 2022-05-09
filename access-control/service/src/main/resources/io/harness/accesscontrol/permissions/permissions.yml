@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: permissionsConfiguration
-version: 22
+version: 23
 permissions:
   - identifier: core_project_delete
     name: Delete Project
@@ -883,6 +883,30 @@ permissions:
       - project
   - identifier: core_file_access
     name: Access a File
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: core_variable_view
+    name: View a Variable
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: core_variable_edit
+    name: Edit a Variable
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: core_variable_delete
+    name: Delete a Variable
     status: ACTIVE
     includeInAllRoles: false
     allowedScopeLevels:

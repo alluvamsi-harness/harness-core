@@ -54,6 +54,7 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.invites.spring.InviteRepository;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
+import io.harness.telemetry.TelemetryReporter;
 import io.harness.user.remote.UserClient;
 
 import com.auth0.jwt.interfaces.Claim;
@@ -92,6 +93,7 @@ public class InviteServiceImplTest extends CategoryTest {
   @Mock private OutboxService outboxService;
   @Mock private UserGroupService userGroupService;
   @Mock private AccountOrgProjectHelper accountOrgProjectHelper;
+  @Mock private TelemetryReporter telemetryReporter;
 
   private InviteService inviteService;
 
@@ -101,7 +103,7 @@ public class InviteServiceImplTest extends CategoryTest {
     MongoConfig mongoConfig = MongoConfig.builder().uri("mongodb://localhost:27017/ng-harness").build();
     inviteService = new InviteServiceImpl(USER_VERIFICATION_SECRET, mongoConfig, jwtGeneratorUtils, ngUserService,
         transactionTemplate, inviteRepository, notificationClient, accountClient, outboxService, accessControlClient,
-        userClient, accountOrgProjectHelper, false);
+        userClient, accountOrgProjectHelper, false, telemetryReporter);
 
     when(accountClient.getAccountDTO(any()).execute())
         .thenReturn(Response.success(new RestResponse(AccountDTO.builder()

@@ -41,13 +41,11 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
-import io.harness.pms.pipeline.PipelineMetadataV2;
 import io.harness.pms.pipeline.StepCategory;
 import io.harness.pms.pipeline.StepPalleteFilterWrapper;
 import io.harness.pms.pipeline.StepPalleteInfo;
 import io.harness.pms.pipeline.StepPalleteModuleInfo;
 import io.harness.pms.sdk.PmsSdkInstanceService;
-import io.harness.pms.variables.VariableCreatorMergeService;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.repositories.pipeline.PMSPipelineRepository;
 import io.harness.telemetry.TelemetryReporter;
@@ -75,13 +73,11 @@ import org.springframework.data.mongodb.core.query.Update;
 public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Inject private PMSPipelineRepository pmsPipelineRepository;
   @Inject private PmsSdkInstanceService pmsSdkInstanceService;
-  @Inject private VariableCreatorMergeService variableCreatorMergeService;
   @Inject private PMSPipelineServiceHelper pmsPipelineServiceHelper;
   @Inject private PMSPipelineServiceStepHelper pmsPipelineServiceStepHelper;
   @Inject private GitSyncSdkService gitSyncSdkService;
   @Inject private CommonStepInfo commonStepInfo;
   @Inject private TelemetryReporter telemetryReporter;
-  @Inject private PipelineMetadataService pipelineMetadataService;
   public static String PIPELINE_SAVE = "pipeline_save";
   public static String PIPELINE_SAVE_ACTION_TYPE = "action";
   public static String CREATING_PIPELINE = "creating new pipeline";
@@ -236,39 +232,6 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     Update update = new Update();
     update.set(PipelineEntityKeys.executionSummaryInfo, executionSummaryInfo);
     updatePipelineMetadata(accountId, orgId, projectId, criteria, update);
-  }
-
-  @Override
-  public int incrementRunSequence(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean deleted) {
-    return pipelineMetadataService.incrementExecutionCounter(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
-  }
-
-  @Override
-  public int incrementRunSequence(PipelineEntity pipelineEntity) {
-    String accountId = pipelineEntity.getAccountId();
-    String orgIdentifier = pipelineEntity.getOrgIdentifier();
-    String projectIdentifier = pipelineEntity.getProjectIdentifier();
-    int count = pipelineMetadataService.incrementExecutionCounter(
-        accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
-    if (count == -1) {
-      try {
-        PipelineMetadataV2 metadata = PipelineMetadataV2.builder()
-                                          .accountIdentifier(pipelineEntity.getAccountIdentifier())
-                                          .orgIdentifier(orgIdentifier)
-                                          .projectIdentifier(projectIdentifier)
-                                          .runSequence(pipelineEntity.getRunSequence() + 1)
-                                          .identifier(pipelineEntity.getIdentifier())
-                                          .build();
-        return pipelineMetadataService.save(metadata).getRunSequence();
-      } catch (DuplicateKeyException exception) {
-        // retry insert if above fails
-        return pipelineMetadataService.incrementExecutionCounter(
-            accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
-      }
-    }
-    return count;
   }
 
   @Override

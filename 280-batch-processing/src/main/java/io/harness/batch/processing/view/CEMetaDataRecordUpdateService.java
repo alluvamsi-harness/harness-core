@@ -7,9 +7,9 @@
 
 package io.harness.batch.processing.view;
 
-import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.ACCOUNT_ID;
-import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.CCM_DATA_GENERATED;
-import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.DATA_GENERATED;
+import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.DATA_TYPE;
+import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.FIRST_DATA_RECEIVED;
+import static io.harness.batch.processing.billing.tasklet.BillingDataGeneratedMailTasklet.MODULE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 import static io.harness.utils.RestCallToNGManagerClientUtils.execute;
@@ -126,10 +126,10 @@ public class CEMetaDataRecordUpdateService {
         Boolean isSegmentDataReadyEventSent = currentCEMetadataRecord.getSegmentDataReadyEventSent();
         if (isSegmentDataReadyEventSent == null || !isSegmentDataReadyEventSent) {
           HashMap<String, Object> properties = new HashMap<>();
-          properties.put(ACCOUNT_ID, accountId);
-          properties.put(DATA_GENERATED, "CLOUD");
-          telemetryReporter.sendTrackEvent(
-              CCM_DATA_GENERATED, properties, Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
+          properties.put(MODULE, "CCM");
+          properties.put(DATA_TYPE, "CLOUD");
+          telemetryReporter.sendTrackEvent(FIRST_DATA_RECEIVED, null, accountId, properties,
+              Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
           ceMetadataRecord.setSegmentDataReadyEventSent(true);
         }
       }

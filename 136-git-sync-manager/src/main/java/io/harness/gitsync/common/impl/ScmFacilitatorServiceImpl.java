@@ -24,9 +24,12 @@ import io.harness.gitsync.common.scmerrorhandling.ScmApiErrorHandlingHelper;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
+import io.harness.product.ci.scm.proto.Repository;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -98,6 +101,14 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         .build();
   }
 
+  @Override
+  public String getDefaultBranch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
+    Repository repoDetails =
+        getRepoDetails(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
+    return repoDetails.getBranch();
+  }
+
   private List<GitRepositoryResponseDTO> prepareListRepoResponse(
       ScmConnector scmConnector, GetUserReposResponse response) {
     GitRepositoryDTO gitRepository = scmConnector.getGitRepositoryDetails();
@@ -119,5 +130,19 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
 
   private boolean isFailureResponse(int statusCode) {
     return statusCode >= 300;
+  }
+
+  @VisibleForTesting
+  protected Repository getRepoDetails(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
+    final ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
+    GetUserRepoResponse getUserRepoResponse =
+        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
+            -> scmClientFacilitatorService.getRepoDetails(
+                accountIdentifier, orgIdentifier, projectIdentifier, scmConnector),
+            scmConnector);
+    // add error handling
+    return getUserRepoResponse.getRepo();
   }
 }

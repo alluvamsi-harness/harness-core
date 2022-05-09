@@ -8,6 +8,7 @@
 package io.harness.ng.core.filestore.api;
 
 import io.harness.EntityType;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
@@ -37,9 +38,7 @@ public interface FileReferenceService {
    * Validates if file is referenced by other entities
    *
    * @param fileOrFolder the file to check reference
-   * @param entityType the entity type
-   * @return number of other entities file is referenced by
-   * @throws InvalidArgumentsException in case file is referenced by other entities
+   * @throws ReferencedEntityException in case file is referenced by other entities
    */
-  Long validateIsReferencedBy(NGFile fileOrFolder);
+  void validateReferenceByAndThrow(NGFile fileOrFolder);
 }
