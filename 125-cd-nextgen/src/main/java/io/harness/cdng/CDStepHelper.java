@@ -471,7 +471,7 @@ public class CDStepHelper {
     }
     return aggregatedValuesManifests.stream()
         .filter(valuesManifestOutcome
-            -> ManifestStoreType.INHERITFROMMANIFEST.equals(valuesManifestOutcome.getStore().getKind()))
+            -> ManifestStoreType.InheritFromManifest.equals(valuesManifestOutcome.getStore().getKind()))
         .map(valuesManifestOutcome -> getInheritFromManifestFetchFileConfig(valuesManifestOutcome))
         .collect(Collectors.toList());
   }

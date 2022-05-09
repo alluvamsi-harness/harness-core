@@ -406,7 +406,7 @@ public class K8sStepHelper extends CDStepHelper {
         GitFetchFilesConfig gitFetchFilesConfig = getGitFetchFilesConfig(
             ambiance, individualManifestOutcome.getStore(), validationMessage, individualManifestOutcome);
         gitFetchFilesConfigs.add(gitFetchFilesConfig);
-      } else if (ManifestStoreType.INHERITFROMMANIFEST.equals(individualManifestOutcome.getStore().getKind())) {
+      } else if (ManifestStoreType.InheritFromManifest.equals(individualManifestOutcome.getStore().getKind())) {
         GitFetchFilesConfig gitFetchFilesConfig = getOverridePathForGitFetchFileConfig(
             ambiance, validationMessage, individualManifestOutcome, k8sManifestOutcome);
         gitFetchFilesConfigs.add(gitFetchFilesConfig);
@@ -537,7 +537,7 @@ public class K8sStepHelper extends CDStepHelper {
     }
     return aggregatedValuesManifests.stream()
         .filter(valuesManifestOutcome
-            -> ManifestStoreType.INHERITFROMMANIFEST.equals(valuesManifestOutcome.getStore().getKind()))
+            -> ManifestStoreType.InheritFromManifest.equals(valuesManifestOutcome.getStore().getKind()))
         .map(valuesManifestOutcome
             -> getOverridePathForGitFetchFileConfig(ambiance,
                 format("Values YAML with Id [%s]", valuesManifestOutcome.getIdentifier()), valuesManifestOutcome,
@@ -870,13 +870,13 @@ public class K8sStepHelper extends CDStepHelper {
   private boolean isAnyOcParamRemoteStore(@NotEmpty List<OpenshiftParamManifestOutcome> openshiftParamManifests) {
     return openshiftParamManifests.stream().anyMatch(openshiftParamManifest
         -> ManifestStoreType.isInGitSubset(openshiftParamManifest.getStore().getKind())
-            || ManifestStoreType.INHERITFROMMANIFEST.equals(openshiftParamManifest.getStore().getKind()));
+            || ManifestStoreType.InheritFromManifest.equals(openshiftParamManifest.getStore().getKind()));
   }
 
   private boolean isAnyRemoteStore(@NotEmpty List<? extends ManifestOutcome> aggregatedValuesManifests) {
     return aggregatedValuesManifests.stream().anyMatch(valuesManifest
         -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind())
-            || valuesManifest.getStore().getKind().equals(ManifestStoreType.INHERITFROMMANIFEST));
+            || valuesManifest.getStore().getKind().equals(ManifestStoreType.InheritFromManifest));
   }
 
   public TaskChainResponse executeNextLink(K8sStepExecutor k8sStepExecutor, Ambiance ambiance,
@@ -1010,7 +1010,7 @@ public class K8sStepHelper extends CDStepHelper {
           valuesFileContents.addAll(
               gitFetchFilesResult.getFiles().stream().map(GitFile::getFileContent).collect(Collectors.toList()));
         }
-      } else if (ManifestStoreType.INHERITFROMMANIFEST.equals(store.getKind())
+      } else if (ManifestStoreType.InheritFromManifest.equals(store.getKind())
           && isNotEmpty(helmChartFetchFilesResultMap)) {
         List<String> inheritFromManifestFileContent = helmChartFetchFilesResultMap.get(valuesManifest.getIdentifier());
         if (inheritFromManifestFileContent != null) {

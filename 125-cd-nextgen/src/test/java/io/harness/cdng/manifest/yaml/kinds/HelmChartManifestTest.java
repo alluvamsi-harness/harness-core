@@ -11,6 +11,7 @@ import static io.harness.cdng.manifest.yaml.HelmCommandFlagType.Fetch;
 import static io.harness.cdng.manifest.yaml.HelmCommandFlagType.Template;
 import static io.harness.rule.OwnerRule.ABOSII;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -40,27 +41,28 @@ public class HelmChartManifestTest extends CategoryTest {
     HelmChartManifest original = HelmChartManifest.builder()
                                      .helmVersion(HelmVersion.V3)
                                      .skipResourceVersioning(ParameterField.createValueField(true))
+                                     .valuesPaths(ParameterField.createValueField(asList("file/path")))
                                      .store(ParameterField.createValueField(originalStoreConfig))
-                                     .commandFlags(Arrays.asList(HelmManifestCommandFlag.builder()
-                                                                     .commandType(Fetch)
-                                                                     .flag(ParameterField.createValueField("--debug"))
-                                                                     .build()))
+                                     .commandFlags(asList(HelmManifestCommandFlag.builder()
+                                                              .commandType(Fetch)
+                                                              .flag(ParameterField.createValueField("--debug"))
+                                                              .build()))
                                      .build();
 
-    HelmChartManifest override =
-        HelmChartManifest.builder()
-            .helmVersion(HelmVersion.V2)
-            .skipResourceVersioning(ParameterField.createValueField(false))
-            .store(ParameterField.createValueField(overrideStoreConfig))
-            .commandFlags(Arrays.asList(HelmManifestCommandFlag.builder()
-                                            .commandType(Template)
-                                            .flag(ParameterField.createValueField("--template"))
-                                            .build(),
-                HelmManifestCommandFlag.builder()
-                    .commandType(Fetch)
-                    .flag(ParameterField.createValueField("--updated-debug"))
-                    .build()))
-            .build();
+    HelmChartManifest override = HelmChartManifest.builder()
+                                     .helmVersion(HelmVersion.V2)
+                                     .skipResourceVersioning(ParameterField.createValueField(false))
+                                     .valuesPaths(ParameterField.createValueField(asList("file/path")))
+                                     .store(ParameterField.createValueField(overrideStoreConfig))
+                                     .commandFlags(asList(HelmManifestCommandFlag.builder()
+                                                              .commandType(Template)
+                                                              .flag(ParameterField.createValueField("--template"))
+                                                              .build(),
+                                         HelmManifestCommandFlag.builder()
+                                             .commandType(Fetch)
+                                             .flag(ParameterField.createValueField("--updated-debug"))
+                                             .build()))
+                                     .build();
 
     doReturn(overrideStoreConfig).when(originalStoreConfig).applyOverrides(overrideStoreConfig);
 
@@ -68,6 +70,7 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(original.getHelmVersion()).isEqualTo(HelmVersion.V3);
     assertThat(original.getSkipResourceVersioning().getValue()).isTrue();
+    assertThat(original.getValuesPaths().getValue()).isEqualTo("file/path");
     assertThat(original.getStore().getValue()).isEqualTo(originalStoreConfig);
     assertThat(original.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Fetch);
@@ -76,6 +79,7 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(override.getHelmVersion()).isEqualTo(HelmVersion.V2);
     assertThat(override.getSkipResourceVersioning().getValue()).isFalse();
+    assertThat(override.getValuesPaths().getValue()).isEqualTo("override/file/path");
     assertThat(override.getStore().getValue()).isEqualTo(overrideStoreConfig);
     assertThat(override.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Template, Fetch);
@@ -84,6 +88,7 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(result.getHelmVersion()).isEqualTo(HelmVersion.V2);
     assertThat(result.getSkipResourceVersioning().getValue()).isFalse();
+    assertThat(result.getValuesPaths().getValue()).isEqualTo("override/file/path");
     assertThat(result.getStore().getValue()).isEqualTo(overrideStoreConfig);
     assertThat(result.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Template, Fetch);
@@ -96,20 +101,20 @@ public class HelmChartManifestTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testApplyOverridesWithNulls() {
     StoreConfigWrapper storeConfig = Mockito.mock(StoreConfigWrapper.class);
-    HelmChartManifest original =
-        HelmChartManifest.builder()
-            .skipResourceVersioning(ParameterField.createValueField(true))
-            .store(ParameterField.createValueField(storeConfig))
-            .helmVersion(HelmVersion.V3)
-            .commandFlags(Arrays.asList(HelmManifestCommandFlag.builder()
-                                            .commandType(Template)
-                                            .flag(ParameterField.createValueField("--template"))
-                                            .build(),
-                HelmManifestCommandFlag.builder()
-                    .commandType(Fetch)
-                    .flag(ParameterField.createValueField("--debug"))
-                    .build()))
-            .build();
+    HelmChartManifest original = HelmChartManifest.builder()
+                                     .skipResourceVersioning(ParameterField.createValueField(true))
+                                     .valuesPaths(ParameterField.createValueField(asList("file/path")))
+                                     .store(ParameterField.createValueField(storeConfig))
+                                     .helmVersion(HelmVersion.V3)
+                                     .commandFlags(asList(HelmManifestCommandFlag.builder()
+                                                              .commandType(Template)
+                                                              .flag(ParameterField.createValueField("--template"))
+                                                              .build(),
+                                         HelmManifestCommandFlag.builder()
+                                             .commandType(Fetch)
+                                             .flag(ParameterField.createValueField("--debug"))
+                                             .build()))
+                                     .build();
 
     HelmChartManifest override = HelmChartManifest.builder().build();
 
@@ -117,6 +122,7 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(original.getHelmVersion()).isEqualTo(HelmVersion.V3);
     assertThat(original.getSkipResourceVersioning().getValue()).isTrue();
+    assertThat(original.getValuesPaths().getValue()).isEqualTo("override/file/path");
     assertThat(original.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Template, Fetch);
     assertThat(original.getCommandFlags().stream().map(HelmManifestCommandFlag::getFlag).map(ParameterField::getValue))

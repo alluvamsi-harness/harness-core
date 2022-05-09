@@ -31,7 +31,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = false)
-@JsonTypeName(ManifestStoreType.INHERITFROMMANIFEST)
+@JsonTypeName(ManifestStoreType.InheritFromManifest)
 @TypeAlias("InheritFromManifestStoreConfig")
 @RecasterAlias("io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig")
 public class InheritFromManifestStoreConfig implements StoreConfig {
@@ -42,7 +42,7 @@ public class InheritFromManifestStoreConfig implements StoreConfig {
 
   @Override
   public String getKind() {
-    return ManifestStoreType.INHERITFROMMANIFEST;
+    return ManifestStoreType.InheritFromManifest;
   }
 
   @Override

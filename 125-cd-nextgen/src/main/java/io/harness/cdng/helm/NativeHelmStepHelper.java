@@ -287,7 +287,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
     }
     return aggregatedValuesManifests.stream()
         .filter(valuesManifestOutcome
-            -> ManifestStoreType.INHERITFROMMANIFEST.equals(valuesManifestOutcome.getStore().getKind()))
+            -> ManifestStoreType.InheritFromManifest.equals(valuesManifestOutcome.getStore().getKind()))
         .map(valuesManifestOutcome
             -> getOverridePathForGitFetchFileConfig(ambiance,
                 format("Values YAML with Id [%s]", valuesManifestOutcome.getIdentifier()), valuesManifestOutcome,
@@ -481,7 +481,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
   private boolean isAnyRemoteStore(@NotEmpty List<ValuesManifestOutcome> aggregatedValuesManifests) {
     return aggregatedValuesManifests.stream().anyMatch(valuesManifest
         -> ManifestStoreType.isInGitSubset(valuesManifest.getStore().getKind())
-            || ManifestStoreType.INHERITFROMMANIFEST.equals(valuesManifest.getStore().getKind()));
+            || ManifestStoreType.InheritFromManifest.equals(valuesManifest.getStore().getKind()));
   }
 
   public TaskChainResponse executeNextLink(NativeHelmStepExecutor nativeHelmStepExecutor, Ambiance ambiance,
@@ -614,7 +614,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
           valuesFileContents.addAll(
               gitFetchFilesResult.getFiles().stream().map(GitFile::getFileContent).collect(Collectors.toList()));
         }
-      } else if (ManifestStoreType.INHERITFROMMANIFEST.equals(store.getKind())
+      } else if (ManifestStoreType.InheritFromManifest.equals(store.getKind())
           && isNotEmpty(helmChartFetchFilesResultMap)) {
         List<String> inheritFromManifestFileContent = helmChartFetchFilesResultMap.get(valuesManifest.getIdentifier());
         if (isNotEmpty(inheritFromManifestFileContent)) {

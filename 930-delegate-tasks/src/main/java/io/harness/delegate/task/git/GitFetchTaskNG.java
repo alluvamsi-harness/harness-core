@@ -109,8 +109,6 @@ public class GitFetchTaskNG extends AbstractDelegateRunnableTask {
           String exceptionMsg = gitFetchFilesTaskHelper.extractErrorMessage(ex);
 
           // Values.yaml in service spec is optional.
-          //          if (ex.getCause() instanceof NoSuchFileException && gitFetchFilesConfig.isSucceedIfFileNotFound()
-          //          && file.equals(VALUES_YAML)) {
           if (ex.getCause() instanceof NoSuchFileException && gitFetchFilesConfig.isSucceedIfFileNotFound()) {
             log.info("file not found. " + exceptionMsg, ex);
             executionLogCallback.saveExecutionLog(color(
