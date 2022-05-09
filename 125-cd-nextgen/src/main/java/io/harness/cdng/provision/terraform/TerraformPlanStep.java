@@ -11,7 +11,6 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.terraform.TFTaskType;
@@ -51,6 +50,7 @@ import software.wings.beans.TaskType;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +65,6 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
 
   @Inject private KryoSerializer kryoSerializer;
   @Inject private TerraformStepHelper helper;
-  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
   @Inject private StepHelper stepHelper;
 
@@ -122,6 +121,8 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
     builder.taskType(TFTaskType.PLAN)
         .terraformCommandUnit(TerraformCommandUnit.Plan)
         .entityId(entityId)
+        .tfModuleSourceInheritSSH(helper.isExportCredentialForSourceModule(
+            ambiance, configuration.getConfigFiles(), stepElementParameters.getType()))
         .currentStateFileId(helper.getLatestFileId(entityId))
         .workspace(ParameterFieldHelper.getParameterFieldValue(configuration.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
@@ -132,7 +133,9 @@ public class TerraformPlanStep extends TaskExecutableWithRollbackAndRbac<Terrafo
         .backendConfig(helper.getBackendConfig(configuration.getBackendConfig()))
         .targets(ParameterFieldHelper.getParameterFieldValue(configuration.getTargets()))
         .saveTerraformStateJson(false)
-        .environmentVariables(helper.getEnvironmentVariablesMap(configuration.getEnvironmentVariables()))
+        .environmentVariables(helper.getEnvironmentVariablesMap(configuration.getEnvironmentVariables()) == null
+                ? new HashMap<>()
+                : helper.getEnvironmentVariablesMap(configuration.getEnvironmentVariables()))
         .encryptionConfig(helper.getEncryptionConfig(ambiance, planStepParameters))
         .terraformCommand(TerraformPlanCommand.APPLY == planStepParameters.getConfiguration().getCommand()
                 ? TerraformCommand.APPLY

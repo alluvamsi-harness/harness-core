@@ -8,9 +8,13 @@
 package io.harness.beans.yaml.extended.infrastrucutre;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
+import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -47,6 +51,10 @@ public class VmPoolYaml implements VmInfraSpec {
     @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
     @ApiModelProperty(hidden = true)
     String uuid;
-    @NotNull private String identifier;
+    private String identifier;
+    @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> poolName;
+    @YamlSchemaTypes({runtime})
+    @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.infrastrucutre.OSType")
+    private ParameterField<OSType> os;
   }
 }

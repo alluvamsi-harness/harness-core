@@ -65,6 +65,8 @@ public class VerificationConfiguration extends Configuration {
   @JsonProperty("accessControlClientConfig") private AccessControlClientConfiguration accessControlClientConfiguration;
   @JsonProperty("distributedLockImplementation")
   private DistributedLockImplementation distributedLockImplementation = DistributedLockImplementation.MONGO;
+  private ServiceHttpClientConfig templateServiceClientConfig;
+  private String templateServiceSecret;
 
   private String portalUrl;
   /**

@@ -20,6 +20,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
 
 import software.wings.beans.SlackMessage;
+import software.wings.beans.SlackMessageJSON;
 import software.wings.common.NotificationMessageResolver;
 import software.wings.service.intfc.SlackMessageSender;
 
@@ -30,6 +31,9 @@ import allbegray.slack.webhook.SlackWebhookClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
@@ -87,8 +91,31 @@ public class SlackMessageSenderImpl implements SlackMessageSender {
     }
   }
 
+  @Override
+  public void sendJSON(SlackMessageJSON slackMessage) {
+    OkHttpClient client = getHttpClient();
+    try {
+      Request slackRequest =
+          SlackNotificationUtils.createHttpRequest(slackMessage.getMessage(), slackMessage.getOutgoingWebhookUrl());
+      Response response = client.newCall(slackRequest).execute();
+      if (!response.isSuccessful()) {
+        String bodyString = (null != response.body()) ? response.body().string() : "null";
+
+        log.error("Response not Successful. Response body: {}", bodyString);
+        return;
+      }
+      log.info("Slack json message response was successful");
+    } catch (Exception e) {
+      log.error("Error sending post data", e);
+    }
+  }
+
   SlackWebhookClient getWebhookClient(final String webhookUrl) {
     return SlackClientFactory.createWebhookClient(webhookUrl);
+  }
+
+  OkHttpClient getHttpClient() {
+    return new OkHttpClient();
   }
 
   private void sendGenericHttpPostRequest(String webhookUrl, Payload payload, boolean isCertValidationRequired) {

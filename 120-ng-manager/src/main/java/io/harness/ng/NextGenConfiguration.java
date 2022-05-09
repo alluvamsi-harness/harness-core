@@ -48,11 +48,22 @@ import io.harness.telemetry.segment.SegmentConfiguration;
 import io.harness.threading.ThreadPoolConfig;
 import io.harness.timescaledb.TimeScaleDBConfig;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
 import io.dropwizard.Configuration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,6 +99,7 @@ public class NextGenConfiguration extends Configuration {
   public static final String ARTIFACTS_PACKAGE = "io.harness.ng.core.artifacts.resources";
   public static final String AUTHENTICATION_SETTINGS_PACKAGE = "io.harness.ng.authenticationsettings.resources";
   public static final String SERVICE_PACKAGE = "io.harness.ng.core.service.resources";
+  public static final String VARIABLE_RESOURCE_PACKAGE = "io.harness.ng.core.variable.resources";
   public static final String CD_OVERVIEW_PACKAGE = "io.harness.ng.overview.resource";
   public static final String ACTIVITY_HISTORY_PACKAGE = "io.harness.ng.core.activityhistory.resource";
   public static final String SERVICE_ACCOUNTS_PACKAGE = "io.harness.ng.serviceaccounts.resource";
@@ -115,6 +127,7 @@ public class NextGenConfiguration extends Configuration {
   public static final String NG_GLOBAL_KMS_RESOURCE_PACKAGE = "io.harness.ng.core.globalkms.resource";
   public static final String AZURE_RESOURCES_PACKAGE = "io.harness.ng.core.resources.azure";
   public static final String NG_TRIAL_SIGNUP_PACKAGE = "io.harness.ng.trialsignup";
+  public static final String FILE_STORE_RESOURCE_PACKAGE = "io.harness.ng.core.filestore.remote";
   public static final Collection<Class<?>> HARNESS_RESOURCE_CLASSES = getResourceClasses();
 
   @JsonProperty("swagger") private SwaggerBundleConfiguration swaggerBundleConfiguration;
@@ -145,7 +158,7 @@ public class NextGenConfiguration extends Configuration {
   @JsonProperty("ceAzureSetupConfig") @ConfigSecret private CEAzureSetupConfig ceAzureSetupConfig;
   @JsonProperty("ceGcpSetupConfig") private CEGcpSetupConfig ceGcpSetupConfig;
   @JsonProperty(value = "enableAudit") private boolean enableAudit;
-  @JsonProperty(value = "ngAuthUIEnabled") private boolean isNGAuthUIEnabled;
+  @JsonProperty(value = "ngAuthUIEnabled") private boolean isNgAuthUIEnabled;
   @JsonProperty("pmsSdkGrpcServerConfig") private GrpcServerConfig pmsSdkGrpcServerConfig;
   @JsonProperty("pmsGrpcClientConfig") private GrpcClientConfig pmsGrpcClientConfig;
   @JsonProperty("shouldConfigureWithPMS") private Boolean shouldConfigureWithPMS;
@@ -183,8 +196,8 @@ public class NextGenConfiguration extends Configuration {
   @JsonProperty("cacheConfig") private CacheConfig cacheConfig;
   @JsonProperty(value = "scopeAccessCheckEnabled", defaultValue = "false") private boolean isScopeAccessCheckEnabled;
   @JsonProperty(value = "signupTargetEnv") private String signupTargetEnv;
-  @JsonProperty("hostname") String hostname;
-  @JsonProperty("basePathPrefix") String basePathPrefix;
+  @JsonProperty("hostname") String hostname = "localhost";
+  @JsonProperty("basePathPrefix") String basePathPrefix = "";
   @JsonProperty("enforcementClientConfiguration") EnforcementClientConfiguration enforcementClientConfiguration;
   @JsonProperty("ciManagerClientConfig") ServiceHttpClientConfig ciManagerClientConfig;
   @JsonProperty("secretsConfiguration") private SecretsConfiguration secretsConfiguration;
@@ -222,7 +235,8 @@ public class NextGenConfiguration extends Configuration {
                 SCHEMA_PACKAGE, DELEGATE_PACKAGE, ACCESS_CONTROL_PACKAGE, FEEDBACK_PACKAGE, INSTANCE_SYNC_PACKAGE,
                 INVITE_PACKAGE, USER_PACKAGE, INSTANCE_NG_PACKAGE, LICENSING_USAGE_PACKAGE, SMTP_NG_RESOURCE,
                 SERVICENOW_PACKAGE, SCIM_NG_RESOURCE, NG_GLOBAL_KMS_RESOURCE_PACKAGE, ACCOUNT_SETTING_PACKAGE,
-                ENV_GROUP_RESOURCE, AZURE_RESOURCES_PACKAGE, NG_TRIAL_SIGNUP_PACKAGE))
+                ENV_GROUP_RESOURCE, AZURE_RESOURCES_PACKAGE, NG_TRIAL_SIGNUP_PACKAGE, VARIABLE_RESOURCE_PACKAGE,
+                FILE_STORE_RESOURCE_PACKAGE))
         .collect(Collectors.toSet());
   }
 
@@ -232,5 +246,38 @@ public class NextGenConfiguration extends Configuration {
 
   public static Set<String> getUniquePackagesContainingResources() {
     return HARNESS_RESOURCE_CLASSES.stream().map(aClass -> aClass.getPackage().getName()).collect(toSet());
+  }
+
+  @JsonIgnore
+  public OpenAPIConfiguration getOasConfig() {
+    OpenAPI oas = new OpenAPI();
+    Info info =
+        new Info()
+            .title("Harness NextGen Software Delivery Platform API Reference")
+            .description(
+                "This is the Open Api Spec 3 for the NextGen Manager. This is under active development. Beware of the breaking change with respect to the generated code stub")
+            .termsOfService("https://harness.io/terms-of-use/")
+            .version("3.0")
+            .contact(new Contact().email("contact@harness.io"));
+    oas.info(info);
+    try {
+      URL baseurl = new URL("https", hostname, basePathPrefix);
+      Server server = new Server();
+      server.setUrl(baseurl.toString());
+      oas.servers(Collections.singletonList(server));
+    } catch (MalformedURLException e) {
+      log.error("failed to set baseurl for server, {}/{}", hostname, basePathPrefix);
+    }
+    final Set<String> resourceClasses =
+        getOAS3ResourceClassesOnly().stream().map(Class::getCanonicalName).collect(toSet());
+    return new SwaggerConfiguration()
+        .openAPI(oas)
+        .prettyPrint(true)
+        .resourceClasses(resourceClasses)
+        .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
+  }
+
+  public static Collection<Class<?>> getOAS3ResourceClassesOnly() {
+    return HARNESS_RESOURCE_CLASSES.stream().filter(x -> x.isAnnotationPresent(Tag.class)).collect(Collectors.toList());
   }
 }

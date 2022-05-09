@@ -9,7 +9,7 @@ package software.wings.expression;
 
 import static io.harness.rule.OwnerRule.SRINIVAS;
 
-import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
+import static software.wings.beans.ServiceVariableType.ENCRYPTED_TEXT;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
 
 import static org.assertj.core.api.Assertions.assertThat;

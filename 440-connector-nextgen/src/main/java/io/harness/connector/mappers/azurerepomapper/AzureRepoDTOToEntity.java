@@ -63,6 +63,7 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
         .authenticationDetails(azureRepoAuthentication)
         .azureRepoApiAccess(azureRepoApiAccess)
         .url(configDTO.getUrl())
+        .validationProject(configDTO.getValidationProject())
         .validationRepo(configDTO.getValidationRepo())
         .build();
   }

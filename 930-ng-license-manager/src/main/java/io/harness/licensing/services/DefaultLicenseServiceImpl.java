@@ -119,6 +119,13 @@ public class DefaultLicenseServiceImpl implements LicenseService {
   }
 
   @Override
+  public List<ModuleLicenseDTO> getEnabledModuleLicensesByModuleType(ModuleType moduleType, long expiryTime) {
+    List<ModuleLicense> licenses =
+        moduleLicenseRepository.findByModuleTypeAndExpiryTimeGreaterThanEqual(moduleType, expiryTime);
+    return licenses.stream().map(licenseObjectConverter::<ModuleLicenseDTO>toDTO).collect(Collectors.toList());
+  }
+
+  @Override
   public AccountLicenseDTO getAccountLicense(String accountIdentifier) {
     AccountLicenseDTO dto = AccountLicenseDTO.builder().accountId(accountIdentifier).build();
     Map<ModuleType, List<ModuleLicenseDTO>> allModuleLicenses = new HashMap<>();

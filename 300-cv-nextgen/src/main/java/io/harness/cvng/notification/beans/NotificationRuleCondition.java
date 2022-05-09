@@ -20,5 +20,8 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXTERNAL_PROPERTY, visible = true)
-@JsonSubTypes({ @JsonSubTypes.Type(value = SLONotificationRuleCondition.class, name = "slo") })
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = SLONotificationRuleCondition.class, name = "ServiceLevelObjective")
+  , @JsonSubTypes.Type(value = MonitoredServiceNotificationRuleCondition.class, name = "MonitoredService")
+})
 public abstract class NotificationRuleCondition {}

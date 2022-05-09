@@ -542,6 +542,17 @@ public class YamlGitConfigServiceImpl implements YamlGitConfigService {
         .orElseThrow(() -> new InvalidRequestException("No git sync config exists"));
   }
 
+  @Override
+  public Optional<YamlGitConfigDTO> getByProjectIdAndRepoOptional(
+      String accountId, String orgId, String projectId, String repo) {
+    Optional<YamlGitConfig> yamlGitConfig =
+        yamlGitConfigRepository.findByAccountIdAndOrgIdentifierAndProjectIdentifierAndRepo(
+            accountId, orgId, projectId, repo);
+    if (yamlGitConfig.isPresent()) {
+      return yamlGitConfig.map(YamlGitConfigMapper::toYamlGitConfigDTO);
+    }
+    return Optional.empty();
+  }
   private String getYamlGitConfigScopeKey(YamlGitConfigDTO yamlGitConfig) {
     return Stream
         .of(yamlGitConfig.getAccountIdentifier(), yamlGitConfig.getOrganizationIdentifier(),

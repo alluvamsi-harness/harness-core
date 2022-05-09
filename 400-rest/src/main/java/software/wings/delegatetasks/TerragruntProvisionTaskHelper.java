@@ -32,7 +32,7 @@ import software.wings.api.terraform.TfVarGitSource;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitOperationContext;
 import software.wings.beans.NameValuePair;
-import software.wings.beans.ServiceVariable;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.beans.delegation.TerragruntProvisionParameters;
 import software.wings.beans.yaml.GitFetchFilesRequest;
@@ -243,14 +243,14 @@ public class TerragruntProvisionTaskHelper {
     List<NameValuePair> allVars = new ArrayList<>();
     if (isNotEmpty(variables)) {
       for (Map.Entry<String, String> entry : variables.entrySet()) {
-        allVars.add(new NameValuePair(entry.getKey(), entry.getValue(), ServiceVariable.Type.TEXT.name()));
+        allVars.add(new NameValuePair(entry.getKey(), entry.getValue(), ServiceVariableType.TEXT.name()));
       }
     }
 
     if (isNotEmpty(encryptedVariables)) {
       for (Map.Entry<String, EncryptedDataDetail> entry : encryptedVariables.entrySet()) {
         allVars.add(new NameValuePair(
-            entry.getKey(), entry.getValue().getEncryptedData().getUuid(), ServiceVariable.Type.ENCRYPTED_TEXT.name()));
+            entry.getKey(), entry.getValue().getEncryptedData().getUuid(), ServiceVariableType.ENCRYPTED_TEXT.name()));
       }
     }
     return allVars;

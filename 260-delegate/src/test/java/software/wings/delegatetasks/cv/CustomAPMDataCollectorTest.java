@@ -27,6 +27,10 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.APMVerificationConfig;
+import software.wings.beans.ApmMetricCollectionInfo;
+import software.wings.beans.ApmResponseMapping;
+import software.wings.beans.apm.Method;
+import software.wings.beans.apm.ResponseType;
 import software.wings.delegatetasks.DelegateCVActivityLogService;
 import software.wings.metrics.MetricType;
 import software.wings.service.impl.ThirdPartyApiCallLog;
@@ -35,7 +39,6 @@ import software.wings.service.impl.analysis.DataCollectionInfoV2;
 import software.wings.service.impl.analysis.MetricElement;
 import software.wings.service.impl.apm.CustomAPMDataCollectionInfo;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.states.APMVerificationState;
 import software.wings.verification.apm.APMCVServiceConfiguration;
 
 import com.google.common.base.Charsets;
@@ -95,13 +98,13 @@ public class CustomAPMDataCollectorTest extends WingsBaseTest {
     apmcvServiceConfiguration.setStateType(APM_VERIFICATION);
     apmcvServiceConfiguration.setAnalysisTolerance(AnalysisTolerance.MEDIUM);
 
-    List<APMVerificationState.MetricCollectionInfo> metricCollectionInfos = new ArrayList<>();
-    APMVerificationState.ResponseMapping responseMapping = new APMVerificationState.ResponseMapping(
+    List<ApmMetricCollectionInfo> metricCollectionInfos = new ArrayList<>();
+    ApmResponseMapping responseMapping = new ApmResponseMapping(
         "myhardcodedtxnName", null, null, "series[*].pointlist[*].[1]", null, null, "series[*].pointlist[*].[0]", null);
 
-    APMVerificationState.MetricCollectionInfo metricCollectionInfo = new APMVerificationState.MetricCollectionInfo(
-        "metricName", MetricType.INFRA, "randomtag", "dummyuri", null, "{\"bodycollection\":\"body\"}",
-        APMVerificationState.ResponseType.JSON, responseMapping, APMVerificationState.Method.POST);
+    ApmMetricCollectionInfo metricCollectionInfo =
+        new ApmMetricCollectionInfo("metricName", MetricType.INFRA, "randomtag", "dummyuri", null,
+            "{\"bodycollection\":\"body\"}", ResponseType.JSON, responseMapping, Method.POST);
 
     metricCollectionInfos.add(metricCollectionInfo);
     apmcvServiceConfiguration.setMetricCollectionInfos(metricCollectionInfos);

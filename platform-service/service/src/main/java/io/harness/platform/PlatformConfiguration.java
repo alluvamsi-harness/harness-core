@@ -9,6 +9,8 @@ package io.harness.platform;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
+import static java.util.stream.Collectors.toSet;
+
 import io.harness.AccessControlClientConfiguration;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.enforcement.client.EnforcementClientConfiguration;
@@ -23,6 +25,7 @@ import io.harness.threading.ThreadPoolConfig;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.Level;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
@@ -32,16 +35,29 @@ import io.dropwizard.logging.FileAppenderFactory;
 import io.dropwizard.request.logging.LogbackAccessRequestLogFactory;
 import io.dropwizard.request.logging.RequestLogFactory;
 import io.dropwizard.server.DefaultServerFactory;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.Path;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter
+@Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 @OwnedBy(PL)
 public class PlatformConfiguration extends Configuration {
@@ -59,10 +75,14 @@ public class PlatformConfiguration extends Configuration {
   @ConfigSecret
   private NotificationServiceConfiguration notificationServiceConfig;
   @JsonProperty("commonPoolConfig") private ThreadPoolConfig commonPoolConfig;
-  @JsonProperty("auditServiceConfig") @ConfigSecret private AuditServiceConfiguration auditServiceConfig;
+  @JsonProperty("auditServiceConfig")
+  @ConfigSecret
+  private AuditServiceConfiguration auditServiceConfig =
+      AuditServiceConfiguration.builder().hostname("localhost").basePathPrefix("").build();
   @JsonProperty("resourceGroupServiceConfig")
   @ConfigSecret
-  private ResourceGroupServiceConfig resoureGroupServiceConfig;
+  private ResourceGroupServiceConfig resoureGroupServiceConfig =
+      ResourceGroupServiceConfig.builder().hostname("localhost").basePathPrefix("").enableResourceGroup(true).build();
 
   @JsonProperty("allowedOrigins") private List<String> allowedOrigins = Lists.newArrayList();
   @JsonProperty("managerClientConfig") private ServiceHttpClientConfig managerServiceConfig;
@@ -76,8 +96,8 @@ public class PlatformConfiguration extends Configuration {
   private AccessControlClientConfiguration accessControlClientConfig;
   @JsonProperty("enforcementClientConfiguration") private EnforcementClientConfiguration enforcementClientConfiguration;
   @JsonProperty("secretsConfiguration") private SecretsConfiguration secretsConfiguration;
-  @JsonProperty("hostname") String hostname;
-  @JsonProperty("basePathPrefix") String basePathPrefix;
+  @JsonProperty("hostname") String hostname = "localhost";
+  @JsonProperty("basePathPrefix") String basePathPrefix = "";
 
   public static final Collection<Class<?>> ALL_HARNESS_RESOURCES = getAllResources();
   public static final Collection<Class<?>> NOTIFICATION_SERVICE_RESOURCES = getNotificationServiceResourceClasses();
@@ -137,5 +157,40 @@ public class PlatformConfiguration extends Configuration {
     fileAppenderFactory.setArchivedFileCount(14);
     logbackAccessRequestLogFactory.setAppenders(ImmutableList.of(fileAppenderFactory));
     return logbackAccessRequestLogFactory;
+  }
+
+  @JsonIgnore
+  public OpenAPIConfiguration getOasConfig() {
+    OpenAPI oas = new OpenAPI();
+    Info info =
+        new Info()
+            .title("Platform Service API Reference")
+            .description(
+                "This is the Open Api Spec 3 for the Platform Service. This is under active development. Beware of the breaking change with respect to the generated code stub")
+            .termsOfService("https://harness.io/terms-of-use/")
+            .version("3.0")
+            .contact(new Contact().email("contact@harness.io"));
+    oas.info(info);
+    URL baseurl = null;
+    try {
+      baseurl = new URL("https", hostname, basePathPrefix);
+      Server server = new Server();
+      server.setUrl(baseurl.toString());
+      oas.servers(Collections.singletonList(server));
+    } catch (MalformedURLException e) {
+      log.error("The base URL of the server could not be set. {}/{}", hostname, basePathPrefix);
+    }
+    Collection<Class<?>> allResourceClasses = getPlatformServiceCombinedResourceClasses(this);
+    final Set<String> resourceClasses =
+        getOAS3ResourceClassesOnly(allResourceClasses).stream().map(Class::getCanonicalName).collect(toSet());
+    return new SwaggerConfiguration()
+        .openAPI(oas)
+        .prettyPrint(true)
+        .resourceClasses(resourceClasses)
+        .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
+  }
+
+  public static Collection<Class<?>> getOAS3ResourceClassesOnly(Collection<Class<?>> allResourceClasses) {
+    return allResourceClasses.stream().filter(x -> x.isAnnotationPresent(Tag.class)).collect(Collectors.toList());
   }
 }

@@ -113,6 +113,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
                                      .build())
             .build();
 
+    doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYaml)
         .when(helmTaskHelperBase)
@@ -154,6 +155,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
                                      .build())
             .build();
 
+    doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYaml)
         .when(helmTaskHelperBase)
@@ -197,6 +199,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
             .helmVersion(HelmVersion.V380)
             .build();
 
+    doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doReturn(valuesYaml)
         .when(helmTaskHelperBase)
@@ -239,6 +242,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
                                      .build())
             .build();
 
+    doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
     doThrow(new RuntimeException("Something went wrong"))
         .when(helmTaskHelperBase)

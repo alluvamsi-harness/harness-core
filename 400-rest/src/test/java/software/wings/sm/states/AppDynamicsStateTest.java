@@ -74,7 +74,7 @@ import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.MetricDataAnalysisService;
 import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.appdynamics.AppdynamicsService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.states.AbstractAnalysisState.CVInstanceApiResponse;
 import software.wings.sm.states.AppDynamicsState.AppDynamicsStateKeys;
@@ -161,7 +161,8 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
     FieldUtils.writeField(appDynamicsState, "cvActivityLogService", cvActivityLogService, true);
     FieldUtils.writeField(
         appDynamicsState, "workflowVerificationResultService", workflowVerificationResultService, true);
-    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString())).thenReturn(mock(Logger.class));
+    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
+        .thenReturn(mock(CVActivityLogger.class));
 
     when(executionContext.getContextElement(ContextElementType.PARAM, AbstractAnalysisStateTestBase.PHASE_PARAM))
         .thenReturn(phaseElement);

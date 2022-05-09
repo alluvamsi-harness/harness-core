@@ -235,7 +235,7 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
   @Override
   public List<String> update(ProjectParams projectParams, List<ServiceLevelIndicatorDTO> serviceLevelIndicatorDTOList,
       String serviceLevelObjectiveIdentifier, List<String> serviceLevelIndicatorsList, String monitoredServiceIndicator,
-      String healthSourceIndicator, TimePeriod timePeriod) {
+      String healthSourceIndicator, TimePeriod timePeriod, TimePeriod currentTimePeriod) {
     List<String> serviceLevelIndicatorIdentifiers = new ArrayList<>();
     for (ServiceLevelIndicatorDTO serviceLevelIndicatorDTO : serviceLevelIndicatorDTOList) {
       if (Objects.isNull(serviceLevelIndicatorDTO.getName())
@@ -252,8 +252,8 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
                      projectParams, serviceLevelIndicatorDTO, monitoredServiceIndicator, healthSourceIndicator))) {
         deleteAndCreate(projectParams, newServiceLevelIndicator);
       } else {
-        updateServiceLevelIndicatorEntity(
-            projectParams, serviceLevelIndicatorDTO, monitoredServiceIndicator, healthSourceIndicator, timePeriod);
+        updateServiceLevelIndicatorEntity(projectParams, serviceLevelIndicatorDTO, monitoredServiceIndicator,
+            healthSourceIndicator, timePeriod, currentTimePeriod);
       }
       serviceLevelIndicatorIdentifiers.add(serviceLevelIndicatorDTO.getIdentifier());
     }
@@ -300,7 +300,7 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
 
   private void updateServiceLevelIndicatorEntity(ProjectParams projectParams,
       ServiceLevelIndicatorDTO serviceLevelIndicatorDTO, String monitoredServiceIndicator, String healthSourceIndicator,
-      TimePeriod timePeriod) {
+      TimePeriod timePeriod, TimePeriod currentTimePeriod) {
     UpdatableEntity<ServiceLevelIndicator, ServiceLevelIndicator> updatableEntity =
         serviceLevelIndicatorMapBinder.get(serviceLevelIndicatorDTO.getSpec().getType());
     ServiceLevelIndicator serviceLevelIndicator =
@@ -309,7 +309,7 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
         hPersistence.createUpdateOperations(ServiceLevelIndicator.class);
     ServiceLevelIndicator updatableServiceLevelIndicator =
         convertDTOToEntity(projectParams, serviceLevelIndicatorDTO, monitoredServiceIndicator, healthSourceIndicator);
-    if (serviceLevelIndicator.shouldReAnalysis(updatableServiceLevelIndicator)) {
+    if (shouldReAnalysis(serviceLevelIndicator, updatableServiceLevelIndicator, timePeriod, currentTimePeriod)) {
       updatableEntity.setUpdateOperations(updateOperations, updatableServiceLevelIndicator);
       Instant startTime = timePeriod.getStartTime(ZoneOffset.UTC).minus(INTERVAL_HOURS, ChronoUnit.HOURS);
       Instant endTime = DateTimeUtils.roundDownTo5MinBoundary(clock.instant());
@@ -325,6 +325,21 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
       }
       hPersistence.update(serviceLevelIndicator, updateOperations);
     }
+  }
+
+  /**
+   * In case of the changes in SLI and new slo target period is before the current slo target period
+   * we need to recalculate the data again as the older is stale.
+   * @param serviceLevelIndicator
+   * @param updatableServiceLevelIndicator
+   * @param timePeriod
+   * @param currentTimePeriod
+   * @return
+   */
+  private boolean shouldReAnalysis(ServiceLevelIndicator serviceLevelIndicator,
+      ServiceLevelIndicator updatableServiceLevelIndicator, TimePeriod timePeriod, TimePeriod currentTimePeriod) {
+    boolean shouldReAnalysisOnTimePeriod = timePeriod.getStartTime().isBefore(currentTimePeriod.getStartTime());
+    return serviceLevelIndicator.shouldReAnalysis(updatableServiceLevelIndicator) || shouldReAnalysisOnTimePeriod;
   }
 
   private void saveServiceLevelIndicatorEntity(ProjectParams projectParams,

@@ -436,7 +436,7 @@
 5359:software.wings.beans.ServiceVariable
 5360:software.wings.beans.EntityType
 5361:software.wings.beans.ServiceVariable$OverrideType
-5362:software.wings.beans.ServiceVariable$Type
+5362:software.wings.beans.ServiceVariableType
 5363:software.wings.beans.container.KubernetesServiceSpecification
 5364:software.wings.beans.container.KubernetesBlueGreenConfig
 5365:software.wings.beans.container.KubernetesSwapServiceSelectorsParams
@@ -548,7 +548,7 @@
 5478:software.wings.service.impl.aws.model.AwsCFTemplateParamsData
 5479:software.wings.helpers.ext.cloudformation.response.ExistingStackInfo
 5480:software.wings.api.cloudformation.CloudFormationRollbackInfoElement
-5481:software.wings.sm.states.APMVerificationState$Method
+5481:software.wings.beans.apm.Method
 5482:software.wings.api.ResourceConstraintExecutionData
 5483:software.wings.api.ResourceConstraintStepExecutionSummary
 5486:software.wings.service.impl.analysis.LogElement
@@ -828,6 +828,7 @@
 7260:software.wings.api.k8s.K8sSwapServiceElement
 7261:software.wings.beans.SlackMessage
 7262:software.wings.service.impl.SlackMessageSenderImpl
+7263:software.wings.beans.SlackMessageJSON
 7264:software.wings.api.pcf.PcfPluginExecutionSummary
 7265:software.wings.api.pcf.PcfPluginStateExecutionData
 7266:software.wings.service.impl.aws.model.AwsS3Request
@@ -1472,8 +1473,8 @@
 19469:io.harness.delegate.beans.azure.registry.AzureRegistryType
 19470:io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceApplicationSettingDTO
 19471:io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceConnectionStringDTO
-19472:io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest
-19473:io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse
+19472:io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest
+19473:io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse
 19475:io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSlotSetupResponse
 19476:io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData
 19477:io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppRollbackResponse
@@ -1629,7 +1630,6 @@
 20103:io.harness.ng.core.account.AuthenticationMechanism
 20104:io.harness.ng.core.account.ServiceAccountConfig
 22001:io.harness.ng.core.common.beans.NGTag
-22002:io.harness.ng.core.service.entity.ServiceEntity
 22003:io.harness.ng.core.environment.beans.Environment
 22004:io.harness.ng.core.common.beans.KeyValuePair
 22005:io.harness.ng.core.ResourceScope
@@ -1836,6 +1836,7 @@
 97110:software.wings.helpers.ext.jenkins.BuildDetails
 97111:software.wings.helpers.ext.jenkins.BuildDetails$BuildStatus
 97112:io.harness.delegate.beans.artifact.ArtifactFileMetadata
+97113:io.harness.servicenow.ServiceNowTemplate
 98399:io.harness.delegate.task.helm.HelmCommandRequestNG
 98400:io.harness.delegate.task.helm.HelmCommandRequestNG$HelmCommandType
 98401:io.harness.delegate.task.helm.HelmInstallCommandRequestNG
@@ -1891,7 +1892,6 @@
 400125:software.wings.beans.AmiDeploymentType
 400126:software.wings.api.CloudProviderType
 400127:software.wings.beans.VMSSAuthType
-400128:software.wings.beans.artifact.AzureMachineImageArtifactStream$ImageType
 400129:software.wings.beans.command.CommandUnitDetails$CommandUnitType
 400130:software.wings.beans.Setup$SetupStatus
 400131:software.wings.beans.Activity$Type
@@ -2185,6 +2185,7 @@
 563530:io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability
 563531:io.harness.delegate.task.artifacts.artifactory.ArtifactoryBaseArtifactDelegateRequest
 563532:io.harness.delegate.task.k8s.AzureK8sInfraDelegateConfig
+563533:io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse
 600001:io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO
 600002:io.harness.secretmanagerclient.WinRmAuthScheme
 600003:io.harness.ng.core.dto.secrets.NTLMConfigDTO

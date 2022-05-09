@@ -198,7 +198,7 @@ public class WatcherServiceImpl implements WatcherService {
 
   static {
     String deployMode = System.getenv().get("DEPLOY_MODE");
-    multiVersion = isEmpty(deployMode) || !(deployMode.equals("ONPREM") || deployMode.equals("KUBERNETES_ONPREM"));
+    multiVersion = isEmpty(deployMode) || !deployMode.equals("KUBERNETES_ONPREM");
   }
   private static final String DELEGATE_TYPE = System.getenv().get("DELEGATE_TYPE");
   private static final String DELEGATE_SCRIPT = "delegate.sh";

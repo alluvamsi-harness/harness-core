@@ -29,6 +29,8 @@ import io.harness.serializer.OrchestrationRegistrars;
 import io.harness.serializer.PersistenceRegistrars;
 import io.harness.service.intfc.DelegateAsyncService;
 import io.harness.service.intfc.DelegateSyncService;
+import io.harness.sto.beans.entities.STOServiceConfig;
+import io.harness.stoserviceclient.STOServiceClientModule;
 import io.harness.tiserviceclient.TIServiceClientModule;
 import io.harness.user.remote.UserClient;
 
@@ -103,5 +105,7 @@ public class CIExecutionTestModule extends AbstractModule {
         LogServiceConfig.builder().baseUrl("http://localhost:8079").globalToken("token").build()));
     install(new TIServiceClientModule(
         TIServiceConfig.builder().baseUrl("http://localhost:8078").globalToken("token").build()));
+    install(new STOServiceClientModule(
+        STOServiceConfig.builder().baseUrl("http://localhost:4000").globalToken("api/v1/token").build()));
   }
 }

@@ -13,7 +13,7 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.security.encryption.EncryptionType.LOCAL;
 
-import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
+import static software.wings.beans.ServiceVariableType.ENCRYPTED_TEXT;
 import static software.wings.expression.SecretManagerFunctorInterface.obtainConfigFileExpression;
 import static software.wings.expression.SecretManagerFunctorInterface.obtainExpression;
 

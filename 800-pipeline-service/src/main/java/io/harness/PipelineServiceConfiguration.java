@@ -37,6 +37,7 @@ import io.harness.timescaledb.TimeScaleDBConfig;
 import io.harness.yaml.schema.client.config.YamlSchemaClientConfig;
 
 import ch.qos.logback.access.spi.IAccessEvent;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Singleton;
@@ -50,8 +51,17 @@ import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.server.ServerFactory;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,12 +72,14 @@ import javax.ws.rs.Path;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 // Todo: Streamline this
 @OwnedBy(PIPELINE)
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Slf4j
 @Singleton
 public class PipelineServiceConfiguration extends Configuration {
   public static final String RESOURCE_PACKAGE = "io.harness.pms";
@@ -110,8 +122,8 @@ public class PipelineServiceConfiguration extends Configuration {
   @JsonProperty("auditClientConfig") private ServiceHttpClientConfig auditClientConfig;
   @JsonProperty(value = "enableAudit") private boolean enableAudit;
   @JsonProperty("cacheConfig") private CacheConfig cacheConfig;
-  @JsonProperty("hostname") String hostname;
-  @JsonProperty("basePathPrefix") String basePathPrefix;
+  @JsonProperty("hostname") String hostname = "localhost";
+  @JsonProperty("basePathPrefix") String basePathPrefix = "";
   @JsonProperty("segmentConfiguration") private SegmentConfiguration segmentConfiguration;
   @JsonProperty("pipelineEventConsumersConfig") PipelineServiceConsumersConfig pipelineServiceConsumersConfig;
   @JsonProperty("enforcementClientConfiguration") EnforcementClientConfiguration enforcementClientConfiguration;
@@ -218,5 +230,34 @@ public class PipelineServiceConfiguration extends Configuration {
         .filter(x -> x.isAnnotationPresent(Tag.class))
         .map(Class::getName)
         .collect(toSet());
+  }
+
+  @JsonIgnore
+  public OpenAPIConfiguration getOasConfig() {
+    OpenAPI oas = new OpenAPI();
+    Info info =
+        new Info()
+            .title("Pipeline Service API Reference")
+            .description(
+                "This is the Open Api Spec 3 for the Pipeline Service. This is under active development. Beware of the breaking change with respect to the generated code stub")
+            .termsOfService("https://harness.io/terms-of-use/")
+            .version("3.0")
+            .contact(new Contact().email("contact@harness.io"));
+    oas.info(info);
+    URL baseurl = null;
+    try {
+      baseurl = new URL("https", hostname, basePathPrefix);
+      Server server = new Server();
+      server.setUrl(baseurl.toString());
+      oas.servers(Collections.singletonList(server));
+    } catch (MalformedURLException e) {
+      log.error("failed to set baseurl for server, {}/{}", hostname, basePathPrefix);
+    }
+    Set<String> resourceClasses = getOpenApiResources();
+    return new SwaggerConfiguration()
+        .openAPI(oas)
+        .prettyPrint(true)
+        .resourceClasses(resourceClasses)
+        .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
   }
 }

@@ -691,6 +691,7 @@ message GetAuthenticatedUserResponse {
 message GetUserReposRequest {
   PageRequest pagination = 1;
   Provider provider = 2;
+  bool fetchAllRepos = 3;
 }
 
 message GetUserReposResponse {

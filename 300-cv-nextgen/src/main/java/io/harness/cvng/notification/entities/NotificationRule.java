@@ -13,10 +13,10 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.core.services.api.UpdatableEntity;
 import io.harness.cvng.notification.beans.NotificationRuleType;
+import io.harness.cvng.notification.channelDetails.CVNGNotificationChannel;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
-import io.harness.notification.channelDetails.PmsNotificationChannel;
 import io.harness.persistence.AccountAccess;
 import io.harness.persistence.CreatedAtAware;
 import io.harness.persistence.PersistentEntity;
@@ -78,7 +78,7 @@ public abstract class NotificationRule
   private int version;
 
   NotificationRuleType type;
-  PmsNotificationChannel notificationMethod;
+  CVNGNotificationChannel notificationMethod;
 
   public abstract static class NotificationRuleUpdatableEntity<T extends NotificationRule, D extends NotificationRule>
       implements UpdatableEntity<T, D> {

@@ -9,9 +9,11 @@ package io.harness.pms.quickFilters;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.filter.FilterType.PIPELINEEXECUTION;
+import static io.harness.rule.OwnerRule.BRIJESH;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
@@ -21,8 +23,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filter.service.FilterService;
+import io.harness.ng.core.common.beans.NGTag;
 import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.pms.execution.ExecutionStatus;
+import io.harness.pms.execution.TimeRange;
 import io.harness.pms.helpers.TriggeredByHelper;
 import io.harness.pms.plan.execution.beans.dto.PipelineExecutionFilterPropertiesDTO;
 import io.harness.pms.plan.execution.service.PMSExecutionServiceImpl;
@@ -134,5 +138,68 @@ public class QuickFilterTest extends CategoryTest {
                            -> pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId,
                                randomFilterIdentifier, null, moduleName, searchTerm, null, true, false, null, true))
         .isInstanceOf(InvalidRequestException.class);
+  }
+
+  @Test
+  @Owner(developers = BRIJESH)
+  @Category(UnitTests.class)
+  public void testFormCriteriaTimeRangeFilter() {
+    // Testing the execution in Time Range.
+    Criteria form = pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
+        PipelineExecutionFilterPropertiesDTO.builder()
+            .timeRange(TimeRange.builder().startTime(1651480019931L).endTime(1651480019931L).build())
+            .build(),
+        null, null, null, false, false, null, true);
+
+    // Verify that the time range is present in criteria.
+    assertEquals(form.getCriteriaObject().get("$and").toString(),
+        "[Document{{createdAt=Document{{$gte=1651480019931, $lte=1651480019931}}}}, Document{{}}, Document{{}}, Document{{}}]");
+
+    // ENdTime not provided in filter. Should throw exception.
+
+    assertThatThrownBy(()
+                           -> pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
+                               PipelineExecutionFilterPropertiesDTO.builder()
+                                   .timeRange(TimeRange.builder().startTime(1651480019931L).build())
+                                   .build(),
+                               null, null, null, false, false, null, true))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "startTime or endTime is not provided in TimeRange filter. Either add the missing field or remove the timeRange filter.");
+
+    // StartTime not provided in filter. Should throw exception.
+    assertThatThrownBy(()
+                           -> pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
+                               PipelineExecutionFilterPropertiesDTO.builder()
+                                   .timeRange(TimeRange.builder().endTime(1651480019931L).build())
+                                   .build(),
+                               null, null, null, false, false, null, true))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "startTime or endTime is not provided in TimeRange filter. Either add the missing field or remove the timeRange filter.");
+
+    form = pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
+        PipelineExecutionFilterPropertiesDTO.builder().timeRange(TimeRange.builder().build()).build(), null, null, null,
+        false, false, null, true);
+
+    // TimeRange Filter should not be present in Criteria.
+    assertEquals(
+        form.getCriteriaObject().get("$and").toString(), "[Document{{}}, Document{{}}, Document{{}}, Document{{}}]");
+  }
+
+  @Test
+  @Owner(developers = BRIJESH)
+  @Category(UnitTests.class)
+  public void testFormCriteriaTagsFilter() {
+    // Testing the execution list by tags
+    Criteria form = pmsExecutionServiceImpl.formCriteria(accountId, orgId, projId, pipelineId, null,
+        PipelineExecutionFilterPropertiesDTO.builder()
+            .pipelineTags(Collections.singletonList(NGTag.builder().key("key1").value("val1").build()))
+            .build(),
+        null, null, null, false, false, null, true);
+
+    // Verify that tags are present in criteria.
+    assertEquals(form.getCriteriaObject().get("$and").toString(),
+        "[Document{{$and=[Document{{$or=[Document{{tags.key=Document{{$in=[key1, val1]}}}}, Document{{tags.value=Document{{$in=[key1, val1]}}}}]}}]}}, Document{{}}, Document{{}}, Document{{}}]");
   }
 }

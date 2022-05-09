@@ -64,7 +64,7 @@ import software.wings.service.intfc.InfrastructureMappingService;
 import software.wings.service.intfc.MetricDataAnalysisService;
 import software.wings.service.intfc.newrelic.NewRelicService;
 import software.wings.service.intfc.security.SecretManager;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
 import software.wings.sm.states.NewRelicState.Metric;
@@ -170,7 +170,8 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     FieldUtils.writeField(newRelicState, "accountService", accountService, true);
     FieldUtils.writeField(newRelicState, "cvActivityLogService", cvActivityLogService, true);
     FieldUtils.writeField(newRelicState, "workflowVerificationResultService", workflowVerificationResultService, true);
-    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString())).thenReturn(mock(Logger.class));
+    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
+        .thenReturn(mock(CVActivityLogger.class));
 
     setupCommonMocks();
   }

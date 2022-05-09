@@ -1250,6 +1250,9 @@
             "url": {
               "type": "string"
             },
+            "validationProject": {
+              "type": "string"
+            },
             "validationRepo": {
               "type": "string"
             }

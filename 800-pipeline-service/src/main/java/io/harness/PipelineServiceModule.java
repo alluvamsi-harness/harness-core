@@ -112,6 +112,7 @@ import io.harness.pms.rbac.validator.PipelineRbacServiceImpl;
 import io.harness.pms.resourceconstraints.service.PMSResourceConstraintService;
 import io.harness.pms.resourceconstraints.service.PMSResourceConstraintServiceImpl;
 import io.harness.pms.sdk.PmsSdkInstance;
+import io.harness.pms.servicenow.ServiceNowStepHelperServiceImpl;
 import io.harness.pms.triggers.webhook.service.TriggerWebhookExecutionService;
 import io.harness.pms.triggers.webhook.service.TriggerWebhookExecutionServiceV2;
 import io.harness.pms.triggers.webhook.service.impl.TriggerWebhookExecutionServiceImpl;
@@ -131,6 +132,7 @@ import io.harness.steps.approval.ApprovalNotificationHandler;
 import io.harness.steps.approval.step.jira.JiraApprovalHelperService;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalHelperService;
 import io.harness.steps.jira.JiraStepHelperService;
+import io.harness.steps.servicenow.ServiceNowStepHelperService;
 import io.harness.steps.shellscript.ShellScriptHelperService;
 import io.harness.steps.shellscript.ShellScriptHelperServiceImpl;
 import io.harness.telemetry.AbstractTelemetryModule;
@@ -360,6 +362,7 @@ public class PipelineServiceModule extends AbstractModule {
 
     bind(PipelineDashboardService.class).to(PipelineDashboardServiceImpl.class);
     bind(ServiceNowApprovalHelperService.class).to(ServiceNowApprovalHelperServiceImpl.class);
+    bind(ServiceNowStepHelperService.class).to(ServiceNowStepHelperServiceImpl.class);
     try {
       bind(TimeScaleDBService.class)
           .toConstructor(TimeScaleDBServiceImpl.class.getConstructor(TimeScaleDBConfig.class));

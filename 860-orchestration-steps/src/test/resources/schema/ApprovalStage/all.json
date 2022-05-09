@@ -1773,7 +1773,8 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -1840,7 +1841,8 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {

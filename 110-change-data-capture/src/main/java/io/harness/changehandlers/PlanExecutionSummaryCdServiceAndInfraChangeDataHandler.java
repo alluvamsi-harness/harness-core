@@ -300,6 +300,16 @@ public class PlanExecutionSummaryCdServiceAndInfraChangeDataHandler implements C
                     columnValueMapping.put("tag", tagList);
                   }
                 }
+                if (primary.get("version") != null) {
+                  String tag = primary.get("version").toString();
+                  if (columnValueMapping.containsKey("tag")) {
+                    columnValueMapping.get("tag").add(tag);
+                  } else {
+                    List<String> tagList = new ArrayList<>();
+                    tagList.add(tag);
+                    columnValueMapping.put("tag", tagList);
+                  }
+                }
                 if (primary.get("imagePath") != null) {
                   String imagePath = primary.get("imagePath").toString();
                   if (columnValueMapping.containsKey("artifact_image")) {

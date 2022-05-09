@@ -37,21 +37,18 @@ public class DelegateConfiguration {
   private boolean pollForTasks;
   private String description;
 
-  private String kubectlPath;
-  private String ocPath;
-  private String kustomizePath;
-
   private String managerTarget;
   private String managerAuthority;
   private String queueFilePath;
 
   private boolean useCdn;
-
   private String cdnUrl;
 
+  private String kubectlPath;
+  private String ocPath;
+  private String kustomizePath;
   private String helmPath;
   private String helm3Path;
-
   private String cfCli6Path;
   private String cfCli7Path;
 

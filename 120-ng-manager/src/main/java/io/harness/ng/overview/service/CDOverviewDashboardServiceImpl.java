@@ -53,6 +53,8 @@ import io.harness.ng.overview.dto.EntityStatusDetails;
 import io.harness.ng.overview.dto.EnvBuildIdAndInstanceCountInfo;
 import io.harness.ng.overview.dto.EnvBuildIdAndInstanceCountInfoList;
 import io.harness.ng.overview.dto.EnvIdCountPair;
+import io.harness.ng.overview.dto.EnvironmentDeploymentInfo;
+import io.harness.ng.overview.dto.EnvironmentInfoByServiceId;
 import io.harness.ng.overview.dto.ExecutionDeployment;
 import io.harness.ng.overview.dto.ExecutionDeploymentInfo;
 import io.harness.ng.overview.dto.HealthDeploymentDashboard;
@@ -1633,5 +1635,57 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
         .createdAt(serviceEntity.getCreatedAt())
         .lastModifiedAt(serviceEntity.getLastModifiedAt())
         .build();
+  }
+
+  /*
+  Returns a list of last successfully buildId deployed to environments for given account+org+project+service
+*/
+  @Override
+  public io.harness.ng.overview.dto.EnvironmentDeploymentInfo getEnvironmentDeploymentDetailsByServiceId(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String serviceId) {
+    String query =
+        queryBuilderDeploymentsWithArtifactsDetails(accountIdentifier, orgIdentifier, projectIdentifier, serviceId);
+    List<EnvironmentInfoByServiceId> environmentInfoByServiceIds = getEnvironmentWithArtifactDetails(query);
+    return EnvironmentDeploymentInfo.builder().environmentInfoByServiceId(environmentInfoByServiceIds).build();
+  }
+
+  public String queryBuilderDeploymentsWithArtifactsDetails(
+      String accountId, String orgId, String projectId, String serviceId) {
+    return "SELECT DISTINCT ON (env_id) env_name, env_id, artifact_image, tag, service_startts, "
+        + "service_endts, service_name, service_id from " + tableNameServiceAndInfra + " where "
+        + String.format("accountid='%s' and ", accountId) + String.format("orgidentifier='%s' and ", orgId)
+        + String.format("projectidentifier='%s' and ", projectId) + String.format("service_id='%s'", serviceId)
+        + " and service_status = 'SUCCESS' AND tag is not null order by env_id , service_endts DESC;";
+  }
+
+  public List<EnvironmentInfoByServiceId> getEnvironmentWithArtifactDetails(String queryStatus) {
+    int totalTries = 0;
+    List<EnvironmentInfoByServiceId> environmentInfoList = new ArrayList<>();
+    boolean successfulOperation = false;
+    while (!successfulOperation && totalTries <= MAX_RETRY_COUNT) {
+      ResultSet resultSet = null;
+      try (Connection connection = timeScaleDBService.getDBConnection();
+           PreparedStatement statement = connection.prepareStatement(queryStatus)) {
+        resultSet = statement.executeQuery();
+        while (resultSet != null && resultSet.next()) {
+          environmentInfoList.add(EnvironmentInfoByServiceId.builder()
+                                      .environmentId(resultSet.getString("env_id"))
+                                      .environmentName(resultSet.getString("env_name"))
+                                      .artifactImage(resultSet.getString("artifact_image"))
+                                      .tag(resultSet.getString("tag"))
+                                      .serviceId(resultSet.getString("service_id"))
+                                      .serviceName(resultSet.getString("service_name"))
+                                      .service_startTs(resultSet.getLong("service_startts"))
+                                      .service_endTs(resultSet.getLong("service_endts"))
+                                      .build());
+        }
+        successfulOperation = true;
+      } catch (SQLException ex) {
+        totalTries++;
+      } finally {
+        DBUtils.close(resultSet);
+      }
+    }
+    return environmentInfoList;
   }
 }

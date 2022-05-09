@@ -430,7 +430,7 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
         .executeCommand(anyMap(), anyString(), eq(chartDirectory), anyString(), eq(timeoutInMillis),
             eq(HelmCliCommandType.REPO_ADD));
 
-    helmTaskHelperBase.addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, chartDirectory, V3, timeoutInMillis);
+    helmTaskHelperBase.addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, chartDirectory, V3, timeoutInMillis, "");
     ArgumentCaptor<String> commandCaptor = ArgumentCaptor.forClass(String.class);
     verify(helmTaskHelperBase, times(1))
         .executeCommand(anyMap(), commandCaptor.capture(), eq(chartDirectory), anyString(), eq(timeoutInMillis),
@@ -454,7 +454,7 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
 
     assertThatThrownBy(()
                            -> helmTaskHelperBase.addChartMuseumRepo(
-                               REPO_NAME, REPO_DISPLAY_NAME, port, chartDirectory, V3, timeoutInMillis))
+                               REPO_NAME, REPO_DISPLAY_NAME, port, chartDirectory, V3, timeoutInMillis, ""))
         .isInstanceOf(HelmClientException.class)
         .hasMessageContaining("Failed to add helm repo. Executed command");
   }
@@ -463,8 +463,11 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testDownloadChartFilesUsingChartMuseumS3() throws Exception {
-    final S3HelmStoreDelegateConfig s3StoreDelegateConfig =
-        S3HelmStoreDelegateConfig.builder().repoName(REPO_NAME).repoDisplayName(REPO_DISPLAY_NAME).build();
+    final S3HelmStoreDelegateConfig s3StoreDelegateConfig = S3HelmStoreDelegateConfig.builder()
+                                                                .bucketName("some-bucket")
+                                                                .repoName(REPO_NAME)
+                                                                .repoDisplayName(REPO_DISPLAY_NAME)
+                                                                .build();
     testDownloadChartFilesUsingChartMuseum(s3StoreDelegateConfig);
   }
 
@@ -472,8 +475,11 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testDownloadChartFilesUsingChartMuseumGCS() throws Exception {
-    final GcsHelmStoreDelegateConfig gcsHelmStoreDelegateConfig =
-        GcsHelmStoreDelegateConfig.builder().repoName(REPO_NAME).repoDisplayName(REPO_DISPLAY_NAME).build();
+    final GcsHelmStoreDelegateConfig gcsHelmStoreDelegateConfig = GcsHelmStoreDelegateConfig.builder()
+                                                                      .bucketName("some-bucket")
+                                                                      .repoName(REPO_NAME)
+                                                                      .repoDisplayName(REPO_DISPLAY_NAME)
+                                                                      .build();
     testDownloadChartFilesUsingChartMuseum(gcsHelmStoreDelegateConfig);
   }
 
@@ -496,21 +502,25 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
         .startChartMuseumServer(storeDelegateConfig, resourceDirectory);
     doNothing()
         .when(helmTaskHelperBase)
-        .addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, destinationDirectory, V3, timeoutInMillis);
+        .addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, destinationDirectory, V3, timeoutInMillis, "");
     doNothing()
         .when(helmTaskHelperBase)
         .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, destinationDirectory, V3, null,
             timeoutInMillis, false, "");
+    doReturn(new ProcessResult(0, null))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), any());
 
     helmTaskHelperBase.downloadChartFilesUsingChartMuseum(manifest, destinationDirectory, timeoutInMillis);
 
     verify(ngChartMuseumService, times(1)).startChartMuseumServer(storeDelegateConfig, resourceDirectory);
     verify(ngChartMuseumService, times(1)).stopChartMuseumServer(chartMuseumServer);
     verify(helmTaskHelperBase, times(1))
-        .addChartMuseumRepo(REPO_NAME, REPO_DISPLAY_NAME, port, destinationDirectory, V3, timeoutInMillis);
+        .addChartMuseumRepo(
+            REPO_NAME + "-some-bucket", REPO_DISPLAY_NAME, port, destinationDirectory, V3, timeoutInMillis, "");
     verify(helmTaskHelperBase, times(1))
-        .fetchChartFromRepo(REPO_NAME, REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION, destinationDirectory, V3, null,
-            timeoutInMillis, false, "");
+        .fetchChartFromRepo(REPO_NAME + "-some-bucket", REPO_DISPLAY_NAME, CHART_NAME, CHART_VERSION,
+            destinationDirectory, V3, null, timeoutInMillis, false, "");
   }
 
   @Test

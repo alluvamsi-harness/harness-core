@@ -88,5 +88,8 @@ public class K8sDirectInfraYaml implements Infrastructure {
     @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.infrastrucutre.k8.SecurityContext")
     ParameterField<SecurityContext> containerSecurityContext;
     @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> priorityClassName;
+    @YamlSchemaTypes({runtime})
+    @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.infrastrucutre.OSType")
+    private ParameterField<OSType> os;
   }
 }

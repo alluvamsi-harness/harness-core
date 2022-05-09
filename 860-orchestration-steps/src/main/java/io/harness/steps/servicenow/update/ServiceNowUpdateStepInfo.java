@@ -24,7 +24,6 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.steps.StepSpecTypeConstants;
-import io.harness.steps.jira.create.JiraCreateStep;
 import io.harness.steps.servicenow.ServiceNowStepUtils;
 import io.harness.steps.servicenow.beans.ServiceNowField;
 import io.harness.yaml.YamlSchemaTypes;
@@ -60,7 +59,9 @@ public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef, 
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketType;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketNumber;
 
-  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH) ParameterField<Boolean> useServiceNowTemplate;
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)
+  ParameterField<Boolean> useServiceNowTemplate;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> templateName;
 
   List<ServiceNowField> fields;
@@ -71,7 +72,7 @@ public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef, 
 
   @Override
   public StepType getStepType() {
-    return JiraCreateStep.STEP_TYPE;
+    return ServiceNowUpdateStep.STEP_TYPE;
   }
 
   @Override
@@ -87,6 +88,8 @@ public class ServiceNowUpdateStepInfo implements PMSStepInfo, WithConnectorRef, 
         .ticketNumber(ticketNumber)
         .fields(ServiceNowStepUtils.processServiceNowFieldsList(fields))
         .delegateSelectors(delegateSelectors)
+        .templateName(templateName)
+        .useServiceNowTemplate(useServiceNowTemplate)
         .build();
   }
 

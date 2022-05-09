@@ -57,6 +57,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
   public void testToConnectorEntityHTTPAccount() {
     final String url = "url";
     final String tokenRef = "tokenRef";
+    final String validationProject = "validationProject";
     final String validationRepo = "validationRepo";
 
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
@@ -78,6 +79,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
 
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
+                                                            .validationProject(validationProject)
                                                             .validationRepo(validationRepo)
                                                             .connectionType(GitConnectionType.ACCOUNT)
                                                             .authentication(azureRepoAuthenticationDTO)
@@ -87,6 +89,7 @@ public class AzureRepoDTOToEntityTest extends CategoryTest {
     final AzureRepoConnector azureRepoConnector = azureRepoDTOToEntity.toConnectorEntity(azureRepoConnectorDTO);
     assertThat(azureRepoConnector).isNotNull();
     assertThat(azureRepoConnector.getUrl()).isEqualTo(url);
+    assertThat(azureRepoConnector.getValidationProject()).isEqualTo(validationProject);
     assertThat(azureRepoConnector.getValidationRepo()).isEqualTo(validationRepo);
     assertThat(azureRepoConnector.getApiAccessType()).isEqualTo(TOKEN);
     assertThat(azureRepoConnector.getAuthType()).isEqualTo(HTTP);

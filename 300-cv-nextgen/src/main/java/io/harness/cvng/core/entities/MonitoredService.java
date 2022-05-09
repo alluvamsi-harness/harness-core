@@ -12,6 +12,7 @@ import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.MonitoredServiceType;
+import io.harness.cvng.notification.beans.NotificationRuleRef;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
@@ -81,6 +82,7 @@ public final class MonitoredService
   private long lastUpdatedAt;
   private long createdAt;
   private boolean enabled;
+  List<NotificationRuleRef> notificationRuleRefs;
 
   @NotNull @Singular @Size(max = 128) List<NGTag> tags;
 
@@ -102,5 +104,12 @@ public final class MonitoredService
       return Collections.emptyList();
     }
     return environmentIdentifierList;
+  }
+
+  public List<NotificationRuleRef> getNotificationRuleRefs() {
+    if (notificationRuleRefs == null) {
+      return Collections.emptyList();
+    }
+    return notificationRuleRefs;
   }
 }

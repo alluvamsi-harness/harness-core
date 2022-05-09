@@ -65,6 +65,7 @@ import software.wings.beans.LambdaSpecification.FunctionSpecification;
 import software.wings.beans.Log.Builder;
 import software.wings.beans.Service;
 import software.wings.beans.ServiceVariable;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.Tag;
 import software.wings.beans.artifact.Artifact;
@@ -506,7 +507,7 @@ public class AwsLambdaState extends State {
         serviceTemplateService
             .computeServiceVariables(appId, envId, serviceTemplateId, context.getWorkflowExecutionId(), OBTAIN_VALUE)
             .stream()
-            .filter(serviceVariable -> ServiceVariable.Type.ARTIFACT != serviceVariable.getType())
+            .filter(serviceVariable -> ServiceVariableType.ARTIFACT != serviceVariable.getType())
             .collect(
                 Collectors.toMap(ServiceVariable::getName, sv -> context.renderExpression(new String(sv.getValue()))));
     wfRequestBuilder.serviceVariables(serviceVariables);

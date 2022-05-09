@@ -91,7 +91,7 @@ public class InfrastructureMapper {
             .environment(environmentOutcome)
             .infrastructureKey(InfrastructureKey.generate(
                 service, environmentOutcome, k8sAzureInfrastructure.getInfrastructureKeyValues()))
-            .subscription(k8sAzureInfrastructure.getSubscription().getValue())
+            .subscription(k8sAzureInfrastructure.getSubscriptionId().getValue())
             .resourceGroup(k8sAzureInfrastructure.getResourceGroup().getValue())
             .build();
 
@@ -156,8 +156,8 @@ public class InfrastructureMapper {
       throw new InvalidArgumentsException(Pair.of("cluster", "cannot be empty"));
     }
 
-    if (ParameterField.isNull(infrastructure.getSubscription())
-        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getSubscription()))) {
+    if (ParameterField.isNull(infrastructure.getSubscriptionId())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getSubscriptionId()))) {
       throw new InvalidArgumentsException(Pair.of("subscription", "cannot be empty"));
     }
 

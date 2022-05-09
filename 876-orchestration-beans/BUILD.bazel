@@ -9,7 +9,7 @@ java_library(
     deps = [
         "//:lombok",
         "//879-pms-sdk:module",
-        "//890-pms-contracts:module",
+        "//954-pms-contracts:module",
         "//959-timeout-engine:module",
         "//960-ng-license-beans:module",
         "//960-persistence:module",

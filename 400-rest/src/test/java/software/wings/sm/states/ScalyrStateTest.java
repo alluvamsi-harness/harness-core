@@ -38,7 +38,7 @@ import software.wings.service.intfc.MetricDataAnalysisService;
 import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.scalyr.ScalyrService;
 import software.wings.service.intfc.security.SecretManager;
-import software.wings.service.intfc.verification.CVActivityLogService;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
 import com.google.common.collect.Sets;
@@ -145,7 +145,7 @@ public class ScalyrStateTest extends APMStateVerificationTestBase {
     String resolvedAnalysisServerConfigId = generateUuid();
 
     when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
-        .thenReturn(mock(CVActivityLogService.Logger.class));
+        .thenReturn(mock(CVActivityLogger.class));
 
     ScalyrConfig scalyrConfig = ScalyrConfig.builder().url(generateUuid()).build();
     SettingAttribute settingAttribute =

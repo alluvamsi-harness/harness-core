@@ -20,4 +20,8 @@ import software.wings.annotation.EncryptableSetting;
 @TargetModule(HarnessModule._957_CG_BEANS)
 public interface HelmRepoConfig extends EncryptableSetting, ExecutionCapabilityDemander {
   String getConnectorId();
+
+  default String getBucketName() {
+    return "";
+  }
 }

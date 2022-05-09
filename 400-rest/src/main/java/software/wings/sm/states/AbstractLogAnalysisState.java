@@ -52,7 +52,7 @@ import software.wings.service.impl.analysis.MLAnalysisType;
 import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
 import software.wings.service.intfc.analysis.AnalysisService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
@@ -142,7 +142,7 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
              OVERRIDE_ERROR)) {
       getLogger().info("Executing state {}", executionContext.getStateExecutionInstanceId());
       String correlationId = UUID.randomUUID().toString();
-      Logger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
+      CVActivityLogger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
           executionContext.getAccountId(), executionContext.getStateExecutionInstanceId());
       if (executionContext.isRetry()) {
         activityLogger.info(RETRYING_VERIFICATION_STATE_MSG);

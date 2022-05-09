@@ -26,6 +26,7 @@ import io.harness.product.ci.scm.proto.FindPRResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
+import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.ListCommitsInPRResponse;
 import io.harness.product.ci.scm.proto.ListCommitsResponse;
 import io.harness.product.ci.scm.proto.SCMGrpc;
@@ -153,6 +154,15 @@ public class ScmGitRefTask extends AbstractDelegateRunnableTask {
         return ScmGitRefTaskResponseData.builder()
             .gitRefType(scmGitRefTaskParams.getGitRefType())
             .getUserReposResponse(getUserReposResponse.toByteArray())
+            .build();
+      }
+      case BRANCH_LIST_WITH_DEFAULT_BRANCH: {
+        final ListBranchesWithDefaultResponse listBranchesWithDefaultResponse = scmDelegateClient.processScmRequest(c
+            -> scmServiceClient.listBranchesWithDefault(scmGitRefTaskParams.getScmConnector(),
+                scmGitRefTaskParams.getPageRequest(), SCMGrpc.newBlockingStub(c)));
+        return ScmGitRefTaskResponseData.builder()
+            .gitRefType(scmGitRefTaskParams.getGitRefType())
+            .getListBranchesWithDefaultResponse(listBranchesWithDefaultResponse.toByteArray())
             .build();
       }
       default:

@@ -2518,7 +2518,7 @@
             "namespace",
             "releaseName",
             "resourceGroup",
-            "subscription"
+            "subscriptionId"
           ],
           "properties": {
             "cluster": {
@@ -2541,7 +2541,7 @@
               "type": "string",
               "minLength": 1
             },
-            "subscription": {
+            "subscriptionId": {
               "type": "string",
               "minLength": 1
             }
@@ -3290,6 +3290,28 @@
           }
         }
       ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ModuleSource": {
+      "type": "object",
+      "required": [
+        "useConnectorCredentials"
+      ],
+      "properties": {
+        "useConnectorCredentials": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/ParameterFieldBoolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "NGVariable": {
@@ -4866,7 +4888,8 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -4933,7 +4956,8 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -6517,6 +6541,9 @@
         "store"
       ],
       "properties": {
+        "moduleSource": {
+          "$ref": "#/definitions/ModuleSource"
+        },
         "store": {
           "$ref": "#/definitions/StoreConfigWrapper"
         }

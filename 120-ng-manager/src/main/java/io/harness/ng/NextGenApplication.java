@@ -23,7 +23,6 @@ import static io.harness.pms.contracts.plan.ExpansionRequestType.KEY;
 import static io.harness.pms.listener.NgOrchestrationNotifyEventListener.NG_ORCHESTRATION;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static java.util.stream.Collectors.toSet;
 
 import io.harness.EntityType;
 import io.harness.Microservice;
@@ -110,6 +109,7 @@ import io.harness.ng.core.remote.licenserestriction.CloudCostK8sConnectorRestric
 import io.harness.ng.core.remote.licenserestriction.OrgRestrictionsUsageImpl;
 import io.harness.ng.core.remote.licenserestriction.ProjectRestrictionsUsageImpl;
 import io.harness.ng.core.user.exception.mapper.InvalidUserRemoveRequestExceptionMapper;
+import io.harness.ng.core.variable.expressions.functors.VariableFunctor;
 import io.harness.ng.migration.DelegateMigrationProvider;
 import io.harness.ng.migration.NGCoreMigrationProvider;
 import io.harness.ng.migration.SourceCodeManagerMigrationProvider;
@@ -214,20 +214,10 @@ import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.integration.SwaggerConfiguration;
-import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.servers.Server;
 import java.lang.annotation.Annotation;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -239,7 +229,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -278,6 +267,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     initializeLogging();
     bootstrap.addCommand(new InspectCommand<>(this));
     bootstrap.addCommand(new ScanClasspathMetadataCommand());
+    bootstrap.addCommand(new GenerateOpenApiSpecCommand());
     // Enable variable substitution with environment variables
     bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
         bootstrap.getConfigurationSourceProvider(), new EnvironmentVariableSubstitutor(false)));
@@ -434,7 +424,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
 
   private void registerOasResource(NextGenConfiguration appConfig, Environment environment, Injector injector) {
     OpenApiResource openApiResource = injector.getInstance(OpenApiResource.class);
-    openApiResource.setOpenApiConfiguration(getOasConfig(appConfig));
+    openApiResource.setOpenApiConfiguration(appConfig.getOasConfig());
     environment.jersey().register(openApiResource);
   }
 
@@ -636,6 +626,7 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
   private Map<String, Class<? extends SdkFunctor>> getSdkFunctors() {
     Map<String, Class<? extends SdkFunctor>> sdkFunctorMap = new HashMap<>();
     sdkFunctorMap.put(ImagePullSecretFunctor.IMAGE_PULL_SECRET, ImagePullSecretFunctor.class);
+    sdkFunctorMap.put(VariableFunctor.VARIABLE, VariableFunctor.class);
     return sdkFunctorMap;
   }
 
@@ -717,35 +708,6 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     environment.jersey().register(injector.getInstance(VersionInfoResource.class));
     environment.jersey().property(
         ServerProperties.RESOURCE_VALIDATION_DISABLE, appConfig.isDisableResourceValidation());
-  }
-
-  private OpenAPIConfiguration getOasConfig(NextGenConfiguration appConfig) {
-    OpenAPI oas = new OpenAPI();
-    Info info =
-        new Info()
-            .title("Harness NextGen Software Delivery Platform API Reference")
-            .description(
-                "This is the Open Api Spec 3 for the NextGen Manager. This is under active development. Beware of the breaking change with respect to the generated code stub")
-            .termsOfService("https://harness.io/terms-of-use/")
-            .version("3.0")
-            .contact(new Contact().email("contact@harness.io"));
-    oas.info(info);
-    URL baseurl = null;
-    try {
-      baseurl = new URL("https", appConfig.getHostname(), appConfig.getBasePathPrefix());
-      Server server = new Server();
-      server.setUrl(baseurl.toString());
-      oas.servers(Collections.singletonList(server));
-    } catch (MalformedURLException e) {
-      log.error("failed to set baseurl for server, {}/{}", appConfig.hostname, appConfig.getBasePathPrefix());
-    }
-    final Set<String> resourceClasses =
-        getOAS3ResourceClassesOnly().stream().map(Class::getCanonicalName).collect(toSet());
-    return new SwaggerConfiguration()
-        .openAPI(oas)
-        .prettyPrint(true)
-        .resourceClasses(resourceClasses)
-        .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
   }
 
   private void registerJerseyProviders(Environment environment, Injector injector) {
@@ -920,9 +882,5 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
 
     injector.getInstance(EnforcementSdkRegisterService.class)
         .initialize(restrictionUsageRegisterConfiguration, customConfig);
-  }
-
-  public static Collection<Class<?>> getOAS3ResourceClassesOnly() {
-    return HARNESS_RESOURCE_CLASSES.stream().filter(x -> x.isAnnotationPresent(Tag.class)).collect(Collectors.toList());
   }
 }

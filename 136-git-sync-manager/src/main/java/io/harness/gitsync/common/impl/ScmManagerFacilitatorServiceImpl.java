@@ -50,6 +50,7 @@ import io.harness.product.ci.scm.proto.DeleteFileResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
+import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.service.ScmClient;
 import io.harness.tasks.DecryptGitApiAccessHelper;
@@ -276,10 +277,18 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
 
   @Override
   public GetUserReposResponse listUserRepos(String accountIdentifier, String orgIdentifier, String projectIdentifier,
-      String connectorRef, PageRequestDTO pageRequest) {
-    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnectorByRef(
-        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef);
+      ScmConnector scmConnector, PageRequestDTO pageRequest) {
+    ScmConnector decryptedConnector =
+        gitSyncConnectorHelper.getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector);
     return scmClient.getUserRepos(decryptedConnector, pageRequest);
+  }
+
+  @Override
+  public ListBranchesWithDefaultResponse listBranches(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, ScmConnector scmConnector, PageRequestDTO pageRequest) {
+    final ScmConnector decryptedConnector =
+        gitSyncConnectorHelper.getDecryptedConnector(accountIdentifier, orgIdentifier, projectIdentifier, scmConnector);
+    return scmClient.listBranchesWithDefault(decryptedConnector, pageRequest);
   }
 
   private CreateBranchResponse createBranch(String branch, String baseBranch, ScmConnector scmConnector) {

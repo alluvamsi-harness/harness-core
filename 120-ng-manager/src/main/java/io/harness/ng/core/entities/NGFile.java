@@ -12,8 +12,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.ChecksumType;
-import io.harness.filestore.FileUsage;
-import io.harness.filestore.NGFileType;
 import io.harness.mongo.CollationLocale;
 import io.harness.mongo.CollationStrength;
 import io.harness.mongo.index.Collation;
@@ -23,6 +21,8 @@ import io.harness.ng.core.NGAccountAccess;
 import io.harness.ng.core.NGOrgAccess;
 import io.harness.ng.core.NGProjectAccess;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.filestore.FileUsage;
+import io.harness.ng.core.filestore.NGFileType;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
 
@@ -42,6 +42,7 @@ import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -58,8 +59,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @OwnedBy(HarnessTeam.CDP)
 public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
   @org.springframework.data.annotation.Id @Id String uuid;
-  @CreatedDate Long createdAt;
-  @LastModifiedDate Long lastModifiedAt;
+  @CreatedDate private Long createdAt;
+  @LastModifiedDate private Long lastModifiedAt;
+  @CreatedBy private String createdBy;
+  @LastModifiedBy private String lastModifiedBy;
 
   @NotEmpty String accountIdentifier;
   @EntityIdentifier(allowBlank = true) String orgIdentifier;
@@ -68,7 +71,6 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   @EntityIdentifier String identifier;
   @Size(max = 1024) String description;
   @Size(max = 128) List<NGTag> tags;
-  @NotEmpty String parentId;
   @NotNull FileUsage fileUsage;
   @NotNull NGFileType type;
   @NotEmpty String parentIdentifier;
@@ -79,7 +81,6 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   String mimeType;
   Long size;
   Boolean draft;
-  @CreatedBy private String createdBy;
 
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()

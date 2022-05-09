@@ -8,7 +8,7 @@
 package io.harness.delegate.app;
 
 import static io.harness.annotations.dev.HarnessModule._420_DELEGATE_AGENT;
-import static io.harness.configuration.DeployMode.DEPLOY_MODE;
+import static io.harness.configuration.DeployMode.isOnPrem;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_DASH;
 import static io.harness.delegate.message.MessageConstants.NEW_DELEGATE;
 import static io.harness.delegate.message.MessageConstants.WATCHER_DATA;
@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.configuration.DeployMode;
 import io.harness.delegate.app.modules.DelegateAgentModule;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.delegate.message.MessageService;
@@ -35,7 +36,6 @@ import io.harness.threading.ThreadPool;
 import io.harness.utils.ProcessControl;
 
 import ch.qos.logback.classic.LoggerContext;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -60,6 +60,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 @BreakDependencyOn("io.harness.serializer.ManagerRegistrars")
 @BreakDependencyOn("io.harness.serializer.kryo.CvNextGenCommonsBeansKryoRegistrar")
 public class DelegateApplication {
+  private static final String DEPLOY_MODE = System.getenv(DeployMode.DEPLOY_MODE);
   private static String processId = String.valueOf(ProcessControl.myProcessId());
   private static DelegateConfiguration configuration;
 
@@ -99,7 +100,7 @@ public class DelegateApplication {
       java.util.logging.LogManager.getLogManager().getLogger("").setLevel(Level.INFO);
 
       initializeLogging();
-      log.info("Starting Delegate");
+      log.info("Starting Delegate in {} mode", DEPLOY_MODE);
       log.info("Process: {}", ManagementFactory.getRuntimeMXBean().getName());
       DelegateApplication delegateApplication = new DelegateApplication();
       delegateApplication.run(configuration, watcherProcess);
@@ -128,9 +129,9 @@ public class DelegateApplication {
       watcherData.put(WATCHER_PROCESS, watcherProcess);
       messageService.putAllData(WATCHER_DATA, watcherData);
     }
-    if (!ImmutableSet.of("ONPREM", "KUBERNETES_ONPREM").contains(System.getenv().get(DEPLOY_MODE))) {
-      injector.getInstance(PingPongClient.class).startAsync();
-    }
+
+    injector.getInstance(PingPongClient.class).startAsync();
+
     DelegateAgentService delegateService = injector.getInstance(DelegateAgentService.class);
     delegateService.run(watched, false);
 
@@ -151,13 +152,12 @@ public class DelegateApplication {
         messageService.closeData(DELEGATE_DASH + processId);
         log.info("Message service has been closed.");
 
-        final PingPongClient pingPongClient = injector.getInstance(PingPongClient.class);
-        if (pingPongClient != null) {
-          pingPongClient.stopAsync();
+        injector.getInstance(PingPongClient.class).stopAsync();
+        if (!isOnPrem(DEPLOY_MODE)) {
+          injector.getInstance(EventPublisher.class).shutdown();
         }
 
         injector.getInstance(ExecutorService.class).shutdown();
-        injector.getInstance(EventPublisher.class).shutdown();
         log.info("Executor services have been shut down.");
 
         injector.getInstance(DefaultAsyncHttpClient.class).close();

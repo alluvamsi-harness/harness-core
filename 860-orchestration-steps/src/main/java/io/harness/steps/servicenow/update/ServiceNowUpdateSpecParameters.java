@@ -35,5 +35,10 @@ public class ServiceNowUpdateSpecParameters implements SpecParameters {
   @NotNull ParameterField<String> ticketType;
   @NotNull ParameterField<String> ticketNumber;
   Map<String, ParameterField<String>> fields;
+
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
+  // template fields
+  ParameterField<String> templateName;
+  ParameterField<Boolean> useServiceNowTemplate;
 }

@@ -23,6 +23,7 @@ import static io.harness.licensing.services.DefaultLicenseServiceImpl.SUCCEED_ST
 import static io.harness.licensing.services.DefaultLicenseServiceImpl.SUCCEED_START_TRIAL_OPERATION;
 import static io.harness.licensing.services.DefaultLicenseServiceImpl.TRIAL_ENDED;
 import static io.harness.rule.OwnerRule.NATHAN;
+import static io.harness.rule.OwnerRule.XIN;
 import static io.harness.rule.OwnerRule.ZHUO;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,7 +99,7 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
 
   private StartTrialDTO startTrialRequestDTO;
   private AccountLicenseDTO defaultAccountLicensesDTO;
-
+  private static final long EXPIRY_TIME = 1651518231;
   @Before
   public void setUp() {
     initMocks(this);
@@ -142,6 +143,17 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
         .thenReturn(new ArrayList<>());
     ModuleLicenseDTO moduleLicense = licenseService.getModuleLicense(ACCOUNT_IDENTIFIER, DEFAULT_MODULE_TYPE);
     assertThat(moduleLicense).isNull();
+  }
+
+  @Test
+  @Owner(developers = XIN)
+  @Category(UnitTests.class)
+  public void testGetModuleLicensesByModuleTypeAndExpiryTime() {
+    when(moduleLicenseRepository.findByModuleTypeAndExpiryTimeGreaterThanEqual(DEFAULT_MODULE_TYPE, EXPIRY_TIME))
+        .thenReturn(Lists.newArrayList(DEFAULT_CI_MODULE_LICENSE));
+    List<ModuleLicenseDTO> moduleLicense =
+        licenseService.getEnabledModuleLicensesByModuleType(DEFAULT_MODULE_TYPE, EXPIRY_TIME);
+    assertThat(moduleLicense).isEqualTo(Lists.newArrayList(DEFAULT_CI_MODULE_LICENSE_DTO));
   }
 
   @Test

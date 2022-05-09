@@ -18,7 +18,6 @@ import io.harness.steps.approval.step.beans.ApprovalType;
 import io.harness.steps.approval.step.harness.beans.HarnessApprovalActivityRequestDTO;
 import io.harness.steps.approval.step.harness.beans.HarnessApprovalInstanceAuthorizationDTO;
 
-import com.google.common.io.Resources;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,8 +29,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -141,12 +138,9 @@ public class ApprovalResource {
   @Path("/stage-yaml-snippet")
   @ApiOperation(value = "Gets the initial yaml snippet for Approval stage", nickname = "getInitialStageYamlSnippet")
   @Hidden
-  public ResponseDTO<String> getInitialStageYamlSnippet(@Parameter(description = "Approval Type") @NotNull @QueryParam(
-      "approvalType") ApprovalType approvalType) throws IOException {
-    ClassLoader classLoader = this.getClass().getClassLoader();
-    return ResponseDTO.newResponse(
-        Resources.toString(Objects.requireNonNull(classLoader.getResource(
-                               String.format("approval_stage_yamls/%s.yaml", approvalType.getDisplayName()))),
-            StandardCharsets.UTF_8));
+  public ResponseDTO<String> getInitialStageYamlSnippet(
+      @Parameter(description = "Approval Type") @NotNull @QueryParam("approvalType") ApprovalType approvalType,
+      @QueryParam("routingId") String routingId) throws IOException {
+    return ResponseDTO.newResponse(approvalResourceService.getYamlSnippet(approvalType, routingId));
   }
 }

@@ -48,6 +48,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 public class PipelineFullGitSyncHandlerTest extends CategoryTest {
   @InjectMocks PipelineFullGitSyncHandler pipelineFullGitSyncHandler;
   @Mock private PMSPipelineService pipelineService;
+  @Mock private PMSPipelineServiceHelper pipelineServiceHelper;
   @Mock private EntityDetailRestToProtoMapper entityDetailRestToProtoMapper;
 
   private final String acc = "account_id";
@@ -77,7 +78,7 @@ public class PipelineFullGitSyncHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetFileChangesForFullSync() {
     Criteria criteria = Criteria.where("myKey").is("myValue");
-    doReturn(criteria).when(pipelineService).formCriteria(acc, org, proj, null, null, false, null, null);
+    doReturn(criteria).when(pipelineServiceHelper).formCriteria(acc, org, proj, null, null, false, null, null);
     Criteria actualCriteria = criteria.and(PipelineEntityKeys.yamlGitConfigRef).is(null);
     PageRequest pageRequest = PageRequest.of(0, 200, Sort.by(Sort.Direction.DESC, PipelineEntityKeys.lastUpdatedAt));
     Page<PipelineEntity> pipelinesPage = new PageImpl<>(Collections.singletonList(pipelineEntity), pageRequest, 1);

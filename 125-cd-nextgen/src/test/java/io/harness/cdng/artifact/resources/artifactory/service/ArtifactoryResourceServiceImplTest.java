@@ -42,7 +42,7 @@ import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthe
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
@@ -332,7 +332,7 @@ public class ArtifactoryResourceServiceImplTest extends CategoryTest {
                 .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
                 .artifactTaskExecutionResponse(ArtifactTaskExecutionResponse.builder()
                                                    .artifactDelegateResponses(Lists.newArrayList(
-                                                       ArtifactoryDockerArtifactDelegateResponse.builder()
+                                                       ArtifactoryArtifactDelegateResponse.builder()
                                                            .buildDetails(ArtifactBuildDetailsNG.builder().build())
                                                            .build()))
                                                    .build())
@@ -373,7 +373,7 @@ public class ArtifactoryResourceServiceImplTest extends CategoryTest {
                 .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
                 .artifactTaskExecutionResponse(ArtifactTaskExecutionResponse.builder()
                                                    .artifactDelegateResponses(Lists.newArrayList(
-                                                       ArtifactoryDockerArtifactDelegateResponse.builder()
+                                                       ArtifactoryArtifactDelegateResponse.builder()
                                                            .buildDetails(ArtifactBuildDetailsNG.builder().build())
                                                            .build()))
                                                    .build())

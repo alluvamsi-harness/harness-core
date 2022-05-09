@@ -33,7 +33,9 @@ import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
+import io.harness.beans.yaml.extended.infrastrucutre.VmInfraSpec;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
 import io.harness.ci.utils.ValidationUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
@@ -124,7 +126,16 @@ public class VmInitializeStepUtils {
     }
 
     VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
-    return resolveOSType(vmInfraYaml.getOs());
+    if (vmInfraYaml.getSpec() == null) {
+      throw new CIStageExecutionException("Infrastructure spec should not be empty");
+    }
+
+    if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
+      throw new CIStageExecutionException(format("Invalid VM type: %s", vmInfraYaml.getSpec().getType()));
+    }
+
+    VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
+    return resolveOSType(vmPoolYaml.getSpec().getOs());
   }
 
   private void validateStageConfig(IntegrationStageConfig integrationStageConfig, String accountId) {

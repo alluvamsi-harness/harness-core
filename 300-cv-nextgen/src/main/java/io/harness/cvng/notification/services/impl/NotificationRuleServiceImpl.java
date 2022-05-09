@@ -107,6 +107,18 @@ public class NotificationRuleServiceImpl implements NotificationRuleService {
   }
 
   @Override
+  public List<NotificationRule> getEnabledNotificationRules(ProjectParams projectParams, List<String> identifiers) {
+    return hPersistence.createQuery(NotificationRule.class)
+        .filter(NotificationRuleKeys.accountId, projectParams.getAccountIdentifier())
+        .filter(NotificationRuleKeys.orgIdentifier, projectParams.getOrgIdentifier())
+        .filter(NotificationRuleKeys.projectIdentifier, projectParams.getProjectIdentifier())
+        .filter(NotificationRuleKeys.enabled, true)
+        .field(NotificationRuleKeys.identifier)
+        .in(identifiers)
+        .asList();
+  }
+
+  @Override
   public NotificationRuleResponse update(
       ProjectParams projectParams, String identifier, NotificationRuleDTO notificationRuleDTO) {
     Preconditions.checkArgument(identifier.equals(notificationRuleDTO.getIdentifier()),

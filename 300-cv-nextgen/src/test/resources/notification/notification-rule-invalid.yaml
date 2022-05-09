@@ -3,8 +3,9 @@ name: rule
 identifier: rule
 orgIdentifier: $orgIdentifier
 projectIdentifier: $projectIdentifier
-type: slo
+type: ServiceLevelObjective
 notificationMethod:
   type: Email
-  userGroups: [testUserGroup]
-  recipients: [test@harness.io]
+  spec:
+    userGroups: [testUserGroup]
+    recipients: [test@harness.io]

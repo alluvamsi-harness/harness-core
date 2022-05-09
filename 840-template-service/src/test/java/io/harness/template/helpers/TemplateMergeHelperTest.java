@@ -12,6 +12,7 @@ import static io.harness.rule.OwnerRule.ABHINAV_MITTAL;
 import static io.harness.rule.OwnerRule.INDER;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.joor.Reflect.on;
 import static org.mockito.Mockito.when;
 
 import io.harness.TemplateServiceTestBase;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
@@ -42,6 +44,7 @@ import org.mockito.Mock;
 public class TemplateMergeHelperTest extends TemplateServiceTestBase {
   @InjectMocks private TemplateMergeHelper templateMergeHelper;
   @Mock private NGTemplateService templateService;
+  @InjectMocks TemplateMergeServiceHelper templateMergeServiceHelper;
 
   private static final String ACCOUNT_ID = "accountId";
   private static final String ORG_ID = "orgId";
@@ -54,6 +57,12 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
     } catch (IOException e) {
       throw new InvalidRequestException("Could not read resource file: " + filename);
     }
+  }
+
+  @Before
+  public void setup() throws IllegalAccessException {
+    on(templateMergeServiceHelper).set("templateService", templateService);
+    on(templateMergeHelper).set("templateMergeServiceHelper", templateMergeServiceHelper);
   }
 
   @Test

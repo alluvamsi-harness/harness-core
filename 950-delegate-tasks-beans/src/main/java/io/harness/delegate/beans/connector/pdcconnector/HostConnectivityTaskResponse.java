@@ -11,7 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.DelegateMetaInfo;
-import io.harness.delegate.beans.DelegateResponseData;
+import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import io.harness.eraro.ErrorCode;
 
 import lombok.Builder;
@@ -20,7 +20,7 @@ import lombok.Data;
 @OwnedBy(CDP)
 @Data
 @Builder
-public class HostConnectivityTaskResponse implements DelegateResponseData {
+public class HostConnectivityTaskResponse implements DelegateTaskNotifyResponseData {
   private boolean connectionSuccessful;
   private String errorMessage;
   private ErrorCode errorCode;

@@ -12,8 +12,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.ng.core.dto.filestore.FileDTO;
 import io.harness.ng.core.entities.NGFile;
+import io.harness.ng.core.filestore.dto.FileDTO;
 
 import java.util.Collections;
 import lombok.experimental.UtilityClass;
@@ -21,7 +21,7 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(CDP)
 @UtilityClass
 public class FileDTOMapper {
-  public NGFile getNGFileFromDTO(FileDTO fileDto, Boolean draft) {
+  public NGFile getNGFileFromDTO(FileDTO fileDto) {
     if (fileDto.isFolder()) {
       return NGFile.builder()
           .accountIdentifier(fileDto.getAccountIdentifier())
@@ -31,6 +31,7 @@ public class FileDTOMapper {
           .parentIdentifier(fileDto.getParentIdentifier())
           .name(fileDto.getName())
           .type(fileDto.getType())
+          .createdBy(fileDto.getCreatedBy())
           .build();
     }
 
@@ -46,7 +47,7 @@ public class FileDTOMapper {
         .description(fileDto.getDescription())
         .tags(!EmptyPredicate.isEmpty(fileDto.getTags()) ? fileDto.getTags() : Collections.emptyList())
         .mimeType(fileDto.getMimeType())
-        .draft(draft)
+        .draft(fileDto.getDraft())
         .createdBy(fileDto.getCreatedBy())
         .build();
   }
@@ -61,6 +62,7 @@ public class FileDTOMapper {
           .name(ngFile.getName())
           .type(ngFile.getType())
           .parentIdentifier(ngFile.getParentIdentifier())
+          .createdBy(ngFile.getCreatedBy())
           .build();
     }
 
@@ -86,6 +88,7 @@ public class FileDTOMapper {
       file.setType(fileDto.getType());
       file.setParentIdentifier(fileDto.getParentIdentifier());
       file.setName(fileDto.getName());
+      file.setCreatedBy(fileDto.getCreatedBy());
       return file;
     }
 

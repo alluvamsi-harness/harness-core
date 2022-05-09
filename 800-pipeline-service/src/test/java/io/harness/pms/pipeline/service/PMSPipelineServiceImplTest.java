@@ -10,7 +10,6 @@ package io.harness.pms.pipeline.service;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.BRIJESH;
 import static io.harness.rule.OwnerRule.SAHIL;
-import static io.harness.rule.OwnerRule.SAMARTH;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -30,7 +29,6 @@ import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.contracts.steps.StepMetaData;
 import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
-import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.StepCategory;
 import io.harness.pms.pipeline.StepData;
 import io.harness.pms.pipeline.StepPalleteInfo;
@@ -58,10 +56,6 @@ import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.query.Criteria;
 
 @Slf4j
 @OwnedBy(PIPELINE)
@@ -228,51 +222,6 @@ public class PMSPipelineServiceImplTest extends PipelineServiceTestBase {
     String expected =
         "StepCategory(name=Library, stepsData=[], stepCategories=[StepCategory(name=cv, stepsData=[], stepCategories=[StepCategory(name=Double, stepsData=[], stepCategories=[StepCategory(name=Single, stepsData=[StepData(name=testStepCV, type=testStepCV, disabled=false, featureRestrictionName=null)], stepCategories=[])])])])";
     assertThat(stepCategory.toString()).isEqualTo(expected);
-  }
-
-  @Test
-  @Owner(developers = SAMARTH)
-  @Category(UnitTests.class)
-  public void testFormCriteria() {
-    Criteria form =
-        pmsPipelineService.formCriteria(accountId, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, null, false, null, null);
-
-    assertThat(form.getCriteriaObject().get("accountId").toString().contentEquals(accountId)).isEqualTo(true);
-    assertThat(form.getCriteriaObject().get("orgIdentifier").toString().contentEquals(ORG_IDENTIFIER)).isEqualTo(true);
-    assertThat(form.getCriteriaObject().get("projectIdentifier").toString().contentEquals(PROJ_IDENTIFIER))
-        .isEqualTo(true);
-    assertThat(form.getCriteriaObject().containsKey("status")).isEqualTo(false);
-    assertThat(form.getCriteriaObject().get("deleted")).isEqualTo(false);
-  }
-
-  @Test
-  @Owner(developers = SAMARTH)
-  @Category(UnitTests.class)
-  public void testFormCriteriaWithActualData() throws IOException {
-    doReturn(Optional.empty()).when(pipelineMetadataService).getMetadata(any(), any(), any(), any());
-    on(pmsPipelineService).set("pmsPipelineRepository", pmsPipelineRepository);
-    doReturn(outboxEvent).when(outboxService).save(any());
-    doReturn(updatedPipelineEntity).when(pmsPipelineServiceHelper).updatePipelineInfo(pipelineEntity);
-
-    pmsPipelineService.create(pipelineEntity);
-
-    Criteria criteria =
-        pmsPipelineService.formCriteria(accountId, ORG_IDENTIFIER, PROJ_IDENTIFIER, null, null, false, "cd", "my");
-
-    Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, PipelineEntityKeys.createdAt));
-
-    List<PipelineEntity> list =
-        pmsPipelineService.list(criteria, pageable, accountId, ORG_IDENTIFIER, PROJ_IDENTIFIER, null).getContent();
-
-    assertThat(list.size()).isEqualTo(1);
-    PipelineEntity queriedPipelineEntity = list.get(0);
-    assertThat(queriedPipelineEntity.getAccountId()).isEqualTo(updatedPipelineEntity.getAccountId());
-    assertThat(queriedPipelineEntity.getOrgIdentifier()).isEqualTo(updatedPipelineEntity.getOrgIdentifier());
-    assertThat(queriedPipelineEntity.getIdentifier()).isEqualTo(updatedPipelineEntity.getIdentifier());
-    assertThat(queriedPipelineEntity.getName()).isEqualTo(updatedPipelineEntity.getName());
-    assertThat(queriedPipelineEntity.getYaml()).isEqualTo(updatedPipelineEntity.getYaml());
-    assertThat(queriedPipelineEntity.getStageCount()).isEqualTo(updatedPipelineEntity.getStageCount());
-    assertThat(queriedPipelineEntity.getStageNames()).isEqualTo(updatedPipelineEntity.getStageNames());
   }
 
   @Test

@@ -322,8 +322,8 @@ public class ScmFacilitatorResource {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
-      @Parameter(description = GitSyncApiConstants.REPO_URL_PARAM_MESSAGE) @NotBlank @QueryParam(
-          NGCommonEntityConstants.REPO_URL) String repoUrl,
+      @Parameter(description = GitSyncApiConstants.REPO_NAME_PARAM_MESSAGE) @NotBlank @QueryParam(
+          NGCommonEntityConstants.REPO_NAME) String repoName,
       @Parameter(description = GitSyncApiConstants.GIT_CONNECTOR_REF_PARAM_MESSAGE) @NotBlank @QueryParam(
           GitSyncApiConstants.CONNECTOR_REF) String connectorRef,
       @Parameter(description = PAGE_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PAGE) @DefaultValue(
@@ -333,6 +333,8 @@ public class ScmFacilitatorResource {
       int pageSize,
       @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.SEARCH_TERM) @DefaultValue("") String searchTerm) {
-    return ResponseDTO.newResponse(GitBranchesResponseDTO.builder().build());
+    return ResponseDTO.newResponse(
+        scmFacilitatorService.listBranchesV2(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef,
+            repoName, PageRequest.builder().pageIndex(pageNum).pageSize(pageSize).build(), searchTerm));
   }
 }

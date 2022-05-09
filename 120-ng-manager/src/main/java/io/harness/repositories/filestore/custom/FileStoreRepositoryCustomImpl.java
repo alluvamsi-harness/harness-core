@@ -49,4 +49,12 @@ public class FileStoreRepositoryCustomImpl implements FileStoreRepositoryCustom 
     return PageableExecutionUtils.getPage(
         ngFiles, pageable, () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), NGFile.class));
   }
+
+  @Override
+  public Page<NGFile> findAll(Criteria criteria, Pageable pageable) {
+    Query query = new Query(criteria).with(pageable);
+    List<NGFile> organizations = mongoTemplate.find(query, NGFile.class);
+    return PageableExecutionUtils.getPage(
+        organizations, pageable, () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), NGFile.class));
+  }
 }

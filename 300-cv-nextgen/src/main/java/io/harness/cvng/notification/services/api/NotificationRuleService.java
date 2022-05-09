@@ -20,13 +20,14 @@ import java.util.List;
 public interface NotificationRuleService {
   NotificationRuleResponse create(ProjectParams projectParams, NotificationRuleDTO notificationRuleDTO);
   List<NotificationRuleRefDTO> create(ProjectParams projectParams, List<NotificationRuleDTO> notificationRuleDTO);
-  List<NotificationRule> getEntities(ProjectParams projectParams, List<String> identifier);
+  List<NotificationRule> getEntities(ProjectParams projectParams, List<String> identifiers);
   NotificationRule getEntity(ProjectParams projectParams, String identifier);
+  List<NotificationRule> getEnabledNotificationRules(ProjectParams projectParams, List<String> identifiers);
   NotificationRuleResponse update(
       ProjectParams projectParams, String identifier, NotificationRuleDTO notificationRuleDTO);
   List<NotificationRuleRef> update(ProjectParams projectParams, List<NotificationRuleRefDTO> notificationRuleRefs);
   Boolean delete(ProjectParams projectParams, String identifier);
-  void delete(ProjectParams projectParams, List<String> identifier);
+  void delete(ProjectParams projectParams, List<String> identifiers);
   PageResponse<NotificationRuleResponse> get(ProjectParams projectParams, Integer pageNumber, Integer pageSize);
   List<NotificationRuleRefDTO> getNotificationRuleRefs(ProjectParams projectParams, List<String> identifiers);
 }

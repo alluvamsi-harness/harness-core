@@ -41,7 +41,10 @@ import software.wings.api.HostElement;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
 import software.wings.beans.APMVerificationConfig;
+import software.wings.beans.ApmMetricCollectionInfo;
+import software.wings.beans.ApmResponseMapping;
 import software.wings.beans.SettingAttribute;
+import software.wings.beans.apm.Method;
 import software.wings.service.impl.apm.APMMetricInfo;
 import software.wings.service.impl.apm.CustomAPMDataCollectionInfo;
 import software.wings.service.intfc.MetricDataAnalysisService;
@@ -49,9 +52,6 @@ import software.wings.service.intfc.SettingsService;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
-import software.wings.sm.states.APMVerificationState.Method;
-import software.wings.sm.states.APMVerificationState.MetricCollectionInfo;
-import software.wings.sm.states.APMVerificationState.ResponseMapping;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Charsets;
@@ -118,8 +118,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
 
     Map<String, List<APMMetricInfo>> apmMetricInfos =
@@ -148,8 +148,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     mcInfo.get(2).getResponseMapping().setTxnNameJsonPath("${workflow.variable.jsonPath}");
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     ExecutionContextImpl executionContext = mock(ExecutionContextImpl.class);
@@ -191,10 +191,10 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testValidateFieldsResponseMapping() {
-    MetricCollectionInfo info = MetricCollectionInfo.builder()
-                                    .collectionUrl("This is a sample URL ${host} ${start_time} ${end_time}")
-                                    .metricName("name")
-                                    .build();
+    ApmMetricCollectionInfo info = ApmMetricCollectionInfo.builder()
+                                       .collectionUrl("This is a sample URL ${host} ${start_time} ${end_time}")
+                                       .metricName("name")
+                                       .build();
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
     assertThat(invalidFields.size() == 1).isTrue();
@@ -205,15 +205,15 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testValidateFields_noHost() {
-    MetricCollectionInfo info = MetricCollectionInfo.builder()
-                                    .collectionUrl("This is a sample URL ${start_time} ${end_time}")
-                                    .metricName("name")
-                                    .build();
-    ResponseMapping mapping = ResponseMapping.builder()
-                                  .metricValueJsonPath("metricValue")
-                                  .timestampJsonPath("timestamp")
-                                  .txnNameFieldValue("txnName")
-                                  .build();
+    ApmMetricCollectionInfo info = ApmMetricCollectionInfo.builder()
+                                       .collectionUrl("This is a sample URL ${start_time} ${end_time}")
+                                       .metricName("name")
+                                       .build();
+    ApmResponseMapping mapping = ApmResponseMapping.builder()
+                                     .metricValueJsonPath("metricValue")
+                                     .timestampJsonPath("timestamp")
+                                     .txnNameFieldValue("txnName")
+                                     .build();
     info.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
@@ -226,15 +226,15 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testValidateFields_noTimePlaceholders() {
-    MetricCollectionInfo info = MetricCollectionInfo.builder()
-                                    .collectionUrl("This is a sample URL ${host}  ${end_time}")
-                                    .metricName("name")
-                                    .build();
-    ResponseMapping mapping = ResponseMapping.builder()
-                                  .metricValueJsonPath("metricValue")
-                                  .timestampJsonPath("timestamp")
-                                  .txnNameFieldValue("txnName")
-                                  .build();
+    ApmMetricCollectionInfo info = ApmMetricCollectionInfo.builder()
+                                       .collectionUrl("This is a sample URL ${host}  ${end_time}")
+                                       .metricName("name")
+                                       .build();
+    ApmResponseMapping mapping = ApmResponseMapping.builder()
+                                     .metricValueJsonPath("metricValue")
+                                     .timestampJsonPath("timestamp")
+                                     .txnNameFieldValue("txnName")
+                                     .build();
     info.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
@@ -247,12 +247,12 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testValidateFieldsResponseMappingMetricValue() {
-    MetricCollectionInfo info = MetricCollectionInfo.builder()
-                                    .collectionUrl("This is a sample URL ${host} ${start_time} ${end_time}")
-                                    .metricName("name")
-                                    .build();
-    ResponseMapping mapping =
-        ResponseMapping.builder().metricValueJsonPath("metricValue").timestampJsonPath("timestamp").build();
+    ApmMetricCollectionInfo info = ApmMetricCollectionInfo.builder()
+                                       .collectionUrl("This is a sample URL ${host} ${start_time} ${end_time}")
+                                       .metricName("name")
+                                       .build();
+    ApmResponseMapping mapping =
+        ApmResponseMapping.builder().metricValueJsonPath("metricValue").timestampJsonPath("timestamp").build();
     info.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
@@ -264,15 +264,15 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testValidateFieldsResponseMappingHostName() {
-    MetricCollectionInfo info = MetricCollectionInfo.builder()
-                                    .collectionUrl("This is a sample URL ${host} ${start_time} ${end_time}")
-                                    .metricName("name")
-                                    .build();
-    ResponseMapping mapping = ResponseMapping.builder()
-                                  .metricValueJsonPath("metricValue")
-                                  .timestampJsonPath("timestamp")
-                                  .txnNameFieldValue("txnName")
-                                  .build();
+    ApmMetricCollectionInfo info = ApmMetricCollectionInfo.builder()
+                                       .collectionUrl("This is a sample URL ${host} ${start_time} ${end_time}")
+                                       .metricName("name")
+                                       .build();
+    ApmResponseMapping mapping = ApmResponseMapping.builder()
+                                     .metricValueJsonPath("metricValue")
+                                     .timestampJsonPath("timestamp")
+                                     .txnNameFieldValue("txnName")
+                                     .build();
     info.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
@@ -285,17 +285,17 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   public void testHostAndBaseline() {
     String metricName = generateUuid();
 
-    MetricCollectionInfo info =
-        MetricCollectionInfo.builder()
+    ApmMetricCollectionInfo info =
+        ApmMetricCollectionInfo.builder()
             .collectionUrl("${host} ${start_time} ${end_time} This is a sample URL " + VERIFICATION_HOST_PLACEHOLDER)
             .baselineCollectionUrl("some baseline url")
             .metricName(metricName)
             .build();
-    ResponseMapping mapping = ResponseMapping.builder()
-                                  .metricValueJsonPath("metricValue")
-                                  .timestampJsonPath("timestamp")
-                                  .txnNameFieldValue("txnName")
-                                  .build();
+    ApmResponseMapping mapping = ApmResponseMapping.builder()
+                                     .metricValueJsonPath("metricValue")
+                                     .timestampJsonPath("timestamp")
+                                     .txnNameFieldValue("txnName")
+                                     .build();
     info.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
@@ -311,16 +311,16 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   public void testBaselineUrlHasHost() {
     String metricName = generateUuid();
 
-    MetricCollectionInfo info = MetricCollectionInfo.builder()
-                                    .collectionUrl("This is a sample URL")
-                                    .baselineCollectionUrl("some baseline url " + VERIFICATION_HOST_PLACEHOLDER)
-                                    .metricName(metricName)
-                                    .build();
-    ResponseMapping mapping = ResponseMapping.builder()
-                                  .metricValueJsonPath("metricValue")
-                                  .timestampJsonPath("timestamp")
-                                  .txnNameFieldValue("txnName")
-                                  .build();
+    ApmMetricCollectionInfo info = ApmMetricCollectionInfo.builder()
+                                       .collectionUrl("This is a sample URL")
+                                       .baselineCollectionUrl("some baseline url " + VERIFICATION_HOST_PLACEHOLDER)
+                                       .metricName(metricName)
+                                       .build();
+    ApmResponseMapping mapping = ApmResponseMapping.builder()
+                                     .metricValueJsonPath("metricValue")
+                                     .timestampJsonPath("timestamp")
+                                     .txnNameFieldValue("txnName")
+                                     .build();
     info.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info));
     Map<String, String> invalidFields = apmVerificationState.validateFields();
@@ -337,20 +337,20 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     String metricName1 = generateUuid();
     String metricName2 = generateUuid();
 
-    MetricCollectionInfo info1 = MetricCollectionInfo.builder()
-                                     .collectionUrl("This is a sample URL")
-                                     .baselineCollectionUrl("some baseline url")
-                                     .metricName(metricName1)
+    ApmMetricCollectionInfo info1 = ApmMetricCollectionInfo.builder()
+                                        .collectionUrl("This is a sample URL")
+                                        .baselineCollectionUrl("some baseline url")
+                                        .metricName(metricName1)
+                                        .build();
+    ApmMetricCollectionInfo info2 = ApmMetricCollectionInfo.builder()
+                                        .collectionUrl("This is a sample URL " + VERIFICATION_HOST_PLACEHOLDER)
+                                        .metricName(metricName2)
+                                        .build();
+    ApmResponseMapping mapping = ApmResponseMapping.builder()
+                                     .metricValueJsonPath("metricValue")
+                                     .timestampJsonPath("timestamp")
+                                     .txnNameFieldValue("txnName")
                                      .build();
-    MetricCollectionInfo info2 = MetricCollectionInfo.builder()
-                                     .collectionUrl("This is a sample URL " + VERIFICATION_HOST_PLACEHOLDER)
-                                     .metricName(metricName2)
-                                     .build();
-    ResponseMapping mapping = ResponseMapping.builder()
-                                  .metricValueJsonPath("metricValue")
-                                  .timestampJsonPath("timestamp")
-                                  .txnNameFieldValue("txnName")
-                                  .build();
     info1.setResponseMapping(mapping);
     info2.setResponseMapping(mapping);
     apmVerificationState.setMetricCollectionInfos(Arrays.asList(info1, info2));
@@ -367,8 +367,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   public void testValidInitialDelay() throws Exception {
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     apmVerificationState.setInitialAnalysisDelay("4m");
     assertThat(apmVerificationState.validateFields().containsKey("initialAnalysisDelay")).isFalse();
@@ -381,8 +381,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     apmVerificationState.setInitialAnalysisDelay("200s");
     assertThat(apmVerificationState.validateFields().containsKey("initialAnalysisDelay")).isFalse();
@@ -395,8 +395,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     apmVerificationState.setInitialAnalysisDelay("500s");
     // Now value is hard coded to DELAY_MINUTES
@@ -412,8 +412,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
 
     assertThat(apmVerificationState.isHistoricalAnalysis(accountId)).isTrue();
@@ -427,8 +427,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr = Resources.toString(
         APMVerificationStateTest.class.getResource("/apm/apm_collection_info_not_historical.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
 
     assertThat(apmVerificationState.isHistoricalAnalysis(accountId)).isFalse();
@@ -442,8 +442,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr = Resources.toString(
         APMVerificationStateTest.class.getResource("/apm/apm_collection_info_not_historical.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     mcInfo.forEach(info -> info.setCollectionUrl(info.getCollectionUrl() + VERIFICATION_HOST_PLACEHOLDER));
     apmVerificationState.setMetricCollectionInfos(mcInfo);
 
@@ -458,8 +458,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr = Resources.toString(
         APMVerificationStateTest.class.getResource("/apm/apm_collection_info_not_historical.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     mcInfo.forEach(info -> info.setCollectionBody(null));
     mcInfo.forEach(info -> info.setCollectionUrl("dummyURLwithoutHost"));
     apmVerificationState.setMetricCollectionInfos(mcInfo);
@@ -475,8 +475,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr = Resources.toString(
         APMVerificationStateTest.class.getResource("/apm/apm_collection_info_not_historical.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     mcInfo.forEach(info -> info.setCollectionUrl(null));
     apmVerificationState.setMetricCollectionInfos(mcInfo);
 
@@ -492,8 +492,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr = Resources.toString(
         APMVerificationStateTest.class.getResource("/apm/apm_collection_info_not_historical.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     mcInfo.forEach(info -> info.setCollectionUrl(null));
     apmVerificationState.setMetricCollectionInfos(mcInfo);
 
@@ -512,8 +512,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     apmVerificationState.setAnalysisServerConfigId(analysisServerConfigId);
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     APMVerificationConfig apmVerificationConfig = new APMVerificationConfig();
     apmVerificationConfig.setValidationUrl("/validation");
@@ -547,8 +547,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     apmVerificationState.setAnalysisServerConfigId(analysisServerConfigId);
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
-    List<APMVerificationState.MetricCollectionInfo> mcInfo =
-        yamlUtils.read(yamlStr, new TypeReference<List<APMVerificationState.MetricCollectionInfo>>() {});
+    List<ApmMetricCollectionInfo> mcInfo =
+        yamlUtils.read(yamlStr, new TypeReference<List<ApmMetricCollectionInfo>>() {});
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     APMVerificationConfig apmVerificationConfig = new APMVerificationConfig();
     apmVerificationConfig.setValidationUrl("/validation");

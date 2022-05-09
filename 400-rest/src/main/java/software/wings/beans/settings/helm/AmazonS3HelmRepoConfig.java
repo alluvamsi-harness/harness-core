@@ -86,6 +86,11 @@ public class AmazonS3HelmRepoConfig extends SettingValue implements HelmRepoConf
     return executionCapabilityList;
   }
 
+  @Override
+  public String getBucketName() {
+    return bucketName;
+  }
+
   @Data
   @NoArgsConstructor
   @EqualsAndHashCode(callSuper = true)

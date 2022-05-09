@@ -16,7 +16,7 @@ import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetai
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryDockerBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryGenericBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
@@ -54,10 +54,10 @@ public class ArtifactoryResourceMapper {
               .collect(Collectors.toList());
       return ArtifactoryResourceMapper.toArtifactoryGenericResponse(artifactoryArtifactDelegateResponses);
     }
-    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
+    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
         artifactTaskExecutionResponse.getArtifactDelegateResponses()
             .stream()
-            .map(delegateResponse -> (ArtifactoryDockerArtifactDelegateResponse) delegateResponse)
+            .map(delegateResponse -> (ArtifactoryArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
     return ArtifactoryResourceMapper.toArtifactoryDockerResponse(artifactoryArtifactDelegateResponses);
   }
@@ -72,7 +72,7 @@ public class ArtifactoryResourceMapper {
   }
 
   public ArtifactoryResponseDTO toArtifactoryDockerResponse(
-      List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponseList) {
+      List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponseList) {
     List<ArtifactoryBuildDetailsDTO> detailsDTOList =
         artifactoryArtifactDelegateResponseList.stream()
             .map(response -> toArtifactoryDockerBuildDetailsDTO(response.getBuildDetails(), response.getArtifactPath()))

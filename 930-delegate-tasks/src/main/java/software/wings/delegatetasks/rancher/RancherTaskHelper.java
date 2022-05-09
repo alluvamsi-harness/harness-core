@@ -33,6 +33,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.Cluster;
@@ -146,7 +147,7 @@ public class RancherTaskHelper {
       }
     }
 
-    if (config != null && config.getUsers() != null && config.getUsers().get(0) != null
+    if (config != null && CollectionUtils.isNotEmpty(config.getUsers()) && config.getUsers().get(0) != null
         && config.getUsers().get(0).getUser() != null) {
       token = config.getUsers().get(0).getUser().getToken();
     }
@@ -158,7 +159,8 @@ public class RancherTaskHelper {
         .build();
   }
 
-  private String generateKubeConfigFromRancher(RancherConfig rancherConfig, String clusterId) throws IOException {
+  @VisibleForTesting
+  String generateKubeConfigFromRancher(RancherConfig rancherConfig, String clusterId) throws IOException {
     String url = String.format("/v3/clusters/%s?action=generateKubeconfig", clusterId);
     HttpInternalResponse response = makeRancherApi("POST", url, rancherConfig);
 

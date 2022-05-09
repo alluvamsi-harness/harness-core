@@ -16,6 +16,7 @@ import io.harness.beans.GraphVertex;
 import io.harness.beans.OrchestrationEventLog;
 import io.harness.beans.OrchestrationGraph;
 import io.harness.beans.converter.EphemeralOrchestrationGraphConverter;
+import io.harness.beans.internal.OrchestrationAdjacencyListInternal;
 import io.harness.cache.SpringCacheEntity;
 import io.harness.cache.SpringMongoStore;
 import io.harness.data.structure.EmptyPredicate;
@@ -49,6 +50,8 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -255,7 +258,13 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
     }
     List<NodeExecution> nodeExecutions = nodeExecutionService.fetchNodeExecutionsWithoutOldRetries(planExecutionId);
     if (isEmpty(nodeExecutions)) {
-      throw new InvalidRequestException("No nodes found for planExecutionId [" + planExecutionId + "]");
+      return OrchestrationGraph.builder()
+          .adjacencyList(OrchestrationAdjacencyListInternal.builder()
+                             .adjacencyMap(new HashMap<>())
+                             .graphVertexMap(new HashMap<>())
+                             .build())
+          .rootNodeIds(new ArrayList<>())
+          .build();
     }
 
     String rootNodeId = obtainStartingNodeExId(nodeExecutions);

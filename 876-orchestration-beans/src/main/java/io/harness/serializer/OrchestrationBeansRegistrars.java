@@ -11,8 +11,10 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.pms.serializer.kryo.PmsContractsKryoRegistrar;
+import io.harness.serializer.kryo.NotificationBeansKryoRegistrar;
 import io.harness.serializer.kryo.OrchestrationBeansKryoRegistrar;
 import io.harness.serializer.kryo.RecasterKryoRegistrar;
+import io.harness.serializer.morphia.NotificationBeansMorphiaRegistrar;
 import io.harness.serializer.morphia.OrchestrationBeansMorphiaRegistrar;
 import io.harness.serializer.spring.converters.stepparameters.PmsStepParametersReadConverter;
 import io.harness.serializer.spring.converters.stepparameters.PmsStepParametersWriteConverter;
@@ -38,6 +40,7 @@ public class OrchestrationBeansRegistrars {
           .addAll(NGCoreBeansRegistrars.kryoRegistrars)
           .add(OrchestrationBeansKryoRegistrar.class)
           .add(RecasterKryoRegistrar.class)
+          .add(NotificationBeansKryoRegistrar.class)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -49,6 +52,7 @@ public class OrchestrationBeansRegistrars {
           .add(PmsSdkCoreMorphiaRegistrar.class)
           .addAll(WaitEngineRegistrars.morphiaRegistrars)
           .add(OrchestrationBeansMorphiaRegistrar.class)
+          .add(NotificationBeansMorphiaRegistrar.class)
           .build();
 
   public static final ImmutableSet<Class<? extends TypeConverter>> morphiaConverters =

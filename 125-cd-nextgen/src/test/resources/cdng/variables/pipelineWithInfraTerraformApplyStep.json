@@ -72,6 +72,10 @@
                                   },
                                   "__uuid": "xfEK00-pTq-aU5MwTxpq_g"
                                 },
+                                "moduleSource": {
+                                  "useConnectorCredentials": true,
+                                  "__uuid": "djfaBeuQRK6WVU_F5_7NUw"
+                                },
                                 "__uuid": "uMHttjd6ReOZzkSKH6lN9A"
                               },
                               "backendConfig": {

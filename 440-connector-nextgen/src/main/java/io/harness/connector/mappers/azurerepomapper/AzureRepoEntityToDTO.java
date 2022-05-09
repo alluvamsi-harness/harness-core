@@ -53,6 +53,7 @@ public class AzureRepoEntityToDTO implements ConnectorEntityToDTOMapper<AzureRep
         .connectionType(connector.getConnectionType())
         .authentication(azureAuthenticationDTO)
         .url(connector.getUrl())
+        .validationProject(connector.getValidationProject())
         .validationRepo(connector.getValidationRepo())
         .build();
   }

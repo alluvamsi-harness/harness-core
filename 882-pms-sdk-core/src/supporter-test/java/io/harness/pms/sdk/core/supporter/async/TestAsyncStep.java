@@ -22,12 +22,20 @@ import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.tasks.ResponseData;
 
+import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 
 @OwnedBy(PIPELINE)
 public class TestAsyncStep implements AsyncExecutable<TestStepParameters> {
   public static final StepType ASYNC_STEP_TYPE =
       StepType.newBuilder().setType("TEST_STATE_PLAN_ASYNC").setStepCategory(StepCategory.STEP).build();
+
+  @Getter private String message;
+
+  public TestAsyncStep(String message) {
+    this.message = message;
+  }
 
   @Override
   public Class<TestStepParameters> getStepParametersClass() {
@@ -45,6 +53,12 @@ public class TestAsyncStep implements AsyncExecutable<TestStepParameters> {
   public StepResponse handleAsyncResponse(
       Ambiance ambiance, TestStepParameters stepParameters, Map<String, ResponseData> responseDataMap) {
     return StepResponse.builder().status(Status.SUCCEEDED).build();
+  }
+
+  @Override
+  public void handleForCallbackId(Ambiance ambiance, TestStepParameters stepParameters, List<String> allCallbackIds,
+      String callbackId, ResponseData responseData) {
+    message = callbackId;
   }
 
   @Override

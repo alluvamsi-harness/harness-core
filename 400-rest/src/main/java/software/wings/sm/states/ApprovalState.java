@@ -178,6 +178,11 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
   @Getter @Setter private boolean disable;
   @Getter @Setter private String disableAssertion;
   @Setter @SchemaIgnore private String stageName;
+  @Getter @Setter private boolean userGroupAsExpression;
+  /**
+   * This should be used to get user groups to approval if {@link #userGroupAsExpression} is set.
+   */
+  @NotNull @Getter @Setter private String userGroupExpression;
 
   @Override
   public KryoSerializer getKryoSerializer() {
@@ -234,8 +239,10 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
     ExecutionContextImpl executionContext = (ExecutionContextImpl) context;
     String approvalId = generateUuid();
 
-    if (!isEmpty(getTemplateExpressions())) {
+    if (isNotEmpty(getTemplateExpressions())) {
       resolveUserGroupFromTemplate(context, executionContext);
+    } else if (isUserGroupAsExpression()) {
+      resolveUserGroupFromExpression(context);
     }
 
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
@@ -326,8 +333,34 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
           Level.ERROR, WingsException.USER);
     }
 
-    for (String singleUserGroup : userGroups) {
-      String accountId = executionContext.getApp().getAccountId();
+    userGroups = resolveUserGroup(userGroups, executionContext.getApp().getAccountId());
+  }
+
+  @VisibleForTesting
+  void resolveUserGroupFromExpression(ExecutionContext context) {
+    if (isEmpty(getUserGroupExpression())) {
+      throw new InvalidRequestException("User group expression is set but value is not provided", USER);
+    }
+
+    String expression = getUserGroupExpression();
+    String renderedExpression = context.renderExpression(expression);
+
+    if (isEmpty(renderedExpression)) {
+      log.error("[EMPTY_EXPRESSION] Rendered expression is: [{}]. Original Expression: [{}], Context: [{}]",
+          renderedExpression, expression, context.asMap());
+      throw new InvalidRequestException("User group expression is invalid", USER);
+    }
+
+    List<String> userGroupNames =
+        Arrays.stream(renderedExpression.split(",")).map(String::trim).collect(Collectors.toList());
+
+    userGroups = resolveUserGroup(userGroupNames, context.getAccountId());
+  }
+
+  private List<String> resolveUserGroup(List<String> userGroupNames, String accountId) {
+    List<String> resolvedUserGroup = new ArrayList<>();
+
+    for (String singleUserGroup : userGroupNames) {
       UserGroup userGroup = userGroupService.get(accountId, singleUserGroup);
       if (userGroup == null) {
         userGroup = userGroupService.fetchUserGroupByName(accountId, singleUserGroup);
@@ -338,7 +371,8 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
       }
       resolvedUserGroup.add(userGroup.getUuid());
     }
-    userGroups = resolvedUserGroup;
+
+    return resolvedUserGroup;
   }
 
   @Nullable

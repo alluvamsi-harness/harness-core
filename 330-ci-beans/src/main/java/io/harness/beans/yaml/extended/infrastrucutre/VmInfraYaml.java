@@ -8,12 +8,9 @@
 package io.harness.beans.yaml.extended.infrastrucutre;
 
 import static io.harness.annotations.dev.HarnessTeam.CI;
-import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
-import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -39,8 +36,5 @@ public class VmInfraYaml implements Infrastructure {
   @ApiModelProperty(hidden = true)
   String uuid;
   @Builder.Default @NotNull private Type type = Type.VM;
-  @YamlSchemaTypes({string})
-  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.infrastrucutre.OSType")
-  private ParameterField<OSType> os;
   @NotNull private VmInfraSpec spec;
 }

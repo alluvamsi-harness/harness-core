@@ -140,9 +140,9 @@ import io.harness.delegate.task.artifactory.ArtifactoryDelegateTask;
 import io.harness.delegate.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactTaskHandler;
@@ -642,6 +642,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -784,7 +785,7 @@ public class DelegateModule extends AbstractModule {
   @Provides
   @Singleton
   @Named("taskExecutor")
-  public ExecutorService taskExecutor() {
+  public ThreadPoolExecutor taskExecutor() {
     int maxPoolSize = Integer.MAX_VALUE;
     long delegateXmx = 0;
     try {
@@ -814,7 +815,7 @@ public class DelegateModule extends AbstractModule {
   @Provides
   @Singleton
   @Named("timeoutExecutor")
-  public ExecutorService timeoutExecutor() {
+  public ThreadPoolExecutor timeoutExecutor() {
     return ThreadPool.create(10, 40, 7, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("timeout-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
@@ -1173,7 +1174,7 @@ public class DelegateModule extends AbstractModule {
         artifactoryDockerArtifactServiceMapBinder =
             MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
-    artifactoryDockerArtifactServiceMapBinder.addBinding(ArtifactoryDockerArtifactDelegateRequest.class)
+    artifactoryDockerArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
         .toInstance(ArtifactoryArtifactTaskHandler.class);
 
     MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>

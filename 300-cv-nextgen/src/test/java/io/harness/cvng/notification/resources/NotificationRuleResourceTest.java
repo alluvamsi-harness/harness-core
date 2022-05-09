@@ -157,6 +157,19 @@ public class NotificationRuleResourceTest extends CvNextGenTestBase {
     assertThat(response.readEntity(String.class)).contains("\"totalItems\":1");
   }
 
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testSaveNotificationRuleData_withMonitoredService() throws IOException {
+    String sloYaml = getYAML("notification/notification-rule-monitored-service.yaml");
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/notification-rule/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(sloYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
   private String getYAML(String filePath) throws IOException {
     return getYAML(filePath, monitoredServiceDTO.getIdentifier());
   }

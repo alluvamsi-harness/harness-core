@@ -9,6 +9,7 @@ package software.wings.delegatetasks.terraform.helper;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.clienttools.ClientTool.TERRAFORM_CONFIG_INSPECT;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.SPACE;
@@ -17,7 +18,8 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.data.structure.HarnessStringUtils;
-import io.harness.delegate.configuration.InstallUtils;
+import io.harness.delegate.clienttools.InstallUtils;
+import io.harness.delegate.clienttools.TerraformConfigInspectVersion;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.exception.WingsException;
@@ -60,9 +62,16 @@ public class TerraformConfigInspectClientImpl implements TerraformConfigInspectC
     }
   }
 
-  String executeTerraformInspect(String directory, boolean useLatestVersion) {
-    String cmd = InstallUtils.getTerraformConfigInspectPath(useLatestVersion);
+  String executeTerraformInspect(final String directory, final boolean useLatestVersion) {
+    String cmd = getTerraformConfigInspectPath(useLatestVersion);
     return executeShellCommand(HarnessStringUtils.join(SPACE, cmd, jsonArg, directory));
+  }
+
+  private String getTerraformConfigInspectPath(final boolean useLatestVersion) {
+    if (useLatestVersion) {
+      return InstallUtils.getLatestVersionPath(TERRAFORM_CONFIG_INSPECT);
+    }
+    return InstallUtils.getPath(TERRAFORM_CONFIG_INSPECT, TerraformConfigInspectVersion.V1_0);
   }
 
   /*

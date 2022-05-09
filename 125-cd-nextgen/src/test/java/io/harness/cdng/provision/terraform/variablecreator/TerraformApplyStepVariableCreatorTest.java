@@ -87,6 +87,7 @@ public class TerraformApplyStepVariableCreatorTest extends CategoryTest {
             "pipeline.stages.K8s.spec.infrastructure.infrastructureDefinition.provisioner.steps.Terraform_Apply.timeout",
             "pipeline.stages.K8s.spec.infrastructure.infrastructureDefinition.provisioner.steps.Terraform_Apply.spec.configuration.spec.backendConfig.spec.content",
             "pipeline.stages.K8s.spec.infrastructure.infrastructureDefinition.provisioner.steps.Terraform_Apply.spec.configuration.spec.targets",
-            "pipeline.stages.K8s.spec.infrastructure.infrastructureDefinition.provisioner.steps.Terraform_Apply.spec.configuration.spec.environmentVariables.ANSWER");
+            "pipeline.stages.K8s.spec.infrastructure.infrastructureDefinition.provisioner.steps.Terraform_Apply.spec.configuration.spec.environmentVariables.ANSWER",
+            "pipeline.stages.K8s.spec.infrastructure.infrastructureDefinition.provisioner.steps.Terraform_Apply.spec.configuration.spec.configFiles.moduleSource.useConnectorCredentials");
   }
 }

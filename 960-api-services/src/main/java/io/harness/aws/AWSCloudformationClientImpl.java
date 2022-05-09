@@ -8,6 +8,7 @@
 package io.harness.aws;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.util.Collections.emptyList;
 
@@ -43,6 +44,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(CDP)
@@ -52,6 +54,13 @@ import lombok.extern.slf4j.Slf4j;
 public class AWSCloudformationClientImpl implements AWSCloudformationClient {
   @Inject AwsApiHelperService awsApiHelperService;
   @Inject private AwsCallTracker tracker;
+
+  @Override
+  public Optional<Stack> getStack(
+      String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig) {
+    List<Stack> stacks = getAllStacks(region, describeStacksRequest, awsConfig);
+    return isNotEmpty(stacks) ? Optional.of(stacks.get(0)) : Optional.empty();
+  }
 
   @Override
   public List<Stack> getAllStacks(
@@ -174,6 +183,12 @@ public class AWSCloudformationClientImpl implements AWSCloudformationClient {
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
     }
     return new UpdateStackResult();
+  }
+
+  @Override
+  public DeployStackResult deployStack(
+      String region, DeployStackRequest deployStackRequest, AwsInternalConfig awsConfig) {
+    throw new InvalidRequestException("To be implemented");
   }
 
   @Override

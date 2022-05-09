@@ -11,6 +11,7 @@ import static io.harness.rule.OwnerRule.AMAN;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import io.harness.agent.sdk.HarnessHierarchy;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -32,6 +33,7 @@ public class CiBeansComponentTest extends CiBeansTestBase {
   @Test
   @Owner(developers = AMAN)
   @Category(UnitTests.class)
+  @HarnessHierarchy(TestExecution.class)
   public void componentCiBeansTests() {
     for (Entry<String, TestExecution> test : tests.entrySet()) {
       assertThatCode(() -> test.getValue().run()).as(test.getKey()).doesNotThrowAnyException();

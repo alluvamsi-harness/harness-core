@@ -19,7 +19,10 @@ import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.CDStepHelper;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.manifest.ManifestStoreType;
@@ -59,6 +62,7 @@ import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
 import io.harness.delegate.task.terraform.TerraformVarFileInfo;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
+import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.mappers.SecretManagerConfigMapper;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.NGAccess;
@@ -107,6 +111,7 @@ public class TerraformStepHelper {
   private static final String TF_INHERIT_OUTPUT_FORMAT = "tfInheritOutput_%s_%s";
   public static final String TF_CONFIG_FILES = "TF_CONFIG_FILES";
   public static final String TF_VAR_FILES = "TF_VAR_FILES_%d";
+  public static final String USE_CONNECTOR_CREDENTIALS = "useConnectorCredentials";
 
   @Inject private HPersistence persistence;
   @Inject private K8sStepHelper k8sStepHelper;
@@ -115,6 +120,7 @@ public class TerraformStepHelper {
   @Inject private FileServiceClientFactory fileService;
   @Named("PRIVILEGED") @Inject private SecretManagerClientService secretManagerClientService;
   @Inject private EngineExpressionService engineExpressionService;
+  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Inject public TerraformConfigDAL terraformConfigDAL;
 
   public static List<EntityDetail> prepareEntityDetailsForVarFiles(
@@ -300,6 +306,9 @@ public class TerraformStepHelper {
         Map<String, String> commitIdMap = terraformTaskNGResponse.getCommitIdForConfigFilesMap();
         builder.configFiles(getStoreConfigAtCommitId(
             configuration.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES)));
+        builder.useConnectorCredentials(isExportCredentialForSourceModule(
+            ambiance, configuration.getConfigFiles(), ExecutionNodeType.TERRAFORM_PLAN.getYamlType()));
+
         break;
       case ARTIFACTORY:
         builder.fileStoreConfig((FileStorageStoreConfig) configuration.getConfigFiles().getStore().getSpec());
@@ -401,6 +410,7 @@ public class TerraformStepHelper {
             .pipelineExecutionId(ambiance.getPlanExecutionId())
             .configFiles(
                 inheritOutput.getConfigFiles() != null ? inheritOutput.getConfigFiles().toGitStoreConfigDTO() : null)
+            .useConnectorCredentials(inheritOutput.isUseConnectorCredentials())
             .fileStoreConfig(inheritOutput.getFileStoreConfig() != null
                     ? inheritOutput.getFileStoreConfig().toFileStorageConfigDTO()
                     : null)
@@ -478,6 +488,10 @@ public class TerraformStepHelper {
         builder.configFiles(
             getStoreConfigAtCommitId(spec.getConfigFiles().getStore().getSpec(), commitIdMap.get(TF_CONFIG_FILES))
                 .toGitStoreConfigDTO());
+
+        builder.useConnectorCredentials(isExportCredentialForSourceModule(
+            ambiance, configuration.getSpec().getConfigFiles(), ExecutionNodeType.TERRAFORM_APPLY.getYamlType()));
+
         break;
       case ARTIFACTORY:
         builder.fileStoreConfig(((FileStorageStoreConfig) store.getSpec()).toFileStorageConfigDTO());
@@ -577,6 +591,16 @@ public class TerraformStepHelper {
       throw new InvalidRequestException(
           format("Unable to update StateFile version for entityId: [%s], Please try re-running pipeline", entityId));
     }
+  }
+
+  public boolean isExportCredentialForSourceModule(
+      Ambiance ambiance, TerraformConfigFilesWrapper configFiles, String type) {
+    String description = String.format("%s step", type);
+    return cdFeatureFlagHelper.isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH)
+        && configFiles.getModuleSource() != null
+        && !ParameterField.isNull(configFiles.getModuleSource().getUseConnectorCredentials())
+        && CDStepHelper.getParameterFieldBooleanValue(
+            configFiles.getModuleSource().getUseConnectorCredentials(), USE_CONNECTOR_CREDENTIALS, description);
   }
 
   // Conversion Methods

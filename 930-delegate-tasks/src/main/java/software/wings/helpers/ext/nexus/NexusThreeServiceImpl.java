@@ -44,7 +44,7 @@ import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.common.AlphanumComparator;
 import software.wings.common.BuildDetailsComparatorAscending;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionCommonTaskHelper;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryFormat;
 
@@ -80,7 +80,7 @@ public class NexusThreeServiceImpl {
   private static final int MAX_PAGES = 10;
   private static final List<String> IGNORE_EXTENSIONS = Lists.newArrayList("pom", "sha1", "sha256", "sha512", "md5");
 
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
   @Inject private CGNexusHelper nexusHelper;
 
   public List<String> getPackageNames(
@@ -486,7 +486,7 @@ public class NexusThreeServiceImpl {
       ListNotifyResponseData notifyResponseData, String artifactName, String artifactUrl) {
     Pair<String, InputStream> pair = downloadArtifactByUrl(nexusConfig, artifactName, artifactUrl);
     try {
-      artifactCollectionTaskHelper.addDataToResponse(
+      artifactCollectionCommonTaskHelper.addDataToResponse(
           pair, artifactUrl, notifyResponseData, delegateId, taskId, accountId);
     } catch (IOException e) {
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);

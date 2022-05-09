@@ -39,7 +39,6 @@ import io.harness.perpetualtask.k8s.watch.K8sWatchPerpetualTaskServiceClient;
 import io.harness.rule.Owner;
 
 import software.wings.beans.Account;
-import software.wings.service.intfc.AlertService;
 import software.wings.service.intfc.DelegateService;
 
 import java.util.ArrayList;
@@ -67,7 +66,6 @@ public class PerpetualTaskRecordHandlerTest extends CategoryTest {
   @Mock DelegateService delegateService;
   @Mock PerpetualTaskService perpetualTaskService;
   @Mock PerpetualTaskRecordDao perpetualTaskRecordDao;
-  @Mock AlertService alertService;
   @InjectMocks PerpetualTaskRecordHandler perpetualTaskRecordHandler;
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
 

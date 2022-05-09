@@ -10,6 +10,7 @@ package io.harness.stateutils.buildstate;
 import static io.harness.beans.serializer.RunTimeInputHandler.UNRESOLVED_PARAMETER;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveIntegerParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
+import static io.harness.beans.serializer.RunTimeInputHandler.resolveOSType;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
 import static io.harness.beans.sweepingoutputs.CISweepingOutputNames.CODE_BASE_CONNECTOR_REF;
 import static io.harness.beans.sweepingoutputs.ContainerPortDetails.PORT_DETAILS;
@@ -40,6 +41,8 @@ import static io.harness.common.CIExecutionConstants.STAGE_ID_ATTR;
 import static io.harness.common.CIExecutionConstants.STAGE_NAME_ATTR;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_TOKEN_VARIABLE;
+import static io.harness.common.STOExecutionConstants.STO_SERVICE_ENDPOINT_VARIABLE;
+import static io.harness.common.STOExecutionConstants.STO_SERVICE_TOKEN_VARIABLE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.lang.String.format;
@@ -67,6 +70,7 @@ import io.harness.beans.sweepingoutputs.K8StageInfraDetails;
 import io.harness.beans.sweepingoutputs.PodCleanupDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.Capabilities;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.SecurityContext;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.Toleration;
@@ -102,6 +106,7 @@ import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.stateutils.buildstate.providers.InternalContainerParamsProvider;
+import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 import io.harness.util.GithubApiFunctor;
 import io.harness.util.GithubApiTokenEvaluator;
@@ -137,6 +142,7 @@ public class K8BuildSetupUtils {
   @Inject private CIFeatureFlagService featureFlagService;
   @Inject CILogServiceUtils logServiceUtils;
   @Inject TIServiceUtils tiServiceUtils;
+  @Inject STOServiceUtils stoServiceUtils;
   @Inject CodebaseUtils codebaseUtils;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
@@ -194,6 +200,8 @@ public class K8BuildSetupUtils {
     List<PodToleration> podTolerations = getPodTolerations(k8sDirectInfraYaml.getSpec().getTolerations());
     String priorityClassName = k8sDirectInfraYaml.getSpec().getPriorityClassName().getValue();
     Boolean automountServiceAccountToken = k8sDirectInfraYaml.getSpec().getAutomountServiceAccountToken().getValue();
+    OSType os = resolveOSType(k8sDirectInfraYaml.getSpec().getOs());
+
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
 
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
@@ -201,7 +209,7 @@ public class K8BuildSetupUtils {
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
         podSetupInfo.getVolumes(), runtime, k8sDirectInfraYaml.getSpec().getNamespace().getValue(), ctrSecurityContext,
-        automountServiceAccountToken, priorityClassName);
+        automountServiceAccountToken, priorityClassName, os);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 
@@ -239,7 +247,7 @@ public class K8BuildSetupUtils {
 
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
-        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null);
+        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null, OSType.LINUX);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 
@@ -277,8 +285,8 @@ public class K8BuildSetupUtils {
       InitializeStepInfo initializeStepInfo, boolean usePVC, String logPrefix, Ambiance ambiance,
       Map<String, String> annotations, Map<String, String> labels, Integer stageRunAsUser, String serviceAccountName,
       Map<String, String> nodeSelector, List<PodToleration> podTolerations, List<PodVolume> podVolumes, String runtime,
-      String namespace, SecurityContext securityContext, Boolean automountServiceAccountToken,
-      String priorityClassName) {
+      String namespace, SecurityContext securityContext, Boolean automountServiceAccountToken, String priorityClassName,
+      OSType os) {
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
     ConnectorDetails harnessInternalImageConnector = null;
     if (isNotEmpty(ciExecutionServiceConfig.getDefaultInternalImageConnector())) {
@@ -296,7 +304,7 @@ public class K8BuildSetupUtils {
 
     CIK8ContainerParams setupAddOnContainerParams = internalContainerParamsProvider.getSetupAddonContainerParams(
         harnessInternalImageConnector, podSetupInfo.getVolumeToMountPath(), podSetupInfo.getWorkDirPath(),
-        getCtrSecurityContext(securityContext), ngAccess.getAccountIdentifier());
+        getCtrSecurityContext(securityContext), ngAccess.getAccountIdentifier(), os);
 
     // Service identifier usage in host alias requires that service identifier does not have capital letter characters
     // or _. For now, removing host alias usage otherwise pod creation itself fails.
@@ -377,6 +385,7 @@ public class K8BuildSetupUtils {
     String accountId = AmbianceUtils.getAccountId(ambiance);
     Map<String, String> logEnvVars = getLogServiceEnvVariables(k8PodDetails, accountId);
     Map<String, String> tiEnvVars = getTIServiceEnvVariables(accountId);
+    Map<String, String> stoEnvVars = getSTOServiceEnvVariables(accountId);
     Map<String, String> commonEnvVars = getCommonStepEnvVariables(
         k8PodDetails, gitEnvVars, runtimeCodebaseVars, podSetupInfo.getWorkDirPath(), logPrefix, ambiance);
     Map<String, ConnectorConversionInfo> stepConnectors =
@@ -395,7 +404,8 @@ public class K8BuildSetupUtils {
 
     CIK8ContainerParams liteEngineContainerParams = createLiteEngineContainerParams(harnessInternalImageConnector,
         k8PodDetails, podSetupInfo.getStageCpuRequest(), podSetupInfo.getStageMemoryRequest(), logEnvVars, tiEnvVars,
-        podSetupInfo.getVolumeToMountPath(), podSetupInfo.getWorkDirPath(), ctrSecurityContext, logPrefix, ambiance);
+        stoEnvVars, podSetupInfo.getVolumeToMountPath(), podSetupInfo.getWorkDirPath(), ctrSecurityContext, logPrefix,
+        ambiance);
 
     List<CIK8ContainerParams> containerParams = new ArrayList<>();
     containerParams.add(liteEngineContainerParams);
@@ -405,8 +415,8 @@ public class K8BuildSetupUtils {
         podSetupInfo.getPodSetupParams().getContainerDefinitionInfos()) {
       CIK8ContainerParams cik8ContainerParams =
           createCIK8ContainerParams(ngAccess, containerDefinitionInfo, harnessInternalImageConnector, commonEnvVars,
-              stepConnectors, podSetupInfo.getVolumeToMountPath(), podSetupInfo.getWorkDirPath(), securityContext,
-              logPrefix, secretVariableDetails, githubApiTokenFunctorConnectors);
+              stoEnvVars, stepConnectors, podSetupInfo.getVolumeToMountPath(), podSetupInfo.getWorkDirPath(),
+              securityContext, logPrefix, secretVariableDetails, githubApiTokenFunctorConnectors);
       containerParams.add(cik8ContainerParams);
     }
     return containerParams;
@@ -466,14 +476,15 @@ public class K8BuildSetupUtils {
 
   private CIK8ContainerParams createCIK8ContainerParams(NGAccess ngAccess,
       ContainerDefinitionInfo containerDefinitionInfo, ConnectorDetails harnessInternalImageConnector,
-      Map<String, String> commonEnvVars, Map<String, ConnectorConversionInfo> connectorRefs,
-      Map<String, String> volumeToMountPath, String workDirPath, SecurityContext securityContext, String logPrefix,
-      List<SecretVariableDetails> secretVariableDetails,
+      Map<String, String> commonEnvVars, Map<String, String> stoEnvVars,
+      Map<String, ConnectorConversionInfo> connectorRefs, Map<String, String> volumeToMountPath, String workDirPath,
+      SecurityContext securityContext, String logPrefix, List<SecretVariableDetails> secretVariableDetails,
       Map<String, ConnectorDetails> githubApiTokenFunctorConnectors) {
     Map<String, String> envVars = new HashMap<>();
     if (isNotEmpty(containerDefinitionInfo.getEnvVars())) {
       envVars.putAll(containerDefinitionInfo.getEnvVars()); // Put customer input env variables
     }
+
     Map<String, ConnectorDetails> stepConnectorDetails = emptyMap();
     if (isNotEmpty(containerDefinitionInfo.getStepIdentifier()) && isNotEmpty(connectorRefs)) {
       ConnectorConversionInfo connectorConversionInfo = connectorRefs.get(containerDefinitionInfo.getStepIdentifier());
@@ -531,6 +542,8 @@ public class K8BuildSetupUtils {
                                   .secretVariableDetails(containerSecretVariableDetails)
                                   .connectorDetailsMap(stepConnectorDetails)
                                   .functorConnectors(githubApiTokenFunctorConnectors)
+                                  .plainTextSecretsByName(internalContainerParamsProvider.getLiteEngineSecretVars(
+                                      emptyMap(), emptyMap(), stoEnvVars))
                                   .build())
             .commands(containerDefinitionInfo.getCommands())
             .ports(containerDefinitionInfo.getPorts())
@@ -562,13 +575,13 @@ public class K8BuildSetupUtils {
 
   private CIK8ContainerParams createLiteEngineContainerParams(ConnectorDetails connectorDetails,
       K8PodDetails k8PodDetails, Integer stageCpuRequest, Integer stageMemoryRequest, Map<String, String> logEnvVars,
-      Map<String, String> tiEnvVars, Map<String, String> volumeToMountPath, String workDirPath,
-      ContainerSecurityContext ctrSecurityContext, String logPrefix, Ambiance ambiance) {
+      Map<String, String> tiEnvVars, Map<String, String> stoEnvVars, Map<String, String> volumeToMountPath,
+      String workDirPath, ContainerSecurityContext ctrSecurityContext, String logPrefix, Ambiance ambiance) {
     Map<String, ConnectorDetails> stepConnectorDetails = new HashMap<>();
 
     return internalContainerParamsProvider.getLiteEngineContainerParams(connectorDetails, stepConnectorDetails,
-        k8PodDetails, stageCpuRequest, stageMemoryRequest, logEnvVars, tiEnvVars, volumeToMountPath, workDirPath,
-        ctrSecurityContext, logPrefix, ambiance);
+        k8PodDetails, stageCpuRequest, stageMemoryRequest, logEnvVars, tiEnvVars, stoEnvVars, volumeToMountPath,
+        workDirPath, ctrSecurityContext, logPrefix, ambiance);
   }
 
   @NotNull
@@ -631,6 +644,26 @@ public class K8BuildSetupUtils {
 
     envVars.put(TI_SERVICE_TOKEN_VARIABLE, tiServiceToken);
     envVars.put(TI_SERVICE_ENDPOINT_VARIABLE, tiServiceBaseUrl);
+
+    return envVars;
+  }
+
+  @NotNull
+  private Map<String, String> getSTOServiceEnvVariables(String accountId) {
+    Map<String, String> envVars = new HashMap<>();
+    final String stoServiceBaseUrl = stoServiceUtils.getStoServiceConfig().getBaseUrl();
+
+    String stoServiceToken = "token";
+
+    // Make a call to the STO service and get back the token.
+    try {
+      stoServiceToken = stoServiceUtils.getSTOServiceToken(accountId);
+    } catch (Exception e) {
+      log.error("Could not call token endpoint for STO service", e);
+    }
+
+    envVars.put(STO_SERVICE_TOKEN_VARIABLE, stoServiceToken);
+    envVars.put(STO_SERVICE_ENDPOINT_VARIABLE, stoServiceBaseUrl);
 
     return envVars;
   }

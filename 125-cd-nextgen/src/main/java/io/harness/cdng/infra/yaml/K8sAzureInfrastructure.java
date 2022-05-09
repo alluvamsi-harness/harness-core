@@ -66,7 +66,7 @@ public class K8sAzureInfrastructure implements Infrastructure, Visitable, WithCo
   @NotEmpty
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Wither
-  ParameterField<String> subscription;
+  ParameterField<String> subscriptionId;
   @NotNull
   @NotEmpty
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
@@ -93,7 +93,7 @@ public class K8sAzureInfrastructure implements Infrastructure, Visitable, WithCo
 
   @Override
   public String[] getInfrastructureKeyValues() {
-    return new String[] {connectorRef.getValue(), cluster.getValue(), namespace.getValue(), subscription.getValue(),
+    return new String[] {connectorRef.getValue(), cluster.getValue(), namespace.getValue(), subscriptionId.getValue(),
         resourceGroup.getValue()};
   }
 
@@ -118,8 +118,8 @@ public class K8sAzureInfrastructure implements Infrastructure, Visitable, WithCo
     if (!ParameterField.isNull(config.getReleaseName())) {
       resultantInfra = resultantInfra.withReleaseName(config.getReleaseName());
     }
-    if (!ParameterField.isNull(config.getSubscription())) {
-      resultantInfra = resultantInfra.withSubscription(config.getSubscription());
+    if (!ParameterField.isNull(config.getSubscriptionId())) {
+      resultantInfra = resultantInfra.withSubscriptionId(config.getSubscriptionId());
     }
     if (!ParameterField.isNull(config.getResourceGroup())) {
       resultantInfra = resultantInfra.withResourceGroup(config.getResourceGroup());

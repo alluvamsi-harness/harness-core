@@ -98,7 +98,7 @@ import software.wings.beans.NameValuePair;
 import software.wings.beans.Service;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.Variable;
 import software.wings.beans.appmanifest.HelmChart;
@@ -481,7 +481,7 @@ public class ExecutionContextImplTest extends WingsBaseTest {
 
     ServiceVariable serviceVariable = ServiceVariable.builder()
                                           .serviceId(svc.getUuid())
-                                          .type(Type.TEXT)
+                                          .type(ServiceVariableType.TEXT)
                                           .name("REV")
                                           .value("${artifact.buildNo}".toCharArray())
                                           .build();
@@ -570,7 +570,7 @@ public class ExecutionContextImplTest extends WingsBaseTest {
 
     ServiceVariable serviceVariable = ServiceVariable.builder()
                                           .serviceId(svc1.getUuid())
-                                          .type(Type.TEXT)
+                                          .type(ServiceVariableType.TEXT)
                                           .name(svcVarName)
                                           .value(svcVarValue.toCharArray())
                                           .build();

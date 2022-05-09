@@ -324,7 +324,8 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
   @VisibleForTesting
   protected boolean canAssignDelegateProfileScopes(
       Delegate delegate, Map<String, String> taskSetupAbstractions, String taskId) {
-    DelegateProfile delegateProfile = persistence.get(DelegateProfile.class, delegate.getDelegateProfileId());
+    DelegateProfile delegateProfile =
+        delegateCache.getDelegateProfile(delegate.getAccountId(), delegate.getDelegateProfileId());
     if (delegateProfile == null) {
       // ng delegates dont have delegateProfile, so no need of logging a warning.
       return true;

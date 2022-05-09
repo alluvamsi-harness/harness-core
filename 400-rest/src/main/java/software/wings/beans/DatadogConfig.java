@@ -17,7 +17,7 @@ import software.wings.audit.ResourceType;
 import software.wings.jersey.JsonViews;
 import software.wings.settings.SettingValue;
 import software.wings.settings.SettingVariableTypes;
-import software.wings.utils.Utils;
+import software.wings.utils.CVUtils;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -135,6 +135,6 @@ public class DatadogConfig extends SettingValue implements EncryptableSetting {
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     return Arrays.asList(HttpConnectionExecutionCapabilityGenerator.buildHttpConnectionExecutionCapability(
-        Utils.appendPathToBaseUrl(url, validationUrl), maskingEvaluator));
+        CVUtils.appendPathToBaseUrl(url, validationUrl), maskingEvaluator));
   }
 }

@@ -59,6 +59,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
     final String url = "url";
     final String usernameRef = "usernameRef";
     final String tokenRef = "tokenRef";
+    final String validationProject = "validationProject";
     final String validationRepo = "validationRepo";
 
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
@@ -80,6 +81,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
             .build();
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
+                                                            .validationProject(validationProject)
                                                             .validationRepo(validationRepo)
                                                             .connectionType(GitConnectionType.ACCOUNT)
                                                             .authentication(azureRepoAuthenticationDTO)
@@ -90,6 +92,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
         AzureRepoConnector.builder()
             .hasApiAccess(true)
             .url(url)
+            .validationProject(validationProject)
             .validationRepo(validationRepo)
             .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
             .apiAccessType(AzureRepoApiAccessType.TOKEN)
@@ -113,6 +116,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
   public void testToConnectorEntitySSH() throws IOException {
     final String url = "url";
     final String tokenRef = "tokenRef";
+    final String validationProject = "validationProject";
     final String validationRepo = "validationRepo";
     final String sshKeyRef = "sshKeyRef";
 
@@ -130,6 +134,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
             .build();
     final AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                             .url(url)
+                                                            .validationProject(validationProject)
                                                             .validationRepo(validationRepo)
                                                             .connectionType(GitConnectionType.ACCOUNT)
                                                             .authentication(azureRepoAuthenticationDTO)
@@ -140,6 +145,7 @@ public class AzureRepoEntityToDTOTest extends CategoryTest {
         AzureRepoConnector.builder()
             .hasApiAccess(true)
             .url(url)
+            .validationProject(validationProject)
             .validationRepo(validationRepo)
             .azureRepoApiAccess(AzureRepoTokenApiAccess.builder().tokenRef(tokenRef).build())
             .apiAccessType(AzureRepoApiAccessType.TOKEN)

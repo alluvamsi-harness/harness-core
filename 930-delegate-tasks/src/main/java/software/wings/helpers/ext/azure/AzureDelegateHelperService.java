@@ -289,48 +289,6 @@ public class AzureDelegateHelperService {
         .collect(Collectors.toList());
   }
 
-  public List<AzureImageDefinition> listImageDefinitions(AzureConfig azureConfig,
-      List<EncryptedDataDetail> encryptionDetails, String subscriptionId, String resourceGroupName,
-      String galleryName) {
-    encryptionService.decrypt(azureConfig, encryptionDetails, false);
-    Azure azure = getAzureClient(azureConfig, subscriptionId);
-    return azure.galleryImages()
-        .listByGallery(resourceGroupName, galleryName)
-        .stream()
-        .map(id
-            -> AzureImageDefinition.builder()
-                   .name(id.name())
-                   .location(id.location())
-                   .osType(id.osType().name())
-                   .subscriptionId(subscriptionId)
-                   .resourceGroupName(resourceGroupName)
-                   .galleryName(galleryName)
-                   .build())
-        .collect(Collectors.toList());
-  }
-
-  public List<AzureImageVersion> listImageDefinitionVersions(AzureConfig azureConfig,
-      List<EncryptedDataDetail> encryptionDetails, String subscriptionId, String resourceGroupName, String galleryName,
-      String imageDefinition) {
-    encryptionService.decrypt(azureConfig, encryptionDetails, false);
-    Azure azure = getAzureClient(azureConfig, subscriptionId);
-    // Only fetch successful Azure Image versions
-    return azure.galleryImageVersions()
-        .listByGalleryImage(resourceGroupName, galleryName, imageDefinition)
-        .stream()
-        .filter(id -> "Succeeded".equals(id.provisioningState()))
-        .map(id
-            -> AzureImageVersion.builder()
-                   .name(id.name())
-                   .imageDefinitionName(imageDefinition)
-                   .location(id.location())
-                   .subscriptionId(subscriptionId)
-                   .resourceGroupName(resourceGroupName)
-                   .galleryName(galleryName)
-                   .build())
-        .collect(Collectors.toList());
-  }
-
   public List<String> listRepositoryTags(AzureConfig azureConfig, List<EncryptedDataDetail> encryptionDetails,
       String subscriptionId, String registryName, String repositoryName) {
     encryptionService.decrypt(azureConfig, encryptionDetails, false);
@@ -530,5 +488,47 @@ public class AzureDelegateHelperService {
     }
 
     throw new InvalidRequestException("Failed to connect to Azure cluster. " + ExceptionUtils.getMessage(e), USER);
+  }
+
+  public List<AzureImageVersion> listImageDefinitionVersions(AzureConfig azureConfig,
+      List<EncryptedDataDetail> encryptionDetails, String subscriptionId, String resourceGroupName, String galleryName,
+      String imageDefinition) {
+    encryptionService.decrypt(azureConfig, encryptionDetails, false);
+    Azure azure = getAzureClient(azureConfig, subscriptionId);
+    // Only fetch successful Azure Image versions
+    return azure.galleryImageVersions()
+        .listByGalleryImage(resourceGroupName, galleryName, imageDefinition)
+        .stream()
+        .filter(id -> "Succeeded".equals(id.provisioningState()))
+        .map(id
+            -> AzureImageVersion.builder()
+                   .name(id.name())
+                   .imageDefinitionName(imageDefinition)
+                   .location(id.location())
+                   .subscriptionId(subscriptionId)
+                   .resourceGroupName(resourceGroupName)
+                   .galleryName(galleryName)
+                   .build())
+        .collect(Collectors.toList());
+  }
+
+  public List<AzureImageDefinition> listImageDefinitions(AzureConfig azureConfig,
+      List<EncryptedDataDetail> encryptionDetails, String subscriptionId, String resourceGroupName,
+      String galleryName) {
+    encryptionService.decrypt(azureConfig, encryptionDetails, false);
+    Azure azure = getAzureClient(azureConfig, subscriptionId);
+    return azure.galleryImages()
+        .listByGallery(resourceGroupName, galleryName)
+        .stream()
+        .map(id
+            -> AzureImageDefinition.builder()
+                   .name(id.name())
+                   .location(id.location())
+                   .osType(id.osType().name())
+                   .subscriptionId(subscriptionId)
+                   .resourceGroupName(resourceGroupName)
+                   .galleryName(galleryName)
+                   .build())
+        .collect(Collectors.toList());
   }
 }

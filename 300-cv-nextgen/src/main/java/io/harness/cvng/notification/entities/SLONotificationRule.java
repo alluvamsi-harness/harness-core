@@ -9,6 +9,7 @@ package io.harness.cvng.notification.entities;
 
 import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionType;
+import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
@@ -39,6 +40,11 @@ public class SLONotificationRule extends NotificationRule {
   public static class SLONotificationRuleEntityCondition {
     @NonNull SLONotificationRuleConditionType conditionType;
     @NonNull Double threshold;
+
+    public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
+      return this.getConditionType().equals(SLONotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
+          && sloHealthIndicator.getErrorBudgetRemainingPercentage() <= this.getThreshold();
+    }
   }
 
   public static class SLONotificationRuleUpdatableEntity

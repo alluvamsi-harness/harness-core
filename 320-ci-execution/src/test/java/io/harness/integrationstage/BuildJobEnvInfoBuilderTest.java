@@ -20,6 +20,8 @@ import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml.VmPoolYamlSpec;
 import io.harness.category.element.UnitTests;
 import io.harness.ci.integrationstage.BuildJobEnvInfoBuilder;
 import io.harness.ci.integrationstage.VmInitializeStepUtils;
@@ -76,8 +78,11 @@ public class BuildJobEnvInfoBuilderTest extends CIExecutionTestBase {
                                    .volToMountPath(volToMountPath)
                                    .connectorRefs(new ArrayList<>())
                                    .build();
-    BuildJobEnvInfo actual = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(
-        stageElementConfig, VmInfraYaml.builder().build(), null, new ArrayList<>(), ACCOUNT_ID);
+    BuildJobEnvInfo actual = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(stageElementConfig,
+        VmInfraYaml.builder()
+            .spec(VmPoolYaml.builder().spec(VmPoolYamlSpec.builder().identifier("test").build()).build())
+            .build(),
+        null, new ArrayList<>(), ACCOUNT_ID);
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -95,8 +100,12 @@ public class BuildJobEnvInfoBuilderTest extends CIExecutionTestBase {
                                    .connectorRefs(new ArrayList<>())
                                    .build();
     BuildJobEnvInfo actual = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(stageElementConfig,
-        VmInfraYaml.builder().os(ParameterField.createValueField(OSType.OSX)).build(), null, new ArrayList<>(),
-        ACCOUNT_ID);
+        VmInfraYaml.builder()
+            .spec(VmPoolYaml.builder()
+                      .spec(VmPoolYamlSpec.builder().os(ParameterField.createValueField(OSType.OSX)).build())
+                      .build())
+            .build(),
+        null, new ArrayList<>(), ACCOUNT_ID);
     assertThat(actual).isEqualTo(expected);
   }
 }

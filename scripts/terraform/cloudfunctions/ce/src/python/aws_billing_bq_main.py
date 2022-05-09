@@ -281,23 +281,24 @@ def ingest_data_to_awscur(jsonData):
         print_("Skipping ingesting tags")
         tags_query = "null AS tags "
 
-    desirable_columns = ["resourceid", "usagestartdate", "productname", "productfamily", "servicecode", "blendedrate", "blendedcost",
+    desirable_columns = ["resourceid", "usagestartdate", "productname", "productfamily", "servicecode", "servicename", "blendedrate", "blendedcost",
                       "unblendedrate", "unblendedcost", "region", "availabilityzone", "usageaccountid", "instancetype",
                       "usagetype", "lineitemtype", "effectivecost", "billingentity", "instanceFamily", "marketOption"]
     available_columns = list(set(desirable_columns) & set(jsonData["available_columns"]))
     available_columns = ", ".join(f"{w}" for w in available_columns)
 
     amortised_cost_query = prep_amortised_cost_query(set(jsonData["available_columns"]))
+    net_amortised_cost_query = prep_net_amortised_cost_query(set(jsonData["available_columns"]))
 
     query = """
     DELETE FROM `%s` WHERE DATE(usagestartdate) >= '%s' AND DATE(usagestartdate) <= '%s' and usageaccountid IN (%s);
-    INSERT INTO `%s` (%s, amortisedCost, tags) 
-        SELECT %s, %s, %s 
+    INSERT INTO `%s` (%s, amortisedCost, netAmortisedCost, tags) 
+        SELECT %s, %s, %s, %s
         FROM `%s` table 
         WHERE DATE(usagestartdate) >= '%s' AND DATE(usagestartdate) <= '%s';
      """ % (tableName, date_start, date_end, jsonData["usageaccountid"],
             tableName, available_columns,
-            available_columns, amortised_cost_query, tags_query,
+            available_columns, amortised_cost_query, net_amortised_cost_query, tags_query,
             jsonData["tableId"],
             date_start, date_end)
     # Configure the query job.
@@ -321,7 +322,6 @@ def ingest_data_to_awscur(jsonData):
 
 def prep_amortised_cost_query(cols):
     # Prep amortised cost calculation query based on available cols
-    print_(cols)
     query = """CASE  
                     WHEN (lineitemtype = 'SavingsPlanNegation') THEN 0
                     WHEN (lineitemtype = 'SavingsPlanUpfrontFee') THEN 0 
@@ -337,6 +337,30 @@ def prep_amortised_cost_query(cols):
     if "ReservationARN".lower() in cols:
         query = query + "WHEN ((lineitemtype = 'Fee') AND (ReservationARN <> '')) THEN 0 \n"
     query = query + " ELSE UnblendedCost END amortisedCost \n"
+    print_(query)
+    return query
+
+def prep_net_amortised_cost_query(cols):
+    # Prep net amortised cost calculation query based on available cols
+    query = """CASE  
+                    WHEN (lineitemtype = 'SavingsPlanNegation') THEN 0
+                    WHEN (lineitemtype = 'SavingsPlanUpfrontFee') THEN 0 
+            """
+    if "NetSavingsPlanEffectiveCost".lower() in cols:
+        query = query + "WHEN (lineitemtype = 'SavingsPlanCoveredUsage') THEN NetSavingsPlanEffectiveCost \n"
+    if "TotalCommitmentToDate".lower() in cols and "UsedCommitment".lower() in cols:
+        query = query + "WHEN (lineitemtype = 'SavingsPlanRecurringFee') THEN (TotalCommitmentToDate - UsedCommitment) \n"
+    if "NetEffectiveCost".lower() in cols:
+        query = query + "WHEN (lineitemtype = 'DiscountedUsage') THEN NetEffectiveCost \n"
+    if "NetUnusedAmortizedUpfrontFeeForBillingPeriod".lower() in cols and "NetUnusedRecurringFee".lower() in cols:
+        query = query + "WHEN (lineitemtype = 'RIFee') THEN (NetUnusedAmortizedUpfrontFeeForBillingPeriod + NetUnusedRecurringFee) \n"
+    if "ReservationARN".lower() in cols:
+        query = query + "WHEN ((lineitemtype = 'Fee') AND (ReservationARN <> '')) THEN 0 \n"
+    if "NetUnblendedCost".lower() in cols:
+        query = query + " ELSE NetUnblendedCost \n"
+    else:
+        query = query + " ELSE 0 \n"
+    query = query + "END netAmortisedCost \n"
     print_(query)
     return query
 
@@ -534,7 +558,9 @@ def alter_awscur_table(jsonData):
         ADD COLUMN IF NOT EXISTS billingEntity STRING, \
         ADD COLUMN IF NOT EXISTS instanceFamily STRING, \
         ADD COLUMN IF NOT EXISTS marketOption STRING, \
-        ADD COLUMN IF NOT EXISTS amortisedCost FLOAT64;" % (ds, jsonData["awsCurTableSuffix"])
+        ADD COLUMN IF NOT EXISTS amortisedCost FLOAT64, \
+        ADD COLUMN IF NOT EXISTS netAmortisedCost FLOAT64, \
+        ADD COLUMN IF NOT EXISTS serviceName STRING;" % (ds, jsonData["awsCurTableSuffix"])
 
     try:
         print_(query)

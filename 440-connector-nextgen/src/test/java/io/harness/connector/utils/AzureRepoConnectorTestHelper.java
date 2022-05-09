@@ -26,6 +26,7 @@ public class AzureRepoConnectorTestHelper {
   public static ConnectorDTO createConnectorDTO() {
     final String url = "url";
     final String tokenRef = "tokenRef";
+    final String validationProject = "validationProject";
     final String validationRepo = "validationRepo";
 
     final AzureRepoAuthenticationDTO azureRepoAuthenticationDTO =
@@ -47,6 +48,7 @@ public class AzureRepoConnectorTestHelper {
 
     AzureRepoConnectorDTO azureRepoConnectorDTO = AzureRepoConnectorDTO.builder()
                                                       .url(url)
+                                                      .validationProject(validationProject)
                                                       .validationRepo(validationRepo)
                                                       .connectionType(GitConnectionType.ACCOUNT)
                                                       .authentication(azureRepoAuthenticationDTO)

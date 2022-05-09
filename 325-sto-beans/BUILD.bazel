@@ -24,6 +24,7 @@ java_library(
     srcs = glob(["src/test/**/*.java"]),
     resources = [
         "//325-sto-beans/src/test/resources:resource",
+        "//999-annotations:module",
     ],
     visibility = ["//visibility:public"],
     deps = shared_dependencies + [

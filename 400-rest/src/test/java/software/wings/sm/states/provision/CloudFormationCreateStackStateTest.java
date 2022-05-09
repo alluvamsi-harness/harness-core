@@ -8,12 +8,14 @@
 package software.wings.sm.states.provision;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.FeatureName.CLOUDFORMATION_CHANGE_SET;
 import static io.harness.beans.FeatureName.CLOUDFORMATION_SKIP_WAIT_FOR_RESOURCES;
 import static io.harness.beans.FeatureName.SKIP_BASED_ON_STACK_STATUSES;
 import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_BODY;
 import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_URL;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
+import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.BOJANA;
 import static io.harness.rule.OwnerRule.JELENA;
 import static io.harness.rule.OwnerRule.NAVNEET;
@@ -812,5 +814,43 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
     CloudFormationCreateStackRequest request =
         (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
     assertThat(request.isSkipWaitForResources()).isTrue();
+  }
+
+  @Test
+  @Owner(developers = ARVIND)
+  @Category(UnitTests.class)
+  public void verifyDeployIsFalse() {
+    when(featureFlagService.isEnabled(CLOUDFORMATION_CHANGE_SET, mockContext.getAccountId())).thenReturn(false);
+    CloudFormationInfrastructureProvisioner provisioner = CloudFormationInfrastructureProvisioner.builder()
+                                                              .sourceType(TEMPLATE_URL.name())
+                                                              .templateFilePath(TEMPLATE_FILE_PATH)
+                                                              .build();
+
+    state.buildAndQueueDelegateTask(mockContext, provisioner, awsConfig, ACTIVITY_ID);
+    ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
+    verify(delegateService).queueTask(captor.capture());
+    DelegateTask delegateTask = captor.getValue();
+    CloudFormationCreateStackRequest request =
+        (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
+    assertThat(request.isDeploy()).isFalse();
+  }
+
+  @Test
+  @Owner(developers = ARVIND)
+  @Category(UnitTests.class)
+  public void verifyDeployIsTrue() {
+    when(featureFlagService.isEnabled(CLOUDFORMATION_CHANGE_SET, mockContext.getAccountId())).thenReturn(true);
+    CloudFormationInfrastructureProvisioner provisioner = CloudFormationInfrastructureProvisioner.builder()
+                                                              .sourceType(TEMPLATE_URL.name())
+                                                              .templateFilePath(TEMPLATE_FILE_PATH)
+                                                              .build();
+
+    state.buildAndQueueDelegateTask(mockContext, provisioner, awsConfig, ACTIVITY_ID);
+    ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
+    verify(delegateService).queueTask(captor.capture());
+    DelegateTask delegateTask = captor.getValue();
+    CloudFormationCreateStackRequest request =
+        (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
+    assertThat(request.isDeploy()).isTrue();
   }
 }

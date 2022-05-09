@@ -49,7 +49,7 @@ import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricAnalysis;
 import software.wings.service.impl.stackdriver.StackDriverDataCollectionInfo;
 import software.wings.service.intfc.MetricDataAnalysisService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
@@ -134,7 +134,7 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
     try (VerificationLogContext ignored = new VerificationLogContext(context.getAccountId(), null,
              context.getStateExecutionInstanceId(), DelegateStateType.valueOf(getStateType()), OVERRIDE_ERROR)) {
       getLogger().info("Executing state {}", context.getStateExecutionInstanceId());
-      Logger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
+      CVActivityLogger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
           context.getAccountId(), context.getStateExecutionInstanceId());
       if (context.isRetry()) {
         activityLogger.info(RETRYING_VERIFICATION_STATE_MSG);

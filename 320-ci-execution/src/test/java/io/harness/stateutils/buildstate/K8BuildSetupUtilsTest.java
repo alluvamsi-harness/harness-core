@@ -25,6 +25,8 @@ import static io.harness.common.CIExecutionConstants.STEP_VOLUME;
 import static io.harness.common.CIExecutionConstants.STEP_WORK_DIR;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_TOKEN_VARIABLE;
+import static io.harness.common.STOExecutionConstants.STO_SERVICE_ENDPOINT_VARIABLE;
+import static io.harness.common.STOExecutionConstants.STO_SERVICE_TOKEN_VARIABLE;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.HARSH;
 import static io.harness.rule.OwnerRule.VISTAAR;
@@ -43,6 +45,7 @@ import io.harness.beans.sweepingoutputs.K8PodDetails;
 import io.harness.beans.sweepingoutputs.StepTaskDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.category.element.UnitTests;
 import io.harness.ci.beans.entities.LogServiceConfig;
 import io.harness.ci.beans.entities.TIServiceConfig;
@@ -74,6 +77,8 @@ import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.secrets.remote.SecretNGManagerClient;
 import io.harness.security.encryption.EncryptedDataDetail;
+import io.harness.sto.beans.entities.STOServiceConfig;
+import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 import io.harness.yaml.extended.ci.codebase.CodeBase;
 
@@ -105,6 +110,7 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
   @Mock private ConnectorUtils connectorUtils;
   @Mock CILogServiceUtils logServiceUtils;
   @Mock TIServiceUtils tiServiceUtils;
+  @Mock STOServiceUtils stoServiceUtils;
   @Mock PipelineRbacHelper pipelineRbacHelper;
   @Mock CodebaseUtils codebaseUtils;
 
@@ -118,6 +124,7 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
     on(k8BuildSetupUtils).set("logServiceUtils", logServiceUtils);
     on(k8BuildSetupUtils).set("featureFlagService", featureFlagService);
     on(k8BuildSetupUtils).set("tiServiceUtils", tiServiceUtils);
+    on(k8BuildSetupUtils).set("stoServiceUtils", stoServiceUtils);
     on(k8BuildSetupUtils).set("pipelineRbacHelper", pipelineRbacHelper);
   }
 
@@ -142,9 +149,16 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
 
     String tiEndpoint = "http://localhost:8078";
     String tiToken = "token";
+
+    String stoEndpoint = "http://localhost:4000";
+    String stoToken = "stoToken";
     TIServiceConfig tiServiceConfig = TIServiceConfig.builder().baseUrl(tiEndpoint).globalToken(tiToken).build();
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(tiServiceConfig);
     when(tiServiceUtils.getTIServiceToken(eq(accountID))).thenReturn(tiToken);
+
+    STOServiceConfig stoServiceConfig = STOServiceConfig.builder().baseUrl(stoEndpoint).globalToken(stoToken).build();
+    when(stoServiceUtils.getStoServiceConfig()).thenReturn(stoServiceConfig);
+    when(stoServiceUtils.getSTOServiceToken(eq(accountID))).thenReturn(stoToken);
     doNothing().when(pipelineRbacHelper).checkRuntimePermissions(any(), any(), any());
 
     when(featureFlagService.isEnabled(FeatureName.CI_INDIRECT_LOG_UPLOAD, eq(accountID))).thenReturn(true);
@@ -186,7 +200,7 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
 
     CIK8PodParams<CIK8ContainerParams> podParams = k8BuildSetupUtils.getPodParams(ngAccess, k8PodDetails,
         ciExecutionPlanTestHelper.getExpectedLiteEngineTaskInfoOnFirstPodWithSetCallbackId(), true, "workspace",
-        ambiance, null, null, null, null, null, null, null, null, infraNamepsace, null, null, null);
+        ambiance, null, null, null, null, null, null, null, null, infraNamepsace, null, null, null, OSType.LINUX);
 
     List<SecretVariableDetails> secretVariableDetails =
         new ArrayList<>(ciExecutionPlanTestHelper.getSecretVariableDetails());
@@ -214,6 +228,8 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
     Map<String, String> stepEnvVars = new HashMap<>();
     stepEnvVars.put(LOG_SERVICE_ENDPOINT_VARIABLE, logEndpoint);
     stepEnvVars.put(LOG_SERVICE_TOKEN_VARIABLE, logToken);
+    stepEnvVars.put(STO_SERVICE_ENDPOINT_VARIABLE, stoEndpoint);
+    stepEnvVars.put(STO_SERVICE_TOKEN_VARIABLE, stoToken);
     stepEnvVars.put(TI_SERVICE_ENDPOINT_VARIABLE, tiEndpoint);
     stepEnvVars.put(TI_SERVICE_TOKEN_VARIABLE, tiToken);
     stepEnvVars.put(HARNESS_ACCOUNT_ID_VARIABLE, accountID);

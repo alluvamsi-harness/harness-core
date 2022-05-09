@@ -31,7 +31,7 @@ import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
 import software.wings.beans.GitOperationContext;
 import software.wings.beans.NameValuePair;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.TerraformInputVariablesTaskResponse;
 import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.delegatetasks.terraform.TerraformConfigInspectClient.BLOCK_TYPE;
@@ -115,7 +115,7 @@ public class TerraformInputVariablesObtainTask extends AbstractDelegateRunnableT
       if (variables != null) {
         variables.stream()
             .distinct()
-            .map(variable -> NameValuePair.builder().name(variable).valueType(Type.TEXT.name()).build())
+            .map(variable -> NameValuePair.builder().name(variable).valueType(ServiceVariableType.TEXT.name()).build())
             .forEach(variablesList::add);
       }
 

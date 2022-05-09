@@ -372,7 +372,7 @@ func ListBranchesWithDefault(ctx context.Context, request *pb.ListBranchesWithDe
 		branches = append(branches, v.Name)
 	}
 
-	if len(branches) == 0 && int(request.GetPagination().GetPage()) == 0 {
+	if len(branches) == 0 && int(request.GetPagination().GetPage()) == 1 {
 		out := &pb.ListBranchesWithDefaultResponse{
 			Branches: branches,
 			Pagination: &pb.PageResponse{
@@ -508,32 +508,50 @@ func GetUserRepos(ctx context.Context, request *pb.GetUserReposRequest, log *zap
 		log.Errorw("GetUserRepos failure", "bad provider", gitclient.GetProvider(*request.GetProvider()), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
+    paginatedCall := !request.GetFetchAllRepos()
 
-	repoList, response, err := client.Repositories.List(ctx, scm.ListOptions{Page: int(request.GetPagination().GetPage())})
+	if paginatedCall {
+		repoList, response, err := client.Repositories.List(ctx, scm.ListOptions{Page: int(request.GetPagination().GetPage())})
+		if err != nil {
+			log.Errorw("GetUserRepos failure", "provider", gitclient.GetProvider(*request.GetProvider()), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
+			// this is a hard error with no response
+			if response == nil {
+				return nil, err
+			}
 
-	if err != nil {
-		log.Errorw("GetUserRepos failure", "provider", gitclient.GetProvider(*request.GetProvider()), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
-		// this is a hard error with no response
-		if response == nil {
-			return nil, err
+			out = &pb.GetUserReposResponse{
+				Status: int32(response.Status),
+				Error:  err.Error(),
+			}
+			return out, nil
 		}
+		log.Infow("GetUserRepos success", "elapsed_time_ms", utils.TimeSince(start))
 
 		out = &pb.GetUserReposResponse{
 			Status: int32(response.Status),
-			Error:  err.Error(),
+			Repos:  convertRepoList(repoList),
+			Pagination: &pb.PageResponse{
+				Next: int32(response.Page.Next),
+			},
+		}
+		return out, nil
+	} else {
+		// TODO as part of error plan improvement change the
+		// Repos function to return the status code as well
+		repoList, err := Repos(ctx, client, log)
+		if err != nil {
+			log.Infow("GetAllUserRepos failed", err)
+			return nil, err
+		}
+
+		log.Infow("GetAllUserRepos success", "elapsed_time_ms", utils.TimeSince(start), "response", len(repoList))
+		out = &pb.GetUserReposResponse{
+			Status:     int32(200),
+			Repos:      convertAndMiniseRepoList(repoList),
+			Pagination: &pb.PageResponse{},
 		}
 		return out, nil
 	}
-	log.Infow("GetUserRepos success", "elapsed_time_ms", utils.TimeSince(start))
-
-	out = &pb.GetUserReposResponse{
-		Status: int32(response.Status),
-		Repos:  convertRepoList(repoList),
-		Pagination: &pb.PageResponse{
-			Next: int32(response.Page.Next),
-		},
-	}
-	return out, nil
 }
 
 func GetUserRepo(ctx context.Context, request *pb.GetUserRepoRequest, log *zap.SugaredLogger) (out *pb.GetUserRepoResponse, err error) {
@@ -618,6 +636,14 @@ func convertRepoList(from []*scm.Repository) (to []*pb.Repository) {
 	return to
 }
 
+func convertAndMiniseRepoList(from []*scm.Repository) (to []*pb.Repository) {
+	for _, v := range from {
+		convertedRepository, _ := converter.ConvertsAndMinimiseRepo(v)
+		to = append(to, convertedRepository)
+	}
+	return to
+}
+
 func convertChange(from *scm.Change) *pb.PRFile {
 	return &pb.PRFile{
 		Path:         from.Path,
@@ -626,4 +652,27 @@ func convertChange(from *scm.Change) *pb.PRFile {
 		Renamed:      from.Renamed,
 		PrevFilePath: from.PrevFilePath,
 	}
+}
+
+// Repos returns the full repository list, traversing and
+// combining paginated responses if necessary.
+func Repos(ctx context.Context, client *scm.Client, log *zap.SugaredLogger) ([]*scm.Repository, error) {
+	list := []*scm.Repository{}
+	opts := scm.ListOptions{Size: 100}
+	for {
+		result, meta, err := client.Repositories.List(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+        if result != nil {
+            list = append(list, result...)
+        }
+		opts.Page = meta.Page.Next
+		opts.URL = meta.Page.NextURL
+
+		if opts.Page == 0 && opts.URL == "" {
+			break
+		}
+	}
+	return list, nil
 }

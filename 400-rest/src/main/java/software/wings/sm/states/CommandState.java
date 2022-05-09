@@ -129,6 +129,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionContext.StateExecutionContextBuilder;
 import software.wings.sm.WorkflowStandardParams;
 import software.wings.stencils.Expand;
+import software.wings.utils.MappingUtils;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.SchemaIgnore;
@@ -740,7 +741,7 @@ public class CommandState extends State {
       Service service, String accountId, Artifact artifact, CommandParametersBuilder commandParametersBuilder) {
     log.info("Artifact being used: {} for stateExecutionInstanceId: {}", artifact.getUuid(),
         context.getStateExecutionInstanceId());
-    commandParametersBuilder.metadata(artifact.getMetadata());
+    commandParametersBuilder.metadata(MappingUtils.safeCopy(artifact.getMetadata()));
     // Observed NPE in alerts
     ArtifactStream artifactStream = artifactStreamService.get(artifact.getArtifactStreamId());
     if (artifactStream == null) {
@@ -856,15 +857,15 @@ public class CommandState extends State {
           throw new InvalidRequestException(
               format("ArtifactStreamAttributes not found for artifact: %s", artifactVariableName));
         }
-        if (isNotEmpty(artifact.getArtifactFiles())) {
-          String name = artifact.getArtifactFiles().get(0).getName();
-          if (isNotEmpty(name)) {
-            artifactFileName = name;
-          }
-        } else if (artifactStreamAttributes.getMetadata() != null) {
+        if (artifactStreamAttributes.getMetadata() != null) {
           String value = artifactStreamAttributes.getMetadata().get(ArtifactMetadataKeys.artifactFileName);
           if (isNotEmpty(value)) {
             artifactFileName = value;
+          }
+        } else if (isNotEmpty(artifact.getArtifactFiles())) {
+          String name = artifact.getArtifactFiles().get(0).getName();
+          if (isNotEmpty(name)) {
+            artifactFileName = name;
           }
         }
       }

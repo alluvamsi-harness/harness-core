@@ -65,6 +65,7 @@ public class CustomSecretsManagerConfig extends SecretManagerConfig {
   @NonNull @Attributes(title = "Delegate Selectors") private Set<String> delegateSelectors;
   @NonNull @Attributes(title = "Test Parameters") private Set<EncryptedDataParams> testVariables;
   @Attributes(title = "Execute on Delegate") private boolean executeOnDelegate;
+  @Attributes(title = "Skip Validation") private boolean skipValidation;
   @Attributes(title = "Templatize Connector") private boolean isConnectorTemplatized;
   @Attributes(title = "Target Host") private String host;
   @Attributes(title = "Command Path") private String commandPath;

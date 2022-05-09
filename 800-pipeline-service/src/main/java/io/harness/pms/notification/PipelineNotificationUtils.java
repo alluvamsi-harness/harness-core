@@ -24,6 +24,7 @@ public class PipelineNotificationUtils {
     }
     switch (status) {
       case SUCCEEDED:
+      case IGNORE_FAILED:
         return "completed";
       case FAILED:
       case ERRORED:
@@ -51,6 +52,7 @@ public class PipelineNotificationUtils {
     }
     switch (status) {
       case SUCCEEDED:
+      case IGNORE_FAILED:
         return "completed";
       case FAILED:
       case ERRORED:
@@ -75,6 +77,7 @@ public class PipelineNotificationUtils {
   public static String getThemeColor(Status status) {
     switch (status) {
       case SUCCEEDED:
+      case IGNORE_FAILED:
         return PipelineNotificationConstants.SUCCEEDED_COLOR;
       case EXPIRED:
       case APPROVAL_REJECTED:

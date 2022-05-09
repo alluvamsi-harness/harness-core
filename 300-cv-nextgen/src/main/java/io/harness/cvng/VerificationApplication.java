@@ -24,6 +24,7 @@ import static java.time.Duration.ofSeconds;
 import io.harness.AccessControlClientModule;
 import io.harness.ModuleType;
 import io.harness.PipelineServiceUtilityModule;
+import io.harness.Team;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.CacheModule;
@@ -81,8 +82,11 @@ import io.harness.cvng.migration.CVNGSchemaHandler;
 import io.harness.cvng.migration.beans.CVNGSchema;
 import io.harness.cvng.migration.beans.CVNGSchema.CVNGSchemaKeys;
 import io.harness.cvng.migration.service.CVNGMigrationService;
+import io.harness.cvng.notification.jobs.SLONotificationHandler;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator.ServiceLevelIndicatorKeys;
+import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
+import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective.ServiceLevelObjectiveKeys;
 import io.harness.cvng.statemachine.beans.AnalysisOrchestratorStatus;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator.AnalysisOrchestratorKeys;
@@ -95,6 +99,7 @@ import io.harness.cvng.verificationjob.jobs.VerificationJobInstanceTimeoutHandle
 import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
+import io.harness.exception.UnexpectedException;
 import io.harness.ff.FeatureFlagConfig;
 import io.harness.govern.ProviderModule;
 import io.harness.health.HealthService;
@@ -118,6 +123,8 @@ import io.harness.ng.core.CorrelationFilter;
 import io.harness.ng.core.exceptionmappers.GenericExceptionMapperV2;
 import io.harness.ng.core.exceptionmappers.WingsExceptionMapperV2;
 import io.harness.notification.module.NotificationClientModule;
+import io.harness.notification.notificationclient.NotificationClient;
+import io.harness.notification.templates.PredefinedTemplate;
 import io.harness.persistence.HPersistence;
 import io.harness.persistence.NoopUserProvider;
 import io.harness.persistence.UserProvider;
@@ -432,6 +439,8 @@ public class VerificationApplication extends Application<VerificationConfigurati
     registerWaitEnginePublishers(injector);
     registerPmsSdkEvents(injector);
     registerDemoGenerationIterator(injector);
+    registerNotificationTemplates(injector);
+    registerSLONotificationIterator(injector);
     scheduleSidekickProcessing(injector);
     scheduleMaintenanceActivities(injector, configuration);
 
@@ -900,6 +909,44 @@ public class VerificationApplication extends Application<VerificationConfigurati
             .build();
     injector.injectMembers(dataCollectionIterator);
     migrationExecutor.scheduleWithFixedDelay(() -> dataCollectionIterator.process(), 0, 15, TimeUnit.MINUTES);
+  }
+
+  private void registerNotificationTemplates(Injector injector) {
+    NotificationClient notificationClient = injector.getInstance(NotificationClient.class);
+    List<PredefinedTemplate> templates = new ArrayList<>(Arrays.asList(PredefinedTemplate.CVNG_SLO_SLACK,
+        PredefinedTemplate.CVNG_SLO_EMAIL, PredefinedTemplate.CVNG_SLO_PAGERDUTY, PredefinedTemplate.CVNG_SLO_MSTEAMS));
+    for (PredefinedTemplate template : templates) {
+      try {
+        log.info("Registering {} with NotificationService", template);
+        notificationClient.saveNotificationTemplate(Team.CV, template, true);
+      } catch (UnexpectedException ex) {
+        log.error("Unable to save {} to NotificationService - skipping register notification templates.", template, ex);
+      }
+    }
+  }
+
+  private void registerSLONotificationIterator(Injector injector) {
+    ScheduledThreadPoolExecutor notificationExecutor = new ScheduledThreadPoolExecutor(
+        5, new ThreadFactoryBuilder().setNameFormat("slo-notification-iterator").build());
+    SLONotificationHandler sloNotificationHandler = injector.getInstance(SLONotificationHandler.class);
+
+    PersistenceIterator dataCollectionIterator =
+        MongoPersistenceIterator.<ServiceLevelObjective, MorphiaFilterExpander<ServiceLevelObjective>>builder()
+            .mode(PersistenceIterator.ProcessMode.PUMP)
+            .clazz(ServiceLevelObjective.class)
+            .fieldName(ServiceLevelObjectiveKeys.nextNotificationIteration)
+            .targetInterval(ofMinutes(60))
+            .acceptableNoAlertDelay(ofMinutes(10))
+            .executorService(notificationExecutor)
+            .semaphore(new Semaphore(5))
+            .handler(sloNotificationHandler)
+            .schedulingType(REGULAR)
+            .filterExpander(query -> query.field(ServiceLevelObjectiveKeys.notificationRuleRefs).exists())
+            .persistenceProvider(injector.getInstance(MorphiaPersistenceProvider.class))
+            .redistribute(true)
+            .build();
+    injector.injectMembers(dataCollectionIterator);
+    notificationExecutor.scheduleWithFixedDelay(() -> dataCollectionIterator.process(), 0, 30, TimeUnit.MINUTES);
   }
 
   private void initializeServiceSecretKeys() {

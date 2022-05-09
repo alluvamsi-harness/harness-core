@@ -130,7 +130,7 @@ import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.verification.CVActivityLogService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.service.intfc.verification.CVConfigurationService;
 import software.wings.service.intfc.verification.CVTaskService;
 import software.wings.sm.StateType;
@@ -221,7 +221,7 @@ public class ContinuousVerificationServiceTest extends VerificationBase {
   @Mock private SecretManager secretManager;
   @Mock private AppService appService;
   @Mock private CVActivityLogService cvActivityLogService;
-  @Mock private Logger activityLogger;
+  @Mock private CVActivityLogger activityLogger;
   @Mock private AccountService accountService;
 
   private SumoConfig sumoConfig;
@@ -333,7 +333,8 @@ public class ContinuousVerificationServiceTest extends VerificationBase {
     writeField(alertService, "injector", injector, true);
     writeField(alertService, "alertTypeClassMap", alertTypeClassMap, true);
     writeField(managerVerificationService, "alertService", alertService, true);
-    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString())).thenReturn(mock(Logger.class));
+    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
+        .thenReturn(mock(CVActivityLogger.class));
     when(cvActivityLogService.getLoggerByCVConfigId(anyString(), anyString(), anyLong())).thenReturn(activityLogger);
     when(verificationManagerClient.triggerCVDataCollection(anyString(), anyObject(), anyLong(), anyLong()))
         .then(invocation -> {

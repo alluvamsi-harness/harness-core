@@ -10,6 +10,9 @@ package io.harness.pms.pipeline.service;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+
+import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.data.structure.EmptyPredicate;
@@ -24,6 +27,7 @@ import io.harness.filter.service.FilterService;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.pms.PmsFeatureFlagService;
@@ -225,5 +229,52 @@ public class PMSPipelineServiceHelper {
       expansionRequestMetadataBuilder.setGitSyncBranchContext(gitSyncBranchContextBytes);
     }
     return expansionRequestMetadataBuilder.build();
+  }
+
+  public Criteria formCriteria(String accountId, String orgId, String projectId, String filterIdentifier,
+      PipelineFilterPropertiesDto filterProperties, boolean deleted, String module, String searchTerm) {
+    Criteria criteria = new Criteria();
+    if (isNotEmpty(accountId)) {
+      criteria.and(PipelineEntityKeys.accountId).is(accountId);
+    }
+    if (isNotEmpty(orgId)) {
+      criteria.and(PipelineEntityKeys.orgIdentifier).is(orgId);
+    }
+    if (isNotEmpty(projectId)) {
+      criteria.and(PipelineEntityKeys.projectIdentifier).is(projectId);
+    }
+
+    criteria.and(PipelineEntityKeys.deleted).is(deleted);
+
+    if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties != null) {
+      throw new InvalidRequestException("Can not apply both filter properties and saved filter together");
+    } else if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties == null) {
+      populateFilterUsingIdentifier(criteria, accountId, orgId, projectId, filterIdentifier);
+    } else if (EmptyPredicate.isEmpty(filterIdentifier) && filterProperties != null) {
+      PMSPipelineServiceHelper.populateFilter(criteria, filterProperties);
+    }
+
+    Criteria moduleCriteria = new Criteria();
+    if (EmptyPredicate.isNotEmpty(module)) {
+      // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
+      // criteria = { "$or": [ { "filters": {} } , { "filters.MODULE": { $exists: true } } ] }
+      moduleCriteria.orOperator(where(PipelineEntityKeys.filters).is(new Document()),
+          where(String.format("%s.%s", PipelineEntityKeys.filters, module)).exists(true));
+    }
+
+    Criteria searchCriteria = new Criteria();
+    if (EmptyPredicate.isNotEmpty(searchTerm)) {
+      searchCriteria.orOperator(where(PipelineEntityKeys.identifier)
+                                    .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+          where(PipelineEntityKeys.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+          where(PipelineEntityKeys.tags + "." + NGTagKeys.key)
+              .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+          where(PipelineEntityKeys.tags + "." + NGTagKeys.value)
+              .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS));
+    }
+
+    criteria.andOperator(moduleCriteria, searchCriteria);
+
+    return criteria;
   }
 }

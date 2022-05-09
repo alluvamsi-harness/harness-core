@@ -11,9 +11,9 @@ shared_dependencies = [
     "//:lombok",
     "//430-cv-nextgen-commons:module",
     "//440-connector-nextgen:module",
-    "//860-orchestration-steps:module",  # This needs to be removed from here
     "//878-ng-common-utilities:module",
     "//879-pms-sdk:module",
+    "//930-ng-core-clients:module",
     "//950-wait-engine:module",
     "//clients/notification:module",
     "//940-primary-version-manager:module",

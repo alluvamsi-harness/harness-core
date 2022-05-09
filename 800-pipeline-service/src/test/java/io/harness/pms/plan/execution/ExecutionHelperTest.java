@@ -116,7 +116,8 @@ public class ExecutionHelperTest extends CategoryTest {
       + "      description: <+input>\n"
       + "  - stage:\n"
       + "      identifier: s2\n"
-      + "      description: <+input>\n";
+      + "      description: <+input>\n"
+      + "  allowStageExecutions: true\n";
   String pipelineYamlWithExpressions = "pipeline:\n"
       + "  stages:\n"
       + "  - stage:\n"
@@ -124,7 +125,8 @@ public class ExecutionHelperTest extends CategoryTest {
       + "      description: \"desc\"\n"
       + "  - stage:\n"
       + "      identifier: \"s2\"\n"
-      + "      description: \"<+pipeline.stages.s1.description>\"\n";
+      + "      description: \"<+pipeline.stages.s1.description>\"\n"
+      + "  allowStageExecutions: true\n";
   Map<String, String> expressionValues = Collections.singletonMap("<+pipeline.stages.s1.description>", "desc");
   String mergedPipelineYaml = "pipeline:\n"
       + "  stages:\n"
@@ -133,12 +135,14 @@ public class ExecutionHelperTest extends CategoryTest {
       + "      description: \"desc\"\n"
       + "  - stage:\n"
       + "      identifier: \"s2\"\n"
-      + "      description: \"desc\"\n";
+      + "      description: \"desc\"\n"
+      + "  allowStageExecutions: true\n";
   String mergedPipelineYamlForS2 = "pipeline:\n"
       + "  stages:\n"
       + "  - stage:\n"
       + "      identifier: \"s2\"\n"
-      + "      description: \"desc\"\n";
+      + "      description: \"desc\"\n"
+      + "  allowStageExecutions: true\n";
   String originalExecutionId = "originalExecutionId";
   String generatedExecutionId = "newExecId";
 
@@ -309,7 +313,7 @@ public class ExecutionHelperTest extends CategoryTest {
     buildExecutionArgsMocks();
 
     TemplateMergeResponseDTO templateMergeResponseDTO =
-        TemplateMergeResponseDTO.builder().mergedPipelineYaml(mergedPipelineYaml).build();
+        TemplateMergeResponseDTO.builder().mergedPipelineYaml(mergedPipelineYamlForS2).build();
     String mergedYaml = InputSetMergeHelper.mergeInputSetIntoPipeline(pipelineEntity.getYaml(), runtimeInputYaml, true);
     doReturn(templateMergeResponseDTO)
         .when(pipelineTemplateHelper)

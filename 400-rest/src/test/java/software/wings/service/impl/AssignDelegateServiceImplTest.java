@@ -120,6 +120,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -597,7 +598,6 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                      .delegate(Delegate.builder()
                                    .accountId(accountId)
                                    .uuid(generateUuid())
-                                   .delegateProfileId(generateUuid())
                                    .supportedTaskTypes(Arrays.asList(TaskType.HTTP.name()))
                                    .ng(true)
                                    .build())
@@ -632,6 +632,12 @@ public class AssignDelegateServiceImplTest extends WingsBaseTest {
                                             .build();
 
       persistence.save(delegateProfile);
+
+      DelegateProfile returnDelegateProfile =
+          StringUtils.isEmpty(test.getDelegate().getDelegateProfileId()) ? null : delegateProfile;
+      when(delegateCache.getDelegateProfile(
+               test.getDelegate().getAccountId(), test.getDelegate().getDelegateProfileId()))
+          .thenReturn(returnDelegateProfile);
 
       assertThat(assignDelegateService.canAssign(test.getDelegate().getUuid(), test.getTask()))
           .isEqualTo(test.isAssignable());

@@ -20,6 +20,7 @@ import io.harness.pms.sdk.core.adviser.success.OnSuccessAdviserParameters;
 import io.harness.pms.sdk.core.data.ExecutionSweepingOutput;
 import io.harness.pms.sdk.core.execution.AsyncSdkProgressCallback;
 import io.harness.pms.sdk.core.execution.AsyncSdkResumeCallback;
+import io.harness.pms.sdk.core.execution.AsyncSdkSingleCallback;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StatusNotifyResponseData;
@@ -50,5 +51,6 @@ public class PmsSdkCoreKryoRegistrar implements KryoRegistrar {
     kryo.register(ExecutionSweepingOutput.class, 88202);
     kryo.register(AsyncSdkResumeCallback.class, 88204);
     kryo.register(AsyncSdkProgressCallback.class, 88205);
+    kryo.register(AsyncSdkSingleCallback.class, 88206);
   }
 }
