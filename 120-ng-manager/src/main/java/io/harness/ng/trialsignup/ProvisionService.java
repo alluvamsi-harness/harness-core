@@ -332,8 +332,10 @@ public class ProvisionService {
         .build();
   }
 
-  public List<UserRepoResponse> getAllUserRepos(String accountId, String repoRef) {
-    Optional<ConnectorResponseDTO> connector = connectorService.getByRef(accountId, null, null, repoRef);
+  public List<UserRepoResponse> getAllUserRepos(
+      String accountId, String orgIdentifier, String projectIdentifier, String repoRef) {
+    Optional<ConnectorResponseDTO> connector =
+        connectorService.getByRef(accountId, orgIdentifier, projectIdentifier, repoRef);
     connector.orElseThrow(
         () -> new InvalidArgumentsException(format("connector %s was not found in account %s", repoRef, accountId)));
     ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(

@@ -75,6 +75,4 @@ public class Cluster implements PersistentEntity {
 
   @Wither @CreatedDate Long createdAt;
   @Wither @LastModifiedDate Long lastModifiedAt;
-  @Builder.Default Boolean deleted = Boolean.FALSE;
-  Long deletedAt;
 }

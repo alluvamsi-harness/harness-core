@@ -5,12 +5,10 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.cvng.notification.beans;
+package software.wings.beans.sso;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import static io.harness.annotations.dev.HarnessTeam.PL;
 
-public enum MonitoredServiceNotificationRuleConditionType {
-  @JsonProperty("ChangeImpact") CHANGE_IMPACT,
-  @JsonProperty("HealthScore") HEALTH_SCORE,
-  @JsonProperty("ChangeObserved") CHANGE_OBSERVED;
-}
+import io.harness.annotations.dev.OwnedBy;
+
+@OwnedBy(PL) public enum LdapAuthType { INLINE_SECRET, SECRET_REF }

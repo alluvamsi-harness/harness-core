@@ -7,8 +7,8 @@
 
 package io.harness.cvng.notification.entities;
 
+import io.harness.cvng.notification.beans.NotificationRuleConditionType;
 import io.harness.cvng.notification.beans.NotificationRuleType;
-import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionType;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -28,7 +28,7 @@ import org.mongodb.morphia.query.UpdateOperations;
 @FieldNameConstants(innerTypeName = "SLONotificationRuleKeys")
 @EqualsAndHashCode(callSuper = true)
 public class SLONotificationRule extends NotificationRule {
-  @NonNull List<SLONotificationRuleEntityCondition> conditions;
+  @NonNull List<SLONotificationRuleCondition> conditions;
 
   @Override
   public NotificationRuleType getType() {
@@ -37,13 +37,45 @@ public class SLONotificationRule extends NotificationRule {
 
   @Data
   @SuperBuilder
-  public static class SLONotificationRuleEntityCondition {
-    @NonNull SLONotificationRuleConditionType conditionType;
+  public abstract static class SLONotificationRuleCondition {
+    public abstract NotificationRuleConditionType getType();
+    public abstract boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator);
+  }
+
+  @SuperBuilder
+  @Data
+  public static class SLOErrorBudgetRemainingPercentageCondition extends SLONotificationRuleCondition {
+    public final NotificationRuleConditionType type = NotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE;
     @NonNull Double threshold;
 
+    @Override
     public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
-      return this.getConditionType().equals(SLONotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
-          && sloHealthIndicator.getErrorBudgetRemainingPercentage() <= this.getThreshold();
+      return sloHealthIndicator.getErrorBudgetRemainingPercentage() <= this.getThreshold();
+    }
+  }
+
+  @SuperBuilder
+  @Data
+  public static class SLOErrorBudgetRemainingMinutesCondition extends SLONotificationRuleCondition {
+    public final NotificationRuleConditionType type = NotificationRuleConditionType.ERROR_BUDGET_REMAINING_MINUTES;
+    @NonNull Double threshold;
+
+    @Override
+    public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
+      return sloHealthIndicator.getErrorBudgetRemainingMinutes() <= this.getThreshold();
+    }
+  }
+
+  @SuperBuilder
+  @Data
+  public static class SLOErrorBudgetBurnRateCondition extends SLONotificationRuleCondition {
+    public final NotificationRuleConditionType type = NotificationRuleConditionType.ERROR_BUDGET_BURN_RATE;
+    @NonNull Double threshold;
+    @NonNull long lookBackDuration;
+
+    @Override
+    public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
+      return sloHealthIndicator.getErrorBudgetBurnRate() >= this.getThreshold();
     }
   }
 

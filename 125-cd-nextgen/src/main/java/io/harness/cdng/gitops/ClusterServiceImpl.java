@@ -30,7 +30,7 @@ import io.harness.utils.PageUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mongodb.client.result.UpdateResult;
+import com.mongodb.client.result.DeleteResult;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,7 +56,7 @@ public class ClusterServiceImpl implements ClusterService {
   public Optional<Cluster> get(String orgIdentifier, String projectIdentifier, String accountId, String envIdentifier,
       String identifier, boolean deleted) {
     Criteria criteria =
-        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, identifier, false);
+        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, identifier);
     return Optional.ofNullable(clusterRepository.findOne(criteria));
   }
 
@@ -74,7 +74,7 @@ public class ClusterServiceImpl implements ClusterService {
 
   @Override
   public Cluster update(Cluster cluster) {
-    Criteria criteria = getClusterEqualityCriteria(cluster, false);
+    Criteria criteria = getClusterEqualityCriteria(cluster);
     Cluster updated = clusterRepository.update(criteria, cluster);
     if (updated == null) {
       throw new InvalidRequestException(String.format(
@@ -102,15 +102,15 @@ public class ClusterServiceImpl implements ClusterService {
   public boolean delete(
       String accountId, String orgIdentifier, String projectIdentifier, String envIdentifier, String identifier) {
     Criteria criteria =
-        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, identifier, false);
-    UpdateResult delete = clusterRepository.delete(criteria);
-    return delete.wasAcknowledged() && delete.getModifiedCount() == 1;
+        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, identifier);
+    DeleteResult delete = clusterRepository.delete(criteria);
+    return delete.wasAcknowledged() && delete.getDeletedCount() == 1;
   }
 
   public Page<Cluster> list(int page, int size, String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String envRef, String searchTerm, List<String> identifiers, List<String> sort) {
     Criteria criteria =
-        createCriteriaForGetList(accountIdentifier, orgIdentifier, projectIdentifier, envRef, false, searchTerm);
+        createCriteriaForGetList(accountIdentifier, orgIdentifier, projectIdentifier, envRef, searchTerm);
     Pageable pageRequest;
     if (isNotEmpty(identifiers)) {
       criteria.and(ClusterKeys.identifier).in(identifiers);
@@ -125,13 +125,13 @@ public class ClusterServiceImpl implements ClusterService {
     return clusterRepository.find(criteria, pageRequest);
   }
 
-  private Criteria getClusterEqualityCriteria(@Valid Cluster cluster, boolean deleted) {
+  private Criteria getClusterEqualityCriteria(@Valid Cluster cluster) {
     return getClusterEqualityCriteria(cluster.getAccountId(), cluster.getOrgIdentifier(),
-        cluster.getProjectIdentifier(), cluster.getEnvRef(), cluster.getIdentifier(), deleted);
+        cluster.getProjectIdentifier(), cluster.getEnvRef(), cluster.getIdentifier());
   }
 
   private Criteria getClusterEqualityCriteria(
-      String accountId, String orgId, String projectId, String envIdentifier, String identifier, boolean deleted) {
+      String accountId, String orgId, String projectId, String envIdentifier, String identifier) {
     return where(ClusterKeys.accountId)
         .is(accountId)
         .and(ClusterKeys.orgIdentifier)
@@ -141,9 +141,7 @@ public class ClusterServiceImpl implements ClusterService {
         .and(ClusterKeys.identifier)
         .is(identifier)
         .and(ClusterKeys.envRef)
-        .is(envIdentifier)
-        .and(ClusterKeys.deleted)
-        .is(deleted);
+        .is(envIdentifier);
   }
 
   private String getDuplicateExistsErrorMessage(
@@ -178,10 +176,9 @@ public class ClusterServiceImpl implements ClusterService {
     return errorMessageToBeReturned;
   }
 
-  public Criteria createCriteriaForGetList(String accountId, String orgIdentifier, String projectIdentifier,
-      String envRef, boolean deleted, String searchTerm) {
-    Criteria criteria =
-        CoreCriteriaUtils.createCriteriaForGetList(accountId, orgIdentifier, projectIdentifier, deleted);
+  public Criteria createCriteriaForGetList(
+      String accountId, String orgIdentifier, String projectIdentifier, String envRef, String searchTerm) {
+    Criteria criteria = CoreCriteriaUtils.createCriteriaForGetList(accountId, orgIdentifier, projectIdentifier);
     criteria.andOperator(Criteria.where(ClusterKeys.envRef).is(envRef));
     if (isNotEmpty(searchTerm)) {
       Criteria searchCriteria = new Criteria().orOperator(

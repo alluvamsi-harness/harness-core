@@ -33,6 +33,7 @@ public class GitSyncApiConstants {
   public static final String SYNC_STATUS = "syncStatus";
   public static final String CONNECTOR_REF = "connectorRef";
   public static final String STORE_TYPE = "storeType";
+  public static final String REPO_NAME = "repoName";
 
   public static final String BRANCH_PARAM_MESSAGE = "Name of the branch.";
   public static final String FILEPATH_PARAM_MESSAGE = "File Path of the Entity.";

@@ -67,6 +67,9 @@ import software.wings.helpers.ext.mail.EmailData;
 import software.wings.helpers.ext.mail.SmtpConfig;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
+import software.wings.service.impl.aws.model.AwsAmiServiceDeployResponse;
+import software.wings.service.impl.aws.model.AwsAmiServiceSetupResponse;
+import software.wings.service.impl.aws.model.AwsAmiSwitchRoutesResponse;
 import software.wings.service.impl.cloudwatch.CloudWatchMetric;
 import software.wings.service.impl.elk.ElkDataCollectionInfo;
 import software.wings.service.impl.elk.ElkDataCollectionInfoV2;
@@ -168,5 +171,8 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("service.impl.cloudwatch.CloudWatchMetric", CloudWatchMetric.class);
     w.put("beans.BugsnagConfig", BugsnagConfig.class);
     w.put("delegatetasks.buildsource.BuildSourceExecutionResponse", BuildSourceExecutionResponse.class);
+    w.put("service.impl.aws.model.AwsAmiServiceDeployResponse", AwsAmiServiceDeployResponse.class);
+    w.put("service.impl.aws.model.AwsAmiServiceSetupResponse", AwsAmiServiceSetupResponse.class);
+    w.put("service.impl.aws.model.AwsAmiSwitchRoutesResponse", AwsAmiSwitchRoutesResponse.class);
   }
 }

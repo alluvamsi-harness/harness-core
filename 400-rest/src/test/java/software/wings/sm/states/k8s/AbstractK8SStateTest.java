@@ -106,7 +106,6 @@ import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.manifests.response.CustomManifestValuesFetchResponse;
 import io.harness.deployment.InstanceDetails;
-import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.expression.VariableResolverTracker;
@@ -989,12 +988,8 @@ public class AbstractK8SStateTest extends WingsBaseTest {
     assertThat(releaseName).isEqualTo("64317ae8-c2a8-3fd8-af26-68f2e717431a");
 
     infrastructureMapping.setReleaseName("-release-name");
-    try {
-      abstractK8SState.fetchReleaseName(context, infrastructureMapping);
-      fail("Should not reach here");
-    } catch (Exception ex) {
-      assertThatExceptionOfType(InvalidArgumentsException.class);
-    }
+    releaseName = abstractK8SState.fetchReleaseName(context, infrastructureMapping);
+    assertThat(releaseName).isEqualTo("-release-name");
   }
 
   @Test

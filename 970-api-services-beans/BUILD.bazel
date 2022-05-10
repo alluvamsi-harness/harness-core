@@ -30,6 +30,7 @@ java_library(
         "@maven//:com_google_http_client_google_http_client",
         "@maven//:com_sumologic_api_client_sumo_java_client",
         "@maven//:io_fabric8_kubernetes_client",
+        "@maven//:io_fabric8_kubernetes_client_project",
         "@maven//:io_kubernetes_client_java",
         "@maven//:io_kubernetes_client_java_api",
         "@maven//:io_swagger_core_v3_swagger_annotations",

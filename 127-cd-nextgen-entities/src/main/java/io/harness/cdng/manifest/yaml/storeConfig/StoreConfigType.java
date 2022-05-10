@@ -43,7 +43,7 @@ public enum StoreConfigType {
     return displayName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static StoreConfigType getStoreConfigType(@JsonProperty("type") String displayName) {
     for (StoreConfigType storeConfigType : StoreConfigType.values()) {
       if (storeConfigType.displayName.equalsIgnoreCase(displayName)) {

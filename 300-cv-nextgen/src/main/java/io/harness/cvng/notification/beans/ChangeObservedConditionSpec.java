@@ -21,13 +21,11 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MonitoredServiceChangeImpactConditionSpec extends MonitoredServiceNotificationRuleConditionSpec {
+public class ChangeObservedConditionSpec extends NotificationRuleConditionSpec {
   @NonNull List<MonitoredServiceChangeEventType> changeEventTypes;
-  @NonNull Double threshold;
-  @NonNull String period;
 
   @Override
-  public MonitoredServiceNotificationRuleConditionType getConditionType() {
-    return MonitoredServiceNotificationRuleConditionType.CHANGE_IMPACT;
+  public NotificationRuleConditionType getType() {
+    return NotificationRuleConditionType.CHANGE_OBSERVED;
   }
 }

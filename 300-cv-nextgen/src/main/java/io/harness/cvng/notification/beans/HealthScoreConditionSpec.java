@@ -20,12 +20,12 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MonitoredServiceHealthScoreConditionSpec extends MonitoredServiceNotificationRuleConditionSpec {
+public class HealthScoreConditionSpec extends NotificationRuleConditionSpec {
   @NonNull Double threshold;
   @NonNull String period;
 
   @Override
-  public MonitoredServiceNotificationRuleConditionType getConditionType() {
-    return MonitoredServiceNotificationRuleConditionType.HEALTH_SCORE;
+  public NotificationRuleConditionType getType() {
+    return NotificationRuleConditionType.HEALTH_SCORE;
   }
 }

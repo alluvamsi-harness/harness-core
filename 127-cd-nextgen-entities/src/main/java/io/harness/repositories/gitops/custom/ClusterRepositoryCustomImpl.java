@@ -7,15 +7,13 @@
 
 package io.harness.repositories.gitops.custom;
 
-import static java.lang.System.currentTimeMillis;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.gitops.entity.Cluster;
 import io.harness.cdng.gitops.entity.Cluster.ClusterKeys;
 
 import com.google.inject.Inject;
-import com.mongodb.client.result.UpdateResult;
+import com.mongodb.client.result.DeleteResult;
 import java.time.Duration;
 import java.util.List;
 import lombok.AccessLevel;
@@ -68,13 +66,11 @@ public class ClusterRepositoryCustomImpl implements ClusterRepositoryCustom {
   }
 
   @Override
-  public UpdateResult delete(Criteria criteria) {
+  public DeleteResult delete(Criteria criteria) {
     Query query = new Query(criteria);
-    Update updateOperationsForDelete = getUpdateOperationsForDelete();
     RetryPolicy<Object> retryPolicy = getRetryPolicy(
         "[Retrying]: Failed deleting Cluster; attempt: {}", "[Failed]: Failed deleting Service; attempt: {}");
-    return Failsafe.with(retryPolicy)
-        .get(() -> mongoTemplate.updateFirst(query, updateOperationsForDelete, Cluster.class));
+    return Failsafe.with(retryPolicy).get(() -> mongoTemplate.remove(query, Cluster.class));
   }
 
   @Override
@@ -96,12 +92,5 @@ public class ClusterRepositoryCustomImpl implements ClusterRepositoryCustom {
         .withMaxAttempts(MAX_ATTEMPTS)
         .onFailedAttempt(event -> log.info(failedAttemptMessage, event.getAttemptCount(), event.getLastFailure()))
         .onFailure(event -> log.error(failureMessage, event.getAttemptCount(), event.getFailure()));
-  }
-
-  private Update getUpdateOperationsForDelete() {
-    Update update = new Update();
-    update.set(ClusterKeys.deleted, true);
-    update.set(ClusterKeys.deletedAt, currentTimeMillis());
-    return update;
   }
 }

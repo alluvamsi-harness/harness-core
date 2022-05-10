@@ -25,6 +25,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -95,6 +96,7 @@ import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceServic
 import io.harness.cvng.core.services.api.monitoredService.ServiceDependencyService;
 import io.harness.cvng.core.services.impl.ChangeSourceUpdateHandler;
 import io.harness.cvng.core.services.impl.PagerdutyChangeSourceUpdateHandler;
+import io.harness.cvng.core.utils.template.TemplateFacade;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
@@ -149,6 +151,8 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Inject ServiceLevelIndicatorService serviceLevelIndicatorService;
   @Inject CVNGLogService cvngLogService;
   @Inject VerificationTaskService verificationTaskService;
+  @Inject TemplateFacade templateFacade;
+
   @Mock SetupUsageEventService setupUsageEventService;
   @Mock ChangeSourceService changeSourceServiceMock;
 
@@ -236,6 +240,51 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
+  public void testCreateFromYaml() {
+    String yaml = "monitoredService:\n"
+        + "  identifier: <+monitoredService.serviceRef>\n"
+        + "  type: Application\n"
+        + "  description: description\n"
+        + "  name: <+monitoredService.identifier>\n"
+        + "  serviceRef: service1\n"
+        + "  environmentRefList:\n"
+        + "   - env1\n"
+        + "  tags: {}\n"
+        + "  sources:\n"
+        + "    healthSources:\n"
+        + "    changeSources: \n";
+    when(templateFacade.resolveYaml(any(), eq(yaml))).thenReturn(yaml);
+    MonitoredServiceResponse monitoredServiceResponse =
+        monitoredServiceService.createFromYaml(builderFactory.getProjectParams(), yaml);
+    MonitoredServiceResponse monitoredServiceResponseFromDb =
+        monitoredServiceService.get(builderFactory.getProjectParams(), "service1");
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO()).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testCreateFromYaml_expressionEvaluvationError() {
+    String yaml = "monitoredService:\n"
+        + "  identifier: <+monitoredService.serviceRef>\n"
+        + "  type: Application\n"
+        + "  description: description\n"
+        + "  name: <+monitoredService.name>\n"
+        + "  serviceRef: service1\n"
+        + "  environmentRefList:\n"
+        + "   - env1\n"
+        + "  tags: {}\n"
+        + "  sources:\n"
+        + "    healthSources:\n"
+        + "    changeSources: \n";
+    when(templateFacade.resolveYaml(any(), eq(yaml))).thenReturn(yaml);
+    assertThatThrownBy(() -> monitoredServiceService.createFromYaml(builderFactory.getProjectParams(), yaml))
+        .hasMessage("Infinite loop in variable interpretation");
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
   public void testGetSloMetrics() {
     String monitoredServiceIdentifier = "monitoredServiceIdentifier";
     String healthSourceIdentifier = "healthSourceIdentifier";
@@ -259,7 +308,6 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
                                       .identifier(monitoredServiceIdentifier + "/" + healthSourceIdentifier)
                                       .build();
     hPersistence.save(cvConfig);
-
     List<MetricDTO> metricDTOS = monitoredServiceService.getSloMetrics(
         builderFactory.getContext().getProjectParams(), monitoredServiceIdentifier, healthSourceIdentifier);
     metricDTOS =

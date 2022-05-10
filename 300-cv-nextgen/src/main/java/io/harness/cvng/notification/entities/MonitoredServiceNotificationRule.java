@@ -8,12 +8,11 @@
 package io.harness.cvng.notification.entities;
 
 import io.harness.cvng.notification.beans.MonitoredServiceChangeEventType;
-import io.harness.cvng.notification.beans.MonitoredServiceNotificationRuleConditionType;
+import io.harness.cvng.notification.beans.NotificationRuleConditionType;
 import io.harness.cvng.notification.beans.NotificationRuleType;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -29,7 +28,7 @@ import org.mongodb.morphia.query.UpdateOperations;
 @FieldNameConstants(innerTypeName = "MonitoredServiceNotificationRuleKeys")
 @EqualsAndHashCode(callSuper = true)
 public class MonitoredServiceNotificationRule extends NotificationRule {
-  @NonNull List<MonitoredServiceNotificationRuleEntityCondition> conditions;
+  @NonNull List<MonitoredServiceNotificationRuleCondition> conditions;
 
   @Override
   public NotificationRuleType getType() {
@@ -38,54 +37,32 @@ public class MonitoredServiceNotificationRule extends NotificationRule {
 
   @Data
   @SuperBuilder
-  public static class MonitoredServiceNotificationRuleEntityCondition {
-    @NonNull MonitoredServiceNotificationRuleConditionType conditionType;
-    @NotNull MonitoredServiceNotificationRuleEntityConditionSpec spec;
-  }
-
-  @Data
-  @SuperBuilder
-  public abstract static class MonitoredServiceNotificationRuleEntityConditionSpec {
-    public abstract MonitoredServiceNotificationRuleConditionType getConditionType();
+  public abstract static class MonitoredServiceNotificationRuleCondition {
+    public abstract NotificationRuleConditionType getType();
   }
 
   @SuperBuilder
   @Data
-  public static class MonitoredServiceChangeImpactEntityConditionSpec
-      extends MonitoredServiceNotificationRuleEntityConditionSpec {
+  public static class MonitoredServiceChangeImpactCondition extends MonitoredServiceNotificationRuleCondition {
+    public final NotificationRuleConditionType type = NotificationRuleConditionType.CHANGE_IMPACT;
     @NonNull List<MonitoredServiceChangeEventType> changeEventTypes;
     @NonNull Double threshold;
     @NonNull String period;
-
-    @Override
-    public MonitoredServiceNotificationRuleConditionType getConditionType() {
-      return MonitoredServiceNotificationRuleConditionType.CHANGE_IMPACT;
-    }
   }
 
   @SuperBuilder
   @Data
-  public static class MonitoredServiceHealthScoreEntityConditionSpec
-      extends MonitoredServiceNotificationRuleEntityConditionSpec {
+  public static class MonitoredServiceHealthScoreCondition extends MonitoredServiceNotificationRuleCondition {
+    public final NotificationRuleConditionType type = NotificationRuleConditionType.HEALTH_SCORE;
     @NonNull Double threshold;
     @NonNull String period;
-
-    @Override
-    public MonitoredServiceNotificationRuleConditionType getConditionType() {
-      return MonitoredServiceNotificationRuleConditionType.HEALTH_SCORE;
-    }
   }
 
   @SuperBuilder
   @Data
-  public static class MonitoredServiceChangeObservedEntityConditionSpec
-      extends MonitoredServiceNotificationRuleEntityConditionSpec {
+  public static class MonitoredServiceChangeObservedCondition extends MonitoredServiceNotificationRuleCondition {
+    public final NotificationRuleConditionType type = NotificationRuleConditionType.CHANGE_OBSERVED;
     @NonNull List<MonitoredServiceChangeEventType> changeEventTypes;
-
-    @Override
-    public MonitoredServiceNotificationRuleConditionType getConditionType() {
-      return MonitoredServiceNotificationRuleConditionType.CHANGE_OBSERVED;
-    }
   }
 
   public static class MonitoredServiceNotificationRuleUpdatableEntity

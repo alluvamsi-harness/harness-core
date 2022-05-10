@@ -52,20 +52,25 @@ import com.fasterxml.jackson.dataformat.yaml.snakeyaml.constructor.SafeConstruct
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.fabric8.kubernetes.api.model.DoneableHorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerList;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
+import io.fabric8.istio.client.DefaultIstioClient;
+import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.SimpleClientContext;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.internal.HorizontalPodAutoscalerOperationsImpl;
 import io.fabric8.kubernetes.client.internal.SSLUtils;
+import io.fabric8.kubernetes.client.okhttp.OkHttpClientImpl;
 import io.fabric8.kubernetes.client.utils.Utils;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -87,27 +92,22 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
-import me.snowdrop.istio.api.IstioResource;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
-import me.snowdrop.istio.client.DefaultIstioClient;
-import me.snowdrop.istio.client.IstioClient;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionSpec;
 import okhttp3.Credentials;
 import okhttp3.Dispatcher;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
@@ -184,7 +184,10 @@ public class KubernetesHelperService {
     }
 
     OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
-    try (DefaultKubernetesClient client = new DefaultKubernetesClient(okHttpClient, config)) {
+    OkHttpClientImpl fabric8OkHttpClient = new OkHttpClientImpl(okHttpClient);
+    SimpleClientContext simpleClientContext = new SimpleClientContext(config, fabric8OkHttpClient);
+
+    try (DefaultKubernetesClient client = new DefaultKubernetesClient(simpleClientContext)) {
       return client.inNamespace(namespace);
     }
   }
@@ -250,27 +253,29 @@ public class KubernetesHelperService {
     return config;
   }
 
-  public IstioClient getIstioClient(KubernetesConfig kubernetesConfig) {
+  public IstioClient getFabric8IstioClient(KubernetesConfig kubernetesConfig) {
     Config config = getConfig(kubernetesConfig, StringUtils.EMPTY);
 
     String namespace = "default";
     if (isNotBlank(config.getNamespace())) {
       namespace = config.getNamespace();
     }
-
     OkHttpClient okHttpClient = createHttpClientWithProxySetting(config);
-    try (DefaultIstioClient client = new DefaultIstioClient(okHttpClient, config)) {
-      return client.inNamespace(namespace);
+    OkHttpClientImpl fabric8OkHttpClient = new OkHttpClientImpl(okHttpClient);
+    SimpleClientContext simpleClientContext = new SimpleClientContext(config, fabric8OkHttpClient);
+
+    try (DefaultIstioClient istioClient = new DefaultIstioClient(simpleClientContext)) {
+      return istioClient.inNamespace(namespace);
     }
   }
 
   public static void printVirtualServiceRouteWeights(
-      IstioResource virtualService, String controllerPrefix, LogCallback logCallback) {
-    VirtualServiceSpec virtualServiceSpec = ((VirtualService) virtualService).getSpec();
+      VirtualService virtualService, String controllerPrefix, LogCallback logCallback) {
+    VirtualServiceSpec virtualServiceSpec = virtualService.getSpec();
     if (isNotEmpty(virtualServiceSpec.getHttp().get(0).getRoute())) {
-      List<DestinationWeight> sorted = virtualServiceSpec.getHttp().get(0).getRoute();
+      List<HTTPRouteDestination> sorted = virtualServiceSpec.getHttp().get(0).getRoute();
       sorted.sort(Comparator.comparing(a -> Integer.valueOf(a.getDestination().getSubset())));
-      for (DestinationWeight destinationWeight : sorted) {
+      for (HTTPRouteDestination destinationWeight : sorted) {
         int weight = destinationWeight.getWeight();
         String rev = destinationWeight.getDestination().getSubset();
         logCallback.saveExecutionLog(format("   %s%s%s: %d%%", controllerPrefix, DASH, rev, weight));
@@ -278,6 +283,10 @@ public class KubernetesHelperService {
     } else {
       logCallback.saveExecutionLog("   None specified");
     }
+  }
+
+  private boolean shouldDisableHttp2() {
+    return System.getProperty("java.version", "").startsWith("1.8");
   }
 
   /**
@@ -293,10 +302,18 @@ public class KubernetesHelperService {
     try {
       OkHttpClient.Builder httpClientBuilder = getOkHttpClientBuilder();
       httpClientBuilder.proxy(Http.checkAndGetNonProxyIfApplicable(config.getMasterUrl()));
-
       // Follow any redirects
       httpClientBuilder.followRedirects(true);
       httpClientBuilder.followSslRedirects(true);
+
+      if (shouldDisableHttp2() && !config.isHttp2Disable()) {
+        httpClientBuilder.protocols(Collections.singletonList(Protocol.HTTP_1_1));
+      }
+
+      /**
+       * This is copied version of snippet from io.fabric8.kubernetes.client.okhttp.OkHttpClientFactory.createHttpClient
+       * which is internally get called by io.fabric8.kubernetes.client.utils.HttpClientUtils.createHttpClient()
+       */
 
       if (config.isTrustCerts()) {
         httpClientBuilder.hostnameVerifier(new NoopHostnameVerifier());
@@ -312,7 +329,7 @@ public class KubernetesHelperService {
         }
 
         try {
-          SSLContext sslContext = SSLUtils.sslContext(keyManagers, trustManagers, config.isTrustCerts());
+          SSLContext sslContext = SSLUtils.sslContext(keyManagers, trustManagers);
           httpClientBuilder.sslSocketFactory(sslContext.getSocketFactory(), trustManager);
         } catch (GeneralSecurityException e) {
           throw new AssertionError(); // The system has no TLS. Just give up.
@@ -404,8 +421,12 @@ public class KubernetesHelperService {
       }
 
       if (config.getTlsVersions() != null && config.getTlsVersions().length > 0) {
-        ConnectionSpec spec =
-            new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(config.getTlsVersions()).build();
+        int tlsVersionsSize = config.getTlsVersions().length;
+        String[] tlsVersions = new String[tlsVersionsSize];
+        for (int i = 0; i < tlsVersionsSize; i++) {
+          tlsVersions[i] = config.getTlsVersions()[i].javaName();
+        }
+        ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(tlsVersions).build();
         httpClientBuilder.connectionSpecs(asList(spec, CLEARTEXT));
       }
 
@@ -455,8 +476,9 @@ public class KubernetesHelperService {
     return YamlUtils.cleanupYaml(yaml.dump(entity));
   }
 
-  public NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, DoneableHorizontalPodAutoscaler,
-      Resource<HorizontalPodAutoscaler, DoneableHorizontalPodAutoscaler>>
+  public NonNamespaceOperation<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler,
+      io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList,
+      Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>>
   hpaOperationsForCustomMetricHPA(KubernetesConfig kubernetesConfig, String apiName) {
     DefaultKubernetesClient kubernetesClient = (DefaultKubernetesClient) getKubernetesClient(kubernetesConfig, apiName);
 
@@ -472,20 +494,18 @@ public class KubernetesHelperService {
      * getKubernetesClient(kubernetesConfig,encryptedDataDetails).autoscaling().horizontalPodAutoscalers()) always
      * returns client with "v1" apiVersion.
      * */
-    MixedOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, DoneableHorizontalPodAutoscaler,
-        Resource<HorizontalPodAutoscaler, DoneableHorizontalPodAutoscaler>> mixedOperation =
-        new HorizontalPodAutoscalerOperationsImpl(kubernetesClient.getHttpClient(), kubernetesClient.getConfiguration(),
-            apiName, kubernetesClient.getNamespace(), null, true, null, null, false, -1, new TreeMap<>(),
-            new TreeMap<>(), new TreeMap<>(), new TreeMap<>(), new TreeMap<>());
-
+    MixedOperation<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler,
+        io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList,
+        Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>> mixedOperation =
+        kubernetesClient.autoscaling().v2beta1().horizontalPodAutoscalers();
     return mixedOperation.inNamespace(kubernetesConfig.getNamespace());
   }
 
-  public NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, DoneableHorizontalPodAutoscaler,
-      Resource<HorizontalPodAutoscaler, DoneableHorizontalPodAutoscaler>>
+  public NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
   hpaOperations(KubernetesConfig kubernetesConfig) {
     return getKubernetesClient(kubernetesConfig)
         .autoscaling()
+        .v1()
         .horizontalPodAutoscalers()
         .inNamespace(kubernetesConfig.getNamespace());
   }

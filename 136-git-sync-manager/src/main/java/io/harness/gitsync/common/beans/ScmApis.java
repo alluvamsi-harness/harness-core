@@ -9,5 +9,10 @@ package io.harness.gitsync.common.beans;
 
 public enum ScmApis {
   LIST_REPOSITORIES,
+  GET_FILE,
+  CREATE_PULL_REQUEST,
+  CREATE_FILE,
+  UPDATE_FILE,
+  CREATE_BRANCH,
   LIST_BRANCHES;
 }

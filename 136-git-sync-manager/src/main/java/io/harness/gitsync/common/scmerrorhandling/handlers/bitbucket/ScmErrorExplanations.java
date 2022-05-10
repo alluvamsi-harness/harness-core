@@ -1,4 +1,11 @@
-package io.harness.gitsync.common.scmerrorhandling.exceptions.bitbucket;
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
+package io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
@@ -8,7 +15,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 @OwnedBy(PL)
-public class BitbucketScmExceptionExplanations {
+public class ScmErrorExplanations {
   public static final String LIST_REPO_WITH_INVALID_CRED =
       "Couldn't list repositories. Credentials provided in connector are invalid or have expired.";
   public static final String LIST_BRANCH_WITH_INVALID_CRED =

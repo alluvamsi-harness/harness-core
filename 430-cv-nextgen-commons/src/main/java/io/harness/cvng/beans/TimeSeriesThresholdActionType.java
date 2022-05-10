@@ -24,7 +24,7 @@ public enum TimeSeriesThresholdActionType {
     return displayName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static TimeSeriesThresholdActionType fromDisplayName(String displayName) {
     for (TimeSeriesThresholdActionType timeSeriesThresholdActionType : TimeSeriesThresholdActionType.values()) {
       if (timeSeriesThresholdActionType.displayName.equals(displayName)) {

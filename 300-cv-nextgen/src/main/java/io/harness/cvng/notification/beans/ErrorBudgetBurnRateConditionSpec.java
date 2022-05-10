@@ -8,9 +8,6 @@
 package io.harness.cvng.notification.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,12 +20,12 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MonitoredServiceNotificationRuleCondition extends NotificationRuleCondition {
-  @NonNull MonitoredServiceNotificationRuleConditionType conditionType;
+public class ErrorBudgetBurnRateConditionSpec extends NotificationRuleConditionSpec {
+  @NonNull Double threshold;
+  @NonNull String lookBackDuration;
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "conditionType",
-      visible = true)
-  @Valid
-  @NotNull
-  MonitoredServiceNotificationRuleConditionSpec spec;
+  @Override
+  public NotificationRuleConditionType getType() {
+    return NotificationRuleConditionType.ERROR_BUDGET_BURN_RATE;
+  }
 }

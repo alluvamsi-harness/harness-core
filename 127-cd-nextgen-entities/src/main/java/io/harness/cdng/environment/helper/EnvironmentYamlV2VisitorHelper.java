@@ -7,10 +7,14 @@
 
 package io.harness.cdng.environment.helper;
 
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+
+import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.walktree.visitor.validation.ConfigValidator;
 import io.harness.walktree.visitor.validation.ValidationVisitor;
 
+@OwnedBy(CDC)
 public class EnvironmentYamlV2VisitorHelper implements ConfigValidator {
   @Override
   public void validate(Object object, ValidationVisitor visitor) {

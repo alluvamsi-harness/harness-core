@@ -18,7 +18,7 @@ public enum CIShellType {
   @JsonProperty("Pwsh") PWSH("Pwsh");
   private final String yamlName;
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static CIShellType getShellType(@JsonProperty("shellType") String yamlName) {
     for (CIShellType shellType : CIShellType.values()) {
       if (shellType.yamlName.equalsIgnoreCase(yamlName)) {

@@ -71,8 +71,7 @@ public abstract class NotificationRule
   String identifier;
   String name;
 
-  private boolean enabled;
-  private Instant lastSuccessfullCheckTime;
+  private Instant lastSuccessfulCheckTime;
   private long lastUpdatedAt;
   private long createdAt;
   private int version;
@@ -85,7 +84,6 @@ public abstract class NotificationRule
     protected void setCommonOperations(UpdateOperations<T> updateOperations, D notificationRule) {
       updateOperations.set(NotificationRuleKeys.identifier, notificationRule.getIdentifier())
           .set(NotificationRuleKeys.name, notificationRule.getName())
-          .set(NotificationRuleKeys.enabled, notificationRule.isEnabled())
           .set(NotificationRuleKeys.type, notificationRule.getType())
           .set(NotificationRuleKeys.notificationMethod, notificationRule.getNotificationMethod())
           .inc(NotificationRuleKeys.version);

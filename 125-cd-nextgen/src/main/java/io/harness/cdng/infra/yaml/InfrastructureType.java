@@ -40,7 +40,7 @@ public enum InfrastructureType {
     return displayName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static InfrastructureType getInfrastructureType(@JsonProperty("type") String displayName) {
     for (InfrastructureType infrastructureType : InfrastructureType.values()) {
       if (infrastructureType.displayName.equalsIgnoreCase(displayName)) {

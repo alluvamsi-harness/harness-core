@@ -188,8 +188,20 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   }
 
   @Override
-  @SneakyThrows
   public MonitoredServiceResponse createFromYaml(ProjectParams projectParams, String yaml) {
+    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceYaml(projectParams, yaml);
+    return create(projectParams.getAccountIdentifier(), monitoredServiceDTO);
+  }
+
+  @Override
+  public MonitoredServiceResponse updateFromYaml(ProjectParams projectParams, String identifier, String yaml) {
+    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceYaml(projectParams, yaml);
+    monitoredServiceDTO.setIdentifier(identifier);
+    return update(projectParams.getAccountIdentifier(), monitoredServiceDTO);
+  }
+
+  @SneakyThrows
+  private MonitoredServiceDTO getExpandedMonitoredServiceYaml(ProjectParams projectParams, String yaml) {
     String templateResolvedYaml = templateFacade.resolveYaml(projectParams, yaml);
     MonitoredServiceYamlExpressionEvaluator yamlExpressionEvaluator =
         new MonitoredServiceYamlExpressionEvaluator(templateResolvedYaml);
@@ -198,7 +210,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     monitoredServiceDTO = (MonitoredServiceDTO) yamlExpressionEvaluator.resolve(monitoredServiceDTO, false);
     monitoredServiceDTO.setProjectIdentifier(projectParams.getProjectIdentifier());
     monitoredServiceDTO.setOrgIdentifier(projectParams.getOrgIdentifier());
-    return create(projectParams.getAccountIdentifier(), monitoredServiceDTO);
+    return monitoredServiceDTO;
   }
 
   private void validateDependencyMetadata(ProjectParams projectParams, Set<ServiceDependencyDTO> dependencyDTOs) {
@@ -309,7 +321,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                       .projectIdentifier(monitoredService.getProjectIdentifier())
                                       .build();
     updateOperations.set(MonitoredServiceKeys.notificationRuleRefs,
-        notificationRuleService.update(projectParams, monitoredServiceDTO.getNotificationRuleRefs()));
+        notificationRuleService.getNotificationRuleRefs(monitoredServiceDTO.getNotificationRuleRefs()));
     validateDependencyMetadata(projectParams, monitoredServiceDTO.getDependencies());
     serviceDependencyService.updateDependencies(
         projectParams, monitoredService.getIdentifier(), monitoredServiceDTO.getDependencies());
@@ -452,11 +464,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                     .projectIdentifier(projectParams.getProjectIdentifier())
                     .build(),
                 monitoredServiceEntity.getIdentifier()))
-            .notificationRuleRefs(notificationRuleService.getNotificationRuleRefs(projectParams,
-                monitoredServiceEntity.getNotificationRuleRefs()
-                    .stream()
-                    .map(ref -> ref.getNotificationRuleRef())
-                    .collect(Collectors.toList())))
+            .notificationRuleRefs(
+                notificationRuleService.getNotificationRuleRefDTOs(monitoredServiceEntity.getNotificationRuleRefs()))
             .build();
     return MonitoredServiceResponse.builder()
         .monitoredService(monitoredServiceDTO)
@@ -738,7 +747,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .enabled(getMonitoredServiceEnableStatus())
             .tags(TagMapper.convertToList(monitoredServiceDTO.getTags()))
             .notificationRuleRefs(
-                notificationRuleService.update(projectParams, monitoredServiceDTO.getNotificationRuleRefs()))
+                notificationRuleService.getNotificationRuleRefs(monitoredServiceDTO.getNotificationRuleRefs()))
             .build();
     if (monitoredServiceDTO.getSources() != null) {
       monitoredServiceEntity.setHealthSourceIdentifiers(monitoredServiceDTO.getSources()

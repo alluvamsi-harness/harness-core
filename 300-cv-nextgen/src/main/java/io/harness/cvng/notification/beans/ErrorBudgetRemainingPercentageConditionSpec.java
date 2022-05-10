@@ -8,7 +8,6 @@
 package io.harness.cvng.notification.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,11 +20,11 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MonitoredServiceChangeObservedConditionSpec extends MonitoredServiceNotificationRuleConditionSpec {
-  @NonNull List<MonitoredServiceChangeEventType> changeEventTypes;
+public class ErrorBudgetRemainingPercentageConditionSpec extends NotificationRuleConditionSpec {
+  @NonNull Double threshold;
 
   @Override
-  public MonitoredServiceNotificationRuleConditionType getConditionType() {
-    return MonitoredServiceNotificationRuleConditionType.CHANGE_OBSERVED;
+  public NotificationRuleConditionType getType() {
+    return NotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE;
   }
 }

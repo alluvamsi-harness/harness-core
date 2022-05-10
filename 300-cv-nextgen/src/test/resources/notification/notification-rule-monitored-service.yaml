@@ -5,13 +5,11 @@ orgIdentifier: $orgIdentifier
 projectIdentifier: $projectIdentifier
 type: MonitoredService
 conditions:
-  - type: MonitoredService
-    conditionType: HealthScore
+  - type: HealthScore
     spec:
       threshold: 20
       period: 10m
-  - type: MonitoredService
-    conditionType: ChangeImpact
+  - type: ChangeImpact
     spec:
       changeEventTypes:
         - Deployment

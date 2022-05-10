@@ -13,7 +13,6 @@ import static io.harness.persistence.HQuery.allChecks;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.ANUBHAW;
-import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.BRETT;
 import static io.harness.rule.OwnerRule.DINESH;
 import static io.harness.rule.OwnerRule.GEORGE;
@@ -1376,31 +1375,6 @@ public class InfrastructureMappingServiceTest extends WingsBaseTest {
     // happy case when right values
     awsInfrastructureMapping.setHostConnectionType(HostConnectionType.PRIVATE_DNS.name());
     infrastructureMappingService.validateAwsInfraMapping(awsInfrastructureMapping);
-  }
-
-  @Test
-  @Owner(developers = ARVIND)
-  @Category(UnitTests.class)
-  public void testAwsInstanceFilterOrder() {
-    AwsInstanceFilter filter = AwsInstanceFilter.builder().build();
-    assertThat(filter.toString()).isEqualTo("AwsInstanceFilter()");
-    filter = AwsInstanceFilter.builder().vpcIds(Arrays.asList("V10", "V5", "V2", "V1")).build();
-    assertThat(filter.toString()).isEqualTo("AwsInstanceFilter(vpcIds=[V1, V10, V2, V5])");
-    filter = AwsInstanceFilter.builder()
-                 .vpcIds(Arrays.asList("V10", "V5", "V2", "V1"))
-                 .tags(Arrays.asList(AwsInstanceFilter.Tag.builder().key("k2").value("V2").build(),
-                     AwsInstanceFilter.Tag.builder().key("k1").value("V1").build()))
-                 .build();
-    assertThat(filter.toString())
-        .isEqualTo(
-            "AwsInstanceFilter(vpcIds=[V1, V10, V2, V5], tags=[AwsInstanceFilter.Tag(key=k1, value=V1), AwsInstanceFilter.Tag(key=k2, value=V2)])");
-    filter = AwsInstanceFilter.builder()
-                 .tags(Arrays.asList(AwsInstanceFilter.Tag.builder().key("k2").value("V2").build(),
-                     AwsInstanceFilter.Tag.builder().key("k1").value("V1").build()))
-                 .build();
-    assertThat(filter.toString())
-        .isEqualTo(
-            "AwsInstanceFilter(tags=[AwsInstanceFilter.Tag(key=k1, value=V1), AwsInstanceFilter.Tag(key=k2, value=V2)])");
   }
 
   @Test

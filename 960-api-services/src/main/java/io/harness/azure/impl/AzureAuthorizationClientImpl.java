@@ -11,6 +11,7 @@ import static io.harness.azure.model.AzureConstants.OBJECT_ID_NAME_BLANK_VALIDAT
 import static io.harness.azure.model.AzureConstants.ROLE_ASSIGNMENT_NAME_BLANK_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.SUBSCRIPTION_ID_NULL_VALIDATION_MSG;
 
+import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.azure.AzureClient;
@@ -20,16 +21,22 @@ import io.harness.azure.model.AzureAuthenticationType;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.AzureConstants;
 import io.harness.azure.utility.AzureUtils;
+import io.harness.concurrent.HTimeLimiter;
 import io.harness.exception.AzureAuthenticationException;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.WingsException;
 
 import software.wings.helpers.ext.azure.AzureIdentityAccessTokenResponse;
 
+import com.google.common.util.concurrent.TimeLimiter;
+import com.google.common.util.concurrent.UncheckedTimeoutException;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.graphrbac.BuiltInRole;
 import com.microsoft.azure.management.graphrbac.RoleAssignment;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +45,8 @@ import retrofit2.Response;
 @Singleton
 @Slf4j
 public class AzureAuthorizationClientImpl extends AzureClient implements AzureAuthorizationClient {
+  @Inject TimeLimiter timeLimiter;
+
   public RoleAssignment roleAssignmentAtSubscriptionScope(final AzureConfig azureConfig, final String subscriptionId,
       final String objectId, final String roleAssignmentName, final BuiltInRole builtInRole) {
     if (isBlank(subscriptionId)) {
@@ -81,23 +90,36 @@ public class AzureAuthorizationClientImpl extends AzureClient implements AzureAu
   }
 
   @Override
-  public void validateAzureConnection(AzureConfig azureConfig) {
+  public boolean validateAzureConnection(AzureConfig azureConfig) {
     try {
-      getAzureClientWithDefaultSubscription(azureConfig);
-      AzureAuthenticationType azureCredentialType = azureConfig.getAzureAuthenticationType();
-      String message = "Azure connection validated for";
-      if (log.isDebugEnabled()) {
+      return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(90L), () -> {
+        Azure azure = getAzureClientWithDefaultSubscription(azureConfig);
+        AzureAuthenticationType azureCredentialType = azureConfig.getAzureAuthenticationType();
+        StringBuffer message = new StringBuffer("Azure connection validation for ");
         if (azureCredentialType == AzureAuthenticationType.SERVICE_PRINCIPAL_CERT
             || azureCredentialType == AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET) {
-          log.debug("{} clientId {} ", message, azureConfig.getClientId());
+          message.append(format("clientId %s", message, azureConfig.getClientId()));
         } else if (azureCredentialType == AzureAuthenticationType.MANAGED_IDENTITY_USER_ASSIGNED) {
-          log.debug("{} UserAssigned MSI [{}]", message, azureConfig.getClientId());
+          message.append(format("User Assigned Managed Identity %s", message, azureConfig.getClientId()));
         } else if (azureCredentialType == AzureAuthenticationType.MANAGED_IDENTITY_SYSTEM_ASSIGNED) {
-          log.debug("{} SystemAssigned MSI ", message);
+          message.append(format("System Assigned Managed Identity", message));
         }
-      }
+
+        boolean result = azure != null;
+        log.info(format("%s was %s", message.toString(), result ? "successful" : "unsuccessful"));
+
+        return result;
+      });
+    } catch (UncheckedTimeoutException e) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Timeout occurred. Failed to validate connection for Azure connector.",
+          "Please check your Azure connector configuration.",
+          new AzureAuthenticationException("Failed to validate connection for Azure connector"));
+    } catch (WingsException we) {
+      throw we;
     } catch (Exception e) {
-      handleAzureAuthenticationException(e);
+      throw NestedExceptionUtils.hintWithExplanationException("Failed to validate connection for Azure connector.",
+          "Please check your Azure connector configuration.", new AzureAuthenticationException(e.getMessage()));
     }
   }
 

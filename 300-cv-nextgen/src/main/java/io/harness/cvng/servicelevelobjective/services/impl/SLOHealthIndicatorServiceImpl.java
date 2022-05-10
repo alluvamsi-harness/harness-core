@@ -149,6 +149,7 @@ public class SLOHealthIndicatorServiceImpl implements SLOHealthIndicatorService 
               .serviceLevelObjectiveIdentifier(serviceLevelObjective.getIdentifier())
               .monitoredServiceIdentifier(serviceLevelObjective.getMonitoredServiceIdentifier())
               .errorBudgetRemainingPercentage(sloGraphData.getErrorBudgetRemainingPercentage())
+              .errorBudgetRemainingMinutes(sloGraphData.getErrorBudgetRemaining())
               .build();
       hPersistence.save(newSloHealthIndicator);
     } else {

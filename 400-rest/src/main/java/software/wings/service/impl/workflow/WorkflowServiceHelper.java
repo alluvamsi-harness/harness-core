@@ -171,7 +171,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

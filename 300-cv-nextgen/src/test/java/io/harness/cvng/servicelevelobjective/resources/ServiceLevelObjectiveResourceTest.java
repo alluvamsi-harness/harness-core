@@ -24,7 +24,7 @@ import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
-import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
+import io.harness.cvng.notification.beans.NotificationRuleResponse;
 import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
@@ -41,7 +41,6 @@ import com.google.inject.Injector;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -348,12 +347,12 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
   public void testCreate_withNotificationRules() throws IOException {
     NotificationRuleDTO notificationRuleDTO =
         builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
-    List<NotificationRuleRefDTO> notificationRuleRefs =
-        notificationRuleService.create(builderFactory.getProjectParams(), Arrays.asList(notificationRuleDTO));
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getProjectParams(), notificationRuleDTO);
 
     String sloYaml = getYAML("slo/slo-with-notification-rule.yaml");
-    sloYaml = sloYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
-    sloYaml = sloYaml.replace("$enabled", String.valueOf(notificationRuleRefs.get(0).isEnabled()));
+    sloYaml = sloYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    sloYaml = sloYaml.replace("$enabled", "false");
     Response response = RESOURCES.client()
                             .target("http://localhost:9998/slo/")
                             .queryParam("accountId", builderFactory.getContext().getAccountId())
@@ -370,11 +369,11 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
   public void testUpdateSLOData_withNotificationRules() throws IOException {
     NotificationRuleDTO notificationRuleDTO =
         builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
-    List<NotificationRuleRefDTO> notificationRuleRefs =
-        notificationRuleService.create(builderFactory.getProjectParams(), Arrays.asList(notificationRuleDTO));
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getProjectParams(), notificationRuleDTO);
     String sloYaml = getYAML("slo/slo-with-notification-rule.yaml");
-    sloYaml = sloYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
-    sloYaml = sloYaml.replace("$enabled", String.valueOf(notificationRuleRefs.get(0).isEnabled()));
+    sloYaml = sloYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    sloYaml = sloYaml.replace("$enabled", "false");
 
     Response response = RESOURCES.client()
                             .target("http://localhost:9998/slo/")
@@ -386,8 +385,8 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
         .contains("\"notificationRuleRefs\":[{\"notificationRuleRef\":\"rule\",\"enabled\":false}]");
 
     sloYaml = getYAML("slo/slo-with-notification-rule.yaml");
-    sloYaml = sloYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
-    sloYaml = sloYaml.replace("$enabled", String.valueOf(!notificationRuleRefs.get(0).isEnabled()));
+    sloYaml = sloYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    sloYaml = sloYaml.replace("$enabled", "true");
 
     response = RESOURCES.client()
                    .target("http://localhost:9998/slo/"

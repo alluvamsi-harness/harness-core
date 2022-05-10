@@ -8,119 +8,101 @@
 package io.harness.cvng.notification.transformer;
 
 import io.harness.cvng.core.beans.params.ProjectParams;
-import io.harness.cvng.notification.beans.MonitoredServiceChangeImpactConditionSpec;
-import io.harness.cvng.notification.beans.MonitoredServiceChangeObservedConditionSpec;
-import io.harness.cvng.notification.beans.MonitoredServiceHealthScoreConditionSpec;
-import io.harness.cvng.notification.beans.MonitoredServiceNotificationRuleCondition;
-import io.harness.cvng.notification.beans.MonitoredServiceNotificationRuleConditionSpec;
-import io.harness.cvng.notification.beans.MonitoredServiceNotificationRuleConditionType;
+import io.harness.cvng.notification.beans.ChangeImpactConditionSpec;
+import io.harness.cvng.notification.beans.ChangeObservedConditionSpec;
+import io.harness.cvng.notification.beans.HealthScoreConditionSpec;
+import io.harness.cvng.notification.beans.NotificationRuleCondition;
+import io.harness.cvng.notification.beans.NotificationRuleConditionSpec;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
 import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule;
-import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceChangeImpactEntityConditionSpec;
-import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceChangeObservedEntityConditionSpec;
-import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceHealthScoreEntityConditionSpec;
-import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceNotificationRuleEntityCondition;
-import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceNotificationRuleEntityConditionSpec;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceChangeImpactCondition;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceChangeObservedCondition;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceHealthScoreCondition;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceNotificationRuleCondition;
+import io.harness.exception.InvalidArgumentsException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class MonitoredServiceNotificationRuleConditionTransformer
-    extends NotificationRuleConditionTransformer<MonitoredServiceNotificationRule,
-        MonitoredServiceNotificationRuleCondition> {
+    extends NotificationRuleConditionTransformer<MonitoredServiceNotificationRule, NotificationRuleConditionSpec> {
   @Override
   public MonitoredServiceNotificationRule getEntity(
       ProjectParams projectParams, NotificationRuleDTO notificationRuleDTO) {
-    List<MonitoredServiceNotificationRuleCondition> monitoredServiceNotificationRuleConditions = new ArrayList<>();
-    notificationRuleDTO.getConditions().forEach(condition
-        -> monitoredServiceNotificationRuleConditions.add((MonitoredServiceNotificationRuleCondition) condition));
     return MonitoredServiceNotificationRule.builder()
         .accountId(projectParams.getAccountIdentifier())
         .orgIdentifier(projectParams.getOrgIdentifier())
         .projectIdentifier(projectParams.getProjectIdentifier())
         .identifier(notificationRuleDTO.getIdentifier())
         .name(notificationRuleDTO.getName())
-        .enabled(notificationRuleDTO.isEnabled())
         .type(NotificationRuleType.MONITORED_SERVICE)
         .notificationMethod(notificationRuleDTO.getNotificationMethod())
-        .conditions(monitoredServiceNotificationRuleConditions.stream()
-                        .map(condition
-                            -> MonitoredServiceNotificationRuleEntityCondition.builder()
-                                   .conditionType(condition.getConditionType())
-                                   .spec(getEntitySpec(condition.getSpec()))
-                                   .build())
+        .conditions(notificationRuleDTO.getConditions()
+                        .stream()
+                        .map(condition -> getEntityCondition(condition))
                         .collect(Collectors.toList()))
         .build();
   }
 
   @Override
-  protected List<MonitoredServiceNotificationRuleCondition> getSpec(MonitoredServiceNotificationRule notificationRule) {
+  protected List<NotificationRuleConditionSpec> getSpec(MonitoredServiceNotificationRule notificationRule) {
     return notificationRule.getConditions()
         .stream()
-        .map(condition
-            -> MonitoredServiceNotificationRuleCondition.builder()
-                   .conditionType(condition.getConditionType())
-                   .spec(getDTOSpec(condition.getSpec()))
-                   .build())
+        .map(condition -> getDTOCondition(condition))
         .collect(Collectors.toList());
   }
 
-  private MonitoredServiceNotificationRuleEntityConditionSpec getEntitySpec(
-      MonitoredServiceNotificationRuleConditionSpec conditionSpec) {
-    if (conditionSpec.getConditionType().equals(MonitoredServiceNotificationRuleConditionType.CHANGE_IMPACT)) {
-      MonitoredServiceChangeImpactConditionSpec spec = (MonitoredServiceChangeImpactConditionSpec) conditionSpec;
-      return MonitoredServiceChangeImpactEntityConditionSpec.builder()
-          .changeEventTypes(spec.getChangeEventTypes())
-          .threshold(spec.getThreshold())
-          .period(spec.getPeriod())
-          .build();
-    } else if (conditionSpec.getConditionType().equals(MonitoredServiceNotificationRuleConditionType.HEALTH_SCORE)) {
-      MonitoredServiceHealthScoreConditionSpec spec = (MonitoredServiceHealthScoreConditionSpec) conditionSpec;
-      return MonitoredServiceHealthScoreEntityConditionSpec.builder()
-          .threshold(spec.getThreshold())
-          .period(spec.getPeriod())
-          .build();
-    } else if (conditionSpec.getConditionType().equals(MonitoredServiceNotificationRuleConditionType.CHANGE_OBSERVED)) {
-      MonitoredServiceChangeObservedConditionSpec spec = (MonitoredServiceChangeObservedConditionSpec) conditionSpec;
-      return MonitoredServiceChangeObservedEntityConditionSpec.builder()
-          .changeEventTypes(spec.getChangeEventTypes())
-          .build();
-    } else {
-      throw new RuntimeException(
-          "Invalid Monitored Service Notification Rule Condition Type: " + conditionSpec.getConditionType());
+  private MonitoredServiceNotificationRuleCondition getEntityCondition(NotificationRuleCondition condition) {
+    switch (condition.getSpec().getType()) {
+      case CHANGE_IMPACT:
+        ChangeImpactConditionSpec changeImpactConditionSpec = (ChangeImpactConditionSpec) condition.getSpec();
+        return MonitoredServiceChangeImpactCondition.builder()
+            .changeEventTypes(changeImpactConditionSpec.getChangeEventTypes())
+            .threshold(changeImpactConditionSpec.getThreshold())
+            .period(changeImpactConditionSpec.getPeriod())
+            .build();
+      case HEALTH_SCORE:
+        HealthScoreConditionSpec healthScoreConditionSpec = (HealthScoreConditionSpec) condition.getSpec();
+        return MonitoredServiceHealthScoreCondition.builder()
+            .threshold(healthScoreConditionSpec.getThreshold())
+            .period(healthScoreConditionSpec.getPeriod())
+            .build();
+      case CHANGE_OBSERVED:
+        ChangeObservedConditionSpec changeObservedConditionSpec = (ChangeObservedConditionSpec) condition.getSpec();
+        return MonitoredServiceChangeObservedCondition.builder()
+            .changeEventTypes(changeObservedConditionSpec.getChangeEventTypes())
+            .build();
+      default:
+        throw new InvalidArgumentsException(
+            "Invalid Monitored Service Notification Rule Condition Type: " + condition.getType());
     }
   }
 
-  private MonitoredServiceNotificationRuleConditionSpec getDTOSpec(
-      MonitoredServiceNotificationRuleEntityConditionSpec entityConditionSpec) {
-    if (entityConditionSpec.getConditionType().equals(MonitoredServiceNotificationRuleConditionType.CHANGE_IMPACT)) {
-      MonitoredServiceChangeImpactEntityConditionSpec conditionSpec =
-          (MonitoredServiceChangeImpactEntityConditionSpec) entityConditionSpec;
-      return MonitoredServiceChangeImpactConditionSpec.builder()
-          .changeEventTypes(conditionSpec.getChangeEventTypes())
-          .threshold(conditionSpec.getThreshold())
-          .period(conditionSpec.getPeriod())
-          .build();
-    } else if (entityConditionSpec.getConditionType().equals(
-                   MonitoredServiceNotificationRuleConditionType.HEALTH_SCORE)) {
-      MonitoredServiceHealthScoreEntityConditionSpec conditionSpec =
-          (MonitoredServiceHealthScoreEntityConditionSpec) entityConditionSpec;
-      return MonitoredServiceHealthScoreConditionSpec.builder()
-          .threshold(conditionSpec.getThreshold())
-          .period(conditionSpec.getPeriod())
-          .build();
-    } else if (entityConditionSpec.getConditionType().equals(
-                   MonitoredServiceNotificationRuleConditionType.CHANGE_OBSERVED)) {
-      MonitoredServiceChangeObservedEntityConditionSpec conditionSpec =
-          (MonitoredServiceChangeObservedEntityConditionSpec) entityConditionSpec;
-      return MonitoredServiceChangeObservedConditionSpec.builder()
-          .changeEventTypes(conditionSpec.getChangeEventTypes())
-          .build();
-    } else {
-      throw new RuntimeException(
-          "Invalid Monitored Service Notification Rule Condition Type: " + entityConditionSpec.getConditionType());
+  private NotificationRuleConditionSpec getDTOCondition(MonitoredServiceNotificationRuleCondition condition) {
+    switch (condition.getType()) {
+      case CHANGE_IMPACT:
+        MonitoredServiceChangeImpactCondition changeImpactCondition = (MonitoredServiceChangeImpactCondition) condition;
+        return ChangeImpactConditionSpec.builder()
+            .changeEventTypes(changeImpactCondition.getChangeEventTypes())
+            .threshold(changeImpactCondition.getThreshold())
+            .period(changeImpactCondition.getPeriod())
+            .build();
+      case HEALTH_SCORE:
+        MonitoredServiceHealthScoreCondition healthScoreCondition = (MonitoredServiceHealthScoreCondition) condition;
+        return HealthScoreConditionSpec.builder()
+            .threshold(healthScoreCondition.getThreshold())
+            .period(healthScoreCondition.getPeriod())
+            .build();
+      case CHANGE_OBSERVED:
+        MonitoredServiceChangeObservedCondition changeObservedCondition =
+            (MonitoredServiceChangeObservedCondition) condition;
+        return ChangeObservedConditionSpec.builder()
+            .changeEventTypes(changeObservedCondition.getChangeEventTypes())
+            .build();
+      default:
+        throw new InvalidArgumentsException(
+            "Invalid Monitored Service Notification Rule Condition Type: " + condition.getType());
     }
   }
 }

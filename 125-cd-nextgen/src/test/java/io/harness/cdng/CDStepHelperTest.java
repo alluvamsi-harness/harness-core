@@ -629,16 +629,7 @@ public class CDStepHelperTest extends CategoryTest {
     doReturn(connectorDTOOptional).when(connectorService).get("account1", "org1", "project1", "abcConnector");
 
     K8sDirectInfrastructureOutcomeBuilder outcomeBuilder =
-        K8sDirectInfrastructureOutcome.builder().connectorRef("abcConnector").namespace("namespace test");
-
-    try {
-      CDStepHelper.getK8sInfraDelegateConfig(outcomeBuilder.build(), ambiance);
-      fail("Should not reach here.");
-    } catch (InvalidArgumentsException ex) {
-      assertThat(ex.getParams().get("args"))
-          .isEqualTo(
-              "Namespace: \"namespace test\" is an invalid name. Namespaces may only contain lowercase letters, numbers, and '-'.");
-    }
+        K8sDirectInfrastructureOutcome.builder().connectorRef("abcConnector");
 
     try {
       outcomeBuilder.namespace("");
