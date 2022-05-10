@@ -51,7 +51,7 @@ public class HelmChartManifestTest extends CategoryTest {
     HelmChartManifest override = HelmChartManifest.builder()
                                      .helmVersion(HelmVersion.V2)
                                      .skipResourceVersioning(ParameterField.createValueField(false))
-                                     .valuesPaths(ParameterField.createValueField(asList("file/path")))
+                                     .valuesPaths(ParameterField.createValueField(asList("override/file/path")))
                                      .store(ParameterField.createValueField(overrideStoreConfig))
                                      .commandFlags(asList(HelmManifestCommandFlag.builder()
                                                               .commandType(Template)
@@ -69,7 +69,8 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(original.getHelmVersion()).isEqualTo(HelmVersion.V3);
     assertThat(original.getSkipResourceVersioning().getValue()).isTrue();
-    assertThat(original.getValuesPaths().getValue()).isEqualTo("file/path");
+    assertThat(original.getValuesPaths().getValue().size()).isEqualTo(1);
+    assertThat(original.getValuesPaths().getValue().get(0)).isEqualTo("file/path");
     assertThat(original.getStore().getValue()).isEqualTo(originalStoreConfig);
     assertThat(original.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Fetch);
@@ -78,7 +79,8 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(override.getHelmVersion()).isEqualTo(HelmVersion.V2);
     assertThat(override.getSkipResourceVersioning().getValue()).isFalse();
-    assertThat(override.getValuesPaths().getValue()).isEqualTo("override/file/path");
+    assertThat(override.getValuesPaths().getValue().size()).isEqualTo(1);
+    assertThat(override.getValuesPaths().getValue().get(0)).isEqualTo("override/file/path");
     assertThat(override.getStore().getValue()).isEqualTo(overrideStoreConfig);
     assertThat(override.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Template, Fetch);
@@ -87,7 +89,8 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(result.getHelmVersion()).isEqualTo(HelmVersion.V2);
     assertThat(result.getSkipResourceVersioning().getValue()).isFalse();
-    assertThat(result.getValuesPaths().getValue()).isEqualTo("override/file/path");
+    assertThat(result.getValuesPaths().getValue().size()).isEqualTo(1);
+    assertThat(result.getValuesPaths().getValue().get(0)).isEqualTo("override/file/path");
     assertThat(result.getStore().getValue()).isEqualTo(overrideStoreConfig);
     assertThat(result.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Template, Fetch);
@@ -121,7 +124,8 @@ public class HelmChartManifestTest extends CategoryTest {
 
     assertThat(original.getHelmVersion()).isEqualTo(HelmVersion.V3);
     assertThat(original.getSkipResourceVersioning().getValue()).isTrue();
-    assertThat(original.getValuesPaths().getValue()).isEqualTo("override/file/path");
+    assertThat(original.getValuesPaths().getValue().size()).isEqualTo(1);
+    assertThat(original.getValuesPaths().getValue().get(0)).isEqualTo("file/path");
     assertThat(original.getCommandFlags().stream().map(HelmManifestCommandFlag::getCommandType))
         .containsExactlyInAnyOrder(Template, Fetch);
     assertThat(original.getCommandFlags().stream().map(HelmManifestCommandFlag::getFlag).map(ParameterField::getValue))

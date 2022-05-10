@@ -33,7 +33,8 @@ public class InheritFromManifestStoreConfigTest extends CategoryTest {
                                                   .build();
 
     InheritFromManifestStoreConfig result = (InheritFromManifestStoreConfig) original.applyOverrides(override);
-    assertThat(result.getPaths().getValue()).isEqualTo("override/file/path");
+    assertThat(result.getPaths().getValue().size()).isEqualTo(1);
+    assertThat(result.getPaths().getValue().get(0)).isEqualTo("override/file/path");
   }
 
   @Test
@@ -46,7 +47,8 @@ public class InheritFromManifestStoreConfigTest extends CategoryTest {
     InheritFromManifestStoreConfig override = InheritFromManifestStoreConfig.builder().build();
 
     InheritFromManifestStoreConfig result = (InheritFromManifestStoreConfig) original.applyOverrides(override);
-    assertThat(result.getPaths().getValue()).isEqualTo("connector-ref");
+    assertThat(result.getPaths().getValue().size()).isEqualTo(1);
+    assertThat(result.getPaths().getValue().get(0)).isEqualTo("file/path");
   }
 
   @Test
@@ -57,7 +59,7 @@ public class InheritFromManifestStoreConfigTest extends CategoryTest {
         InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("file/path"))).build();
 
     InheritFromManifestStoreConfig originClone = (InheritFromManifestStoreConfig) original.cloneInternal();
-
-    assertThat(originClone.getPaths().getValue()).isEqualTo("file/path");
+    assertThat(originClone.getPaths().getValue().size()).isEqualTo(1);
+    assertThat(originClone.getPaths().getValue().get(0)).isEqualTo("file/path");
   }
 }

@@ -62,7 +62,7 @@ public class InheritFromManifestStoreConfig implements StoreConfig {
   public StoreConfig applyOverrides(StoreConfig overrideConfig) {
     InheritFromManifestStoreConfig inheritFromManifestStoreConfig = (InheritFromManifestStoreConfig) overrideConfig;
     InheritFromManifestStoreConfig resultantInheritFromManifestStoreConfig = this;
-    if (!ParameterField.isNull(resultantInheritFromManifestStoreConfig.getPaths())) {
+    if (!ParameterField.isNull(inheritFromManifestStoreConfig.getPaths())) {
       resultantInheritFromManifestStoreConfig =
           resultantInheritFromManifestStoreConfig.withPaths(inheritFromManifestStoreConfig.getPaths());
     }
