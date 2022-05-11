@@ -17,7 +17,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.exception.ServiceNowException;
 
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowTicketType;
+import software.wings.beans.servicenow.ServiceNowTicketType;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

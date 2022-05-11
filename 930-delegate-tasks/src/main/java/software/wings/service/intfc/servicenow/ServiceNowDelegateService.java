@@ -16,9 +16,9 @@ import io.harness.annotations.dev.TargetModule;
 import software.wings.api.ServiceNowExecutionData;
 import software.wings.beans.TaskType;
 import software.wings.beans.approval.ServiceNowApprovalParams;
+import software.wings.beans.servicenow.ServiceNowMetaDTO;
 import software.wings.beans.servicenow.ServiceNowTaskParameters;
 import software.wings.delegatetasks.DelegateTaskType;
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowMetaDTO;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;

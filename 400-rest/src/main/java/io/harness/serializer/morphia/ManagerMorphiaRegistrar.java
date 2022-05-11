@@ -97,7 +97,6 @@ import software.wings.api.SelectNodeStepExecutionSummary;
 import software.wings.api.SelectedNodeExecutionData;
 import software.wings.api.ServiceInstanceArtifactParam;
 import software.wings.api.ServiceInstanceIdsParam;
-import software.wings.api.ServiceNowExecutionData;
 import software.wings.api.ServiceTemplateElement;
 import software.wings.api.ShellScriptProvisionerOutputElement;
 import software.wings.api.SimpleWorkflowParam;
@@ -1071,7 +1070,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.ServiceArtifactElements", ServiceArtifactElements.class);
     w.put("api.ServiceInstanceArtifactParam", ServiceInstanceArtifactParam.class);
     w.put("api.ServiceInstanceIdsParam", ServiceInstanceIdsParam.class);
-    w.put("api.ServiceNowExecutionData", ServiceNowExecutionData.class);
     w.put("api.ServiceTemplateElement", ServiceTemplateElement.class);
     w.put("api.shellscript.provision.ShellScriptProvisionExecutionData", ShellScriptProvisionExecutionData.class);
     w.put("api.ShellScriptProvisionerOutputElement", ShellScriptProvisionerOutputElement.class);

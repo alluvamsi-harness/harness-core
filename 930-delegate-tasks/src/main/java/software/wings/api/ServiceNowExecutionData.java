@@ -17,7 +17,7 @@ import io.harness.beans.ExecutionStatus;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowTicketType;
+import software.wings.beans.servicenow.ServiceNowTicketType;
 import software.wings.sm.StateExecutionData;
 
 import java.util.List;

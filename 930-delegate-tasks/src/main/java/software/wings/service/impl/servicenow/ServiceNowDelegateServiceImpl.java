@@ -28,9 +28,10 @@ import software.wings.api.ServiceNowExecutionData;
 import software.wings.beans.ServiceNowConfig;
 import software.wings.beans.approval.ServiceNowApprovalParams;
 import software.wings.beans.servicenow.ServiceNowFields;
+import software.wings.beans.servicenow.ServiceNowMetaDTO;
 import software.wings.beans.servicenow.ServiceNowTaskParameters;
+import software.wings.beans.servicenow.ServiceNowTicketType;
 import software.wings.helpers.ext.servicenow.ServiceNowRestClient;
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowMetaDTO;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.servicenow.ServiceNowDelegateService;
 
@@ -133,7 +134,7 @@ public class ServiceNowDelegateServiceImpl implements ServiceNowDelegateService 
 
   @Override
   public List<ServiceNowMetaDTO> getApprovalStates(ServiceNowTaskParameters taskParameters) {
-    if (taskParameters.getTicketType() != ServiceNowServiceImpl.ServiceNowTicketType.CHANGE_REQUEST) {
+    if (taskParameters.getTicketType() != ServiceNowTicketType.CHANGE_REQUEST) {
       throw new InvalidRequestException("Approval states are only valid for issue type Change");
     }
     final Call<JsonNode> request;

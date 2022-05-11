@@ -21,8 +21,6 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.ServiceNowConfig;
 import software.wings.delegatetasks.servicenow.ServiceNowAction;
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowFieldType;
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowTicketType;
 
 import java.util.List;
 import java.util.Map;

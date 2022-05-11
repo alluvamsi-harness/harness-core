@@ -12,9 +12,9 @@ import static io.harness.delegate.task.servicenow.ServiceNowTaskNgHelper.handleR
 import static io.harness.eraro.ErrorCode.SERVICENOW_ERROR;
 import static io.harness.exception.WingsException.USER;
 
+import static software.wings.beans.servicenow.ServiceNowTicketType.CHANGE_TASK;
 import static software.wings.service.impl.servicenow.ServiceNowDelegateServiceImpl.getBaseUrl;
 import static software.wings.service.impl.servicenow.ServiceNowDelegateServiceImpl.getRetrofit;
-import static software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowTicketType.CHANGE_TASK;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
