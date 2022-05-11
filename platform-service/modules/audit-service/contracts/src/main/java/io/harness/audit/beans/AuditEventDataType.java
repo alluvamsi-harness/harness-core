@@ -18,7 +18,6 @@ public enum AuditEventDataType {
   TemplateAuditEventData(AuditEventDataTypeConstants.TEMPLATE_AUDIT_EVENT_DATA),
   OpaAuditEventData(AuditEventDataTypeConstants.OPA_AUDIT_EVENT_DATA),
 
-
   // Deprecated
   USER_INVITE(AuditEventDataTypeConstants.USER_INVITE),
   USER_MEMBERSHIP(AuditEventDataTypeConstants.USER_MEMBERSHIP);
