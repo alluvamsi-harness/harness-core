@@ -39,7 +39,6 @@ import static software.wings.delegatetasks.GitFetchFilesTask.GIT_FETCH_FILES_TAS
 import static software.wings.sm.ExecutionContextImpl.PHASE_PARAM;
 import static software.wings.sm.StateType.HELM_DEPLOY;
 import static software.wings.sm.StateType.HELM_ROLLBACK;
-import static software.wings.sm.states.k8s.K8sStateHelper.fetchEnvFromExecutionContext;
 import static software.wings.sm.states.k8s.K8sStateHelper.fetchSafeTimeoutInMillis;
 
 import static java.util.Collections.singleton;
@@ -175,6 +174,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionContext.StateExecutionContextBuilder;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.k8s.K8sStateHelper;
 import software.wings.sm.states.utils.StateTimeoutUtils;
 import software.wings.stencils.DefaultValue;
@@ -236,6 +236,7 @@ public class HelmDeployState extends State {
   @Inject private LogService logService;
   @Inject private SweepingOutputService sweepingOutputService;
   @Inject private EnvironmentService environmentService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @DefaultValue("10") private int steadyStateTimeout; // Minutes
 
@@ -348,7 +349,7 @@ public class HelmDeployState extends State {
                   .script(customSourceConfig.getScript())
                   .build());
 
-    Environment env = K8sStateHelper.fetchEnvFromExecutionContext(context);
+    Environment env = k8sStateHelper.fetchEnvFromExecutionContext(context);
     ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
     final int expressionFunctorToken = HashGenerator.generateIntegerHash();
     String serviceTemplateId = infraMapping == null ? null : serviceTemplateHelper.fetchServiceTemplateId(infraMapping);
@@ -964,7 +965,7 @@ public class HelmDeployState extends State {
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
 
     final Application app = appService.get(context.getAppId());
-    final Environment env = workflowStandardParams.getEnv();
+    final Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
     ServiceElement serviceElement = phaseElement.getServiceElement();
     Artifact artifact = ((DeploymentExecutionContext) context).getDefaultArtifactForService(serviceElement.getUuid());
     String artifactStreamId = artifact == null ? null : artifact.getArtifactStreamId();
@@ -1275,7 +1276,7 @@ public class HelmDeployState extends State {
     ContainerInfrastructureMapping containerInfraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
 
     String waitId = generateUuid();
-    Environment env = fetchEnvFromExecutionContext(context);
+    Environment env = k8sStateHelper.fetchEnvFromExecutionContext(context);
     DelegateTask delegateTask =
         DelegateTask.builder()
             .accountId(app.getAccountId())
@@ -1518,7 +1519,7 @@ public class HelmDeployState extends State {
     ContainerInfrastructureMapping containerInfraMapping =
         (ContainerInfrastructureMapping) infrastructureMappingService.get(app.getUuid(), context.fetchInfraMappingId());
 
-    Environment env = fetchEnvFromExecutionContext(context);
+    Environment env = k8sStateHelper.fetchEnvFromExecutionContext(context);
     DelegateTask delegateTask =
         DelegateTask.builder()
             .accountId(app.getAccountId())

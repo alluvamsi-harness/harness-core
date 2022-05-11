@@ -88,11 +88,7 @@ public class ManifestStep implements SyncExecutable<ManifestStepParameters> {
     if (stepParameters.getSpec() != null) {
       manifestList.add(stepParameters.getSpec());
     }
-    // 2. Override sets
-    if (stepParameters.getOverrideSets() != null) {
-      manifestList.addAll(stepParameters.getOverrideSets());
-    }
-    // 3. Stage Overrides
+    // 2. Stage Overrides
     if (stepParameters.getStageOverride() != null) {
       manifestList.add(stepParameters.getStageOverride());
     }

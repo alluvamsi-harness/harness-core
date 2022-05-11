@@ -21,12 +21,10 @@ import io.harness.spotinst.model.ElastiGroup;
 
 import software.wings.service.impl.spotinst.SpotInstCommandRequest;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -63,11 +61,6 @@ public class SpotInstSetupContextElement implements ContextElement, SweepingOutp
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.SPOTINST_SERVICE_SETUP;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

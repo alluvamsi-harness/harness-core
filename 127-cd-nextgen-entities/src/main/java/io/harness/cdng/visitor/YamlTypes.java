@@ -64,7 +64,6 @@ public interface YamlTypes {
   String SERVICE_USE_FROM_STAGE_OVERRIDES = "overrides";
   String STAGE_OVERRIDES_CONFIG = "stageOverrides";
   String PATH_CONNECTOR = VisitorParentPathUtils.PATH_CONNECTOR;
-  String VARIABLE_OVERRIDE_SETS = "variableOverrideSets";
   String CONNECTOR_REF = "connectorRef";
   String TAG = "tag";
   String TAG_REGEX = "tagRegex";
@@ -86,7 +85,7 @@ public interface YamlTypes {
   String COMMAND_FLAGS_WRAPPER = "commandFlags";
   String REGION = "region";
   String STAGE = "stage";
-  String SSH_KEY_REF = "sshKeyRef";
+  String CREDENTIALS_REF = "credentialsRef";
   String HOSTS = "hosts";
   String ATTRIBUTE_FILTERS = "attributeFilters";
   String HOST_FILTERS = "hostFilters";

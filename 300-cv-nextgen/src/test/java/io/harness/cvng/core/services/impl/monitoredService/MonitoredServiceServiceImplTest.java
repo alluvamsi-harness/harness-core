@@ -242,23 +242,28 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testCreateFromYaml() {
     String yaml = "monitoredService:\n"
-        + "  identifier: <+monitoredService.serviceRef>\n"
         + "  type: Application\n"
         + "  description: description\n"
+        + "  identifier: <+monitoredService.serviceRef>\n"
         + "  name: <+monitoredService.identifier>\n"
         + "  serviceRef: service1\n"
-        + "  environmentRefList:\n"
-        + "   - env1\n"
-        + "  tags: {}\n"
+        + "  environmentRef: <+monitoredService.variables.environmentIdentifier>\n"
         + "  sources:\n"
-        + "    healthSources:\n"
-        + "    changeSources: \n";
+        + "      healthSources:\n"
+        + "      changeSources: \n"
+        + "  tags: {}\n"
+        + "  variables:\n"
+        + "    -   name: environmentIdentifier\n"
+        + "        type: String\n"
+        + "        value: env3";
     when(templateFacade.resolveYaml(any(), eq(yaml))).thenReturn(yaml);
     MonitoredServiceResponse monitoredServiceResponse =
         monitoredServiceService.createFromYaml(builderFactory.getProjectParams(), yaml);
     MonitoredServiceResponse monitoredServiceResponseFromDb =
         monitoredServiceService.get(builderFactory.getProjectParams(), "service1");
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO()).isNotNull();
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getName()).isEqualTo("service1");
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getEnvironmentRef()).isEqualTo("env3");
   }
 
   @Test

@@ -46,7 +46,7 @@ public interface NGHostValidationService {
       @Nullable String orgIdentifier, @Nullable String projectIdentifier, Set<String> delegateSelectors);
 
   /**
-   * Validate SSH hosts credentials and connectivity.
+   * Validate hosts credentials and connectivity.
    *
    * @param hosts the hosts (the host is host name and port number, or only host name)
    * @param accountIdentifier the account identifier
@@ -55,12 +55,12 @@ public interface NGHostValidationService {
    * @param secretIdentifierWithScope the secret identifier with scope
    * @return the list of host validation results
    */
-  List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, String accountIdentifier,
+  List<HostValidationDTO> validateHosts(@NotNull List<String> hosts, String accountIdentifier,
       @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
       @Nullable Set<String> delegateSelectors);
 
   /**
-   * Validate SSH host credentials and connectivity.
+   * Validate host credentials and connectivity.
    *
    * @param host the host is host name and port number, or only host name
    * @param accountIdentifier the account identifier
@@ -69,7 +69,7 @@ public interface NGHostValidationService {
    * @param secretIdentifierWithScope the secret identifier with scope
    * @return host validation result
    */
-  HostValidationDTO validateSSHHost(@NotNull String host, String accountIdentifier, @Nullable String orgIdentifier,
+  HostValidationDTO validateHost(@NotNull String host, String accountIdentifier, @Nullable String orgIdentifier,
       @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
       @Nullable Set<String> delegateSelectors);
 }

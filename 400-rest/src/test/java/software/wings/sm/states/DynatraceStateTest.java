@@ -61,6 +61,7 @@ import software.wings.service.intfc.dynatrace.DynaTraceService;
 import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.verification.VerificationDataAnalysisResponse;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
@@ -102,6 +103,7 @@ public class DynatraceStateTest extends APMStateVerificationTestBase {
   @Mock private DelegateCache delegateCache;
   @Mock
   private LoadingCache<ImmutablePair<String, String>, Optional<DelegateConnectionResult>> delegateConnectionResultCache;
+  @Mock WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   private static final String VERSION = "1.0.0";
   private static final List<String> supportedTasks = Arrays.stream(TaskType.values()).map(Enum::name).collect(toList());
   @Inject private HPersistence persistence;
@@ -141,6 +143,8 @@ public class DynatraceStateTest extends APMStateVerificationTestBase {
     FieldUtils.writeField(dynatraceState, "accountService", accountService, true);
     FieldUtils.writeField(dynatraceState, "cvActivityLogService", cvActivityLogService, true);
     FieldUtils.writeField(dynatraceState, "dynaTraceService", dynaTraceService, true);
+    FieldUtils.writeField(
+        dynatraceState, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
     when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
         .thenReturn(mock(CVActivityLogger.class));
     when(mockFeatureFlagService.isEnabled(any(), any())).thenReturn(true);
@@ -195,7 +199,8 @@ public class DynatraceStateTest extends APMStateVerificationTestBase {
         .getCVInstanceAPIResponse(any());
     doReturn(workflowId).when(spyState).getWorkflowId(executionContext);
     doReturn(serviceId).when(spyState).getPhaseServiceId(executionContext);
-    when(workflowStandardParams.getEnv()).thenReturn(anEnvironment().uuid(UUID.randomUUID().toString()).build());
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
+        .thenReturn(anEnvironment().uuid(UUID.randomUUID().toString()).build());
     when(executionContext.getContextElement(ContextElementType.STANDARD)).thenReturn(workflowStandardParams);
     createDelegate(accountId);
     ExecutionResponse response = spyState.execute(executionContext);
@@ -427,7 +432,8 @@ public class DynatraceStateTest extends APMStateVerificationTestBase {
         .getCVInstanceAPIResponse(any());
     doReturn(workflowId).when(spyState).getWorkflowId(executionContext);
     doReturn(serviceId).when(spyState).getPhaseServiceId(executionContext);
-    when(workflowStandardParams.getEnv()).thenReturn(anEnvironment().uuid(UUID.randomUUID().toString()).build());
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
+        .thenReturn(anEnvironment().uuid(UUID.randomUUID().toString()).build());
     when(executionContext.getContextElement(ContextElementType.STANDARD)).thenReturn(workflowStandardParams);
 
     return spyState.execute(executionContext);

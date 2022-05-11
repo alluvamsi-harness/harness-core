@@ -78,6 +78,7 @@ import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.State;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.k8s.K8sStateHelper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -119,6 +120,7 @@ public abstract class ContainerServiceSetup extends State {
   @Inject private ArtifactCollectionUtils artifactCollectionUtils;
   @Inject private ContainerMasterUrlHelper containerMasterUrlHelper;
   @Inject private ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   ContainerServiceSetup(String name, String type) {
     super(name, type);
@@ -140,8 +142,8 @@ public abstract class ContainerServiceSetup extends State {
       ImageDetails imageDetails =
           artifactCollectionUtils.fetchContainerImageDetails(artifact, context.getWorkflowExecutionId());
 
-      Application app = workflowStandardParams.fetchRequiredApp();
-      Environment env = workflowStandardParams.getEnv();
+      Application app = workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams);
+      Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
       Service service = serviceResourceService.getWithDetails(app.getUuid(), serviceId);
 
       log.info("Setting up container service for service {}", service.getName());

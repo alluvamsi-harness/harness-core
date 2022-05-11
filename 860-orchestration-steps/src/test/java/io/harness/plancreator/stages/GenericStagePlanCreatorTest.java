@@ -106,7 +106,7 @@ public class GenericStagePlanCreatorTest extends OrchestrationStepsTestBase {
     assertThat(approvalStagePlanNode.getFacilitatorObtainments().get(0).getType().getType()).isEqualTo("CHILD");
 
     assertThat(approvalStagePlanNode.getAdviserObtainments()).hasSize(1);
-    assertThat(approvalStagePlanNode.getAdviserObtainments().get(0).getType().getType()).isEqualTo("NEXT_STEP");
+    assertThat(approvalStagePlanNode.getAdviserObtainments().get(0).getType().getType()).isEqualTo("NEXT_STAGE");
     assertThat(approvalStagePlanNode.getAdviserObtainments().get(0).getParameters())
         .isEqualTo(ByteString.copyFrom(siblingAsBytes));
 

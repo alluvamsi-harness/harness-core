@@ -126,6 +126,7 @@ import software.wings.sm.ContextElement;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.google.common.collect.ImmutableMap;
@@ -165,6 +166,7 @@ public class AwsAmiServiceDeployStateTest extends WingsBaseTest {
   @Mock private AwsAmiServiceStateHelper awsAmiServiceStateHelper;
   @Mock private StateExecutionService stateExecutionService;
   @Mock private FeatureFlagService mockFeatureFlagService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private AwsAmiServiceDeployState state = new AwsAmiServiceDeployState("stateName");
 
@@ -210,10 +212,10 @@ public class AwsAmiServiceDeployStateTest extends WingsBaseTest {
         .getSetupElementFromSweepingOutput(mockContext, AMI_SERVICE_SETUP_SWEEPING_OUTPUT_NAME);
     doReturn(mockParams).when(mockContext).getContextElement(any());
     Environment environment = anEnvironment().uuid(ENV_ID).environmentType(PROD).name(ENV_NAME).build();
-    doReturn(environment).when(mockParams).getEnv();
+    doReturn(environment).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     doReturn(environment).when(mockContext).fetchRequiredEnvironment();
     Application application = anApplication().uuid(APP_ID).name(APP_NAME).accountId(ACCOUNT_ID).build();
-    doReturn(application).when(mockParams).getApp();
+    doReturn(application).when(workflowStandardParamsExtensionService).getApp(mockParams);
     Service service = Service.builder().uuid(SERVICE_ID).name(SERVICE_NAME).build();
     doReturn(service).when(mockServiceResourceService).getWithDetails(anyString(), anyString());
     doReturn(false).when(mockFeatureFlagService).isEnabled(any(), any());
@@ -370,13 +372,13 @@ public class AwsAmiServiceDeployStateTest extends WingsBaseTest {
     doReturn(mockParams).when(mockContext).getContextElement(any());
     doReturn(phaseElement).when(mockContext).getContextElement(any(), anyString());
     Application application = anApplication().uuid(APP_ID).name(APP_NAME).accountId(ACCOUNT_ID).build();
-    doReturn(application).when(mockParams).getApp();
+    doReturn(application).when(workflowStandardParamsExtensionService).getApp(mockParams);
     doReturn(true).when(mockLogService).batchedSaveCommandUnitLogs(anyString(), anyString(), any());
     AwsAmiInfrastructureMapping infrastructureMapping =
         anAwsAmiInfrastructureMapping().withUuid(INFRA_MAPPING_ID).withEnvId(ENV_ID).withRegion("us-east-1").build();
     doReturn(infrastructureMapping).when(mockInfrastructureMappingService).get(anyString(), anyString());
     Environment environment = anEnvironment().uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(environment).when(mockParams).getEnv();
+    doReturn(environment).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     Service service = Service.builder().uuid(SERVICE_ID).name(SERVICE_NAME).build();
     doReturn(service).when(mockServiceResourceService).getWithDetails(anyString(), anyString());
     Key<ServiceTemplate> serviceTemplateKey = new Key<>(ServiceTemplate.class, "collection", "id");

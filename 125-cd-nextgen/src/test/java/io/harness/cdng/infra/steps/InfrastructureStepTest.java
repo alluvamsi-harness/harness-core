@@ -209,10 +209,10 @@ public class InfrastructureStepTest extends CategoryTest {
 
     Infrastructure infrastructureSpec = PdcInfrastructure.builder()
                                             .hosts(ParameterField.createValueField(hosts))
-                                            .sshKeyRef(ParameterField.createValueField(sshKeyRef))
+                                            .credentialsRef(ParameterField.createValueField(sshKeyRef))
                                             .build();
 
-    InfraMapping expectedInfraMapping = PdcInfraMapping.builder().hosts(hosts).sshKeyRef(sshKeyRef).build();
+    InfraMapping expectedInfraMapping = PdcInfraMapping.builder().hosts(hosts).credentialsRef(sshKeyRef).build();
 
     InfraMapping infraMapping = infrastructureStep.createInfraMappingObject(infrastructureSpec);
     assertThat(infraMapping).isEqualTo(expectedInfraMapping);
@@ -227,13 +227,13 @@ public class InfrastructureStepTest extends CategoryTest {
     List<String> hostFilters = Arrays.asList("filter-host1", "filter-host2");
 
     Infrastructure infrastructureSpec = PdcInfrastructure.builder()
-                                            .sshKeyRef(ParameterField.createValueField(sshKeyRef))
+                                            .credentialsRef(ParameterField.createValueField(sshKeyRef))
                                             .connectorRef(ParameterField.createValueField(connectorRef))
                                             .hostFilters(ParameterField.createValueField(hostFilters))
                                             .build();
 
     InfraMapping expectedInfraMapping =
-        PdcInfraMapping.builder().sshKeyRef(sshKeyRef).connectorRef(connectorRef).hostFilters(hostFilters).build();
+        PdcInfraMapping.builder().credentialsRef(sshKeyRef).connectorRef(connectorRef).hostFilters(hostFilters).build();
 
     InfraMapping infraMapping = infrastructureStep.createInfraMappingObject(infrastructureSpec);
     assertThat(infraMapping).isEqualTo(expectedInfraMapping);
@@ -250,13 +250,13 @@ public class InfrastructureStepTest extends CategoryTest {
     attributeFilters.put("another-attribute", "another-value");
 
     Infrastructure infrastructureSpec = PdcInfrastructure.builder()
-                                            .sshKeyRef(ParameterField.createValueField(sshKeyRef))
+                                            .credentialsRef(ParameterField.createValueField(sshKeyRef))
                                             .connectorRef(ParameterField.createValueField(connectorRef))
                                             .attributeFilters(ParameterField.createValueField(attributeFilters))
                                             .build();
 
     InfraMapping expectedInfraMapping = PdcInfraMapping.builder()
-                                            .sshKeyRef(sshKeyRef)
+                                            .credentialsRef(sshKeyRef)
                                             .connectorRef(connectorRef)
                                             .attributeFilters(attributeFilters)
                                             .build();
@@ -320,7 +320,7 @@ public class InfrastructureStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructure() {
     PdcInfrastructure infrastructure = PdcInfrastructure.builder()
-                                           .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+                                           .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
                                            .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
                                            .build();
 
@@ -332,7 +332,7 @@ public class InfrastructureStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructureSshKeyExpression() {
     PdcInfrastructure infrastructure = PdcInfrastructure.builder()
-                                           .sshKeyRef(new ParameterField<>(null, true, "expression1", null, true))
+                                           .credentialsRef(new ParameterField<>(null, true, "expression1", null, true))
                                            .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
                                            .build();
 
@@ -346,7 +346,7 @@ public class InfrastructureStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructureHostsAndConnectorAreExpressions() {
     PdcInfrastructure infrastructure = PdcInfrastructure.builder()
-                                           .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+                                           .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
                                            .hosts(new ParameterField<>(null, true, "expression1", null, true))
                                            .connectorRef(new ParameterField<>(null, true, "expression2", null, true))
                                            .build();

@@ -634,6 +634,30 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "CustomStageConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StageInfoConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "steps"
+          ],
+          "properties": {
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ExecutionWrapperConfig"
+              },
+              "maxItems": 2147483647,
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "Distribution": {
       "type": "object",
       "required": [
@@ -2648,6 +2672,22 @@
                 "properties": {
                   "spec": {
                     "$ref": "#/definitions/ApprovalStageConfig"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "Custom"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/definitions/CustomStageConfig"
                   }
                 }
               }

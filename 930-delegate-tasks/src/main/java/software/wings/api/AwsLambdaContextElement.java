@@ -17,10 +17,8 @@ import io.harness.context.ContextElementType;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.Tag;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -66,10 +64,5 @@ public class AwsLambdaContextElement implements ContextElement {
   @Override
   public ContextElement cloneMin() {
     return this;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 }

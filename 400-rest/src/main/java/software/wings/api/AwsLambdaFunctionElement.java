@@ -17,9 +17,7 @@ import io.harness.context.ContextElementType;
 import software.wings.api.AwsLambdaContextElement.FunctionMeta;
 import software.wings.beans.AwsConfig;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -41,11 +39,6 @@ public class AwsLambdaFunctionElement implements ContextElement {
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.AWS_LAMBDA_FUNCTION;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

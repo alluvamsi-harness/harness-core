@@ -8,18 +8,14 @@
 package io.harness.cdng.service.beans;
 
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
-import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSetWrapper;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
 import io.harness.cdng.service.ServiceSpec;
-import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
 import io.harness.cdng.visitor.helpers.serviceconfig.NativeHelmServiceSpecVisitorHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
-import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.core.variables.NGVariable;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -40,10 +36,6 @@ public class NativeHelmServiceSpec implements ServiceSpec, Visitable {
   ArtifactListConfig artifacts;
   List<ManifestConfigWrapper> manifests;
 
-  @VariableExpression(skipVariableExpression = true) List<NGVariableOverrideSetWrapper> variableOverrideSets;
-  @VariableExpression(skipVariableExpression = true) List<ArtifactOverrideSetWrapper> artifactOverrideSets;
-  @VariableExpression(skipVariableExpression = true) List<ManifestOverrideSetWrapper> manifestOverrideSets;
-
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;
   @Override
@@ -59,14 +51,8 @@ public class NativeHelmServiceSpec implements ServiceSpec, Visitable {
     }
 
     children.add("artifacts", artifacts);
-    if (EmptyPredicate.isNotEmpty(artifactOverrideSets)) {
-      artifactOverrideSets.forEach(artifactOverrideSet -> children.add("artifactOverrideSets", artifactOverrideSet));
-    }
     if (EmptyPredicate.isNotEmpty(manifests)) {
       manifests.forEach(manifest -> children.add("manifests", manifest));
-    }
-    if (EmptyPredicate.isNotEmpty(manifestOverrideSets)) {
-      manifestOverrideSets.forEach(manifestOverrideSet -> children.add("manifestOverrideSets", manifestOverrideSet));
     }
     return children;
   }

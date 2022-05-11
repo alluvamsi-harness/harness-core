@@ -14,6 +14,7 @@ import io.harness.beans.ExecutionInterruptType;
 import io.harness.beans.ExecutionStatus;
 import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.beans.SweepingOutput;
+import io.harness.beans.WorkflowType;
 import io.harness.beans.terraform.TerraformPlanParam;
 import io.harness.context.ContextElementType;
 import io.harness.cvng.beans.cvnglog.ApiCallLogDTO;
@@ -23,7 +24,10 @@ import io.harness.serializer.KryoRegistrar;
 import software.wings.api.CloudProviderType;
 import software.wings.api.ContainerServiceData;
 import software.wings.api.ExecutionDataValue;
+import software.wings.api.ServiceElement;
 import software.wings.beans.AmiDeploymentType;
+import software.wings.beans.ArtifactStreamMetadata;
+import software.wings.beans.ArtifactVariable;
 import software.wings.beans.AwsInstanceFilter;
 import software.wings.beans.CountsByStatuses;
 import software.wings.beans.EntityType;
@@ -34,8 +38,10 @@ import software.wings.beans.LicenseInfo;
 import software.wings.beans.Log;
 import software.wings.beans.PhaseStepType;
 import software.wings.beans.ServiceVariableType;
+import software.wings.beans.Tag;
 import software.wings.beans.VMSSAuthType;
 import software.wings.beans.VMSSDeploymentType;
+import software.wings.beans.Variable;
 import software.wings.beans.VariableType;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
@@ -52,6 +58,7 @@ import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.sm.ExecutionInterruptEffect;
 import software.wings.sm.PipelineSummary;
 import software.wings.sm.StateTypeScope;
+import software.wings.sm.StepExecutionSummary;
 
 import com.esotericsoftware.kryo.Kryo;
 
@@ -60,11 +67,16 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
   @Override
   public void register(Kryo kryo) {
     kryo.register(ContextElementType.class, 4004);
+    kryo.register(WorkflowType.class, 5025);
+    kryo.register(ServiceElement.class, 5083);
     kryo.register(ExecutionStatus.class, 5136);
+    kryo.register(Variable.class, 5378);
     kryo.register(GitFileConfig.class, 5472);
     kryo.register(LicenseInfo.class, 5511);
     kryo.register(ThirdPartyApiCallLog.class, 5377);
+    kryo.register(ArtifactVariable.class, 7195);
     kryo.register(ArtifactStreamSummary.class, 7202);
+    kryo.register(ArtifactStreamMetadata.class, 8126);
     kryo.register(ArtifactSummary.class, 8127);
     kryo.register(Log.class, 71102);
     kryo.register(ThirdPartyApiCallLog.ThirdPartyApiCallField.class, 71100);
@@ -85,6 +97,7 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(ExecutionInterruptEffect.class, 5236);
     kryo.register(PipelineSummary.class, 5142);
     kryo.register(StateTypeScope.class, 5144);
+    kryo.register(StepExecutionSummary.class, 5145);
     kryo.register(WebhookSource.class, 8551);
     kryo.register(ApiCallLogDTO.class, 9048);
     kryo.register(ApiCallLogDTOField.class, 9049);
@@ -102,6 +115,7 @@ public class CgOrchestrationBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(ArtifactInput.class, 7459);
     kryo.register(ServiceVariableType.class, 5362);
     kryo.register(ArtifactFile.class, 5066);
+    kryo.register(Tag.class, 7185);
     kryo.register(Artifact.class, 7192);
     kryo.register(HelmChart.class, 71106);
     kryo.register(Artifact.ContentStatus.class, 7193);

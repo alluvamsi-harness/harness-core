@@ -7,8 +7,6 @@
 
 package software.wings.sm;
 
-import static io.harness.rule.OwnerRule.BRETT;
-import static io.harness.rule.OwnerRule.GARVIT;
 import static io.harness.rule.OwnerRule.MILOS;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.PRASHANT;
@@ -22,7 +20,6 @@ import static software.wings.beans.config.ArtifactSourceable.ARTIFACT_SOURCE_REG
 import static software.wings.beans.config.ArtifactSourceable.ARTIFACT_SOURCE_USER_NAME_KEY;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_KEY;
-import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ARTIFACT_ID;
 import static software.wings.utils.WingsTestConstants.ARTIFACT_STREAM_ID;
 import static software.wings.utils.WingsTestConstants.COMPANY_NAME;
@@ -41,7 +38,6 @@ import static org.mockito.Mockito.when;
 import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
-import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.limits.LimitCheckerFactory;
 import io.harness.rule.Owner;
@@ -53,28 +49,30 @@ import software.wings.beans.Application;
 import software.wings.beans.Environment;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
-import software.wings.scheduler.BackgroundJobScheduler;
+import software.wings.helpers.ext.url.SubdomainUrlHelperIntfc;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ApplicationManifestService;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.ArtifactStreamServiceBindingService;
+import software.wings.service.intfc.BuildSourceService;
 import software.wings.service.intfc.EnvironmentService;
-import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.SettingsService;
+import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.applicationmanifest.HelmChartService;
 import software.wings.settings.SettingVariableTypes;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import com.google.inject.MembersInjector;
+import com.google.inject.Injector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -83,33 +81,22 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 /**
- * The Class WorkflowStandardParamsTest.
+ * Tests the WorkflowStandardParamsMapper class.
  *
  * @author Rishi
  */
-public class WorkflowStandardParamsTest extends WingsBaseTest {
-  /**
-   * The App service.
-   */
+public class WorkflowStandardParamsMapperTest extends WingsBaseTest {
   @Inject @InjectMocks AppService appService;
-  /**
-   * The Environment service.
-   */
   @Inject EnvironmentService environmentService;
-  /**
-   * The Injector.
-   */
-  @Inject MembersInjector<WorkflowStandardParams> injector;
+  @Inject Injector injector;
 
   @Mock SettingsService settingsService;
-  @Mock private BackgroundJobScheduler jobScheduler;
   @Mock private ExecutionContext context;
   @Mock private ArtifactService artifactService;
   @Mock private AccountService accountService;
   @Mock private ArtifactStreamService artifactStreamService;
   @Mock private ArtifactStreamServiceBindingService artifactStreamServiceBindingService;
   @Mock private LimitCheckerFactory limitCheckerFactory;
-  @Mock private ServiceResourceService serviceResourceService;
   @Mock private FeatureFlagService featureFlagService;
   @Mock private HelmChartService helmChartService;
   @Mock private ApplicationManifestService applicationManifestService;
@@ -139,151 +126,15 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     app = appService.get(app.getUuid());
 
     WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
     std.setAppId(app.getUuid());
     std.setEnvId(env.getUuid());
 
     ServiceElement serviceElement = ServiceElement.builder().uuid(SERVICE_ID).name(SERVICE_NAME).build();
     when(context.getContextElement(ContextElementType.SERVICE)).thenReturn(serviceElement);
 
-    Map<String, Object> map = std.paramMap(context);
+    Map<String, Object> map =
+        this.getWorkflowStandardParamsParamMapper(std, null, null, null, null, null, null, null).paramMap(context);
     assertThat(map).isNotNull().containsEntry(ContextElement.APP, app).containsEntry(ContextElement.ENV, env);
-  }
-
-  @Test
-  @Owner(developers = GARVIT)
-  @Category(UnitTests.class)
-  public void shouldFetchRequiredApp() {
-    when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
-    Application app = prepareApp();
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    std.setAppId(app.getUuid());
-    Application fetchedApp = std.fetchRequiredApp();
-    assertThat(fetchedApp).isNotNull();
-    assertThat(fetchedApp.getName()).isEqualTo(app.getName());
-  }
-
-  @Test(expected = InvalidRequestException.class)
-  @Owner(developers = GARVIT)
-  @Category(UnitTests.class)
-  public void shouldThrowOnFetchRequiredApp() {
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    std.setAppId(null);
-    std.fetchRequiredApp();
-  }
-
-  @Test
-  @Owner(developers = GARVIT)
-  @Category(UnitTests.class)
-  public void shouldFetchRequiredEnv() {
-    when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
-    Application app = prepareApp();
-    Environment env = prepareEnv(app.getUuid());
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    std.setAppId(app.getUuid());
-    std.setEnvId(env.getUuid());
-    Environment fetchedEnv = std.fetchRequiredEnv();
-    assertThat(fetchedEnv).isNotNull();
-    assertThat(fetchedEnv.getName()).isEqualTo(env.getName());
-  }
-
-  @Test(expected = InvalidRequestException.class)
-  @Owner(developers = GARVIT)
-  @Category(UnitTests.class)
-  public void shouldThrowOnFetchRequiredEnv() {
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    std.setEnvId(null);
-    std.fetchRequiredEnv();
-  }
-
-  private Application prepareApp() {
-    return appService.save(anApplication().name("app_name").accountId(ACCOUNT_ID).build());
-  }
-
-  private Environment prepareEnv(String appId) {
-    return environmentService.save(anEnvironment().appId(appId).name("env_name").build());
-  }
-
-  @Test
-  @Owner(developers = BRETT)
-  @Category(UnitTests.class)
-  public void shouldGetArtifactForService() {
-    when(artifactService.get(ARTIFACT_ID))
-        .thenReturn(
-            anArtifact().withUuid(ARTIFACT_ID).withAppId(APP_ID).withArtifactStreamId(ARTIFACT_STREAM_ID).build());
-    when(artifactStreamServiceBindingService.listArtifactStreamIds(SERVICE_ID))
-        .thenReturn(singletonList(ARTIFACT_STREAM_ID));
-
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("artifactService", artifactService);
-    on(std).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    std.setAppId(APP_ID);
-    std.setArtifactIds(singletonList(ARTIFACT_ID));
-
-    Artifact artifact = std.getArtifactForService(SERVICE_ID);
-    assertThat(artifact).isNotNull();
-  }
-
-  @Test
-  @Owner(developers = MILOS)
-  @Category(UnitTests.class)
-  public void shouldGetRollbackArtifactForService() {
-    when(artifactStreamServiceBindingService.listArtifactStreamIds(SERVICE_ID))
-        .thenReturn(singletonList("ROLLBACK_ARTIFACT_STREAM_ID"));
-    when(artifactService.get("ROLLBACK_ARTIFACT_ID"))
-        .thenReturn(anArtifact()
-                        .withUuid("ROLLBACK_ARTIFACT_ID")
-                        .withAppId(APP_ID)
-                        .withArtifactStreamId("ROLLBACK_ARTIFACT_STREAM_ID")
-                        .build());
-
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("artifactService", artifactService);
-    on(std).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    std.setAppId(APP_ID);
-    std.setRollbackArtifactIds(singletonList("ROLLBACK_ARTIFACT_ID"));
-
-    Artifact rollbackArtifact = std.getRollbackArtifactForService(SERVICE_ID);
-    assertThat(rollbackArtifact).isNotNull();
-  }
-
-  @Test
-  @Owner(developers = BRETT)
-  @Category(UnitTests.class)
-  public void shouldGetNullArtifact() {
-    when(artifactService.get(ARTIFACT_ID)).thenReturn(anArtifact().withUuid(ARTIFACT_ID).withAppId(APP_ID).build());
-    when(artifactStreamServiceBindingService.listArtifactStreamIds(SERVICE_ID)).thenReturn(new ArrayList<>());
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("artifactService", artifactService);
-    on(std).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    std.setAppId(APP_ID);
-    std.setArtifactIds(singletonList(ARTIFACT_ID));
-
-    Artifact artifact = std.getArtifactForService(SERVICE_ID);
-    assertThat(artifact).isNull();
-  }
-
-  @Test
-  @Owner(developers = MILOS)
-  @Category(UnitTests.class)
-  public void shouldGetNullRollbackArtifact() {
-    when(artifactService.get("ROLLBACK_ARTIFACT_ID"))
-        .thenReturn(anArtifact().withUuid("ROLLBACK_ARTIFACT_ID").withAppId(APP_ID).build());
-    when(artifactStreamServiceBindingService.listArtifactStreamIds(SERVICE_ID)).thenReturn(new ArrayList<>());
-    WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("artifactService", artifactService);
-    on(std).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    std.setAppId(APP_ID);
-    std.setRollbackArtifactIds(singletonList("ROLLBACK_ARTIFACT_ID"));
-
-    Artifact rollbackArtifact = std.getRollbackArtifactForService(SERVICE_ID);
-    assertThat(rollbackArtifact).isNull();
   }
 
   @Test
@@ -298,12 +149,6 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     env = environmentService.save(env);
 
     WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("artifactService", artifactService);
-    on(std).set("artifactStreamService", artifactStreamService);
-    on(std).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    on(std).set("featureFlagService", featureFlagService);
-
     std.setAppId(app.getUuid());
     std.setEnvId(env.getUuid());
     List<String> artifactIds = new ArrayList<>();
@@ -324,7 +169,9 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     when(artifactStreamServiceBindingService.listArtifactStreamIds(SERVICE_ID))
         .thenReturn(singletonList(ARTIFACT_STREAM_ID));
 
-    Map<String, Object> map = std.paramMap(context);
+    Map<String, Object> map = this.getWorkflowStandardParamsParamMapper(std, artifactService, artifactStreamService,
+                                      featureFlagService, null, null, null, artifactStreamServiceBindingService)
+                                  .paramMap(context);
     assertThat(map).isNotNull().containsKey(ContextElement.ARTIFACT);
     Artifact artifact = (Artifact) map.get(ContextElement.ARTIFACT);
     assertThat(artifact).isNotNull();
@@ -345,11 +192,6 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     env = environmentService.save(env);
 
     WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("artifactService", artifactService);
-    on(std).set("artifactStreamService", artifactStreamService);
-    on(std).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    on(std).set("featureFlagService", featureFlagService);
 
     std.setAppId(app.getUuid());
     std.setEnvId(env.getUuid());
@@ -369,7 +211,9 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     when(artifactStreamServiceBindingService.listArtifactStreamIds(SERVICE_ID))
         .thenReturn(singletonList("ROLLBACK_ARTIFACT_STREAM_ID"));
 
-    Map<String, Object> map = std.paramMap(context);
+    Map<String, Object> map = this.getWorkflowStandardParamsParamMapper(std, artifactService, artifactStreamService,
+                                      featureFlagService, null, null, null, artifactStreamServiceBindingService)
+                                  .paramMap(context);
     assertThat(map).isNotNull().containsKey(ContextElement.ROLLBACK_ARTIFACT);
     Artifact rollbackArtifact = (Artifact) map.get(ContextElement.ROLLBACK_ARTIFACT);
     assertThat(rollbackArtifact).isNotNull();
@@ -391,8 +235,6 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     env = environmentService.save(env);
 
     WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
-    on(std).set("accountService", accountService);
     std.setAppId(app.getUuid());
     std.setEnvId(env.getUuid());
 
@@ -404,7 +246,9 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
                         .withDefaults(ImmutableMap.of("MyActDefaultVar", "MyDefaultValue"))
                         .build());
 
-    Map<String, Object> map = std.paramMap(context);
+    Map<String, Object> map =
+        this.getWorkflowStandardParamsParamMapper(std, null, null, null, null, accountService, null, null)
+            .paramMap(context);
     assertThat(map).isNotNull().containsKey(ContextElement.ACCOUNT);
     Account account = (Account) map.get(ContextElement.ACCOUNT);
     assertThat(account).isNotNull();
@@ -417,7 +261,6 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
   public void shouldSetCorrectHelmChartInContext() {
     when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
     WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
 
     Application app = anApplication().name("AppA").accountId(ACCOUNT_ID).build();
     app = appService.save(app);
@@ -434,11 +277,10 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     when(applicationManifestService.fetchAppManifestProperties(app.getUuid(), MANIFEST_ID))
         .thenReturn(Collections.singletonMap("url", "helmRepoUrl"));
     when(featureFlagService.isEnabled(FeatureName.HELM_CHART_AS_ARTIFACT, ACCOUNT_ID)).thenReturn(true);
-    on(std).set("helmChartService", helmChartService);
-    on(std).set("applicationManifestService", applicationManifestService);
-    on(std).set("featureFlagService", featureFlagService);
 
-    Map<String, Object> paramMap = std.paramMap(context);
+    Map<String, Object> paramMap = this.getWorkflowStandardParamsParamMapper(std, null, null, featureFlagService,
+                                           applicationManifestService, null, helmChartService, null)
+                                       .paramMap(context);
     HelmChart helmChart = (HelmChart) paramMap.get(ContextElement.HELM_CHART);
     assertThat(helmChart).isNotNull();
     assertThat(helmChart.getUuid()).isEqualTo(HELM_CHART_ID + 1);
@@ -461,7 +303,6 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
   public void shouldSetNullHelmChartIfAbsent() {
     when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
     WorkflowStandardParams std = new WorkflowStandardParams();
-    injector.injectMembers(std);
 
     Application app = anApplication().name("AppA").accountId(ACCOUNT_ID).build();
     app = appService.save(app);
@@ -470,23 +311,51 @@ public class WorkflowStandardParamsTest extends WingsBaseTest {
     List<String> helmChartIds = Arrays.asList(HELM_CHART_ID + 1);
     String chartName = "chart";
     HelmChart helmChart1 = createHelmChart(chartName, 1);
-    on(std).set("helmChartService", helmChartService);
-    on(std).set("featureFlagService", featureFlagService);
 
     when(featureFlagService.isEnabled(FeatureName.HELM_CHART_AS_ARTIFACT, ACCOUNT_ID)).thenReturn(false);
-    Map<String, Object> paramMap = std.paramMap(context);
+    Map<String, Object> paramMap = this.getWorkflowStandardParamsParamMapper(
+                                           std, null, null, featureFlagService, null, null, helmChartService, null)
+                                       .paramMap(context);
     assertThat(paramMap.get(ContextElement.HELM_CHART)).isNull();
 
     when(featureFlagService.isEnabled(FeatureName.HELM_CHART_AS_ARTIFACT, ACCOUNT_ID)).thenReturn(true);
-    paramMap = std.paramMap(context);
+    paramMap = this.getWorkflowStandardParamsParamMapper(
+                       std, null, null, featureFlagService, null, null, helmChartService, null)
+                   .paramMap(context);
     assertThat(paramMap.get(ContextElement.HELM_CHART)).isNull();
 
     std.setHelmChartIds(Arrays.asList(HELM_CHART_ID + 1));
     ServiceElement serviceElement = ServiceElement.builder().uuid(SERVICE_ID + 2).name(SERVICE_NAME).build();
     when(context.fetchServiceElement()).thenReturn(serviceElement);
     when(helmChartService.listByIds(ACCOUNT_ID, helmChartIds)).thenReturn(Arrays.asList(helmChart1));
-    paramMap = std.paramMap(context);
+    paramMap = this.getWorkflowStandardParamsParamMapper(
+                       std, null, null, featureFlagService, null, null, helmChartService, null)
+                   .paramMap(context);
     assertThat(paramMap.get(ContextElement.HELM_CHART)).isNull();
     verify(helmChartService).listByIds(ACCOUNT_ID, helmChartIds);
+  }
+
+  private WorkflowStandardParamsParamMapper getWorkflowStandardParamsParamMapper(WorkflowStandardParams params,
+      @Nullable ArtifactService artifactService, @Nullable ArtifactStreamService artifactStreamService,
+      @Nullable FeatureFlagService featureFlagService, @Nullable ApplicationManifestService applicationManifestService,
+      @Nullable AccountService accountService, @Nullable HelmChartService helmChartService,
+      @Nullable ArtifactStreamServiceBindingService artifactStreamServiceBindingService) {
+    WorkflowStandardParamsExtensionService extensionService = new WorkflowStandardParamsExtensionService(
+        this.injector.getInstance(AppService.class),
+        accountService != null ? accountService : this.injector.getInstance(AccountService.class),
+        artifactService != null ? artifactService : this.injector.getInstance(ArtifactService.class),
+        injector.getInstance(EnvironmentService.class),
+        artifactStreamServiceBindingService != null ? artifactStreamServiceBindingService
+                                                    : injector.getInstance(ArtifactStreamServiceBindingService.class),
+        helmChartService != null ? helmChartService : injector.getInstance(HelmChartService.class));
+
+    return new WorkflowStandardParamsParamMapper(this.injector.getInstance(SubdomainUrlHelperIntfc.class),
+        this.injector.getInstance(WorkflowExecutionService.class),
+        artifactService != null ? artifactService : this.injector.getInstance(ArtifactService.class),
+        artifactStreamService != null ? artifactStreamService : this.injector.getInstance(ArtifactStreamService.class),
+        applicationManifestService != null ? applicationManifestService
+                                           : this.injector.getInstance(ApplicationManifestService.class),
+        featureFlagService != null ? featureFlagService : this.injector.getInstance(FeatureFlagService.class),
+        this.injector.getInstance(BuildSourceService.class), extensionService, params);
   }
 }

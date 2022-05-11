@@ -15,11 +15,8 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 
@@ -44,12 +41,5 @@ public class ServiceElement implements ContextElement {
   @Override
   public ContextElement cloneMin() {
     return ServiceElement.builder().uuid(uuid).name(name).description(description).build();
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(SERVICE, this);
-    return map;
   }
 }

@@ -16,6 +16,9 @@ import io.harness.beans.SecretUsageLog;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
 
+import software.wings.api.AwsLambdaContextElement;
+import software.wings.api.AwsLambdaExecutionData;
+import software.wings.api.TerraformExecutionData;
 import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsSecretsManagerConfig;
@@ -70,6 +73,8 @@ import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.aws.model.AwsAmiServiceDeployResponse;
 import software.wings.service.impl.aws.model.AwsAmiServiceSetupResponse;
 import software.wings.service.impl.aws.model.AwsAmiSwitchRoutesResponse;
+import software.wings.service.impl.aws.model.AwsLambdaExecuteFunctionResponse;
+import software.wings.service.impl.aws.model.AwsLambdaExecuteWfResponse;
 import software.wings.service.impl.cloudwatch.CloudWatchMetric;
 import software.wings.service.impl.elk.ElkDataCollectionInfo;
 import software.wings.service.impl.elk.ElkDataCollectionInfoV2;
@@ -81,6 +86,8 @@ import software.wings.service.impl.splunk.SplunkDataCollectionInfoV2;
 import software.wings.service.impl.stackdriver.StackDriverDataCollectionInfo;
 import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
+import software.wings.sm.StateExecutionData;
+import software.wings.sm.WorkflowStandardParams;
 
 import java.util.Set;
 
@@ -169,8 +176,15 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("service.impl.instana.InstanaDataCollectionInfo", InstanaDataCollectionInfo.class);
     w.put("service.impl.elk.ElkDataCollectionInfoV2", ElkDataCollectionInfoV2.class);
     w.put("service.impl.cloudwatch.CloudWatchMetric", CloudWatchMetric.class);
+    w.put("sm.WorkflowStandardParams", WorkflowStandardParams.class);
+    w.put("sm.StateExecutionData", StateExecutionData.class);
+    w.put("api.AwsLambdaContextElement", AwsLambdaContextElement.class);
+    w.put("api.AwsLambdaExecutionData", AwsLambdaExecutionData.class);
+    w.put("service.impl.aws.model.AwsLambdaExecuteFunctionResponse", AwsLambdaExecuteFunctionResponse.class);
+    w.put("service.impl.aws.model.AwsLambdaExecuteWfResponse", AwsLambdaExecuteWfResponse.class);
     w.put("beans.BugsnagConfig", BugsnagConfig.class);
     w.put("delegatetasks.buildsource.BuildSourceExecutionResponse", BuildSourceExecutionResponse.class);
+    w.put("api.TerraformExecutionData", TerraformExecutionData.class);
     w.put("service.impl.aws.model.AwsAmiServiceDeployResponse", AwsAmiServiceDeployResponse.class);
     w.put("service.impl.aws.model.AwsAmiServiceSetupResponse", AwsAmiServiceSetupResponse.class);
     w.put("service.impl.aws.model.AwsAmiSwitchRoutesResponse", AwsAmiSwitchRoutesResponse.class);

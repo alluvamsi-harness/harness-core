@@ -11,8 +11,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
-import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSetWrapper;
-import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets;
 import io.harness.cdng.artifact.bean.yaml.PrimaryArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.bean.yaml.SidecarArtifactWrapper;
@@ -25,7 +23,6 @@ import io.harness.cdng.utilities.PrimaryArtifactsUtility;
 import io.harness.cdng.utilities.SideCarsListArtifactsUtility;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.plan.Dependency;
@@ -38,7 +35,6 @@ import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse.PlanCreationResponseBuilder;
 import io.harness.pms.sdk.core.plan.creation.creators.ChildrenPlanCreator;
 import io.harness.pms.yaml.DependenciesUtils;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlField;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.fork.ForkStepParameters;
@@ -93,7 +89,6 @@ public class ArtifactsPlanCreator extends ChildrenPlanCreator<ArtifactListConfig
 
     ArtifactListConfig artifactListConfig = serviceConfig.getServiceDefinition().getServiceSpec().getArtifacts();
     ArtifactListBuilder artifactListBuilder = new ArtifactListBuilder(artifactListConfig);
-    artifactListBuilder.addOverrideSets(serviceConfig);
     artifactListBuilder.addStageOverrides(serviceConfig);
     ArtifactList artifactList = artifactListBuilder.build();
     if (artifactList.getPrimary() == null && EmptyPredicate.isEmpty(artifactList.getSidecars())) {
@@ -238,35 +233,6 @@ public class ArtifactsPlanCreator extends ChildrenPlanCreator<ArtifactListConfig
           sidecars == null
               ? null
               : sidecars.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build())));
-    }
-
-    void addOverrideSets(ServiceConfig serviceConfig) {
-      if (serviceConfig.getStageOverrides() == null
-          || ParameterField.isNull(serviceConfig.getStageOverrides().getUseArtifactOverrideSets())) {
-        return;
-      }
-
-      for (String useArtifactOverrideSet : serviceConfig.getStageOverrides().getUseArtifactOverrideSets().getValue()) {
-        List<ArtifactOverrideSets> artifactOverrideSetsList =
-            serviceConfig.getServiceDefinition()
-                .getServiceSpec()
-                .getArtifactOverrideSets()
-                .stream()
-                .map(ArtifactOverrideSetWrapper::getOverrideSet)
-                .filter(overrideSet -> overrideSet.getIdentifier().equals(useArtifactOverrideSet))
-                .collect(Collectors.toList());
-        if (artifactOverrideSetsList.size() == 0) {
-          throw new InvalidRequestException(
-              String.format("Invalid identifier [%s] in artifact override sets", useArtifactOverrideSet));
-        }
-        if (artifactOverrideSetsList.size() > 1) {
-          throw new InvalidRequestException(
-              String.format("Duplicate identifier [%s] in artifact override sets", useArtifactOverrideSet));
-        }
-
-        ArtifactListConfig artifactListConfig = artifactOverrideSetsList.get(0).getArtifacts();
-        addOverrides(artifactListConfig, ArtifactStepParametersBuilder::overrideSet);
-      }
     }
 
     void addStageOverrides(ServiceConfig serviceConfig) {

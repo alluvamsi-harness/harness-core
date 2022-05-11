@@ -14,6 +14,7 @@ import io.harness.beans.MigratedEntityMapping;
 import io.harness.beans.SweepingOutput;
 import io.harness.beans.terraform.TerraformPlanParam;
 
+import software.wings.api.ServiceElement;
 import software.wings.beans.BaseFile;
 import software.wings.beans.Log;
 import software.wings.beans.TerraGroupProvisioners;
@@ -53,6 +54,7 @@ public class CgOrchestrationBeansMorphiaRegistrar implements MorphiaRegistrar {
   public void registerImplementationClasses(MorphiaRegistrarHelperPut h, MorphiaRegistrarHelperPut w) {
     w.put("metrics.TimeSeriesMetricDefinition", TimeSeriesMetricDefinition.class);
     w.put("api.TerraformPlanParam", TerraformPlanParam.class);
+    w.put("api.ServiceElement", ServiceElement.class);
     w.put("beans.artifact.ArtifactFile", ArtifactFile.class);
   }
 }

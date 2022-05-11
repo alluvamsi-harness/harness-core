@@ -76,6 +76,7 @@ import software.wings.sm.ExecutionResponse.ExecutionResponseBuilder;
 import software.wings.sm.State;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.gcbconfigs.GcbOptions;
 import software.wings.sm.states.mixin.SweepingOutputStateMixin;
 import software.wings.stencils.DefaultValue;
@@ -120,6 +121,7 @@ public class GcbState extends State implements SweepingOutputStateMixin {
   @Transient @Inject private SettingsService settingsService;
   @Transient @Inject KryoSerializer kryoSerializer;
   @Transient @Inject InfrastructureMappingService infrastructureMappingService;
+  @Transient @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   public GcbState(String name) {
     super(name, StateType.GCB.name());
@@ -244,7 +246,7 @@ public class GcbState extends State implements SweepingOutputStateMixin {
     final Application application = context.fetchRequiredApp();
     final WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
     String envId = Optional.ofNullable(workflowStandardParams)
-                       .map(WorkflowStandardParams::getEnv)
+                       .map(standardParams -> this.workflowStandardParamsExtensionService.getEnv(standardParams))
                        .map(Environment::getUuid)
                        .orElse(null);
     String infrastructureMappingId = context.fetchInfraMappingId();

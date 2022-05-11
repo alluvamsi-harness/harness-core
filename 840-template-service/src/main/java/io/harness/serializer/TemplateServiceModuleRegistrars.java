@@ -46,6 +46,7 @@ public class TemplateServiceModuleRegistrars {
           .addAll(NGCoreRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(AccessControlClientRegistrars.kryoRegistrars)
+          .addAll(PmsCommonsModuleRegistrars.kryoRegistrars)
           .add(NotificationBeansKryoRegistrar.class)
           .build();
 
@@ -66,6 +67,7 @@ public class TemplateServiceModuleRegistrars {
           .addAll(YamlBeansModuleRegistrars.morphiaRegistrars)
           .addAll(NGCoreRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
+          .addAll(PmsCommonsModuleRegistrars.morphiaRegistrars)
           .add(NGTemplateMorphiaRegistrar.class)
           .add(NotificationBeansMorphiaRegistrar.class)
           .build();

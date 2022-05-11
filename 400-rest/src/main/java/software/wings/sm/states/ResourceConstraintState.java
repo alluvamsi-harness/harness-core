@@ -65,6 +65,7 @@ import software.wings.sm.ExecutionResponse.ExecutionResponseBuilder;
 import software.wings.sm.State;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.stencils.DefaultValue;
 
 import com.github.reinert.jjschema.Attributes;
@@ -91,6 +92,7 @@ public class ResourceConstraintState extends State {
   @Inject @Transient private WingsPersistence wingsPersistence;
   @Inject @Transient private WorkflowNotificationHelper workflowNotificationHelper;
   @Inject @Transient private FeatureFlagService featureFlagService;
+  @Inject @Transient private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Getter @Setter private String resourceConstraintId;
   @Getter @Setter private String resourceUnit;
@@ -256,7 +258,9 @@ public class ResourceConstraintState extends State {
 
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
 
-    String envId = workflowStandardParams.getEnv() == null ? null : workflowStandardParams.getEnv().getUuid();
+    String envId = workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null
+        ? null
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
     final String workflowUrl = workflowNotificationHelper.calculateWorkflowUrl(
         context.getWorkflowExecutionId(), context.getOrchestrationWorkflowType(), accountId, context.getAppId(), envId);
 

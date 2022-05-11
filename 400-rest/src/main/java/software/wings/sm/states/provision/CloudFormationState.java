@@ -85,6 +85,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.ExecutionResponse.ExecutionResponseBuilder;
 import software.wings.sm.State;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.ManagerExecutionLogCallback;
 import software.wings.stencils.DefaultValue;
 
@@ -123,6 +124,7 @@ public abstract class CloudFormationState extends State {
   @Inject protected transient WingsPersistence wingsPersistence;
   @Inject protected SweepingOutputService sweepingOutputService;
   @Inject protected FeatureFlagService featureFlagService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @FieldNameConstants.Include @Attributes(title = "Provisioner") @Getter @Setter protected String provisionerId;
   @Attributes(title = "Region")
@@ -365,7 +367,7 @@ public abstract class CloudFormationState extends State {
       return getNormalizedId(provisionerId);
     }
     WorkflowStandardParams workflowStandardParams = executionContext.fetchWorkflowStandardParamsFromContext();
-    Environment env = workflowStandardParams.fetchRequiredEnv();
+    Environment env = workflowStandardParamsExtensionService.fetchRequiredEnv(workflowStandardParams);
     return getNormalizedId(env.getUuid()) + getNormalizedId(provisionerId);
   }
 

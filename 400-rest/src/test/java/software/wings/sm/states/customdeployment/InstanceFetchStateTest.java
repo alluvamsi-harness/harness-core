@@ -92,8 +92,10 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionContext;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -125,6 +127,8 @@ public class InstanceFetchStateTest extends WingsBaseTest {
   @Mock private ServiceTemplateHelper serviceTemplateHelper;
   @Mock private StateExecutionService stateExecutionService;
 
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
+
   @InjectMocks private InstanceFetchState state = new InstanceFetchState("Fetch Instances");
 
   private static String resourcePath = "400-rest/src/test/resources/software/wings/customdeployment";
@@ -152,8 +156,10 @@ public class InstanceFetchStateTest extends WingsBaseTest {
     doReturn(phaseElement).when(context).getContextElement(any(), any());
     WorkflowStandardParams workflowStandardParams =
         aWorkflowStandardParams().withAppId(APP_ID).withEnvId(ENV_ID).build();
-    on(workflowStandardParams).set("environmentService", environmentService);
     doReturn(workflowStandardParams).when(context).getContextElement(ContextElementType.STANDARD);
+
+    on(workflowStandardParamsExtensionService).set("environmentService", environmentService);
+    on(state).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
 
     doReturn(ACCOUNT_ID).when(context).getAccountId();
     doReturn(APP_ID).when(context).getAppId();

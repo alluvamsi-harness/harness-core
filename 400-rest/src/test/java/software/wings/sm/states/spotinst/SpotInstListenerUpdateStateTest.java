@@ -60,6 +60,7 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
@@ -76,6 +77,7 @@ public class SpotInstListenerUpdateStateTest extends WingsBaseTest {
   @Mock private ActivityService mockActivityService;
   @Mock private SpotInstStateHelper mockSpotinstStateHelper;
   @Mock private StateExecutionService stateExecutionService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks SpotInstListenerUpdateState state = new SpotInstListenerUpdateState("stateName");
 
@@ -89,7 +91,7 @@ public class SpotInstListenerUpdateStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).getContextElement(any());
     Environment env = anEnvironment().uuid(ENV_ID).build();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
     AwsAmiInfrastructureMapping infrastructureMapping =
         anAwsAmiInfrastructureMapping().withAmiDeploymentType(SPOTINST).withRegion("us-east-1").build();
     doReturn(infrastructureMapping).when(mockInfrastructureMappingService).get(anyString(), anyString());

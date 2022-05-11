@@ -15,7 +15,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,17 +41,6 @@ public class TerraformOutputInfoElement implements ContextElement {
   @Override
   public String getName() {
     return null;
-  }
-
-  /**
-   * @deprecated use {@link software.wings.api.terraform.TerraformOutputVariables} for storing outputs
-   */
-  @Override
-  @Deprecated
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    HashMap<String, Object> paramMap = new HashMap<>();
-    paramMap.put("terraform", outputVariables);
-    return paramMap;
   }
 
   @Override

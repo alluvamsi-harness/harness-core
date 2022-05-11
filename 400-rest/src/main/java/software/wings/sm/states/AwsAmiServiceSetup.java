@@ -81,6 +81,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.State;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.spotinst.SpotInstStateHelper;
 import software.wings.utils.AsgConvention;
 
@@ -113,6 +114,7 @@ public class AwsAmiServiceSetup extends State {
   @Inject private AwsAmiServiceStateHelper awsAmiServiceStateHelper;
   @Inject private AwsStateHelper awsStateHelper;
   @Inject private FeatureFlagService featureFlagService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   private String commandName = AMI_SETUP_COMMAND_NAME;
 
@@ -201,9 +203,9 @@ public class AwsAmiServiceSetup extends State {
       throw new InvalidRequestException(format("Unable to find artifact for service id: %s", serviceId));
     }
 
-    Application app = workflowStandardParams.getApp();
+    Application app = workflowStandardParamsExtensionService.getApp(workflowStandardParams);
     notNullCheck("Application cannot be null", app);
-    Environment env = workflowStandardParams.getEnv();
+    Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
     Service service = serviceResourceService.getWithDetails(app.getUuid(), serviceId);
 
     AwsAmiInfrastructureMapping infrastructureMapping =

@@ -11,12 +11,10 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.SwaggerConstants;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
 import io.harness.cdng.visitor.helpers.serviceconfig.StageOverridesVisitorHelper;
 import io.harness.data.structure.EmptyPredicate;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
@@ -37,15 +35,7 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(CDC)
 public class StageOverridesConfig implements Visitable {
   List<NGVariable> variables;
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  ParameterField<List<String>> useVariableOverrideSets;
-
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  ParameterField<List<String>> useArtifactOverrideSets;
   ArtifactListConfig artifacts;
-
-  @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
-  ParameterField<List<String>> useManifestOverrideSets;
   List<ManifestConfigWrapper> manifests;
 
   // For Visitor Framework Impl

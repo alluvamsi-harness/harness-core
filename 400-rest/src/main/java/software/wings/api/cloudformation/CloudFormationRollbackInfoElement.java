@@ -15,7 +15,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.List;
 import java.util.Map;
@@ -50,11 +49,6 @@ public class CloudFormationRollbackInfoElement implements CloudFormationElement 
 
   @Override
   public String getName() {
-    return null;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
     return null;
   }
 

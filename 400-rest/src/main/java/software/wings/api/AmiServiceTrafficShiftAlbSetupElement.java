@@ -17,14 +17,10 @@ import io.harness.delegate.task.aws.LbDetailsForAlbTrafficShift;
 import software.wings.api.AwsAmiInfoVariables.AwsAmiInfoVariablesBuilder;
 import software.wings.service.impl.aws.model.AwsAmiPreDeploymentData;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.google.common.collect.ImmutableMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -62,14 +58,6 @@ public class AmiServiceTrafficShiftAlbSetupElement implements ContextElement, Sw
   @Override
   public ContextElement cloneMin() {
     return null;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("newAsgName", newAutoScalingGroupName);
-    map.put("oldAsgName", oldAutoScalingGroupName);
-    return ImmutableMap.of("ami", map);
   }
 
   @Override

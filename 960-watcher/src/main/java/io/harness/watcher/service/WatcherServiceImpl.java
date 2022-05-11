@@ -646,7 +646,14 @@ public class WatcherServiceImpl implements WatcherService {
 
               long shutdownStarted = 0L;
               try {
-                shutdownStarted = (Long) delegateData.get(DELEGATE_SHUTDOWN_STARTED);
+                Object shutDownTime = delegateData.get(DELEGATE_SHUTDOWN_STARTED);
+                if (shutDownTime != null) {
+                  if (!shutDownTime.equals(Integer.valueOf(0))) {
+                    shutdownStarted = (Long) shutDownTime;
+                  } else {
+                    log.warn("ShutDownStarted is 0 in Delegate data for process {}", delegateProcess);
+                  }
+                }
               } catch (Exception e) {
                 log.error("Caught exception while reading {} for Delegate process {} ", DELEGATE_SHUTDOWN_STARTED,
                     delegateProcess, e);

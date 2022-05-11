@@ -175,7 +175,7 @@ public class InfraVariableCreator {
       return;
     }
 
-    addVariableForYamlType(YamlTypes.SSH_KEY_REF, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.CREDENTIALS_REF, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.HOSTS, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.CONNECTOR_REF, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.ATTRIBUTE_FILTERS, infraSpecNode, yamlPropertiesMap);

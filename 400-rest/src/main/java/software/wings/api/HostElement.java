@@ -19,11 +19,9 @@ import io.harness.delegate.task.azure.appservice.webapp.response.AzureAppDeploym
 import io.harness.delegate.task.azure.response.AzureVMInstanceData;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -57,16 +55,6 @@ public class HostElement implements ContextElement {
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.HOST;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(ContextElement.HOST, this);
-    if (pcfElement != null) {
-      map.putAll(pcfElement.paramMap(context));
-    }
-    return map;
   }
 
   @Override

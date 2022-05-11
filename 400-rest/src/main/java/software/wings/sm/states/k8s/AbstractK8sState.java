@@ -149,6 +149,7 @@ import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.State;
 import software.wings.sm.StateExecutionContext;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.utils.ApplicationManifestUtils;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -202,6 +203,8 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
   @Inject private KryoSerializer kryoSerializer;
   @Inject private GitConfigHelperService gitConfigHelperService;
   @Inject public K8sStateHelper k8sStateHelper;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
+
   private static final long MIN_TASK_TIMEOUT_IN_MINUTES = 1L;
 
   @Getter @Setter private List<String> delegateSelectors;
@@ -364,7 +367,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
     ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
 
     String waitId = generateUuid();
-    Environment env = K8sStateHelper.fetchEnvFromExecutionContext(context);
+    Environment env = k8sStateHelper.fetchEnvFromExecutionContext(context);
     DelegateTask delegateTask = DelegateTask.builder()
                                     .accountId(app.getAccountId())
                                     .setupAbstraction(Cd1SetupFields.APP_ID_FIELD, app.getUuid())
@@ -463,7 +466,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
                     .build());
     }
 
-    Environment env = K8sStateHelper.fetchEnvFromExecutionContext(context);
+    Environment env = k8sStateHelper.fetchEnvFromExecutionContext(context);
     ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
     int expressionFunctorToken = HashGenerator.generateIntegerHash();
     String serviceTemplateId = infraMapping == null ? null : serviceTemplateHelper.fetchServiceTemplateId(infraMapping);
@@ -612,7 +615,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
     Application app = appService.get(context.getAppId());
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
     notNullCheck("WorkflowStandardParams should not be null", workflowStandardParams);
-    Environment env = workflowStandardParams.getEnv();
+    Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
     ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
     String serviceTemplateId = serviceTemplateHelper.fetchServiceTemplateId(infraMapping);
 
@@ -1148,7 +1151,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
 
     String waitId = generateUuid();
     int expressionFunctorToken = HashGenerator.generateIntegerHash();
-    Environment env = K8sStateHelper.fetchEnvFromExecutionContext(context);
+    Environment env = k8sStateHelper.fetchEnvFromExecutionContext(context);
     DelegateTask delegateTask = DelegateTask.builder()
                                     .accountId(app.getAccountId())
                                     .setupAbstraction(Cd1SetupFields.APP_ID_FIELD, app.getUuid())

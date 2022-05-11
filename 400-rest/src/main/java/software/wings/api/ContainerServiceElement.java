@@ -22,12 +22,10 @@ import software.wings.beans.AwsElbConfig;
 import software.wings.beans.container.AwsAutoScalarConfig;
 import software.wings.beans.container.Label;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 
@@ -81,11 +79,6 @@ public class ContainerServiceElement implements ContextElement, SweepingOutput {
   @Override
   public ContextElementType getElementType() {
     return CONTAINER_SERVICE;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

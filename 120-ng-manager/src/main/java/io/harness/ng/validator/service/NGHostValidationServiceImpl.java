@@ -26,9 +26,10 @@ import io.harness.beans.IdentifierRef;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.SSHTaskParams;
+import io.harness.delegate.beans.WinRmTaskParams;
 import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams;
 import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse;
-import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
+import io.harness.delegate.beans.secrets.BaseConfigValidationTaskResponse;
 import io.harness.delegate.task.utils.PhysicalDataCenterConstants;
 import io.harness.delegate.utils.TaskSetupAbstractionHelper;
 import io.harness.encryption.SecretRefData;
@@ -47,12 +48,13 @@ import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
+import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
 import io.harness.ng.core.models.Secret;
 import io.harness.ng.validator.dto.HostValidationDTO;
 import io.harness.ng.validator.service.api.NGHostValidationService;
 import io.harness.pms.utils.CompletableFutures;
-import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.SshKeySpecDTOHelper;
+import io.harness.secretmanagerclient.services.WinRmCredentialsSpecDTOHelper;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
 import io.harness.utils.IdentifierRefHelper;
@@ -73,6 +75,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +84,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NGHostValidationServiceImpl implements NGHostValidationService {
   @Inject private SshKeySpecDTOHelper sshKeySpecDTOHelper;
+  @Inject private WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper;
   @Inject private NGSecretServiceV2 ngSecretServiceV2;
   @Inject private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   @Inject private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
@@ -149,7 +153,7 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
   }
 
   @Override
-  public List<HostValidationDTO> validateSSHHosts(@NotNull List<String> hosts, @Nullable String accountIdentifier,
+  public List<HostValidationDTO> validateHosts(@NotNull List<String> hosts, @Nullable String accountIdentifier,
       @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
       @Nullable Set<String> delegateSelectors) {
     if (hosts.isEmpty()) {
@@ -162,7 +166,7 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
     CompletableFutures<HostValidationDTO> validateSSHHostTasks = new CompletableFutures<>(hostsSSHExecutor);
     for (String hostName : limitHosts(hosts)) {
       validateSSHHostTasks.supplyAsync(()
-                                           -> validateSSHHost(hostName, accountIdentifier, orgIdentifier,
+                                           -> validateHost(hostName, accountIdentifier, orgIdentifier,
                                                projectIdentifier, secretIdentifierWithScope, delegateSelectors));
     }
 
@@ -170,11 +174,11 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
   }
 
   @Override
-  public HostValidationDTO validateSSHHost(@NotNull String host, String accountIdentifier,
-      @Nullable String orgIdentifier, @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
+  public HostValidationDTO validateHost(@NotNull String host, String accountIdentifier, @Nullable String orgIdentifier,
+      @Nullable String projectIdentifier, @NotNull String secretIdentifierWithScope,
       @Nullable Set<String> delegateSelectors) {
     if (isBlank(host)) {
-      throw new InvalidArgumentsException("SSH host cannot be null or empty", USER_SRE);
+      throw new InvalidArgumentsException("Host cannot be null or empty", USER_SRE);
     }
     if (isBlank(secretIdentifierWithScope)) {
       throw new InvalidArgumentsException("Secret identifier cannot be null or empty", USER_SRE);
@@ -186,45 +190,33 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
       throw new InvalidArgumentsException(
           format("Not found secret for host validation, secret identifier: %s", secretIdentifierWithScope), USER_SRE);
     }
-    if (SecretType.SSHKey != secretOptional.get().getType()) {
-      throw new InvalidArgumentsException(
-          format("Secret is not SSH type, secret identifier: %s", secretIdentifierWithScope), USER_SRE);
+
+    final Secret secret = secretOptional.get();
+    final DelegateTaskRequest delegateTaskRequest;
+    final String hostName;
+
+    switch (secret.getType()) {
+      case SSHKey:
+        delegateTaskRequest = generateSshDelegateTaskRequest(
+            secret, host, accountIdentifier, orgIdentifier, projectIdentifier, delegateSelectors);
+        hostName = ((SSHTaskParams) delegateTaskRequest.getTaskParameters()).getHost();
+        break;
+      case WinRmCredentials:
+        delegateTaskRequest = generateWinRmDelegateTaskRequest(
+            secret, host, accountIdentifier, orgIdentifier, projectIdentifier, delegateSelectors);
+        hostName = ((WinRmTaskParams) delegateTaskRequest.getTaskParameters()).getHost();
+        break;
+      default:
+        throw new InvalidArgumentsException(
+            format("Invalid secret type, secret identifier: %s", secretIdentifierWithScope), USER_SRE);
     }
-
-    SSHKeySpecDTO secretSpecDTO = (SSHKeySpecDTO) secretOptional.get().getSecretSpec().toDTO();
-    List<EncryptedDataDetail> encryptionDetails = sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(
-        secretSpecDTO, getBaseNGAccess(accountIdentifier, orgIdentifier, projectIdentifier));
-    Optional<Integer> portFromHost = extractPortFromHost(host);
-    // if port from host exists it takes precedence over the port from SSH key
-    // host is host name and port number
-    portFromHost.ifPresent(secretSpecDTO::setPort);
-
-    String hostName = portFromHost.isPresent()
-        ? extractHostnameFromHost(host).orElseThrow(
-            ()
-                -> new InvalidArgumentsException(
-                    format("Not found hostName, host: %s, extracted port: %s", host, portFromHost.get()), USER_SRE))
-        : host;
-
-    DelegateTaskRequest delegateTaskRequest =
-        DelegateTaskRequest.builder()
-            .accountId(accountIdentifier)
-            .taskType(TaskType.NG_SSH_VALIDATION.name())
-            .taskParameters(SSHTaskParams.builder()
-                                .host(hostName)
-                                .encryptionDetails(encryptionDetails)
-                                .sshKeySpec(secretSpecDTO)
-                                .delegateSelectors(delegateSelectors)
-                                .build())
-            .taskSetupAbstractions(setupTaskAbstractions(accountIdentifier, orgIdentifier, projectIdentifier))
-            .executionTimeout(Duration.ofSeconds(PhysicalDataCenterConstants.EXECUTION_TIMEOUT_IN_SECONDS))
-            .build();
 
     log.info(
         "Start validation host:{}, hostName:{}, secretIdent:{}, accountIdent:{}, orgIdent:{}, projIdent:{}, tags:{}",
         host, hostName, secretIdentifierWithScope, accountIdentifier, orgIdentifier, projectIdentifier,
         delegateSelectors);
-    DelegateResponseData delegateResponseData = executeSshDelegateSyncTask(delegateTaskRequest);
+
+    DelegateResponseData delegateResponseData = executeDelegateSyncTask(delegateTaskRequest);
 
     if (delegateResponseData instanceof ErrorNotifyResponseData) {
       ErrorNotifyResponseData errorResponseData = (ErrorNotifyResponseData) delegateResponseData;
@@ -234,8 +226,8 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
           .status(HostValidationDTO.HostValidationStatus.fromBoolean(false))
           .error(buildErrorDetails(errorResponseData.getErrorMessage()))
           .build();
-    } else if (delegateResponseData instanceof SSHConfigValidationTaskResponse) {
-      SSHConfigValidationTaskResponse responseData = (SSHConfigValidationTaskResponse) delegateResponseData;
+    } else if (delegateResponseData instanceof BaseConfigValidationTaskResponse) {
+      BaseConfigValidationTaskResponse responseData = (BaseConfigValidationTaskResponse) delegateResponseData;
 
       return HostValidationDTO.builder()
           .host(hostName)
@@ -250,6 +242,66 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
           .error(buildErrorDetails("Host validation check failed"))
           .build();
     }
+  }
+
+  private String populateSecretPort(String host, Consumer<Integer> populate) {
+    Optional<Integer> portFromHost = extractPortFromHost(host);
+
+    if (!portFromHost.isPresent()) {
+      return host;
+    }
+
+    Integer portFromHostValue = portFromHost.get();
+    // if port from host exists it takes precedence over the port from SSH key
+    // host is host name and port number
+    populate.accept(portFromHostValue);
+
+    return extractHostnameFromHost(host).orElseThrow(
+        ()
+            -> new InvalidArgumentsException(
+                format("Not found hostName, host: %s, extracted port: %s", host, portFromHostValue), USER_SRE));
+  }
+
+  private DelegateTaskRequest generateSshDelegateTaskRequest(Secret secret, String host, String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, Set<String> delegateSelectors) {
+    SSHKeySpecDTO secretSpecDTO = (SSHKeySpecDTO) secret.getSecretSpec().toDTO();
+    List<EncryptedDataDetail> encryptionDetails = sshKeySpecDTOHelper.getSSHKeyEncryptionDetails(
+        secretSpecDTO, getBaseNGAccess(accountIdentifier, orgIdentifier, projectIdentifier));
+    String hostName = populateSecretPort(host, secretSpecDTO::setPort);
+
+    return DelegateTaskRequest.builder()
+        .accountId(accountIdentifier)
+        .taskType(TaskType.NG_SSH_VALIDATION.name())
+        .taskParameters(SSHTaskParams.builder()
+                            .host(hostName)
+                            .encryptionDetails(encryptionDetails)
+                            .sshKeySpec(secretSpecDTO)
+                            .delegateSelectors(delegateSelectors)
+                            .build())
+        .taskSetupAbstractions(setupTaskAbstractions(accountIdentifier, orgIdentifier, projectIdentifier))
+        .executionTimeout(Duration.ofSeconds(PhysicalDataCenterConstants.EXECUTION_TIMEOUT_IN_SECONDS))
+        .build();
+  }
+
+  private DelegateTaskRequest generateWinRmDelegateTaskRequest(Secret secret, String host, String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, Set<String> delegateSelectors) {
+    WinRmCredentialsSpecDTO secretSpecDTO = (WinRmCredentialsSpecDTO) secret.getSecretSpec().toDTO();
+    List<EncryptedDataDetail> encryptionDetails = winRmCredentialsSpecDTOHelper.getWinRmEncryptionDetails(
+        secretSpecDTO, getBaseNGAccess(accountIdentifier, orgIdentifier, projectIdentifier));
+    String hostName = populateSecretPort(host, secretSpecDTO::setPort);
+
+    return DelegateTaskRequest.builder()
+        .accountId(accountIdentifier)
+        .taskType(TaskType.NG_WINRM_VALIDATION.name())
+        .taskParameters(WinRmTaskParams.builder()
+                            .host(hostName)
+                            .encryptionDetails(encryptionDetails)
+                            .spec(secretSpecDTO)
+                            .delegateSelectors(delegateSelectors)
+                            .build())
+        .taskSetupAbstractions(setupTaskAbstractions(accountIdentifier, orgIdentifier, projectIdentifier))
+        .executionTimeout(Duration.ofSeconds(PhysicalDataCenterConstants.EXECUTION_TIMEOUT_IN_SECONDS))
+        .build();
   }
 
   @NotNull
@@ -312,18 +364,6 @@ public class NGHostValidationServiceImpl implements NGHostValidationService {
       throw new HintException(
           String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
           new DelegateNotAvailableException("Delegates are not available", WingsException.USER));
-    }
-    return delegateResponseData;
-  }
-
-  private DelegateResponseData executeSshDelegateSyncTask(DelegateTaskRequest delegateTaskRequest) {
-    final DelegateResponseData delegateResponseData;
-    try {
-      delegateResponseData = delegateGrpcClientWrapper.executeSyncTask(delegateTaskRequest);
-    } catch (DelegateServiceDriverException ex) {
-      throw new HintException(
-          String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
-          new DelegateNotAvailableException(ex.getCause().getMessage(), ex, WingsException.USER));
     }
     return delegateResponseData;
   }
