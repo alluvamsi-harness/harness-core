@@ -31,6 +31,7 @@ import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubAppSpecDTO;
@@ -143,9 +144,10 @@ public class GitCommandTaskHandler {
       throw SCMRuntimeException.builder().errorCode(errorCode).message(reposResponse.getError()).build();
     }
 
-    if (reposResponse != null && isNotEmpty(reposResponse.getError())) {
+    // AzureRepo returns an error with code 203
+    if (reposResponse != null && scmConnector instanceof AzureRepoConnectorDTO && reposResponse.getStatus() == 203) {
       ErrorCode errorCode = convertScmStatusCodeToErrorCode(reposResponse.getStatus());
-      throw new ExplanationException("Azure Repo returns an error with code 203",
+      throw new ExplanationException("Invalid API Access Token",
           SCMRuntimeException.builder().errorCode(errorCode).message(reposResponse.getError()).build());
     }
   }
