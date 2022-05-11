@@ -44,7 +44,7 @@ import software.wings.beans.NotificationRule;
 import software.wings.beans.alert.Alert;
 import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.SSOSyncFailedAlert;
-import software.wings.beans.sso.LdapConnectionSettings;
+import software.wings.beans.sso.LdapAuthType;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.OauthSettings;
 import software.wings.beans.sso.SSOSettings;
@@ -344,7 +344,7 @@ public class SSOSettingServiceImpl implements SSOSettingService {
       throw new InvalidRequestException(
           "Deleting SSO provider with linked user groups is not allowed. Unlink the user groups first.");
     }
-    if (LdapConnectionSettings.INLINE_SECRET.equals(settings.getConnectionSettings().getPasswordType())) {
+    if (settings.getConnectionSettings().getPasswordType().equals(LdapAuthType.INLINE_SECRET)) {
       secretManager.deleteSecret(
           settings.getAccountId(), settings.getConnectionSettings().getEncryptedBindPassword(), new HashMap<>(), false);
     }

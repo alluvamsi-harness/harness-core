@@ -25,7 +25,6 @@ import io.harness.cdng.service.beans.ServiceUseFromStage;
 import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
-import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.service.entity.ServiceEntity;
 
 import java.util.Set;
@@ -35,7 +34,6 @@ public class NGEntitiesMorphiaRegistrar implements MorphiaRegistrar {
   public void registerClasses(Set<Class> set) {
     set.add(ServiceEntity.class);
     set.add(Cluster.class);
-    set.add(Environment.class);
   }
 
   @Override

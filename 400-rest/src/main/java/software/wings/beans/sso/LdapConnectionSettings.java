@@ -42,8 +42,6 @@ import org.apache.commons.lang3.StringUtils;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @TargetModule(_950_NG_AUTHENTICATION_SERVICE)
 public class LdapConnectionSettings implements LdapConnectionConfig, EncryptableSetting {
-  public static final String INLINE_SECRET = "INLINE";
-  public static final String SECRET = "ENCRYPTED_SECRET";
   @NotNull String host;
   int port = LdapConstants.DEFAULT_CONNECTION_PORT;
   boolean sslEnabled = LdapConstants.DEFAULT_SSL_STATE;
@@ -52,7 +50,7 @@ public class LdapConnectionSettings implements LdapConnectionConfig, Encryptable
   String bindDN = "";
   String bindPassword = "";
   String encryptedBindPassword;
-  @Attributes(title = "Bind Password Type", enums = {INLINE_SECRET, SECRET}) String passwordType;
+  @Attributes(title = "Bind Password Type", required = true) LdapAuthType passwordType;
   @Encrypted(fieldName = "bindSecret") private char[] bindSecret;
   @JsonIgnore @JsonView(JsonViews.Internal.class) @SchemaIgnore private String encryptedBindSecret;
   int connectTimeout = LdapConstants.DEFAULT_CONNECT_TIMEOUT;

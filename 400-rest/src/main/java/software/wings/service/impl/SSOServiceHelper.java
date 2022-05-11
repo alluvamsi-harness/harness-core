@@ -17,6 +17,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.annotation.EncryptableSetting;
+import software.wings.beans.sso.LdapAuthType;
 import software.wings.beans.sso.LdapConnectionSettings;
 import software.wings.helpers.ext.ldap.LdapConstants;
 import software.wings.service.intfc.security.EncryptionService;
@@ -37,29 +38,26 @@ public class SSOServiceHelper {
 
   public void encryptLdapSecret(
       LdapConnectionSettings connectionSettings, SecretManager secretManager, String accountId) {
-    String existingPasswordType = "";
-    existingPasswordType = connectionSettings.getPasswordType();
+    LdapAuthType existingPasswordType = connectionSettings.getPasswordType();
     if (isNotEmpty(connectionSettings.getBindSecret())) {
-      if (isNotEmpty(connectionSettings.getBindPassword())
+      if ((isNotEmpty(connectionSettings.getBindPassword()))
           && (!connectionSettings.getBindPassword().equals(LdapConstants.MASKED_STRING))) {
         throw new InvalidRequestException("Either Enter password or select a secret");
       }
-      connectionSettings.setPasswordType(LdapConnectionSettings.SECRET);
+      connectionSettings.setPasswordType(LdapAuthType.SECRET_REF);
       connectionSettings.setEncryptedBindSecret(String.valueOf(connectionSettings.getBindSecret()));
       connectionSettings.setBindSecret(null);
       List<EncryptedDataDetail> encryptionDetails =
           secretManager.getEncryptionDetails((EncryptableSetting) connectionSettings, null, null);
       encryptionService.decrypt(connectionSettings, encryptionDetails, false);
-      if (existingPasswordType != null) {
-        if (LdapConnectionSettings.INLINE_SECRET.equals(existingPasswordType)) {
-          // If the LDAP Setting was already used with Inline Password, and now when they have choosed Secret, hence
-          // deleting the orphan secret
-          String oldEncryptedBindPassword = connectionSettings.getEncryptedBindPassword();
-          connectionSettings.setBindPassword(LdapConstants.MASKED_STRING);
-          if (isNotEmpty(oldEncryptedBindPassword)) {
-            secretManager.deleteSecret(accountId, oldEncryptedBindPassword, new HashMap<>(), false);
-            connectionSettings.setEncryptedBindPassword(null);
-          }
+      if (existingPasswordType.equals(LdapAuthType.INLINE_SECRET)) {
+        // If the LDAP Setting was already used with Inline Password, and now when they have choosed Secret, hence
+        // deleting the orphan secret
+        String oldEncryptedBindPassword = connectionSettings.getEncryptedBindPassword();
+        connectionSettings.setBindPassword(LdapConstants.MASKED_STRING);
+        if (isNotEmpty(oldEncryptedBindPassword)) {
+          secretManager.deleteSecret(accountId, oldEncryptedBindPassword, new HashMap<>(), false);
+          connectionSettings.setEncryptedBindPassword(null);
         }
       }
     }

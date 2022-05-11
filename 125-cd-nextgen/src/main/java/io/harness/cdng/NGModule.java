@@ -53,8 +53,6 @@ import io.harness.filter.mapper.FilterPropertiesMapper;
 import io.harness.filter.service.FilterService;
 import io.harness.licensing.usage.interfaces.LicenseUsageInterface;
 import io.harness.ng.core.NGCoreModule;
-import io.harness.ng.core.environment.services.EnvironmentService;
-import io.harness.ng.core.environment.services.impl.EnvironmentServiceImpl;
 import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.ng.core.service.services.impl.ServiceEntityServiceImpl;
 import io.harness.service.instance.InstanceService;
@@ -97,7 +95,6 @@ public class NGModule extends AbstractModule {
     bind(LicenseUsageInterface.class).to(CDLicenseUsageImpl.class);
     bind(InstanceService.class).to(InstanceServiceImpl.class);
     bind(ServiceEntityService.class).to(ServiceEntityServiceImpl.class);
-    bind(EnvironmentService.class).to(EnvironmentServiceImpl.class);
     bind(ServiceNowResourceService.class).to(ServiceNowResourceServiceImpl.class);
     bind(ArtifactoryResourceService.class).to(ArtifactoryResourceServiceImpl.class);
     bind(EnvironmentGroupService.class).to(EnvironmentGroupServiceImpl.class);
