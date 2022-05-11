@@ -40,7 +40,7 @@ import org.hibernate.validator.constraints.NotBlank;
       @JsonSubTypes.Type(value = UserInvitationAuditEventData.class, name = USER_INVITATION_AUDIT_EVENT_DATA)
       , @JsonSubTypes.Type(value = AddCollaboratorAuditEventData.class, name = ADD_COLLABORATOR_AUDIT_EVENT_DATA),
           @JsonSubTypes.Type(value = TemplateEventData.class, name = TEMPLATE_AUDIT_EVENT_DATA)
-         , @JsonSubTypes.Type(value = TemplateEventData.class, name = OPA_AUDIT_EVENT_DATA),
+         , @JsonSubTypes.Type(value = OpaAuditEventData.class, name = OPA_AUDIT_EVENT_DATA),
 
           // Deprecated
           @JsonSubTypes.Type(value = UserInviteAuditEventData.class, name = USER_INVITE),
