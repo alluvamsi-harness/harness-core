@@ -486,8 +486,7 @@ public class NGTemplateServiceImpl implements NGTemplateService {
               StringValueUtils.getStringFromStringValue(templateRef.getIdentifier()),
               StringValueUtils.getStringFromStringValue(templateRef.getVersionLabel()));
 
-      //      unSyncedTemplate.ifPresent(templateEntity ->
-      templateReferenceHelper.populateTemplateReferences(templateEntity));
+      unSyncedTemplate.ifPresent(templateEntity -> templateReferenceHelper.populateTemplateReferences(templateEntity));
       return makeTemplateUpdateCall(unSyncedTemplate.get(), unSyncedTemplate.get(), ChangeType.ADD, "",
           TemplateUpdateEventType.OTHERS_EVENT, true);
     } catch (DuplicateKeyException ex) {
