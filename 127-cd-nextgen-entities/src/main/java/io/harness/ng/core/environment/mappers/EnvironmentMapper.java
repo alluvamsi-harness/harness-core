@@ -14,6 +14,7 @@ import static io.harness.ng.core.mapper.TagMapper.convertToList;
 import static io.harness.ng.core.mapper.TagMapper.convertToMap;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.beans.EnvironmentBasicInfo;
 import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
@@ -21,7 +22,10 @@ import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.environment.dto.EnvironmentResponseDTO;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.environment.yaml.NGEnvironmentInfoConfig;
+import io.harness.pms.yaml.YamlUtils;
+import io.harness.utils.YamlPipelineUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,14 +37,14 @@ public class EnvironmentMapper {
   public Environment toEnvironmentEntity(String accountId, EnvironmentRequestDTO environmentRequestDTO) {
     final Environment environment;
     if (isNotEmpty(environmentRequestDTO.getYaml())) {
-      NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environmentRequestDTO);
-      environment = toNGEnvironmentEntity(accountId, ngEnvironmentConfig);
+      NGEnvironmentConfig ngEnvironmentConfig = toNGEnvironmentConfig(environmentRequestDTO);
+      environment = toNGEnvironmentEntity(accountId, ngEnvironmentConfig, environmentRequestDTO.getColor());
       environment.setYaml(environmentRequestDTO.getYaml());
       return environment;
     }
     environment = toNGEnvironmentEntity(accountId, environmentRequestDTO);
-    NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment);
-    environment.setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+    NGEnvironmentConfig ngEnvironmentConfig = toNGEnvironmentConfig(environment);
+    environment.setYaml(toYaml(ngEnvironmentConfig));
     return environment;
   }
 
@@ -58,7 +62,7 @@ public class EnvironmentMapper {
         .build();
   }
 
-  public Environment toNGEnvironmentEntity(String accountId, NGEnvironmentConfig envConfig) {
+  public Environment toNGEnvironmentEntity(String accountId, NGEnvironmentConfig envConfig, String color) {
     NGEnvironmentInfoConfig ngEnvironmentInfoConfig = envConfig.getNgEnvironmentInfoConfig();
     return Environment.builder()
         .identifier(ngEnvironmentInfoConfig.getIdentifier())
@@ -66,7 +70,7 @@ public class EnvironmentMapper {
         .orgIdentifier(ngEnvironmentInfoConfig.getOrgIdentifier())
         .projectIdentifier(ngEnvironmentInfoConfig.getProjectIdentifier())
         .name(ngEnvironmentInfoConfig.getName())
-        .color(Optional.ofNullable(ngEnvironmentInfoConfig.getColor()).orElse(HARNESS_BLUE))
+        .color(Optional.ofNullable(color).orElse(HARNESS_BLUE))
         .description(ngEnvironmentInfoConfig.getDescription())
         .type(ngEnvironmentInfoConfig.getType())
         .tags(convertToList(ngEnvironmentInfoConfig.getTags()))
@@ -114,5 +118,55 @@ public class EnvironmentMapper {
 
   public static List<EnvironmentResponse> toResponseWrapper(List<Environment> envList) {
     return envList.stream().map(env -> toResponseWrapper(env)).collect(Collectors.toList());
+  }
+
+  public static NGEnvironmentConfig toNGEnvironmentConfig(Environment environmentEntity) {
+    if (isNotEmpty(environmentEntity.getYaml())) {
+      try {
+        return YamlUtils.read(environmentEntity.getYaml(), NGEnvironmentConfig.class);
+      } catch (IOException e) {
+        throw new InvalidRequestException("Cannot create environment config due to " + e.getMessage());
+      }
+    }
+    return NGEnvironmentConfig.builder()
+        .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
+                                     .name(environmentEntity.getName())
+                                     .identifier(environmentEntity.getIdentifier())
+                                     .orgIdentifier(environmentEntity.getOrgIdentifier())
+                                     .projectIdentifier(environmentEntity.getProjectIdentifier())
+                                     .description(environmentEntity.getDescription())
+                                     .tags(convertToMap(environmentEntity.getTags()))
+                                     .type(environmentEntity.getType())
+                                     .build())
+        .build();
+  }
+
+  public static NGEnvironmentConfig toNGEnvironmentConfig(EnvironmentRequestDTO dto) {
+    if (isNotEmpty(dto.getYaml())) {
+      try {
+        return YamlUtils.read(dto.getYaml(), NGEnvironmentConfig.class);
+      } catch (IOException e) {
+        throw new InvalidRequestException("Cannot create environment config due to " + e.getMessage());
+      }
+    }
+    return NGEnvironmentConfig.builder()
+        .ngEnvironmentInfoConfig(NGEnvironmentInfoConfig.builder()
+                                     .name(dto.getName())
+                                     .identifier(dto.getIdentifier())
+                                     .orgIdentifier(dto.getOrgIdentifier())
+                                     .projectIdentifier(dto.getProjectIdentifier())
+                                     .description(dto.getDescription())
+                                     .tags(dto.getTags())
+                                     .type(dto.getType())
+                                     .build())
+        .build();
+  }
+
+  public static String toYaml(NGEnvironmentConfig ngEnvironmentConfig) {
+    try {
+      return YamlPipelineUtils.getYamlString(ngEnvironmentConfig);
+    } catch (IOException e) {
+      throw new InvalidRequestException("Cannot create environment entity due to " + e.getMessage());
+    }
   }
 }

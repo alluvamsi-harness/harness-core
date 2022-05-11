@@ -49,7 +49,6 @@ import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.environment.mappers.EnvironmentFilterHelper;
 import io.harness.ng.core.environment.mappers.EnvironmentMapper;
-import io.harness.ng.core.environment.mappers.NGEnvironmentEntityMapper;
 import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.utils.CoreCriteriaUtils;
@@ -161,8 +160,8 @@ public class EnvironmentResourceV2 {
     if (environment.isPresent()) {
       version = environment.get().getVersion().toString();
       if (EmptyPredicate.isEmpty(environment.get().getYaml())) {
-        NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment.get());
-        environment.get().setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+        NGEnvironmentConfig ngEnvironmentConfig = EnvironmentMapper.toNGEnvironmentConfig(environment.get());
+        environment.get().setYaml(EnvironmentMapper.toYaml(ngEnvironmentConfig));
       }
     } else {
       throw new NotFoundException(String.format("Environment with identifier [%s] in project [%s], org [%s] not found",
@@ -322,8 +321,8 @@ public class EnvironmentResourceV2 {
     Page<Environment> environmentEntities = environmentService.list(criteria, pageRequest);
     environmentEntities.forEach(environment -> {
       if (EmptyPredicate.isEmpty(environment.getYaml())) {
-        NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment);
-        environment.setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+        NGEnvironmentConfig ngEnvironmentConfig = EnvironmentMapper.toNGEnvironmentConfig(environment);
+        environment.setYaml(EnvironmentMapper.toYaml(ngEnvironmentConfig));
       }
     });
     return ResponseDTO.newResponse(getNGPageResponse(environmentEntities.map(EnvironmentMapper::toResponseWrapper)));
