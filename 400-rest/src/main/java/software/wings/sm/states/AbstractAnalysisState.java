@@ -77,6 +77,7 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.service.intfc.verification.CVActivityLogService;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
@@ -372,7 +373,7 @@ public abstract class AbstractAnalysisState extends State implements SweepingOut
 
   public abstract void setAnalysisServerConfigId(String analysisServerConfigId);
 
-  protected void generateDemoActivityLogs(CVActivityLogService.Logger activityLogger, boolean failedState) {
+  protected void generateDemoActivityLogs(CVActivityLogger activityLogger, boolean failedState) {
     logDataCollectionTriggeredMessage(activityLogger);
     long startTime = dataCollectionStartTimestampMillis();
     int duration = Integer.parseInt(getTimeDuration());
@@ -520,7 +521,7 @@ public abstract class AbstractAnalysisState extends State implements SweepingOut
         .toEpochMilli();
   }
 
-  protected void logDataCollectionTriggeredMessage(CVActivityLogService.Logger activityLogger) {
+  protected void logDataCollectionTriggeredMessage(CVActivityLogger activityLogger) {
     long dataCollectionStartTime = dataCollectionStartTimestampMillis();
     long initDelayMins = TimeUnit.SECONDS.toMinutes(getDelaySeconds(initialAnalysisDelay));
     activityLogger.info("Triggered data collection for " + getTimeDuration()

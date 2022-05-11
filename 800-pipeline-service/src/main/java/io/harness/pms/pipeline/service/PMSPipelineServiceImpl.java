@@ -8,16 +8,11 @@
 package io.harness.pms.pipeline.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER_SRE;
-import static io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import static io.harness.pms.pipeline.service.PMSPipelineServiceStepHelper.LIBRARY;
-import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import static java.lang.String.format;
-import static org.springframework.data.mongodb.core.query.Criteria.where;
 
-import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
@@ -38,35 +33,26 @@ import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.grpc.utils.StringValueUtils;
 import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
-import io.harness.pms.instrumentaion.PipelineInstrumentationConstants;
 import io.harness.pms.pipeline.CommonStepInfo;
 import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
-import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
-import io.harness.pms.pipeline.PipelineMetadataV2;
 import io.harness.pms.pipeline.StepCategory;
 import io.harness.pms.pipeline.StepPalleteFilterWrapper;
 import io.harness.pms.pipeline.StepPalleteInfo;
 import io.harness.pms.pipeline.StepPalleteModuleInfo;
 import io.harness.pms.sdk.PmsSdkInstanceService;
-import io.harness.pms.variables.VariableCreatorMergeService;
-import io.harness.pms.variables.VariableMergeServiceResponse;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.repositories.pipeline.PMSPipelineRepository;
-import io.harness.telemetry.TelemetryReporter;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.Document;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -81,21 +67,12 @@ import org.springframework.data.mongodb.core.query.Update;
 public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Inject private PMSPipelineRepository pmsPipelineRepository;
   @Inject private PmsSdkInstanceService pmsSdkInstanceService;
-  @Inject private VariableCreatorMergeService variableCreatorMergeService;
   @Inject private PMSPipelineServiceHelper pmsPipelineServiceHelper;
   @Inject private PMSPipelineServiceStepHelper pmsPipelineServiceStepHelper;
   @Inject private GitSyncSdkService gitSyncSdkService;
   @Inject private CommonStepInfo commonStepInfo;
-  @Inject private TelemetryReporter telemetryReporter;
-  @Inject private PipelineMetadataService pipelineMetadataService;
-  public static String PIPELINE_SAVE = "pipeline_save";
-  public static String PIPELINE_SAVE_ACTION_TYPE = "action";
   public static String CREATING_PIPELINE = "creating new pipeline";
   public static String UPDATING_PIPELINE = "updating existing pipeline";
-  public static String PIPELINE_NAME = "pipelineName";
-  public static String ACCOUNT_ID = "accountId";
-  public static String ORG_ID = "orgId";
-  public static String PROJECT_ID = "projectId";
 
   private static final String DUP_KEY_EXP_FORMAT_STRING =
       "Pipeline [%s] under Project[%s], Organization [%s] already exists";
@@ -109,7 +86,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
 
       PipelineEntity entityWithUpdatedInfo = pmsPipelineServiceHelper.updatePipelineInfo(pipelineEntity);
       PipelineEntity createdEntity = pmsPipelineRepository.save(entityWithUpdatedInfo);
-      sendPipelineSaveTelemetryEvent(createdEntity, CREATING_PIPELINE);
+      pmsPipelineServiceHelper.sendPipelineSaveTelemetryEvent(createdEntity, CREATING_PIPELINE);
       return createdEntity;
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(format(DUP_KEY_EXP_FORMAT_STRING, pipelineEntity.getIdentifier(),
@@ -208,7 +185,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
             pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()));
       }
 
-      sendPipelineSaveTelemetryEvent(updatedResult, UPDATING_PIPELINE);
+      pmsPipelineServiceHelper.sendPipelineSaveTelemetryEvent(updatedResult, UPDATING_PIPELINE);
       return updatedResult;
     } catch (EventsFrameworkDownException ex) {
       log.error("Events framework is down for Pipeline Service.", ex);
@@ -242,39 +219,6 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     Update update = new Update();
     update.set(PipelineEntityKeys.executionSummaryInfo, executionSummaryInfo);
     updatePipelineMetadata(accountId, orgId, projectId, criteria, update);
-  }
-
-  @Override
-  public int incrementRunSequence(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean deleted) {
-    return pipelineMetadataService.incrementExecutionCounter(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
-  }
-
-  @Override
-  public int incrementRunSequence(PipelineEntity pipelineEntity) {
-    String accountId = pipelineEntity.getAccountId();
-    String orgIdentifier = pipelineEntity.getOrgIdentifier();
-    String projectIdentifier = pipelineEntity.getProjectIdentifier();
-    int count = pipelineMetadataService.incrementExecutionCounter(
-        accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
-    if (count == -1) {
-      try {
-        PipelineMetadataV2 metadata = PipelineMetadataV2.builder()
-                                          .accountIdentifier(pipelineEntity.getAccountIdentifier())
-                                          .orgIdentifier(orgIdentifier)
-                                          .projectIdentifier(projectIdentifier)
-                                          .runSequence(pipelineEntity.getRunSequence() + 1)
-                                          .identifier(pipelineEntity.getIdentifier())
-                                          .build();
-        return pipelineMetadataService.save(metadata).getRunSequence();
-      } catch (DuplicateKeyException exception) {
-        // retry insert if above fails
-        return pipelineMetadataService.incrementExecutionCounter(
-            accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
-      }
-    }
-    return count;
   }
 
   @Override
@@ -393,33 +337,10 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     return stepCategory;
   }
 
-  @Override
-  public VariableMergeServiceResponse createVariablesResponse(String yaml, boolean newVersion) {
-    try {
-      return variableCreatorMergeService.createVariablesResponse(yaml, newVersion);
-    } catch (Exception ex) {
-      log.error("Error happened while creating variables for pipeline:", ex);
-      throw new InvalidRequestException(
-          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
-    }
-  }
-
-  @Override
-  public VariableMergeServiceResponse createVariablesResponseV2(
-      String accountId, String orgId, String projectId, String yaml) {
-    try {
-      return variableCreatorMergeService.createVariablesResponseV2(accountId, orgId, projectId, yaml);
-    } catch (Exception ex) {
-      log.error("Error happened while creating variables for pipeline:", ex);
-      throw new InvalidRequestException(
-          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
-    }
-  }
-
   // Todo: Remove only if there are no references to the pipeline
   @Override
   public boolean deleteAllPipelinesInAProject(String accountId, String orgId, String projectId) {
-    Criteria criteria = formCriteria(
+    Criteria criteria = pmsPipelineServiceHelper.formCriteria(
         accountId, orgId, projectId, null, PipelineFilterPropertiesDto.builder().build(), false, null, null);
     Pageable pageRequest = PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, PipelineEntityKeys.lastUpdatedAt));
 
@@ -429,67 +350,6 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
       pmsPipelineRepository.deletePipeline(pipelineEntity.withDeleted(true));
     }
     return true;
-  }
-
-  @Override
-  public Criteria formCriteria(String accountId, String orgId, String projectId, String filterIdentifier,
-      PipelineFilterPropertiesDto filterProperties, boolean deleted, String module, String searchTerm) {
-    Criteria criteria = new Criteria();
-    if (isNotEmpty(accountId)) {
-      criteria.and(PipelineEntityKeys.accountId).is(accountId);
-    }
-    if (isNotEmpty(orgId)) {
-      criteria.and(PipelineEntityKeys.orgIdentifier).is(orgId);
-    }
-    if (isNotEmpty(projectId)) {
-      criteria.and(PipelineEntityKeys.projectIdentifier).is(projectId);
-    }
-
-    criteria.and(PipelineEntityKeys.deleted).is(deleted);
-
-    if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties != null) {
-      throw new InvalidRequestException("Can not apply both filter properties and saved filter together");
-    } else if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties == null) {
-      pmsPipelineServiceHelper.populateFilterUsingIdentifier(criteria, accountId, orgId, projectId, filterIdentifier);
-    } else if (EmptyPredicate.isEmpty(filterIdentifier) && filterProperties != null) {
-      PMSPipelineServiceHelper.populateFilter(criteria, filterProperties);
-    }
-
-    Criteria moduleCriteria = new Criteria();
-    if (EmptyPredicate.isNotEmpty(module)) {
-      // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
-      // criteria = { "$or": [ { "filters": {} } , { "filters.MODULE": { $exists: true } } ] }
-      moduleCriteria.orOperator(where(PipelineEntityKeys.filters).is(new Document()),
-          where(String.format("%s.%s", PipelineEntityKeys.filters, module)).exists(true));
-    }
-
-    Criteria searchCriteria = new Criteria();
-    if (EmptyPredicate.isNotEmpty(searchTerm)) {
-      searchCriteria.orOperator(where(PipelineEntityKeys.identifier)
-                                    .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
-          where(PipelineEntityKeys.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
-          where(PipelineEntityKeys.tags + "." + NGTagKeys.key)
-              .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
-          where(PipelineEntityKeys.tags + "." + NGTagKeys.value)
-              .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS));
-    }
-
-    criteria.andOperator(moduleCriteria, searchCriteria);
-
-    return criteria;
-  }
-
-  // TODO(Brijesh): Make this async.
-  private void sendPipelineSaveTelemetryEvent(PipelineEntity entity, String actionType) {
-    HashMap<String, Object> properties = new HashMap<>();
-    properties.put(PIPELINE_NAME, entity.getName());
-    properties.put(ORG_ID, entity.getOrgIdentifier());
-    properties.put(PROJECT_ID, entity.getProjectIdentifier());
-    properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
-    properties.put(PipelineInstrumentationConstants.MODULE_NAME,
-        PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
-    telemetryReporter.sendTrackEvent(PIPELINE_SAVE, null, entity.getAccountId(), properties,
-        Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }
 
   @Override

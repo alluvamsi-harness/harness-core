@@ -25,6 +25,7 @@ import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 import io.harness.yaml.YamlSchemaTypes;
+import io.harness.yaml.core.VariableExpression;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
@@ -55,7 +56,7 @@ public class PipelineInfrastructure implements StepParameters, Visitable {
   private String uuid;
 
   private InfrastructureDef infrastructureDefinition;
-  @Wither private InfraUseFromStage useFromStage;
+  @Wither @VariableExpression(skipVariableExpression = true) private InfraUseFromStage useFromStage;
   private EnvironmentYaml environment;
   @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)

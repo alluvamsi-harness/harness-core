@@ -52,11 +52,12 @@ import software.wings.service.impl.analysis.MLAnalysisType;
 import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
 import software.wings.service.intfc.analysis.AnalysisService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.StackDriverLogState.StackDriverLogStateKeys;
 import software.wings.stencils.DefaultValue;
 import software.wings.verification.VerificationDataAnalysisResponse;
@@ -110,6 +111,10 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
 
   @Transient @Inject @SchemaIgnore protected AnalysisService analysisService;
   @Transient @Inject @SchemaIgnore protected VersionInfoManager versionInfoManager;
+  @Transient
+  @Inject
+  @SchemaIgnore
+  protected WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @SchemaIgnore @Transient private String renderedQuery;
 
@@ -142,7 +147,7 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
              OVERRIDE_ERROR)) {
       getLogger().info("Executing state {}", executionContext.getStateExecutionInstanceId());
       String correlationId = UUID.randomUUID().toString();
-      Logger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
+      CVActivityLogger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
           executionContext.getAccountId(), executionContext.getStateExecutionInstanceId());
       if (executionContext.isRetry()) {
         activityLogger.info(RETRYING_VERIFICATION_STATE_MSG);
@@ -232,7 +237,8 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
           WorkflowStandardParams workflowStandardParams =
               executionContext.getContextElement(ContextElementType.STANDARD);
           baselineWorkflowExecutionId = workflowExecutionBaselineService.getBaselineExecutionId(
-              analysisContext.getAppId(), analysisContext.getWorkflowId(), workflowStandardParams.getEnv().getUuid(),
+              analysisContext.getAppId(), analysisContext.getWorkflowId(),
+              workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid(),
               analysisContext.getServiceId());
           if (isEmpty(baselineWorkflowExecutionId)) {
             responseMessage = "No baseline was set for the workflow. Workflow running with auto baseline.";

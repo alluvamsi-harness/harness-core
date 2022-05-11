@@ -33,7 +33,6 @@ import io.harness.cvng.core.entities.DynatraceCVConfig.DynatraceMetricInfo;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.NewRelicCVConfig;
 import io.harness.cvng.core.entities.NewRelicCVConfig.NewRelicMetricInfo;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.encryption.Scope;
@@ -74,11 +73,11 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
     connectorIdentifier = generateUuid();
     productName = generateUuid();
     groupId = generateUuid();
-    serviceInstanceIdentifier = generateUuid();
+    serviceInstanceIdentifier = builderFactory.getContext().getServiceIdentifier();
     projectIdentifier = builderFactory.getContext().getProjectIdentifier();
     orgIdentifier = builderFactory.getContext().getOrgIdentifier();
-    environmentIdentifier = generateUuid();
-    monitoringSourceIdentifier = generateUuid();
+    environmentIdentifier = builderFactory.getContext().getEnvIdentifier();
+    monitoringSourceIdentifier = generateUuid() + "/" + generateUuid();
     monitoringSourceName = generateUuid();
     serviceEnvironmentParams = ServiceEnvironmentParams.builder()
                                    .accountIdentifier(accountId)
@@ -307,12 +306,12 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
     cvConfigs.forEach(cvConfig -> {
       cvConfig.setOrgIdentifier(orgIdentifier);
       cvConfig.setProjectIdentifier(projectIdentifier);
-      cvConfig.setIdentifier("group1");
+      cvConfig.setIdentifier("group/1");
       cvConfig.setMonitoringSourceName("group1");
     });
     cvConfigs.get(0).setProjectIdentifier("project2");
     save(cvConfigs);
-    assertThat(cvConfigService.list(accountId, orgIdentifier, projectIdentifier, "group1")).hasSize(3);
+    assertThat(cvConfigService.list(accountId, orgIdentifier, projectIdentifier, "group/1")).hasSize(3);
   }
 
   @Test
@@ -338,7 +337,7 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
   public void testDeleteByGroupId() {
-    String groupName = "appdynamics-app-name";
+    String groupName = "appdynamics/app/name";
     List<CVConfig> cvConfigs = createCVConfigs(5);
     cvConfigs.forEach(cvConfig -> cvConfig.setIdentifier(groupName));
     save(cvConfigs);
@@ -353,7 +352,7 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
     String MONITORING_SOURCE_SUFFIX = "Monitoring Source Id ";
     List<CVConfig> cvConfigs = createCVConfigs(50);
     for (int i = 0; i < 50; i++) {
-      cvConfigs.get(i).setIdentifier(MONITORING_SOURCE_SUFFIX + i);
+      cvConfigs.get(i).setIdentifier(MONITORING_SOURCE_SUFFIX + "/" + i);
     }
     save(cvConfigs);
 
@@ -379,14 +378,14 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
     String MONITORING_SOURCE_SUFFIX = "Monitoring Source Id ";
     List<CVConfig> cvConfigs = createCVConfigs(10);
     for (int i = 0; i < 3; i++) {
-      cvConfigs.get(i).setIdentifier(MONITORING_SOURCE_SUFFIX + "0");
+      cvConfigs.get(i).setIdentifier(MONITORING_SOURCE_SUFFIX + "/0");
     }
     for (int i = 0; i < 3; i++) {
-      cvConfigs.get(i + 3).setIdentifier(MONITORING_SOURCE_SUFFIX + "1");
+      cvConfigs.get(i + 3).setIdentifier(MONITORING_SOURCE_SUFFIX + "/1");
     }
     save(cvConfigs);
     List<CVConfig> cvConfigsList = cvConfigService.listByMonitoringSources(accountId, orgIdentifier, projectIdentifier,
-        Arrays.asList(MONITORING_SOURCE_SUFFIX + "0", MONITORING_SOURCE_SUFFIX + "1"));
+        Arrays.asList(MONITORING_SOURCE_SUFFIX + "/0", MONITORING_SOURCE_SUFFIX + "/1"));
     assertThat(cvConfigsList.size()).isEqualTo(6);
   }
 
@@ -410,15 +409,11 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   }
 
   private CVConfig createCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig);
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier(serviceInstanceIdentifier);
-    return cvConfig;
+    return builderFactory.splunkCVConfigBuilder().connectorIdentifier(connectorIdentifier).build();
   }
 
   private AppDynamicsCVConfig createAppDCVConfig() {
-    AppDynamicsCVConfig appDynamicsCVConfig = new AppDynamicsCVConfig();
+    AppDynamicsCVConfig appDynamicsCVConfig = builderFactory.appDynamicsCVConfigBuilder().build();
     fillCommon(appDynamicsCVConfig);
     appDynamicsCVConfig.setApplicationName("application-name");
     appDynamicsCVConfig.setTierName("tier-name");
@@ -428,7 +423,7 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   }
 
   private NewRelicCVConfig createNewRelicCVConfig() {
-    NewRelicCVConfig newRelicCVConfig = new NewRelicCVConfig();
+    NewRelicCVConfig newRelicCVConfig = builderFactory.newRelicCVConfigBuilder().build();
     fillCommon(newRelicCVConfig);
     newRelicCVConfig.setApplicationName("application-name");
     newRelicCVConfig.setApplicationId(12345);
@@ -438,7 +433,7 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   }
 
   private DynatraceCVConfig createDynatraceCVConfig() {
-    DynatraceCVConfig dynatraceCVConfig = new DynatraceCVConfig();
+    DynatraceCVConfig dynatraceCVConfig = builderFactory.dynatraceCVConfigBuilder().build();
     fillCommon(dynatraceCVConfig);
     dynatraceCVConfig.setDynatraceServiceName("dynatrace-service-name");
     dynatraceCVConfig.setDynatraceServiceId("12345");
@@ -593,12 +588,12 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testListByMonitoringSource() {
-    String monSourceId = "monitoringSource1";
+    String monSourceId = "monitoringSource1/healthSource";
     CVConfig cvConfig = createCVConfig();
     cvConfig.setIdentifier(monSourceId);
     CVConfig updated = save(cvConfig);
-    List<CVConfig> results = cvConfigService.listByMonitoringSources(
-        accountId, orgIdentifier, projectIdentifier, "service", "env", Arrays.asList(monSourceId));
+    List<CVConfig> results = cvConfigService.listByMonitoringSources(accountId, orgIdentifier, projectIdentifier,
+        serviceInstanceIdentifier, environmentIdentifier, Arrays.asList(monSourceId));
     assertThat(results).hasSize(1);
     assertThat(results.get(0).getUuid()).isEqualTo(updated.getUuid());
   }
@@ -607,15 +602,15 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testListByMonitoringSource_multiple() {
-    String monSourceId = "monitoringSource1";
+    String monSourceId = "monitoringSource1/healthSource";
     CVConfig cvConfig = createCVConfig();
     cvConfig.setIdentifier(monSourceId);
     CVConfig updated = save(cvConfig);
     CVConfig cvConfig2 = createCVConfig();
-    cvConfig2.setIdentifier(monSourceId + "2");
+    cvConfig2.setIdentifier(monSourceId + "/2");
     CVConfig updated2 = save(cvConfig2);
-    List<CVConfig> results = cvConfigService.listByMonitoringSources(
-        accountId, orgIdentifier, projectIdentifier, "service", "env", Arrays.asList(monSourceId, monSourceId + "2"));
+    List<CVConfig> results = cvConfigService.listByMonitoringSources(accountId, orgIdentifier, projectIdentifier,
+        serviceInstanceIdentifier, environmentIdentifier, Arrays.asList(monSourceId, monSourceId + "/2"));
     assertThat(results).hasSize(2);
     assertThat(results.get(0).getUuid()).isEqualTo(updated.getUuid());
     assertThat(results.get(1).getUuid()).isEqualTo(updated2.getUuid());
@@ -625,15 +620,15 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testListByMonitoringSource_filterById() {
-    String monSourceId = "monitoringSource1";
+    String monSourceId = "monitoringSource1/healthSource";
     CVConfig cvConfig = createCVConfig();
     cvConfig.setIdentifier(monSourceId);
     CVConfig updated = save(cvConfig);
     CVConfig cvConfig2 = createCVConfig();
-    cvConfig2.setIdentifier(monSourceId + "2");
+    cvConfig2.setIdentifier(monSourceId + "/2");
     CVConfig updated2 = save(cvConfig2);
-    List<CVConfig> results = cvConfigService.listByMonitoringSources(
-        accountId, orgIdentifier, projectIdentifier, "service", "env", Arrays.asList(monSourceId));
+    List<CVConfig> results = cvConfigService.listByMonitoringSources(accountId, orgIdentifier, projectIdentifier,
+        serviceInstanceIdentifier, environmentIdentifier, Arrays.asList(monSourceId));
     assertThat(results).hasSize(1);
     assertThat(results.get(0).getUuid()).isEqualTo(updated.getUuid());
   }
@@ -642,15 +637,15 @@ public class CVConfigServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testListByMonitoringSource_null() {
-    String monSourceId = "monitoringSource1";
+    String monSourceId = "monitoringSource1/healthSource1";
     CVConfig cvConfig = createCVConfig();
     cvConfig.setIdentifier(monSourceId);
     CVConfig updated = save(cvConfig);
     CVConfig cvConfig2 = createCVConfig();
-    cvConfig2.setIdentifier(monSourceId + "2");
+    cvConfig2.setIdentifier(monSourceId + "/2");
     CVConfig updated2 = save(cvConfig2);
-    List<CVConfig> results =
-        cvConfigService.listByMonitoringSources(accountId, orgIdentifier, projectIdentifier, "service", "env", null);
+    List<CVConfig> results = cvConfigService.listByMonitoringSources(accountId, orgIdentifier, projectIdentifier,
+        serviceEnvironmentParams.getServiceIdentifier(), serviceEnvironmentParams.getEnvironmentIdentifier(), null);
     assertThat(results).hasSize(2);
     assertThat(results.get(0).getUuid()).isEqualTo(updated.getUuid());
     assertThat(results.get(1).getUuid()).isEqualTo(updated2.getUuid());

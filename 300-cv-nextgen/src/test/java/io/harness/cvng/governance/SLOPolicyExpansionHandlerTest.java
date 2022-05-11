@@ -112,6 +112,7 @@ public class SLOPolicyExpansionHandlerTest extends CvNextGenTestBase {
     assertThat(expansionResponse.getValue().toJson()).isEqualTo(JsonUtils.asJson(sloPolicyDTO));
     assertThat(expansionResponse.getPlacement()).isEqualTo(ExpansionPlacementStrategy.APPEND);
   }
+
   @Test
   @Owner(developers = DEEPAK_CHHIKARA)
   @Category(UnitTests.class)
@@ -122,6 +123,33 @@ public class SLOPolicyExpansionHandlerTest extends CvNextGenTestBase {
                                     .build();
     final String stageYaml = IOUtils.resourceToString(
         "governance/SLOPolicyExpansionHandlerFromStage.json", Charsets.UTF_8, this.getClass().getClassLoader());
+    JsonNode jsonNode = JsonUtils.asObject(stageYaml, JsonNode.class);
+    final String pipelineYaml = IOUtils.resourceToString(
+        "governance/SLOPolicyExpansionHandlerFromStagePipeline.yaml", Charsets.UTF_8, this.getClass().getClassLoader());
+    ExpansionRequestMetadata metadataProject =
+        ExpansionRequestMetadata.newBuilder()
+            .setAccountId(builderFactory.getProjectParams().getAccountIdentifier())
+            .setOrgId(builderFactory.getProjectParams().getOrgIdentifier())
+            .setProjectId(builderFactory.getProjectParams().getProjectIdentifier())
+            .setYaml(ByteString.copyFromUtf8(pipelineYaml))
+            .build();
+    ExpansionResponse expansionResponse = sloPolicyExpansionHandler.expand(jsonNode, metadataProject, null);
+    assertThat(expansionResponse.isSuccess()).isTrue();
+    assertThat(expansionResponse.getKey()).isEqualTo("sloPolicy");
+    assertThat(expansionResponse.getValue().toJson()).isEqualTo(JsonUtils.asJson(sloPolicyDTO));
+    assertThat(expansionResponse.getPlacement()).isEqualTo(ExpansionPlacementStrategy.APPEND);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testExpand_withServiceIdentifier() throws IOException {
+    SLOPolicyDTO sloPolicyDTO = SLOPolicyDTO.builder()
+                                    .sloErrorBudgetRemainingPercentage(100D)
+                                    .statusOfMonitoredService(MonitoredServiceStatus.CONFIGURED)
+                                    .build();
+    final String stageYaml = IOUtils.resourceToString(
+        "governance/SLOPolicyExpansionHandlerServiceIdentifier.json", Charsets.UTF_8, this.getClass().getClassLoader());
     JsonNode jsonNode = JsonUtils.asObject(stageYaml, JsonNode.class);
     final String pipelineYaml = IOUtils.resourceToString(
         "governance/SLOPolicyExpansionHandlerFromStagePipeline.yaml", Charsets.UTF_8, this.getClass().getClassLoader());

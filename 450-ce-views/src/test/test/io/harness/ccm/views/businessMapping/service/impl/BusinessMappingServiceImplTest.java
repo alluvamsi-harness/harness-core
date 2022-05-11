@@ -11,6 +11,9 @@ import static io.harness.rule.OwnerRule.SAHILDEEP;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +24,7 @@ import io.harness.ccm.views.businessMapping.entities.BusinessMapping;
 import io.harness.ccm.views.businessMapping.helper.BusinessMappingHelper;
 import io.harness.ccm.views.entities.ViewField;
 import io.harness.ccm.views.entities.ViewFieldIdentifier;
+import io.harness.ccm.views.helper.AwsAccountFieldHelper;
 import io.harness.rule.Owner;
 
 import java.util.Collections;
@@ -36,6 +40,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BusinessMappingServiceImplTest extends CategoryTest {
   @Mock private BusinessMappingDao businessMappingDao;
+  @Mock private AwsAccountFieldHelper awsAccountFieldHelper;
   @InjectMocks private BusinessMappingServiceImpl businessMappingService;
   private BusinessMapping businessMapping;
 
@@ -51,6 +56,7 @@ public class BusinessMappingServiceImplTest extends CategoryTest {
     when(businessMappingDao.save(any(BusinessMapping.class))).thenReturn(businessMapping);
     final BusinessMapping response = businessMappingService.save(businessMapping);
     verify(businessMappingDao).save(businessMapping);
+    verify(awsAccountFieldHelper, times(4)).removeAwsAccountNameFromAccountRules(anyList());
     assertThat(response).isEqualTo(businessMapping);
   }
 
@@ -62,6 +68,7 @@ public class BusinessMappingServiceImplTest extends CategoryTest {
     when(businessMappingDao.findByAccountId(BusinessMappingHelper.TEST_ACCOUNT_ID)).thenReturn(businessMappings);
     final List<BusinessMapping> response = businessMappingService.list(BusinessMappingHelper.TEST_ACCOUNT_ID);
     verify(businessMappingDao).findByAccountId(BusinessMappingHelper.TEST_ACCOUNT_ID);
+    verify(awsAccountFieldHelper, times(4)).mergeAwsAccountNameInAccountRules(anyList(), anyString());
     assertThat(response).isEqualTo(businessMappings);
   }
 
@@ -84,6 +91,7 @@ public class BusinessMappingServiceImplTest extends CategoryTest {
     final BusinessMapping response =
         businessMappingService.get(BusinessMappingHelper.TEST_ID, BusinessMappingHelper.TEST_ACCOUNT_ID);
     verify(businessMappingDao).get(BusinessMappingHelper.TEST_ID, BusinessMappingHelper.TEST_ACCOUNT_ID);
+    verify(awsAccountFieldHelper, times(4)).mergeAwsAccountNameInAccountRules(anyList(), anyString());
     assertThat(response).isEqualTo(businessMapping);
   }
 
@@ -94,6 +102,7 @@ public class BusinessMappingServiceImplTest extends CategoryTest {
     when(businessMappingDao.update(businessMapping)).thenReturn(businessMapping);
     final BusinessMapping response = businessMappingService.update(businessMapping);
     verify(businessMappingDao).update(businessMapping);
+    verify(awsAccountFieldHelper, times(4)).removeAwsAccountNameFromAccountRules(anyList());
     assertThat(response).isEqualTo(businessMapping);
   }
 

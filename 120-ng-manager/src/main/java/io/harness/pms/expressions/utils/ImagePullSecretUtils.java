@@ -16,19 +16,30 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.outcome.AcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
 import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
+import io.harness.cdng.azure.AzureHelperService;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
+import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureAdditionalParams;
+import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
+import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
+import io.harness.delegate.beans.connector.azureconnector.AzureTaskType;
 import io.harness.delegate.beans.connector.docker.DockerAuthType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerUserNamePasswordDTO;
@@ -60,7 +71,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.annotations.Transient;
@@ -70,10 +83,12 @@ import org.mongodb.morphia.annotations.Transient;
 @OwnedBy(CDP)
 public class ImagePullSecretUtils {
   @Inject private EcrImagePullSecretHelper ecrImagePullSecretHelper;
+  @Inject private AzureHelperService azureHelperService;
   @Inject @Named(NextGenModule.CONNECTOR_DECORATOR_SERVICE) private ConnectorService connectorService;
   @Transient
   private static final String DOCKER_REGISTRY_CREDENTIAL_TEMPLATE =
       "{\"%s\":{\"username\":\"%s\",\"password\":\"%s\"}}";
+  private static final String ACR_SP_CERT_DOCKER_USERNAME = "00000000-0000-0000-0000-000000000000";
 
   public String getImagePullSecret(ArtifactOutcome artifactOutcome, Ambiance ambiance) {
     ImageDetailsBuilder imageDetailsBuilder = ImageDetails.builder();
@@ -92,6 +107,9 @@ public class ImagePullSecretUtils {
         break;
       case ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME:
         getImageDetailsFromArtifactory((ArtifactoryArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
+        break;
+      case ArtifactSourceConstants.ACR_NAME:
+        getImageDetailsFromAcr((AcrArtifactOutcome) artifactOutcome, imageDetailsBuilder, ambiance);
         break;
       default:
         throw new UnsupportedOperationException(
@@ -227,6 +245,50 @@ public class ImagePullSecretUtils {
         imageDetailsBuilder.registryUrl(artifactoryArtifactOutcome.getRegistryHostname());
       } else {
         imageDetailsBuilder.registryUrl(connectorConfig.getArtifactoryServerUrl());
+      }
+    }
+  }
+
+  private void getImageDetailsFromAcr(
+      AcrArtifactOutcome acrArtifactOutcome, ImageDetailsBuilder imageDetailsBuilder, Ambiance ambiance) {
+    String connectorRef = acrArtifactOutcome.getConnectorRef();
+    ConnectorInfoDTO connectorDTO = getConnector(connectorRef, ambiance);
+    AzureConnectorDTO connectorConfig = (AzureConnectorDTO) connectorDTO.getConnectorConfig();
+    imageDetailsBuilder.registryUrl(acrArtifactOutcome.getRegistry());
+    if (connectorConfig.getCredential() != null
+        && connectorConfig.getCredential().getAzureCredentialType() == AzureCredentialType.MANUAL_CREDENTIALS) {
+      AzureManualDetailsDTO config = (AzureManualDetailsDTO) connectorConfig.getCredential().getConfig();
+      if (config.getAuthDTO().getAzureSecretType() == AzureSecretType.SECRET_KEY) {
+        imageDetailsBuilder.username(config.getClientId());
+        imageDetailsBuilder.password(getPasswordExpression(
+            ((AzureClientSecretKeyDTO) config.getAuthDTO().getCredentials()).getSecretKey().toSecretRefStringValue(),
+            ambiance));
+      } else {
+        BaseNGAccess baseNGAccess = azureHelperService.getBaseNGAccess(AmbianceUtils.getAccountId(ambiance),
+            AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
+
+        List<EncryptedDataDetail> encryptionDetails =
+            azureHelperService.getEncryptionDetails(connectorConfig, baseNGAccess);
+
+        Map<AzureAdditionalParams, String> additionalParams = new HashMap<>();
+        additionalParams.put(AzureAdditionalParams.CONTAINER_REGISTRY, acrArtifactOutcome.getRegistry());
+
+        AzureTaskParams azureTaskParams = AzureTaskParams.builder()
+                                              .azureTaskType(AzureTaskType.GET_ACR_TOKEN)
+                                              .azureConnector(connectorConfig)
+                                              .encryptionDetails(encryptionDetails)
+                                              .delegateSelectors(connectorConfig.getDelegateSelectors())
+                                              .additionalParams(additionalParams)
+                                              .build();
+
+        AzureAcrTokenTaskResponse accessTokenResponse =
+            (AzureAcrTokenTaskResponse) azureHelperService.executeSyncTask(ambiance, azureTaskParams, baseNGAccess,
+                "Azure get access token for service principal with certificate task failure due to error");
+
+        String accessToken = format("\"%s\"", accessTokenResponse.getToken());
+
+        imageDetailsBuilder.username(ACR_SP_CERT_DOCKER_USERNAME);
+        imageDetailsBuilder.password(accessToken);
       }
     }
   }

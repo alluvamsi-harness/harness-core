@@ -43,15 +43,20 @@ import software.wings.APMFetchConfig;
 import software.wings.WingsBaseTest;
 import software.wings.beans.APMValidateCollectorConfig;
 import software.wings.beans.APMVerificationConfig;
+import software.wings.beans.ApmMetricCollectionInfo;
+import software.wings.beans.ApmResponseMapping;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.DatadogConfig;
 import software.wings.beans.Environment;
 import software.wings.beans.GcpConfig;
+import software.wings.beans.LogCollectionInfo;
+import software.wings.beans.LogResponseMapping;
 import software.wings.beans.NewRelicConfig;
 import software.wings.beans.PrometheusConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
+import software.wings.beans.apm.Method;
 import software.wings.delegatetasks.DelegateProxyFactory;
 import software.wings.delegatetasks.DelegateStateType;
 import software.wings.dl.WingsPersistence;
@@ -74,14 +79,8 @@ import software.wings.service.intfc.datadog.DatadogService;
 import software.wings.service.intfc.prometheus.PrometheusAnalysisService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.verification.CVActivityLogService;
-import software.wings.service.intfc.verification.CVActivityLogService.Logger;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.StateType;
-import software.wings.sm.states.APMVerificationState;
-import software.wings.sm.states.APMVerificationState.MetricCollectionInfo;
-import software.wings.sm.states.APMVerificationState.ResponseMapping;
-import software.wings.sm.states.CustomLogVerificationState;
-import software.wings.sm.states.CustomLogVerificationState.LogCollectionInfo;
-import software.wings.sm.states.CustomLogVerificationState.Method;
 import software.wings.sm.states.DatadogState;
 import software.wings.verification.appdynamics.AppDynamicsCVServiceConfiguration;
 import software.wings.verification.cloudwatch.CloudWatchCVServiceConfiguration;
@@ -141,9 +140,10 @@ public class APMVerificationServiceImplTest extends WingsBaseTest {
     FieldUtils.writeField(service, "cvActivityLogService", cvActivityLogService, true);
     FieldUtils.writeField(service, "prometheusAnalysisService", prometheusAnalysisService, true);
     when(featureFlagService.isEnabled(any(), anyString())).thenReturn(false);
-    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString())).thenReturn(mock(Logger.class));
+    when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
+        .thenReturn(mock(CVActivityLogger.class));
     when(cvActivityLogService.getLoggerByCVConfigId(anyString(), anyString(), anyLong()))
-        .thenReturn(mock(Logger.class));
+        .thenReturn(mock(CVActivityLogger.class));
     when(environmentService.get(anyString(), anyString()))
         .thenReturn(Environment.Builder.anEnvironment().environmentType(EnvironmentType.PROD).build());
   }
@@ -164,10 +164,10 @@ public class APMVerificationServiceImplTest extends WingsBaseTest {
 
     APMSetupTestNodeData nodeData = APMSetupTestNodeData.builder()
                                         .fetchConfig(fetchConfig)
-                                        .apmMetricCollectionInfo(MetricCollectionInfo.builder()
+                                        .apmMetricCollectionInfo(ApmMetricCollectionInfo.builder()
                                                                      .metricName("name")
                                                                      .collectionUrl("testURL")
-                                                                     .responseMapping(ResponseMapping.builder()
+                                                                     .responseMapping(ApmResponseMapping.builder()
                                                                                           .metricValueJsonPath("key1")
                                                                                           .timestampJsonPath("time")
                                                                                           .txnNameFieldValue("txnName")
@@ -323,7 +323,7 @@ public class APMVerificationServiceImplTest extends WingsBaseTest {
         APMSetupTestNodeData.builder()
             .fetchConfig(fetchConfig)
             .apmMetricCollectionInfo(
-                MetricCollectionInfo.builder().responseMapping(ResponseMapping.builder().build()).build())
+                ApmMetricCollectionInfo.builder().responseMapping(ApmResponseMapping.builder().build()).build())
             .build();
     nodeData.setGuid(generateUuid());
 
@@ -708,7 +708,7 @@ public class APMVerificationServiceImplTest extends WingsBaseTest {
             .logCollectionInfo(LogCollectionInfo.builder()
                                    .collectionUrl("testURL")
                                    .method(Method.GET)
-                                   .responseMapping(CustomLogVerificationState.ResponseMapping.builder()
+                                   .responseMapping(LogResponseMapping.builder()
                                                         .hostJsonPath("host")
                                                         .logMessageJsonPath("logMessage")
                                                         .timestampJsonPath("time")
@@ -745,7 +745,7 @@ public class APMVerificationServiceImplTest extends WingsBaseTest {
     APMSetupTestNodeData nodeData =
         APMSetupTestNodeData.builder()
             .fetchConfig(fetchConfig)
-            .apmMetricCollectionInfo(MetricCollectionInfo.builder().method(APMVerificationState.Method.POST).build())
+            .apmMetricCollectionInfo(ApmMetricCollectionInfo.builder().method(Method.POST).build())
             .build();
 
     // setup

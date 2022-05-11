@@ -11,9 +11,9 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.filter.FilterConstants.FILE_STORE_FILTER;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.filestore.FileUsage;
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterPropertiesDTO;
+import io.harness.ng.core.filestore.FileUsage;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;

@@ -19,6 +19,7 @@ import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.tasks.ResponseData;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +41,16 @@ public interface AsyncExecutable<T extends StepParameters>
     extends Step<T>, Abortable<T, AsyncExecutableResponse>, Failable<T>, Progressable<T> {
   AsyncExecutableResponse executeAsync(
       Ambiance ambiance, T stepParameters, StepInputPackage inputPackage, PassThroughData passThroughData);
+
+  // TODO : There a couple of options we can explore to make this better/optimised
+  // 1. Implement a waitMode in wait engine, which would finish the wait instance if any response received is failed
+  // 2. Combine this with progress updates
+
+  // For optimizations this will only be invoked if you have multiple callback ids if not we just ignore this
+  default void handleForCallbackId(
+      Ambiance ambiance, T stepParameters, List<String> allCallbackIds, String callbackId, ResponseData responseData){
+      // NOOP : By default this is noop
+  };
 
   StepResponse handleAsyncResponse(Ambiance ambiance, T stepParameters, Map<String, ResponseData> responseDataMap);
 

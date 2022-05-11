@@ -21,6 +21,7 @@ import io.harness.audit.api.impl.AuditServiceImpl;
 import io.harness.audit.api.impl.AuditSettingsServiceImpl;
 import io.harness.audit.api.impl.AuditYamlServiceImpl;
 import io.harness.govern.ProviderModule;
+import io.harness.metrics.modules.MetricsModule;
 import io.harness.mongo.AbstractMongoModule;
 import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
@@ -95,6 +96,8 @@ public class AuditServiceModule extends AbstractModule {
         return appConfig.getAuditServiceConfig().getMongoConfig();
       }
     });
+
+    install(new MetricsModule());
     install(ExecutorModule.getInstance());
     bind(PlatformConfiguration.class).toInstance(appConfig);
     install(new AbstractMongoModule() {

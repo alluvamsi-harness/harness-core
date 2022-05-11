@@ -23,6 +23,7 @@ import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
+import io.harness.cdng.infra.yaml.K8sAzureInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
@@ -37,6 +38,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
@@ -188,6 +190,13 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
             "Deployment using AWS infrastructure with manual credentials is only supported.");
       }
     }
+
+    if (InfrastructureKind.KUBERNETES_AZURE.equals(infrastructure.getKind())
+        && !(connectorInfo.getConnectorConfig() instanceof AzureConnectorDTO)) {
+      throw new InvalidRequestException(String.format("Invalid connector type [%s] for identifier: [%s], expected [%s]",
+          connectorInfo.getConnectorType().name(), infrastructure.getConnectorReference().getValue(),
+          ConnectorType.AZURE.name()));
+    }
   }
 
   private ConnectorInfoDTO validateAndGetConnector(ParameterField<String> connectorRef, Ambiance ambiance) {
@@ -231,9 +240,17 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         validateExpression(serverlessAwsLambdaInfrastructure.getConnectorRef(),
             serverlessAwsLambdaInfrastructure.getRegion(), serverlessAwsLambdaInfrastructure.getStage());
         break;
+
+      case InfrastructureKind.KUBERNETES_AZURE:
+        K8sAzureInfrastructure k8sAzureInfrastructure = (K8sAzureInfrastructure) infrastructure;
+        validateExpression(k8sAzureInfrastructure.getConnectorRef(), k8sAzureInfrastructure.getNamespace(),
+            k8sAzureInfrastructure.getCluster(), k8sAzureInfrastructure.getSubscriptionId(),
+            k8sAzureInfrastructure.getResourceGroup());
+        break;
+
       case InfrastructureKind.PDC:
         PdcInfrastructure pdcInfrastructure = (PdcInfrastructure) infrastructure;
-        validateExpression(pdcInfrastructure.getSshKeyRef());
+        validateExpression(pdcInfrastructure.getCredentialsRef());
         requireOne(pdcInfrastructure.getHosts(), pdcInfrastructure.getConnectorRef());
         break;
       default:

@@ -14,6 +14,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.servicenow.beans.ServiceNowField;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,5 +45,26 @@ public class ServiceNowStepUtils {
           String.format("Duplicate ServiceNow fields: [%s]", String.join(", ", duplicateFields)));
     }
     return fieldsMap;
+  }
+
+  public Map<String, String> processServiceNowFieldsInSpec(Map<String, ParameterField<String>> fields) {
+    if (EmptyPredicate.isEmpty(fields)) {
+      return Collections.emptyMap();
+    }
+    Map<String, String> finalMap = new HashMap<>();
+    for (Map.Entry<String, ParameterField<String>> entry : fields.entrySet()) {
+      if (EmptyPredicate.isEmpty(entry.getKey()) || ParameterField.isNull(entry.getValue())) {
+        continue;
+      }
+      if (entry.getValue().isExpression()) {
+        throw new InvalidRequestException(
+            String.format("Field [%s] has invalid ServiceNow field value", entry.getKey()));
+      }
+      if (entry.getValue().getValue() == null) {
+        continue;
+      }
+      finalMap.put(entry.getKey(), entry.getValue().getValue());
+    }
+    return finalMap;
   }
 }

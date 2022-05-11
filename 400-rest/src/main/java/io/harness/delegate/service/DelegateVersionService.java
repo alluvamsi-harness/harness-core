@@ -10,11 +10,16 @@ package io.harness.delegate.service;
 import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
 import static io.harness.delegate.beans.DelegateType.CE_KUBERNETES;
 import static io.harness.delegate.beans.DelegateType.KUBERNETES;
+import static io.harness.delegate.beans.VersionOverrideType.DELEGATE_IMAGE_TAG;
+import static io.harness.delegate.beans.VersionOverrideType.DELEGATE_JAR;
+import static io.harness.delegate.beans.VersionOverrideType.UPGRADER_IMAGE_TAG;
+import static io.harness.delegate.beans.VersionOverrideType.WATCHER_JAR;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-import io.harness.delegate.beans.AccountVersionOverride;
-import io.harness.delegate.beans.AccountVersionOverride.AccountVersionOverrideKeys;
+import io.harness.delegate.beans.VersionOverride;
+import io.harness.delegate.beans.VersionOverride.VersionOverrideKeys;
+import io.harness.delegate.beans.VersionOverrideType;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HPersistence;
@@ -37,9 +42,9 @@ public class DelegateVersionService {
   private final HPersistence persistence;
 
   public String getDelegateImageTag(final String accountId, final String delegateType) {
-    final AccountVersionOverride accountVersionOverride = getVersionOverride(accountId);
-    if (accountVersionOverride != null && isNotBlank(accountVersionOverride.getDelegateImageTag())) {
-      return accountVersionOverride.getDelegateImageTag();
+    final VersionOverride versionOverride = getVersionOverride(accountId, DELEGATE_IMAGE_TAG);
+    if (versionOverride != null && isNotBlank(versionOverride.getVersion())) {
+      return versionOverride.getVersion();
     }
 
     final String ringImage = delegateRingService.getDelegateImageTag(accountId);
@@ -55,9 +60,9 @@ public class DelegateVersionService {
   }
 
   public String getUpgraderImageTag(final String accountId, final String delegateType) {
-    final AccountVersionOverride accountVersionOverride = getVersionOverride(accountId);
-    if (accountVersionOverride != null && isNotBlank(accountVersionOverride.getUpgraderImageTag())) {
-      return accountVersionOverride.getUpgraderImageTag();
+    final VersionOverride versionOverride = getVersionOverride(accountId, UPGRADER_IMAGE_TAG);
+    if (versionOverride != null && isNotBlank(versionOverride.getVersion())) {
+      return versionOverride.getVersion();
     }
 
     final String ringImage = delegateRingService.getUpgraderImageTag(accountId);
@@ -72,9 +77,9 @@ public class DelegateVersionService {
   }
 
   public List<String> getDelegateJarVersions(final String accountId) {
-    final AccountVersionOverride accountVersionOverride = getVersionOverride(accountId);
-    if (accountVersionOverride != null && !CollectionUtils.isEmpty(accountVersionOverride.getDelegateJarVersions())) {
-      return accountVersionOverride.getDelegateJarVersions();
+    final VersionOverride versionOverride = getVersionOverride(accountId, DELEGATE_JAR);
+    if (versionOverride != null && isNotBlank(versionOverride.getVersion())) {
+      return Collections.singletonList(versionOverride.getVersion());
     }
 
     final List<String> ringVersion = delegateRingService.getDelegateVersions(accountId);
@@ -86,9 +91,9 @@ public class DelegateVersionService {
   }
 
   public List<String> getWatcherJarVersions(final String accountId) {
-    final AccountVersionOverride accountVersionOverride = getVersionOverride(accountId);
-    if (accountVersionOverride != null && !CollectionUtils.isEmpty(accountVersionOverride.getWatcherJarVersions())) {
-      return accountVersionOverride.getWatcherJarVersions();
+    final VersionOverride versionOverride = getVersionOverride(accountId, WATCHER_JAR);
+    if (versionOverride != null && isNotBlank(versionOverride.getVersion())) {
+      return Collections.singletonList(versionOverride.getVersion());
     }
 
     final List<String> ringVersion = delegateRingService.getWatcherVersions(accountId);
@@ -99,9 +104,10 @@ public class DelegateVersionService {
     return Collections.emptyList();
   }
 
-  private AccountVersionOverride getVersionOverride(final String accountId) {
-    return persistence.createQuery(AccountVersionOverride.class)
-        .filter(AccountVersionOverrideKeys.accountId, accountId)
+  private VersionOverride getVersionOverride(final String accountId, final VersionOverrideType overrideType) {
+    return persistence.createQuery(VersionOverride.class)
+        .filter(VersionOverrideKeys.accountId, accountId)
+        .filter(VersionOverrideKeys.overrideType, overrideType)
         .get();
   }
 

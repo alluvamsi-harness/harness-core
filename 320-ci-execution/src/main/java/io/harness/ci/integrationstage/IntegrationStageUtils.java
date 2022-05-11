@@ -85,11 +85,7 @@ public class IntegrationStageUtils {
   public static final String PR_EXPRESSION = "<+trigger.prNumber>";
 
   public IntegrationStageConfig getIntegrationStageConfig(StageElementConfig stageElementConfig) {
-    if (stageElementConfig.getType().equals("CI")) {
-      return (IntegrationStageConfig) stageElementConfig.getStageType();
-    } else {
-      throw new CIStageExecutionException("Invalid stage type: " + stageElementConfig.getStageType());
-    }
+    return (IntegrationStageConfig) stageElementConfig.getStageType();
   }
 
   public ParallelStepElementConfig getParallelStepElementConfig(ExecutionWrapperConfig executionWrapperConfig) {

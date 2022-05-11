@@ -8,6 +8,7 @@
 package software.wings.sm.states.provision;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.FeatureName.CF_ROLLBACK_CONFIG_FILTER;
 import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_BODY;
 import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_URL;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
@@ -47,6 +48,7 @@ import io.harness.beans.EmbeddedUser;
 import io.harness.beans.ExecutionStatus;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 import io.harness.tasks.ResponseData;
 
@@ -81,6 +83,7 @@ import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
@@ -108,12 +111,15 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
   @Mock private WingsPersistence mockWingsPersistence;
   @Mock private ExecutionContextImpl mockContext;
   @Mock private SweepingOutputService sweepingOutputService;
+  @Mock protected FeatureFlagService featureFlagService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private CloudFormationRollbackStackState state = new CloudFormationRollbackStackState("stateName");
 
   private CloudFormationRollbackConfig cloudFormationRollbackConfig;
   private SettingAttribute awsConfig;
 
+  private static final String AWS_CONFIG_ID = "awsConfigId";
   @Before
   public void setUp() {
     Query mockQuery = mock(Query.class);
@@ -124,6 +130,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     cloudFormationRollbackConfig = CloudFormationRollbackConfig.builder()
                                        .workflowExecutionId(WORKFLOW_EXECUTION_ID)
                                        .createType(CLOUDFORMATION_STACK_CREATE_URL)
+                                       .awsConfigId(AWS_CONFIG_ID)
                                        .url("url")
                                        .variables(Arrays.asList(NameValuePair.builder().build()))
                                        .build();
@@ -137,10 +144,12 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).getContextElement(ContextElementType.STANDARD);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
 
     awsConfig = aSettingAttribute().withValue(AwsConfig.builder().tag(TAG_NAME).build()).build();
     doReturn(awsConfig).when(mockSettingsService).get(anyString());
+
+    when(featureFlagService.isEnabled(CF_ROLLBACK_CONFIG_FILTER, ACCOUNT_ID)).thenReturn(true);
   }
 
   @Test
@@ -158,7 +167,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     doReturn(mockCurrentUser).when(mockParams).getCurrentUser();
     doReturn(mockParams).when(mockContext).getContextElement(ContextElementType.STANDARD);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
 
     Query mockQuery = mock(Query.class);
     doReturn(mockQuery).when(mockWingsPersistence).createQuery(any());
@@ -172,11 +181,12 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     activity.setUuid(ACTIVITY_ID);
     doReturn(activity).when(mockActivityService).save(any());
     SettingAttribute awsConfig = aSettingAttribute().withValue(AwsConfig.builder().build()).build();
-    doReturn(awsConfig).when(mockSettingsService).get(anyString());
+    doReturn(awsConfig).when(mockSettingsService).get(AWS_CONFIG_ID);
     CloudFormationRollbackInfoElement stackElement = CloudFormationRollbackInfoElement.builder()
                                                          .stackExisted(true)
                                                          .oldStackBody("oldBody")
                                                          .provisionerId(PROVISIONER_ID)
+                                                         .awsConfigId(AWS_CONFIG_ID)
                                                          .oldStackParameters(ImmutableMap.of("oldKey", "oldVal"))
                                                          .build();
     doReturn(singletonList(stackElement)).when(mockContext).getContextElementList(any());
@@ -199,6 +209,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
         (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
     assertThat(CREATE_STACK).isEqualTo(createStackRequest.getCommandType());
     assertThat("oldBody").isEqualTo(createStackRequest.getData());
+    assertThat(awsConfig.getValue()).isEqualTo(createStackRequest.getAwsConfig());
     assertThat(1000).isEqualTo(createStackRequest.getTimeoutInMs());
     Map<String, String> stackParam = createStackRequest.getVariables();
     assertThat(stackParam).isNotNull();
@@ -217,7 +228,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     ExecutionResponse response = state.executeInternal(mockContext, ACTIVITY_ID);
     ScriptStateExecutionData stateExecutionData = (ScriptStateExecutionData) response.getStateExecutionData();
     assertThat(stateExecutionData.getActivityId()).isEqualTo(ACTIVITY_ID);
-    verifyDelegate(CLOUDFORMATION_STACK_CREATE_URL, "url", false, true);
+    verifyDelegate(CLOUDFORMATION_STACK_CREATE_URL, "url", false, true, (AwsConfig) awsConfig.getValue());
   }
 
   @Test
@@ -232,9 +243,10 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     cloudFormationRollbackConfig.setVariables(null);
     cloudFormationRollbackConfig.setBody("body");
     cloudFormationRollbackConfig.setCreateType(CLOUDFORMATION_STACK_CREATE_BODY);
-    awsConfig.setValue(AwsConfig.builder().build());
+    AwsConfig config = AwsConfig.builder().build();
+    awsConfig.setValue(config);
     ExecutionResponse response = state.executeInternal(mockContext, ACTIVITY_ID);
-    verifyDelegate(CLOUDFORMATION_STACK_CREATE_BODY, "body", false, false);
+    verifyDelegate(CLOUDFORMATION_STACK_CREATE_BODY, "body", false, false, config);
   }
 
   @Test
@@ -250,7 +262,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     CloudFormationRollbackInfoElement stackElement = CloudFormationRollbackInfoElement.builder()
                                                          .stackExisted(false)
                                                          .provisionerId(PROVISIONER_ID)
-                                                         .awsConfigId("awsConfigId")
+                                                         .awsConfigId(AWS_CONFIG_ID)
                                                          .build();
     doReturn(singletonList(stackElement)).when(mockContext).getContextElementList(any());
 
@@ -262,7 +274,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     ExecutionResponse response = state.executeInternal(mockContext, ACTIVITY_ID);
     ScriptStateExecutionData stateExecutionData = (ScriptStateExecutionData) response.getStateExecutionData();
     assertThat(stateExecutionData.getActivityId()).isEqualTo(ACTIVITY_ID);
-    verifyDelegate(CLOUDFORMATION_STACK_CREATE_URL, "url", true, true);
+    verifyDelegate(CLOUDFORMATION_STACK_CREATE_URL, "url", true, true, (AwsConfig) awsConfig.getValue());
   }
 
   @Test
@@ -272,7 +284,6 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     Application application = new Application();
     application.setAccountId(ACCOUNT_ID);
     when(mockContext.getApp()).thenReturn(application);
-
     when(mockContext.getWorkflowExecutionId()).thenReturn(WORKFLOW_EXECUTION_ID);
 
     CloudFormationRollbackInfoElement stackElement = CloudFormationRollbackInfoElement.builder()
@@ -317,7 +328,8 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     assertThat(cloudFormationElementList).isEqualTo(emptyList());
   }
 
-  private void verifyDelegate(String createType, String data, boolean stackExisted, boolean checkTags) {
+  private void verifyDelegate(
+      String createType, String data, boolean stackExisted, boolean checkTags, AwsConfig config) {
     ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(mockDelegateService).queueTask(captor.capture());
     DelegateTask delegateTask = captor.getValue();
@@ -339,12 +351,14 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
       assertThat(deleteRequest.getAccountId()).isEqualTo(ACCOUNT_ID);
       assertThat(deleteRequest.getCommandType())
           .isEqualTo(CloudFormationCommandRequest.CloudFormationCommandType.DELETE_STACK);
+      assertThat(deleteRequest.getAwsConfig()).isEqualTo(config);
     } else {
       CloudFormationCreateStackRequest createRequest =
           (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
       assertThat(createRequest.getCreateType()).isEqualTo(createType);
       assertThat(createRequest.getData()).isEqualTo(data);
       assertThat(createRequest.getAccountId()).isEqualTo(ACCOUNT_ID);
+      assertThat(createRequest.getAwsConfig()).isEqualTo(config);
       assertThat(createRequest.getCommandType())
           .isEqualTo(CloudFormationCommandRequest.CloudFormationCommandType.CREATE_STACK);
     }
@@ -372,7 +386,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
     Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
     state.setProvisionerId(PROVISIONER_ID);
 
     ExecutionResponse response = state.handleAsyncResponse(mockContext, delegateResponse);

@@ -127,11 +127,6 @@ public class ServiceVariableCreator {
     if (variablesField != null) {
       VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
     }
-
-    YamlField variableOverrideSetsField = serviceSpecNode.getNode().getField(YamlTypes.VARIABLE_OVERRIDE_SETS);
-    if (variableOverrideSetsField != null) {
-      addVariablesForVariableOverrideSets(variableOverrideSetsField, yamlPropertiesMap);
-    }
   }
 
   private void addVariablesForSshServiceSpec(YamlField serviceSpecNode, Map<String, YamlProperties> yamlPropertiesMap) {
@@ -148,11 +143,6 @@ public class ServiceVariableCreator {
     YamlField variablesField = serviceSpecNode.getNode().getField(YAMLFieldNameConstants.VARIABLES);
     if (variablesField != null) {
       VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
-    }
-
-    YamlField variableOverrideSetsField = serviceSpecNode.getNode().getField(YamlTypes.VARIABLE_OVERRIDE_SETS);
-    if (variableOverrideSetsField != null) {
-      addVariablesForVariableOverrideSets(variableOverrideSetsField, yamlPropertiesMap);
     }
   }
 
@@ -334,19 +324,6 @@ public class ServiceVariableCreator {
               addVariablesForManifest(manifestField, yamlPropertiesMap);
             }
           }
-        }
-      }
-    });
-  }
-
-  private void addVariablesForVariableOverrideSets(YamlField fieldNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    List<YamlNode> overrideNodes = fieldNode.getNode().asArray();
-    overrideNodes.forEach(yamlNode -> {
-      YamlField field = yamlNode.getField(YamlTypes.OVERRIDE_SET);
-      if (field != null) {
-        YamlField variablesField = field.getNode().getField(YAMLFieldNameConstants.VARIABLES);
-        if (variablesField != null) {
-          VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
         }
       }
     });

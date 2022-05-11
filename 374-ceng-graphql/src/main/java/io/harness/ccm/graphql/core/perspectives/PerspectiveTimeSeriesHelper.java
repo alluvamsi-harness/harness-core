@@ -40,7 +40,7 @@ import io.harness.ccm.views.businessMapping.entities.UnallocatedCostStrategy;
 import io.harness.ccm.views.businessMapping.service.intf.BusinessMappingService;
 import io.harness.ccm.views.graphql.QLCEViewGroupBy;
 import io.harness.ccm.views.graphql.QLCEViewTimeTruncGroupBy;
-import io.harness.ccm.views.utils.AwsAccountFieldUtils;
+import io.harness.ccm.views.helper.AwsAccountFieldHelper;
 import io.harness.ccm.views.utils.ViewFieldUtils;
 import io.harness.exception.InvalidRequestException;
 
@@ -325,7 +325,7 @@ public class PerspectiveTimeSeriesHelper {
     dataPoints.forEach(dataPoint -> {
       String name = entityIdToName.getOrDefault(dataPoint.getKey().getName(), dataPoint.getKey().getName());
       if (AWS_ACCOUNT_FIELD.equals(fieldName)) {
-        name = AwsAccountFieldUtils.mergeAwsAccountIdAndName(
+        name = AwsAccountFieldHelper.mergeAwsAccountIdAndName(
             dataPoint.getKey().getName(), entityIdToName.get(dataPoint.getKey().getName()));
       }
       updatedDataPoints.add(DataPoint.builder()

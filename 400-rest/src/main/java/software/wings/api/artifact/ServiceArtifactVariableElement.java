@@ -14,9 +14,7 @@ import io.harness.expression.ExpressionEvaluator;
 
 import software.wings.beans.EntityType;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -37,11 +35,6 @@ public class ServiceArtifactVariableElement implements ContextElement {
 
   public String getArtifactVariableName() {
     return isBlank(artifactVariableName) ? ExpressionEvaluator.DEFAULT_ARTIFACT_VARIABLE_NAME : artifactVariableName;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

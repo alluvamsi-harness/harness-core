@@ -19,6 +19,7 @@ import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.execution.AsyncSdkProgressCallback;
 import io.harness.pms.sdk.core.execution.AsyncSdkResumeCallback;
+import io.harness.pms.sdk.core.execution.AsyncSdkSingleCallback;
 import io.harness.pms.sdk.core.execution.InvokerPackage;
 import io.harness.pms.sdk.core.execution.ProgressableStrategy;
 import io.harness.pms.sdk.core.execution.ResumePackage;
@@ -30,9 +31,12 @@ import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponseMapper;
 import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
+import io.harness.tasks.ResponseData;
 
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -62,6 +66,12 @@ public class AsyncStrategy extends ProgressableStrategy {
     sdkNodeExecutionService.handleStepResponse(ambiance, StepResponseMapper.toStepResponseProto(stepResponse));
   }
 
+  public void resumeSingle(
+      Ambiance ambiance, StepParameters parameters, List<String> allCallbackIds, String callbackId, ResponseData data) {
+    AsyncExecutable asyncExecutable = extractStep(ambiance);
+    asyncExecutable.handleForCallbackId(ambiance, parameters, allCallbackIds, callbackId, data);
+  }
+
   private void handleResponse(
       Ambiance ambiance, ExecutionMode mode, StepParameters stepParameters, AsyncExecutableResponse response) {
     String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
@@ -76,15 +86,32 @@ public class AsyncStrategy extends ProgressableStrategy {
     // this
     sdkNodeExecutionService.addExecutableResponse(ambiance, ExecutableResponse.newBuilder().setAsync(response).build());
 
-    AsyncSdkResumeCallback callback = AsyncSdkResumeCallback.builder().ambianceBytes(ambiance.toByteArray()).build();
-    AsyncSdkProgressCallback progressCallback =
-        AsyncSdkProgressCallback.builder()
-            .ambianceBytes(ambiance.toByteArray())
-            .stepParameters(
-                stepParamString == null ? new byte[] {} : ByteString.copyFromUtf8(stepParamString).toByteArray())
-            .mode(mode)
-            .build();
+    queueCallbacks(ambiance, mode, response, stepParamString);
+  }
 
+  private void queueCallbacks(
+      Ambiance ambiance, ExecutionMode mode, AsyncExecutableResponse response, String stepParamString) {
+    byte[] parameterBytes =
+        stepParamString == null ? new byte[] {} : ByteString.copyFromUtf8(stepParamString).toByteArray();
+    byte[] ambianceBytes = ambiance.toByteArray();
+    if (response.getCallbackIdsList().size() > 1) {
+      for (String callbackId : response.getCallbackIdsList()) {
+        // This is per callback Id callback
+        AsyncSdkSingleCallback singleCallback = AsyncSdkSingleCallback.builder()
+                                                    .ambianceBytes(ambianceBytes)
+                                                    .stepParameters(parameterBytes)
+                                                    .allCallbackIds(new ArrayList<>(response.getCallbackIdsList()))
+                                                    .build();
+        asyncWaitEngine.waitForAllOn(singleCallback, null, callbackId);
+      }
+    }
+    // This is overall callback will be called once all the responses are received
+    AsyncSdkResumeCallback callback = AsyncSdkResumeCallback.builder().ambianceBytes(ambianceBytes).build();
+    AsyncSdkProgressCallback progressCallback = AsyncSdkProgressCallback.builder()
+                                                    .ambianceBytes(ambianceBytes)
+                                                    .stepParameters(parameterBytes)
+                                                    .mode(mode)
+                                                    .build();
     asyncWaitEngine.waitForAllOn(callback, progressCallback, response.getCallbackIdsList().toArray(new String[0]));
   }
 

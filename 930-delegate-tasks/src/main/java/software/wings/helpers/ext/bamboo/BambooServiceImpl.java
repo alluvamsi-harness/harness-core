@@ -35,7 +35,7 @@ import io.harness.stream.StreamUtils;
 
 import software.wings.beans.BambooConfig;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionCommonTaskHelper;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.service.intfc.security.EncryptionService;
 
@@ -80,7 +80,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 public class BambooServiceImpl implements BambooService {
   @Inject private EncryptionService encryptionService;
   @Inject private TimeLimiter timeLimiter;
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
 
   private BambooRestClient getBambooClient(BambooConfig bambooConfig, List<EncryptedDataDetail> encryptionDetails) {
     try {
@@ -557,7 +557,7 @@ public class BambooServiceImpl implements BambooService {
       ListNotifyResponseData notifyResponseData) {
     String link = artifactFileMetadata.getUrl();
     try {
-      artifactCollectionTaskHelper.addDataToResponse(
+      artifactCollectionCommonTaskHelper.addDataToResponse(
           downloadArtifact(bambooConfig, encryptionDetails, artifactFileMetadata.getFileName(), link), link,
           notifyResponseData, delegateId, taskId, accountId);
     } catch (IOException e) {

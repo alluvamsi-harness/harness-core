@@ -9,7 +9,6 @@ package software.wings.delegatetasks.collect.artifacts;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.delegate.beans.DelegateFile.Builder.aDelegateFile;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.RUNNING;
 
@@ -21,9 +20,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.artifactory.ArtifactoryConfigRequest;
-import io.harness.delegate.beans.DelegateFile;
-import io.harness.delegate.beans.FileBucket;
-import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.exception.ArtifactServerException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.UnknownArtifactStreamTypeException;
@@ -33,14 +29,12 @@ import io.harness.logging.LogLevel;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.BambooConfig;
 import software.wings.beans.JenkinsConfig;
-import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactStreamType;
 import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.NexusConfig;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsConfig;
-import software.wings.delegatetasks.DelegateFileManager;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.helpers.ext.amazons3.AmazonS3Service;
 import software.wings.helpers.ext.artifactory.ArtifactoryService;
@@ -56,7 +50,6 @@ import software.wings.service.mappers.artifact.NexusConfigToNexusRequestMapper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -79,7 +72,6 @@ public class ArtifactCollectionTaskHelper {
   private static final String ARTIFACT_STRING = "artifact/";
   private static final String ARTIFACT_FILE_SIZE_MESSAGE = "Getting artifact file size for artifact: ";
   private static final String ON_DELEGATE = " on delegate";
-  @Inject private DelegateFileManager delegateFileManager;
   @Inject private AmazonS3Service amazonS3Service;
   @Inject private DelegateLogService logService;
   @Inject private ArtifactoryService artifactoryService;
@@ -88,40 +80,6 @@ public class ArtifactCollectionTaskHelper {
   @Inject private JenkinsUtils jenkinsUtil;
   @Inject private BambooService bambooService;
   @Inject private NexusService nexusService;
-
-  public void addDataToResponse(Pair<String, InputStream> fileInfo, String artifactPath, ListNotifyResponseData res,
-      String delegateId, String taskId, String accountId) throws FileNotFoundException {
-    if (fileInfo == null) {
-      throw new FileNotFoundException("Unable to get artifact for path " + artifactPath);
-    }
-    log.info("Uploading the file {} for artifact path {}", fileInfo.getKey(), artifactPath);
-
-    DelegateFile delegateFile = aDelegateFile()
-                                    .withBucket(FileBucket.ARTIFACTS)
-                                    .withFileName(fileInfo.getKey())
-                                    .withDelegateId(delegateId)
-                                    .withTaskId(taskId)
-                                    .withAccountId(accountId)
-                                    .build(); // TODO: more about delegate and task info
-    DelegateFile fileRes = null;
-    try (InputStream in = fileInfo.getValue()) {
-      fileRes = delegateFileManager.upload(delegateFile, in);
-    } catch (IOException ignored) {
-    }
-
-    if (fileRes == null || fileRes.getFileId() == null) {
-      log.error(
-          "Failed to upload file name {} for artifactPath {} to manager. Artifact files will be uploaded during the deployment of Artifact Check Step",
-          fileInfo.getKey(), artifactPath);
-    } else {
-      log.info("Uploaded the file name {} and fileUuid {} for artifactPath {}", fileInfo.getKey(), fileRes.getFileId(),
-          artifactPath);
-      ArtifactFile artifactFile = new ArtifactFile();
-      artifactFile.setFileUuid(fileRes.getFileId());
-      artifactFile.setName(fileInfo.getKey());
-      res.addData(artifactFile);
-    }
-  }
 
   public Pair<String, InputStream> downloadArtifactAtRuntime(ArtifactStreamAttributes artifactStreamAttributes,
       String accountId, String appId, String activityId, String commandUnitName, String hostName) {

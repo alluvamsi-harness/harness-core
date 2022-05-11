@@ -45,6 +45,7 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.analysis.AnalysisService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.verification.CVActivityLogService;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
@@ -198,6 +199,6 @@ public class APMStateVerificationTestBase extends WingsBaseTest {
   protected void setupCvActivityLogService(AbstractAnalysisState state) throws IllegalAccessException {
     FieldUtils.writeField(state, "cvActivityLogService", cvActivityLogService, true);
     PowerMockito.when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
-        .thenReturn(mock(CVActivityLogService.Logger.class));
+        .thenReturn(mock(CVActivityLogger.class));
   }
 }

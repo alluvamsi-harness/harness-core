@@ -44,8 +44,8 @@ import io.harness.delegate.task.artifacts.ArtifactDelegateRequestUtils;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
@@ -233,8 +233,8 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    ArtifactoryDockerArtifactDelegateRequest artifactoryRequest =
-        (ArtifactoryDockerArtifactDelegateRequest) ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(
+    ArtifactoryArtifactDelegateRequest artifactoryRequest =
+        (ArtifactoryArtifactDelegateRequest) ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(
             repositoryName, artifactPath, repositoryFormat, artifactRepositoryUrl, artifactoryRequestDTO.getTag(),
             artifactoryRequestDTO.getTagRegex(), null, connector, encryptionDetails,
             ArtifactSourceType.ARTIFACTORY_REGISTRY);
@@ -257,10 +257,9 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
     BaseNGAccess baseNGAccess =
         getBaseNGAccess(artifactoryConnectorRef.getAccountIdentifier(), orgIdentifier, projectIdentifier);
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(connector, baseNGAccess);
-    ArtifactoryDockerArtifactDelegateRequest artifactoryRequest =
-        (ArtifactoryDockerArtifactDelegateRequest) ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(
-            null, null, null, null, null, null, null, connector, encryptionDetails,
-            ArtifactSourceType.ARTIFACTORY_REGISTRY);
+    ArtifactoryArtifactDelegateRequest artifactoryRequest =
+        (ArtifactoryArtifactDelegateRequest) ArtifactDelegateRequestUtils.getArtifactoryArtifactDelegateRequest(null,
+            null, null, null, null, null, null, connector, encryptionDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
     ArtifactTaskExecutionResponse artifactTaskExecutionResponse =
         executeSyncTask(artifactoryRequest, ArtifactTaskType.VALIDATE_ARTIFACT_SERVER, baseNGAccess,
             "Artifactory validate artifact server task failure due to error");
@@ -315,9 +314,8 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
                               .getArtifactoryConnectorDTO()
                               .getDelegateSelectors();
     } else {
-      delegateSelectors = ((ArtifactoryDockerArtifactDelegateRequest) delegateRequest)
-                              .getArtifactoryConnectorDTO()
-                              .getDelegateSelectors();
+      delegateSelectors =
+          ((ArtifactoryArtifactDelegateRequest) delegateRequest).getArtifactoryConnectorDTO().getDelegateSelectors();
     }
     ArtifactTaskParameters artifactTaskParameters = ArtifactTaskParameters.builder()
                                                         .accountId(ngAccess.getAccountIdentifier())
@@ -364,10 +362,10 @@ public class ArtifactoryResourceServiceImpl implements ArtifactoryResourceServic
 
   private ArtifactoryResponseDTO getArtifactoryResponseDTO(
       ArtifactTaskExecutionResponse artifactTaskExecutionResponse) {
-    List<ArtifactoryDockerArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
+    List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponses =
         artifactTaskExecutionResponse.getArtifactDelegateResponses()
             .stream()
-            .map(delegateResponse -> (ArtifactoryDockerArtifactDelegateResponse) delegateResponse)
+            .map(delegateResponse -> (ArtifactoryArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
     return ArtifactoryResourceMapper.toArtifactoryDockerResponse(artifactoryArtifactDelegateResponses);
   }

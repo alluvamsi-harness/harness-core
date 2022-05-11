@@ -110,6 +110,7 @@ public class ResourceGroupServiceModule extends AbstractModule {
         return appConfig.getResoureGroupServiceConfig().getMongoConfig();
       }
     });
+    install(new MetricsModule());
     install(new AbstractMongoModule() {
       @Override
       public UserProvider userProvider() {

@@ -294,6 +294,8 @@ public enum SettingVariableTypes {
 
   SSO_SAML("SSO SAML"),
 
+  LDAP("LDAP"),
+
   GCP_SECRETS_MANAGER,
 
   TRIGGER;

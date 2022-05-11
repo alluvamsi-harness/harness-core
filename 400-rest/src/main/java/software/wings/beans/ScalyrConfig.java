@@ -15,11 +15,11 @@ import io.harness.expression.ExpressionEvaluator;
 
 import software.wings.annotation.EncryptableSetting;
 import software.wings.audit.ResourceType;
+import software.wings.beans.apm.Method;
 import software.wings.jersey.JsonViews;
 import software.wings.security.UsageRestrictions;
 import software.wings.settings.SettingValue;
 import software.wings.sm.StateType;
-import software.wings.sm.states.APMVerificationState;
 import software.wings.yaml.setting.VerificationProviderYaml;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -84,7 +84,7 @@ public class ScalyrConfig extends SettingValue implements EncryptableSetting, Ex
     return APMValidateCollectorConfig.builder()
         .baseUrl(url)
         .url(urlToFetch)
-        .collectionMethod(APMVerificationState.Method.GET)
+        .collectionMethod(Method.GET)
         .headers(new HashMap<>())
         .options(Collections.singletonMap("token", String.valueOf(apiToken)))
         .build();

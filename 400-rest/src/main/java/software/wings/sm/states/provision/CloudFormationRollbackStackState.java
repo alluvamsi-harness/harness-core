@@ -30,6 +30,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
+import io.harness.beans.FeatureName;
 import io.harness.delegate.beans.TaskData;
 import io.harness.exception.InvalidRequestException;
 import io.harness.persistence.HIterator;
@@ -64,6 +65,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
 
 @Slf4j
@@ -174,12 +176,15 @@ public class CloudFormationRollbackStackState extends CloudFormationState {
     ExecutionContextImpl executionContext = (ExecutionContextImpl) context;
     String entityId = getStackNameSuffix(executionContext, provisionerId);
 
-    try (HIterator<CloudFormationRollbackConfig> configIterator =
-             new HIterator(wingsPersistence.createQuery(CloudFormationRollbackConfig.class)
-                               .filter(CloudFormationRollbackConfigKeys.appId, context.getAppId())
-                               .filter(CloudFormationRollbackConfigKeys.entityId, entityId)
-                               .order(Sort.descending(CloudFormationRollbackConfigKeys.createdAt))
-                               .fetch())) {
+    Query<CloudFormationRollbackConfig> getRollbackConfig =
+        wingsPersistence.createQuery(CloudFormationRollbackConfig.class)
+            .filter(CloudFormationRollbackConfigKeys.appId, context.getAppId())
+            .filter(CloudFormationRollbackConfigKeys.entityId, entityId);
+    if (featureFlagService.isEnabled(FeatureName.CF_ROLLBACK_CONFIG_FILTER, context.getAccountId())) {
+      getRollbackConfig.filter(CloudFormationRollbackConfigKeys.awsConfigId, fetchResolvedAwsConfigId(context));
+    }
+    getRollbackConfig.order(Sort.descending(CloudFormationRollbackConfigKeys.createdAt)).fetch();
+    try (HIterator<CloudFormationRollbackConfig> configIterator = new HIterator(getRollbackConfig.fetch())) {
       if (!configIterator.hasNext()) {
         /**
          * No config found.

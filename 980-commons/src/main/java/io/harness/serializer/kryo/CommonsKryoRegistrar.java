@@ -16,6 +16,7 @@ import io.harness.exception.ArtifactoryRegistryException;
 import io.harness.exception.ArtifactoryServerException;
 import io.harness.exception.AuthenticationException;
 import io.harness.exception.AuthorizationException;
+import io.harness.exception.AzureAKSException;
 import io.harness.exception.AzureAuthenticationException;
 import io.harness.exception.AzureConfigException;
 import io.harness.exception.AzureContainerRegistryException;
@@ -141,5 +142,6 @@ public class CommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(NameValuePair.class, 5226);
     kryo.register(ServerlessAwsLambdaRuntimeException.class, 980026);
     kryo.register(ServerlessCommandExecutionException.class, 980027);
+    kryo.register(AzureAKSException.class, 980028);
   }
 }

@@ -17,7 +17,6 @@ import io.harness.category.element.UnitTests;
 import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.core.beans.OnboardingRequestDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthSource.CVConfigUpdateResult;
 import io.harness.cvng.core.beans.monitoredService.MetricPackDTO;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.DynatraceHealthSourceSpec;
@@ -38,8 +37,6 @@ import lombok.experimental.FieldDefaults;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -47,18 +44,15 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
   @Inject MetricPackService metricPackService;
   private DynatraceHealthSourceSpec classUnderTest;
   private ProjectParams mockedProjectParams;
-  @Captor private ArgumentCaptor<OnboardingRequestDTO> requestCaptor;
 
-  private static final BuilderFactory builderFactory = BuilderFactory.builder().build();
+  private BuilderFactory builderFactory;
   private static final String CONNECTOR_IDENTIFIER = generateUuid();
-  private static final String HEALTH_SOURCE_SERVICE_IDENTIFIER = builderFactory.getContext().getServiceIdentifier();
   private static final String DYNATRACE_ENTITY_SERVICE_ID = "service_id_mock";
   private static final String FEATURE = "dynatrace_apm";
   private static final String IDENTIFIER = "identifier";
   private static final String HEALTH_SOURCE_NAME = "some-name";
-  private static final String ENV_IDENTIFIER = builderFactory.getContext().getEnvIdentifier();
+  private String ENV_IDENTIFIER;
   private static final String MONITORED_SERVICE_IDENTIFIER = "mock_monitored_service_identifier";
-  private static final List<String> SERVICE_METHOD_IDS = Collections.singletonList("SERVICE_METHOD_ID");
 
   private static DynatraceCVConfig apply(CVConfig cvConfig) {
     return (DynatraceCVConfig) cvConfig;
@@ -66,6 +60,8 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
 
   @Before
   public void setup() {
+    builderFactory = BuilderFactory.builder().build();
+    ENV_IDENTIFIER = builderFactory.getContext().getEnvIdentifier();
     classUnderTest = DynatraceHealthSourceSpec.builder().connectorRef(CONNECTOR_IDENTIFIER).build();
     mockedProjectParams = ProjectParams.builder()
                               .accountIdentifier(builderFactory.getContext().getAccountId())
@@ -88,9 +84,10 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
                                      .category(CVMonitoringCategory.PERFORMANCE)
                                      .build()));
     CVConfigUpdateResult result = classUnderTest.getCVConfigUpdateResult(mockedProjectParams.getAccountIdentifier(),
-        mockedProjectParams.getOrgIdentifier(), mockedProjectParams.getProjectIdentifier(), ENV_IDENTIFIER,
-        HEALTH_SOURCE_SERVICE_IDENTIFIER, MONITORED_SERVICE_IDENTIFIER, IDENTIFIER, HEALTH_SOURCE_NAME, cvConfigs,
-        metricPackService);
+        mockedProjectParams.getOrgIdentifier(), mockedProjectParams.getProjectIdentifier(),
+        builderFactory.getContext().getEnvIdentifier(), builderFactory.getContext().getServiceIdentifier(),
+        builderFactory.getContext().getMonitoredServiceParams().getMonitoredServiceIdentifier(), IDENTIFIER,
+        HEALTH_SOURCE_NAME, cvConfigs, metricPackService);
     assertThat(result.getDeleted()).hasSize(1);
     DynatraceCVConfig dynatraceCVConfig = (DynatraceCVConfig) result.getDeleted().get(0);
     assertThat(dynatraceCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
@@ -111,44 +108,15 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
             .build();
     List<CVConfig> cvConfigs = new ArrayList<>();
     CVConfigUpdateResult result = classUnderTest.getCVConfigUpdateResult(mockedProjectParams.getAccountIdentifier(),
-        mockedProjectParams.getOrgIdentifier(), mockedProjectParams.getProjectIdentifier(), ENV_IDENTIFIER,
-        HEALTH_SOURCE_SERVICE_IDENTIFIER, MONITORED_SERVICE_IDENTIFIER, IDENTIFIER, HEALTH_SOURCE_NAME, cvConfigs,
-        metricPackService);
+        mockedProjectParams.getOrgIdentifier(), mockedProjectParams.getProjectIdentifier(),
+        builderFactory.getContext().getEnvIdentifier(), builderFactory.getContext().getServiceIdentifier(),
+        MONITORED_SERVICE_IDENTIFIER, IDENTIFIER, HEALTH_SOURCE_NAME, cvConfigs, metricPackService);
     // one metric pack should be mapped into one CV config
     assertThat(result.getAdded()).hasSize(1);
     result.getAdded().stream().map(DynatraceHealthSourceSpecTest::apply).forEach(this::assertCommon);
     assertThat(result.getAdded().stream().map(DynatraceHealthSourceSpecTest::apply).count()).isEqualTo(1);
     DynatraceCVConfig dynamicsCVConfig = (DynatraceCVConfig) result.getAdded().get(0);
     assertThat(dynamicsCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
-  }
-
-  @Test
-  @Owner(developers = PAVIC)
-  @Category(UnitTests.class)
-  public void testGetCVConfigUpdateResultWhenUpdated() {
-    MetricPack mockMetricPack = metricPackService.getMetricPack(mockedProjectParams.getAccountIdentifier(),
-        mockedProjectParams.getOrgIdentifier(), mockedProjectParams.getProjectIdentifier(), DataSourceType.DYNATRACE,
-        CVNextGenConstants.PERFORMANCE_PACK_IDENTIFIER);
-    // provide mock data to spec
-    classUnderTest = DynatraceHealthSourceSpec.builder()
-                         .connectorRef(CONNECTOR_IDENTIFIER)
-                         .feature(FEATURE)
-                         .serviceId(DYNATRACE_ENTITY_SERVICE_ID)
-                         .metricPacks(Collections.singleton(MetricPackDTO.toMetricPackDTO(mockMetricPack)))
-                         .serviceMethodIds(SERVICE_METHOD_IDS)
-                         .build();
-    List<CVConfig> cvConfigs = new ArrayList<>();
-    CVConfig cvConfigToUpdate = createCVConfig(mockMetricPack);
-    cvConfigs.add(cvConfigToUpdate);
-    CVConfigUpdateResult result = classUnderTest.getCVConfigUpdateResult(mockedProjectParams.getAccountIdentifier(),
-        mockedProjectParams.getOrgIdentifier(), mockedProjectParams.getProjectIdentifier(), ENV_IDENTIFIER,
-        HEALTH_SOURCE_SERVICE_IDENTIFIER, MONITORED_SERVICE_IDENTIFIER, IDENTIFIER, HEALTH_SOURCE_NAME, cvConfigs,
-        metricPackService);
-    assertThat(result.getUpdated()).hasSize(1);
-    DynatraceCVConfig dynatraceCVConfig = (DynatraceCVConfig) result.getUpdated().get(0);
-    assertCommon(dynatraceCVConfig);
-    assertThat(dynatraceCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
-    assertThat(dynatraceCVConfig.getServiceMethodIds()).isEqualTo(SERVICE_METHOD_IDS);
   }
 
   private void assertCommon(DynatraceCVConfig cvConfig) {
@@ -174,6 +142,7 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
         .monitoringSourceName(HEALTH_SOURCE_NAME)
         .productName(FEATURE)
         .identifier(IDENTIFIER)
+        .monitoredServiceIdentifier(MONITORED_SERVICE_IDENTIFIER)
         .category(metricPack.getCategory())
         .build();
   }

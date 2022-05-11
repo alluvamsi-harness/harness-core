@@ -147,6 +147,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.ExecutionResponse.ExecutionResponseBuilder;
 import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.ContainerServiceSetup.ContainerServiceSetupKeys;
 import software.wings.sm.states.EcsSetupContextVariableHolder.EcsSetupContextVariableHolderBuilder;
 import software.wings.utils.EcsConvention;
@@ -180,6 +181,7 @@ public class EcsStateHelper {
   @Inject private FeatureFlagService featureFlagService;
   @Inject private SweepingOutputService sweepingOutputService;
   @Inject private StateExecutionService stateExecutionService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   public ContainerSetupParams buildContainerSetupParams(
       ExecutionContext context, EcsSetupStateConfig ecsSetupStateConfig) {
@@ -559,12 +561,12 @@ public class EcsStateHelper {
 
   public Application getApplicationFromExecutionContext(ExecutionContext executionContext) {
     WorkflowStandardParams workflowStandardParams = executionContext.getContextElement(ContextElementType.STANDARD);
-    return workflowStandardParams.fetchRequiredApp();
+    return workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams);
   }
 
   public Environment getEnvironmentFromExecutionContext(ExecutionContext executionContext) {
     WorkflowStandardParams workflowStandardParams = executionContext.getContextElement(ContextElementType.STANDARD);
-    return workflowStandardParams.getEnv();
+    return workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
   }
 
   public EcsRunTaskDataBag prepareBagForEcsRunTask(ExecutionContext executionContext, Long timeout,
@@ -616,8 +618,8 @@ public class EcsStateHelper {
 
     ImageDetails imageDetails =
         artifactCollectionUtils.fetchContainerImageDetails(artifact, context.getWorkflowExecutionId());
-    Application app = workflowStandardParams.fetchRequiredApp();
-    Environment env = workflowStandardParams.getEnv();
+    Application app = workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams);
+    Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
 
     Service service = serviceResourceService.getWithDetails(app.getUuid(), serviceId);
     ContainerTask containerTask =
@@ -1141,8 +1143,8 @@ public class EcsStateHelper {
       ServiceResourceService serviceResourceService, InfrastructureMappingService infrastructureMappingService,
       SettingsService settingsService, SecretManager secretManager, boolean rollback) {
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
-    Application app = workflowStandardParams.fetchRequiredApp();
-    Environment env = workflowStandardParams.getEnv();
+    Application app = workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams);
+    Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
     PhaseElement phaseElement = context.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
     String serviceId = phaseElement.getServiceElement().getUuid();
     Service svc = serviceResourceService.getWithDetails(app.getUuid(), serviceId);

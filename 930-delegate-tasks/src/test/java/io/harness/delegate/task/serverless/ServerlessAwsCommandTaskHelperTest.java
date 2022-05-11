@@ -11,13 +11,17 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
+import io.harness.delegate.task.aws.AwsNgConfigMapper;
+import io.harness.delegate.task.serverless.request.ServerlessDeployRequest;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
@@ -25,7 +29,10 @@ import io.harness.serverless.ServerlessCliResponse;
 import io.harness.serverless.ServerlessClient;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 
+import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
+
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,6 +46,8 @@ import org.mockito.junit.MockitoRule;
 public class ServerlessAwsCommandTaskHelperTest extends CategoryTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock private ServerlessTaskPluginHelper serverlessTaskPluginHelper;
+  @Mock private AwsCFHelperServiceDelegate awsCFHelperServiceDelegate;
+  @Mock private AwsNgConfigMapper awsNgConfigMapper;
 
   @InjectMocks private ServerlessAwsCommandTaskHelper serverlessAwsCommandTaskHelper;
   private ServerlessAwsLambdaManifestSchema serverlessAwsLambdaManifestSchema =
@@ -71,8 +80,22 @@ public class ServerlessAwsCommandTaskHelperTest extends CategoryTest {
         + "  - compiled-cloudformation-template.json\n"
         + "  - custom-resources.zip\n"
         + "  - serverless-state.json";
-    assertThat(serverlessAwsCommandTaskHelper.getPreviousVersionTimeStamp(output))
-        .isEqualTo(Optional.of("1646989096845"));
+
+    String serverlessManifest = "service: ABC";
+    ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig =
+        ServerlessAwsLambdaInfraConfig.builder().region("us-east-2").stage("dev").build();
+    ServerlessDeployRequest serverlessDeployRequest = ServerlessDeployRequest.builder()
+                                                          .manifestContent(serverlessManifest)
+                                                          .serverlessInfraConfig(serverlessAwsLambdaInfraConfig)
+                                                          .build();
+
+    List<String> timeStamps = serverlessAwsCommandTaskHelper.getDeployListTimeStamps(output);
+    assertThat(timeStamps).contains("1646988531400", "1646989096845");
+    doReturn("abc1646988531400xyz").when(awsCFHelperServiceDelegate).getStackBody(any(), any(), any());
+    doReturn(AwsInternalConfig.builder().build()).when(awsNgConfigMapper).createAwsInternalConfig(any());
+
+    assertThat(serverlessAwsCommandTaskHelper.getPreviousVersionTimeStamp(timeStamps, null, serverlessDeployRequest))
+        .isEqualTo(Optional.of("1646988531400"));
   }
 
   @Test

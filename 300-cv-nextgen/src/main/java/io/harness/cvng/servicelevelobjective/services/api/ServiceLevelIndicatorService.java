@@ -29,7 +29,7 @@ public interface ServiceLevelIndicatorService {
 
   List<String> update(ProjectParams projectParams, List<ServiceLevelIndicatorDTO> serviceLevelIndicatorDTOList,
       String serviceLevelObjectiveIdentifier, List<String> serviceLevelIndicatorsList, String monitoredServiceIndicator,
-      String healthSourceIndicator, TimePeriod timePeriod);
+      String healthSourceIndicator, TimePeriod timePeriod, TimePeriod currentTimePeriod);
 
   void deleteByIdentifier(ProjectParams projectParams, List<String> serviceLevelIndicatorIdentifier);
 

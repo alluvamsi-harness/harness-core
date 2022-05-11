@@ -47,12 +47,12 @@ import io.harness.ccm.views.graphql.QLCEViewTimeFilterOperator;
 import io.harness.ccm.views.graphql.QLCEViewTrendInfo;
 import io.harness.ccm.views.graphql.ViewCostData;
 import io.harness.ccm.views.graphql.ViewsQueryHelper;
+import io.harness.ccm.views.helper.AwsAccountFieldHelper;
 import io.harness.ccm.views.helper.ViewFilterBuilderHelper;
 import io.harness.ccm.views.helper.ViewTimeRangeHelper;
 import io.harness.ccm.views.service.CEViewService;
 import io.harness.ccm.views.service.ViewCustomFieldService;
 import io.harness.ccm.views.service.ViewsBillingService;
-import io.harness.ccm.views.utils.AwsAccountFieldUtils;
 import io.harness.exception.InvalidRequestException;
 
 import com.google.cloud.bigquery.BigQuery;
@@ -114,6 +114,7 @@ public class CEViewServiceImpl implements CEViewService {
     }
     ceView.setUuid(null);
     ceViewDao.save(ceView);
+    // For now, we are not returning AWS account Name in case of AWS Account rules
     return ceView;
   }
 
@@ -227,7 +228,8 @@ public class CEViewServiceImpl implements CEViewService {
           if (viewIdCondition.getViewField().getIdentifier() == ViewFieldIdentifier.AWS) {
             viewFieldIdentifierSet.add(ViewFieldIdentifier.AWS);
             if (AWS_ACCOUNT_FIELD.equals(viewIdCondition.getViewField().getFieldName())) {
-              viewIdCondition.setValues(removeAccountNameFromValues(viewIdCondition.getValues()));
+              viewIdCondition.setValues(
+                  AwsAccountFieldHelper.removeAwsAccountNameFromValues(viewIdCondition.getValues()));
             }
           }
           if (viewIdCondition.getViewField().getIdentifier() == ViewFieldIdentifier.GCP) {
@@ -251,10 +253,6 @@ public class CEViewServiceImpl implements CEViewService {
     ceView.setDataSources(new ArrayList<>(viewFieldIdentifierSet));
   }
 
-  private List<String> removeAccountNameFromValues(List<String> values) {
-    return values.stream().map(AwsAccountFieldUtils::removeAwsAccountNameFromValue).collect(Collectors.toList());
-  }
-
   @Override
   public CEView get(String uuid) {
     CEView view = ceViewDao.get(uuid);
@@ -267,6 +265,7 @@ public class CEViewServiceImpl implements CEViewService {
   @Override
   public CEView update(CEView ceView) {
     modifyCEViewAndSetDefaults(ceView);
+    // For now, we are not returning AWS account Name in case of AWS Account rules
     return ceViewDao.update(ceView);
   }
 

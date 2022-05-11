@@ -62,15 +62,7 @@ import com.google.gson.reflect.TypeToken;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMapList;
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
-import io.fabric8.kubernetes.api.model.DoneableHorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.DoneableNamespace;
-import io.fabric8.kubernetes.api.model.DoneablePod;
-import io.fabric8.kubernetes.api.model.DoneableReplicationController;
-import io.fabric8.kubernetes.api.model.DoneableSecret;
-import io.fabric8.kubernetes.api.model.DoneableService;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerList;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceList;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -85,34 +77,30 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.SecretList;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceList;
+import io.fabric8.kubernetes.api.model.apps.StatefulSet;
+import io.fabric8.kubernetes.api.model.apps.StatefulSetList;
+import io.fabric8.kubernetes.api.model.apps.StatefulSetSpec;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscalerList;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSet;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSetList;
 import io.fabric8.kubernetes.api.model.extensions.DaemonSetSpec;
 import io.fabric8.kubernetes.api.model.extensions.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.DeploymentList;
 import io.fabric8.kubernetes.api.model.extensions.DeploymentSpec;
-import io.fabric8.kubernetes.api.model.extensions.DoneableDaemonSet;
-import io.fabric8.kubernetes.api.model.extensions.DoneableDeployment;
-import io.fabric8.kubernetes.api.model.extensions.DoneableStatefulSet;
-import io.fabric8.kubernetes.api.model.extensions.StatefulSet;
-import io.fabric8.kubernetes.api.model.extensions.StatefulSetList;
-import io.fabric8.kubernetes.api.model.extensions.StatefulSetSpec;
 import io.fabric8.kubernetes.client.AppsAPIGroupClient;
 import io.fabric8.kubernetes.client.ExtensionsAPIGroupClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.Watch;
-import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
-import io.fabric8.kubernetes.client.dsl.ScalableResource;
+import io.fabric8.kubernetes.client.dsl.ServiceResource;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.DeploymentConfigList;
 import io.fabric8.openshift.api.model.DeploymentConfigSpec;
-import io.fabric8.openshift.api.model.DoneableDeploymentConfig;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.DeployableScalableResource;
 import io.kubernetes.client.openapi.ApiCallback;
@@ -184,90 +172,77 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   @Mock private KubernetesClient kubernetesClient;
   @Mock private OpenShiftClient openShiftClient;
   @Mock
-  private MixedOperation<ReplicationController, ReplicationControllerList, DoneableReplicationController,
-      RollableScalableResource<ReplicationController, DoneableReplicationController>> replicationControllers;
+  private MixedOperation<ReplicationController, ReplicationControllerList,
+      RollableScalableResource<ReplicationController>> replicationControllers;
   @Mock
-  private NonNamespaceOperation<ReplicationController, ReplicationControllerList, DoneableReplicationController,
-      RollableScalableResource<ReplicationController, DoneableReplicationController>> namespacedReplicationControllers;
+  private NonNamespaceOperation<ReplicationController, ReplicationControllerList,
+      RollableScalableResource<ReplicationController>> namespacedReplicationControllers;
 
-  @Mock private MixedOperation<Service, ServiceList, DoneableService, Resource<Service, DoneableService>> services;
-  @Mock private MixedOperation<Secret, SecretList, DoneableSecret, Resource<Secret, DoneableSecret>> secrets;
-  @Mock
-  private MixedOperation<ConfigMap, ConfigMapList, DoneableConfigMap, Resource<ConfigMap, DoneableConfigMap>>
-      configMaps;
-  @Mock
-  private NonNamespaceOperation<Service, ServiceList, DoneableService, Resource<Service, DoneableService>>
-      namespacedServices;
+  @Mock private MixedOperation<Service, ServiceList, ServiceResource<Service>> services;
+  @Mock private MixedOperation<Secret, SecretList, Resource<Secret>> secrets;
+  @Mock private MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> configMaps;
+  @Mock private NonNamespaceOperation<Service, ServiceList, ServiceResource<Service>> namespacedServices;
 
-  @Mock
-  private NonNamespaceOperation<Secret, SecretList, DoneableSecret, Resource<Secret, DoneableSecret>> namespacedSecrets;
-  @Mock
-  private NonNamespaceOperation<ConfigMap, ConfigMapList, DoneableConfigMap, Resource<ConfigMap, DoneableConfigMap>>
-      namespacedConfigMaps;
+  @Mock private NonNamespaceOperation<Secret, SecretList, Resource<Secret>> namespacedSecrets;
+  @Mock private NonNamespaceOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> namespacedConfigMaps;
 
-  @Mock
-  private RollableScalableResource<ReplicationController, DoneableReplicationController> scalableReplicationController;
-  @Mock private Resource<Service, DoneableService> serviceResource;
-  @Mock private Resource<Secret, DoneableSecret> secretResource;
-  @Mock private Resource<ConfigMap, DoneableConfigMap> configMapResource;
-  @Mock private MixedOperation<Pod, PodList, DoneablePod, PodResource<Pod, DoneablePod>> pods;
+  @Mock private RollableScalableResource<ReplicationController> scalableReplicationController;
+  @Mock private ServiceResource<Service> serviceResource;
+  @Mock private Resource<Secret> secretResource;
+  @Mock private Resource<ConfigMap> configMapResource;
+  @Mock private MixedOperation<Pod, PodList, PodResource<Pod>> pods;
 
   @Mock
-  private MixedOperation<DeploymentConfig, DeploymentConfigList, DoneableDeploymentConfig,
-      DeployableScalableResource<DeploymentConfig, DoneableDeploymentConfig>> deploymentConfigsOperation;
+  private MixedOperation<DeploymentConfig, DeploymentConfigList, DeployableScalableResource<DeploymentConfig>>
+      deploymentConfigsOperation;
   @Mock
-  private NonNamespaceOperation<DeploymentConfig, DeploymentConfigList, DoneableDeploymentConfig,
-      DeployableScalableResource<DeploymentConfig, DoneableDeploymentConfig>> deploymentConfigs;
+  private NonNamespaceOperation<DeploymentConfig, DeploymentConfigList, DeployableScalableResource<DeploymentConfig>>
+      deploymentConfigs;
   @Mock
 
   // Deployments
-  private MixedOperation<Deployment, DeploymentList, DoneableDeployment,
-      ScalableResource<Deployment, DoneableDeployment>> deploymentOperations;
+  private MixedOperation<Deployment, DeploymentList, RollableScalableResource<Deployment>> deploymentOperations;
   @Mock
-  private NonNamespaceOperation<Deployment, DeploymentList, DoneableDeployment,
-      ScalableResource<Deployment, DoneableDeployment>> namespacedDeployments;
-  @Mock private ScalableResource<Deployment, DoneableDeployment> scalableDeployment;
-  @Mock
-  private FilterWatchListDeletable<Deployment, DeploymentList, Boolean, Watch, Watcher<Deployment>>
-      deploymentFilteredList;
+  private NonNamespaceOperation<Deployment, DeploymentList, RollableScalableResource<Deployment>> namespacedDeployments;
+  @Mock private RollableScalableResource<Deployment> scalableDeployment;
+  @Mock private FilterWatchListDeletable<Deployment, DeploymentList> deploymentFilteredList;
 
   // Statefulsets
   @Mock
-  private MixedOperation<StatefulSet, StatefulSetList, DoneableStatefulSet,
-      RollableScalableResource<StatefulSet, DoneableStatefulSet>> statefulSetOperations;
+  private MixedOperation<StatefulSet, StatefulSetList, RollableScalableResource<StatefulSet>> statefulSetOperations;
   @Mock
-  private NonNamespaceOperation<StatefulSet, StatefulSetList, DoneableStatefulSet,
-      RollableScalableResource<StatefulSet, DoneableStatefulSet>> namespacedStatefulsets;
-  @Mock private RollableScalableResource<StatefulSet, DoneableStatefulSet> statefulSetResource;
+  private NonNamespaceOperation<StatefulSet, StatefulSetList, RollableScalableResource<StatefulSet>>
+      namespacedStatefulsets;
+  @Mock private RollableScalableResource<StatefulSet> statefulSetResource;
 
   // DaemonSet
-  @Mock
-  private MixedOperation<DaemonSet, DaemonSetList, DoneableDaemonSet, Resource<DaemonSet, DoneableDaemonSet>>
-      daemonSetOperations;
-  @Mock
-  private NonNamespaceOperation<DaemonSet, DaemonSetList, DoneableDaemonSet, Resource<DaemonSet, DoneableDaemonSet>>
-      namespacedDaemonSet;
-  @Mock private Resource<DaemonSet, DoneableDaemonSet> daemonSetResource;
+  @Mock private MixedOperation<DaemonSet, DaemonSetList, Resource<DaemonSet>> daemonSetOperations;
+  @Mock private NonNamespaceOperation<DaemonSet, DaemonSetList, Resource<DaemonSet>> namespacedDaemonSet;
+  @Mock private Resource<DaemonSet> daemonSetResource;
 
   // Namespaces
-  @Mock
-  private NonNamespaceOperation<Namespace, NamespaceList, DoneableNamespace, Resource<Namespace, DoneableNamespace>>
-      namespacedNamespaces;
-  @Mock private Resource<Namespace, DoneableNamespace> namespaceResource;
+  @Mock private NonNamespaceOperation<Namespace, NamespaceList, Resource<Namespace>> namespacedNamespaces;
+  @Mock private Resource<Namespace> namespaceResource;
 
   // Secrets
-  @Mock private MixedOperation<Secret, SecretList, DoneableSecret, Resource<Secret, DoneableSecret>> secretOperations;
+  @Mock private MixedOperation<Secret, SecretList, Resource<Secret>> secretOperations;
 
   // ConfigMaps
-  @Mock
-  private MixedOperation<ConfigMap, ConfigMapList, DoneableConfigMap, Resource<ConfigMap, DoneableConfigMap>>
-      configMapOperations;
+  @Mock private MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> configMapOperations;
 
   // HPA
   @Mock
-  private NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, DoneableHorizontalPodAutoscaler,
-      Resource<HorizontalPodAutoscaler, DoneableHorizontalPodAutoscaler>> namespacedHpa;
-  @Mock private Resource<HorizontalPodAutoscaler, DoneableHorizontalPodAutoscaler> horizontalPodAutoscalerResource;
+  private NonNamespaceOperation<HorizontalPodAutoscaler, HorizontalPodAutoscalerList, Resource<HorizontalPodAutoscaler>>
+      namespacedHpa;
+
+  @Mock
+  private NonNamespaceOperation<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler,
+      io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscalerList,
+      Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>> v2Beta1NamespacedHpa;
+  @Mock private Resource<HorizontalPodAutoscaler> horizontalPodAutoscalerResource;
+  @Mock
+  private Resource<io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler>
+      v2Beta1HorizontalPodAutoscalerResource;
 
   @Mock private ExtensionsAPIGroupClient extensionsAPIGroupClient;
   @Mock private AppsAPIGroupClient appsAPIGroupClient;
@@ -317,6 +292,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   ConfigMap configMap;
   Service service;
   HorizontalPodAutoscaler horizontalPodAutoscaler;
+  io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler v2Beta1HorizontalPodAutoscaler;
 
   @Before
   public void setUp() throws Exception {
@@ -336,7 +312,6 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
     when(configMaps.inNamespace("default")).thenReturn(namespacedConfigMaps);
     when(replicationControllers.inNamespace("default")).thenReturn(namespacedReplicationControllers);
     when(services.inNamespace(anyString())).thenReturn(namespacedServices);
-    when(namespacedServices.createOrReplaceWithNew()).thenReturn(new DoneableService(item -> item));
     when(namespacedReplicationControllers.withName(anyString())).thenReturn(scalableReplicationController);
     when(namespacedServices.withName(anyString())).thenReturn(serviceResource);
     when(namespacedSecrets.withName(anyString())).thenReturn(secretResource);
@@ -373,6 +348,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
 
     when(kubernetesHelperService.hpaOperations(KUBERNETES_CONFIG)).thenReturn(namespacedHpa);
     when(namespacedHpa.withName(anyString())).thenReturn(horizontalPodAutoscalerResource);
+    when(v2Beta1NamespacedHpa.withName(anyString())).thenReturn(v2Beta1HorizontalPodAutoscalerResource);
 
     when(kubernetesHelperService.getApiClient(KUBERNETES_CONFIG)).thenReturn(k8sApiClient);
     when(k8sApiClient.buildCall(anyString(), anyString(), anyListOf(Pair.class), anyListOf(Pair.class), any(),
@@ -658,20 +634,20 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetAutoscaler() {
     when(horizontalPodAutoscalerResource.get()).thenReturn(horizontalPodAutoscaler);
-    HorizontalPodAutoscaler autoscaler =
-        kubernetesContainerService.getAutoscaler(KUBERNETES_CONFIG, "autoscalar", "v1");
+    when(v2Beta1HorizontalPodAutoscalerResource.get()).thenReturn(v2Beta1HorizontalPodAutoscaler);
+    HasMetadata autoscaler = kubernetesContainerService.getAutoscaler(KUBERNETES_CONFIG, "autoscalar", "v1");
     assertThat(autoscaler).isEqualTo(horizontalPodAutoscaler);
     verify(horizontalPodAutoscalerResource).get();
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
     verify(kubernetesHelperService, never()).hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v1alpha1");
 
     when(kubernetesHelperService.hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v1alpha1"))
-        .thenReturn(namespacedHpa);
+        .thenReturn(v2Beta1NamespacedHpa);
     autoscaler = kubernetesContainerService.getAutoscaler(KUBERNETES_CONFIG, "autoscalar", "v1alpha1");
-    assertThat(autoscaler).isEqualTo(horizontalPodAutoscaler);
+    assertThat(autoscaler).isEqualTo(v2Beta1HorizontalPodAutoscaler);
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
     verify(kubernetesHelperService).hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v1alpha1");
-    verify(horizontalPodAutoscalerResource, times(2)).get();
+    verify(v2Beta1HorizontalPodAutoscalerResource, times(1)).get();
   }
 
   @Test
@@ -687,10 +663,11 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
 
     when(kubernetesHelperService.trimVersion("autoscaling/v2beta1")).thenReturn("v2beta1");
     when(kubernetesHelperService.hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v2beta1"))
-        .thenReturn(namespacedHpa);
+        .thenReturn(v2Beta1NamespacedHpa);
     kubernetesContainerService.createOrReplaceAutoscaler(KUBERNETES_CONFIG, autoscalerYaml);
     verify(kubernetesHelperService).hpaOperationsForCustomMetricHPA(KUBERNETES_CONFIG, "v2beta1");
-    verify(namespacedHpa).createOrReplace(any(HorizontalPodAutoscaler.class));
+    verify(v2Beta1NamespacedHpa)
+        .createOrReplace(any(io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler.class));
 
     autoscalerYaml = "apiVersion: autoscaling/v1\n"
         + "kind: HorizontalPodAutoscaler\n"
@@ -703,7 +680,7 @@ public class KubernetesContainerServiceImplTest extends CategoryTest {
     when(kubernetesHelperService.hpaOperations(KUBERNETES_CONFIG)).thenReturn(namespacedHpa);
     kubernetesContainerService.createOrReplaceAutoscaler(KUBERNETES_CONFIG, autoscalerYaml);
     verify(kubernetesHelperService).hpaOperations(KUBERNETES_CONFIG);
-    verify(namespacedHpa, times(2)).createOrReplace(any(HorizontalPodAutoscaler.class));
+    verify(namespacedHpa, times(1)).createOrReplace(any(HorizontalPodAutoscaler.class));
   }
 
   @Test

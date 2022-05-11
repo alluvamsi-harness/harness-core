@@ -174,8 +174,9 @@ public class ServerlessAwsLambdaDeployCommandTaskHandler extends ServerlessComma
     if (response.getCommandExecutionStatus() == CommandExecutionStatus.SUCCESS) {
       executionLogCallback.saveExecutionLog(
           color(format("%nDeploy List command executed successfully..%n"), LogColor.White, LogWeight.Bold), INFO);
-      Optional<String> previousVersionTimeStamp =
-          serverlessAwsCommandTaskHelper.getPreviousVersionTimeStamp(response.getOutput());
+      List<String> timeStamps = serverlessAwsCommandTaskHelper.getDeployListTimeStamps(response.getOutput());
+      Optional<String> previousVersionTimeStamp = serverlessAwsCommandTaskHelper.getPreviousVersionTimeStamp(
+          timeStamps, executionLogCallback, serverlessDeployRequest);
       previousDeployTimeStamp = previousVersionTimeStamp.orElse(null);
     } else {
       executionLogCallback.saveExecutionLog(

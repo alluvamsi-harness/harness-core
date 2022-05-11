@@ -46,7 +46,8 @@ public class BuildJobEnvInfoBuilder {
       return initializeStepInfoBuilder.getInitializeStepInfoBuilder(
           stageElementConfig, infrastructure, ciExecutionArgs, steps, accountId);
     } else if (infrastructure.getType() == Type.VM) {
-      return vmInitializeStepUtils.getInitializeStepInfoBuilder(stageElementConfig, ciExecutionArgs, steps, accountId);
+      return vmInitializeStepUtils.getInitializeStepInfoBuilder(
+          stageElementConfig, infrastructure, ciExecutionArgs, steps, accountId);
     } else {
       throw new IllegalArgumentException("Input infrastructure type is not of type kubernetes or VM");
     }

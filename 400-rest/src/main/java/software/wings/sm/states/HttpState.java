@@ -77,6 +77,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.mixin.SweepingOutputStateMixin;
 import software.wings.stencils.DefaultValue;
 
@@ -141,6 +142,7 @@ public class HttpState extends State implements SweepingOutputStateMixin {
   @Inject protected transient DelegateService delegateService;
   @Inject @Transient InfrastructureMappingService infrastructureMappingService;
   @Inject @Transient FeatureFlagService featureFlagService;
+  @Inject private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Inject private SettingServiceHelper settingServiceHelper;
   @Inject private AccountServiceImpl accountService;
   @Transient @Inject KryoSerializer kryoSerializer;
@@ -474,9 +476,10 @@ public class HttpState extends State implements SweepingOutputStateMixin {
   }
 
   private String obtainEnvId(WorkflowStandardParams workflowStandardParams) {
-    return (workflowStandardParams == null || workflowStandardParams.getEnv() == null)
+    return (workflowStandardParams == null
+               || workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null)
         ? null
-        : workflowStandardParams.getEnv().getUuid();
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
   }
 
   protected TaskType getTaskType() {

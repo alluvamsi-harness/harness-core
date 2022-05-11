@@ -60,12 +60,17 @@ import software.wings.beans.JenkinsConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SpotInstConfig;
 import software.wings.beans.config.ArtifactSourceable;
+import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
+import software.wings.beans.infrastructure.instance.info.K8sPodInfo;
+import software.wings.beans.infrastructure.instance.info.KubernetesContainerInfo;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.yaml.GitCommandExecutionResponse;
 import software.wings.beans.yaml.GitCommitAndPushResult;
 import software.wings.beans.yaml.GitCommitRequest;
 import software.wings.beans.yaml.GitDiffRequest;
 import software.wings.beans.yaml.GitDiffResult;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateStackResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
@@ -80,6 +85,8 @@ import java.util.Set;
 @BreakDependencyOn("io.harness.capability.CapabilityRequirement")
 @BreakDependencyOn("io.harness.capability.CapabilitySubjectPermission")
 public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
+  private String cf = "helpers.ext.cloudformation.";
+
   @Override
   public void registerClasses(Set<Class> set) {
     set.add(CapabilityRequirement.class);
@@ -150,6 +157,11 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.SpotInstConfig", SpotInstConfig.class);
     w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
     w.put("sm.states.KubernetesSwapServiceSelectorsResponse", KubernetesSwapServiceSelectorsResponse.class);
+    w.put("beans.infrastructure.instance.info.EcsContainerInfo", EcsContainerInfo.class);
+    w.put("beans.infrastructure.instance.info.K8sPodInfo", K8sPodInfo.class);
+    w.put("beans.infrastructure.instance.info.KubernetesContainerInfo", KubernetesContainerInfo.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
+    w.put(cf + "response.CloudFormationCommandExecutionResponse", CloudFormationCommandExecutionResponse.class);
+    w.put(cf + "response.CloudFormationCreateStackResponse", CloudFormationCreateStackResponse.class);
   }
 }

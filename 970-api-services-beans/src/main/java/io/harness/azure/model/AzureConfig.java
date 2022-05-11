@@ -22,4 +22,5 @@ public class AzureConfig {
   char[] key;
   byte[] cert;
   private AzureEnvironmentType azureEnvironmentType;
+  @Builder.Default AzureAuthenticationType azureAuthenticationType = AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET;
 }

@@ -116,4 +116,16 @@ public class CdPartialYamlSchemaResource implements YamlSchemaResource {
     return ResponseDTO.newResponse(
         cdYamlSchemaService.getIndividualYamlSchema(entityType, orgIdentifier, projectIdentifier, scope));
   }
+
+  @GET
+  @Path("/entityYaml")
+  @ApiOperation(value = "Get Entity Yaml Schema", nickname = "getEntityYamlSchema", hidden = true)
+  public ResponseDTO<JsonNode> getEntityYamlSchema(
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @QueryParam(NGCommonEntityConstants.ENTITY_TYPE) EntityType entityType, Scope scope) {
+    return ResponseDTO.newResponse(
+        cdYamlSchemaService.getIndividualYamlSchema(entityType, orgIdentifier, projectIdentifier, scope));
+  }
 }

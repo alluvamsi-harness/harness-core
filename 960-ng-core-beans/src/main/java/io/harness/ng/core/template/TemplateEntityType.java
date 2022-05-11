@@ -47,7 +47,7 @@ public enum TemplateEntityType {
     this.yamlFieldKeys = yamlFieldKeys;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static TemplateEntityType getTemplateType(@JsonProperty("type") String yamlType) {
     for (TemplateEntityType value : TemplateEntityType.values()) {
       if (value.yamlType.equalsIgnoreCase(yamlType)) {

@@ -34,7 +34,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -75,7 +77,13 @@ public abstract class ServiceLevelIndicator
   private SLIMetricType sliMetricType;
   private SLIMissingDataType sliMissingDataType;
   private int version;
-
+  public Map<String, String> getVerificationTaskTags() {
+    Map<String, String> tags = new HashMap<>();
+    tags.put("sliIdentifier", identifier);
+    tags.put("healthSourceIdentifier", healthSourceIdentifier);
+    tags.put("monitoredServiceIdentifier", monitoredServiceIdentifier);
+    return tags;
+  }
   public abstract SLIMetricType getSLIMetricType();
 
   public abstract List<String> getMetricNames();

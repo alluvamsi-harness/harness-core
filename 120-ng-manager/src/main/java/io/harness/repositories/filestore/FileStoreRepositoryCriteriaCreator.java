@@ -7,16 +7,18 @@
 
 package io.harness.repositories.filestore;
 
+import static io.harness.NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
-import io.harness.filestore.NGFileType;
+import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.entities.NGFile.NGFiles;
+import io.harness.ng.core.filestore.NGFileType;
+import io.harness.ng.core.filestore.dto.FileFilterDTO;
 import io.harness.ng.core.mapper.TagMapper;
 import io.harness.ng.core.utils.URLDecoderUtility;
 
@@ -48,7 +50,7 @@ public class FileStoreRepositoryCriteriaCreator {
     searchTerm = URLDecoderUtility.getDecodedString(searchTerm);
 
     if (isNotEmpty(searchTerm)) {
-      criteria.and(NGFiles.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS);
+      criteria.and(NGFiles.name).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS);
     }
 
     if (filterProperties != null && filterProperties.getFileUsage() != null) {
@@ -61,6 +63,29 @@ public class FileStoreRepositoryCriteriaCreator {
 
     if (filterProperties != null && !isEmpty(filterProperties.getTags())) {
       criteria.and(NGFiles.tags).in(TagMapper.convertToList(filterProperties.getTags()));
+    }
+
+    return criteria;
+  }
+
+  public static Criteria createFilesAndFoldersFilterCriteria(Scope scope, FileFilterDTO fileFilterDTO) {
+    Criteria criteria = createScopeCriteria(scope);
+
+    if (fileFilterDTO == null) {
+      return criteria;
+    }
+
+    String searchTerm = URLDecoderUtility.getDecodedString(fileFilterDTO.getSearchTerm());
+
+    if (isNotEmpty(searchTerm)) {
+      criteria.orOperator(Criteria.where(NGFiles.name).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS),
+          Criteria.where(NGFiles.identifier).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS),
+          Criteria.where(NGFiles.tags + "." + NGTagKeys.key).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS),
+          Criteria.where(NGFiles.tags + "." + NGTagKeys.value).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS));
+    }
+
+    if (isNotEmpty(fileFilterDTO.getIdentifiers())) {
+      criteria.and(NGFiles.identifier).in(fileFilterDTO.getIdentifiers());
     }
 
     return criteria;

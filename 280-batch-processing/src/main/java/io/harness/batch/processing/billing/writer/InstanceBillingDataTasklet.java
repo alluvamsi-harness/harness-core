@@ -181,7 +181,7 @@ public class InstanceBillingDataTasklet implements Tasklet {
       if (null != instanceData.getUsageStopTime() && instanceData.getInstanceState() == InstanceState.RUNNING) {
         log.info("correcting instance state {} {} {} {}", instanceData.getInstanceId(),
             instanceData.getActiveInstanceIterator(), instanceData.getUsageStopTime(), instanceData.getInstanceState());
-        instanceDataDao.correctInstanceStateActiveIterationTime(instanceData);
+        // instanceDataDao.correctInstanceStateActiveIterationTime(instanceData);
       }
     });
 

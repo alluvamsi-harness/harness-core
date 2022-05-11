@@ -12,6 +12,7 @@ import io.harness.cvng.core.services.api.VerificationServiceSecretManager;
 import io.harness.cvng.core.services.impl.VerificationServiceSecretManagerImpl;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagModule;
+import io.harness.metrics.modules.MetricsModule;
 import io.harness.persistence.HPersistence;
 import io.harness.service.ContinuousVerificationServiceImpl;
 import io.harness.service.LearningEngineAnalysisServiceImpl;
@@ -87,6 +88,7 @@ public class VerificationServiceModule extends AbstractModule {
     install(FeatureFlagModule.getInstance());
     install(AlertModule.getInstance());
     install(PrimaryVersionManagerModule.getInstance());
+    install(new MetricsModule());
 
     bind(VerificationServiceConfiguration.class).toInstance(configuration);
     bind(HPersistence.class).to(WingsMongoPersistence.class);

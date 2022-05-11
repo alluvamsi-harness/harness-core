@@ -42,7 +42,6 @@ import io.harness.cvng.analysis.entities.TimeSeriesShortTermHistory;
 import io.harness.cvng.analysis.services.api.DeploymentTimeSeriesAnalysisService;
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
 import io.harness.cvng.analysis.services.api.TimeSeriesAnalysisService;
-import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
 import io.harness.cvng.beans.job.CanaryVerificationJobDTO;
@@ -54,14 +53,12 @@ import io.harness.cvng.core.beans.TimeSeriesMetricDefinition;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.MetricPack;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.entities.TimeSeriesRecord;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.statemachine.beans.AnalysisInput;
 import io.harness.cvng.verificationjob.entities.TestVerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJob;
@@ -120,10 +117,10 @@ public class TimeSeriesAnalysisServiceImplTest extends CvNextGenTestBase {
   @Before
   public void setUp() throws Exception {
     builderFactory = BuilderFactory.getDefault();
-    accountId = generateUuid();
+    accountId = builderFactory.getContext().getAccountId();
     instant = Instant.parse("2020-07-27T10:44:06.390Z");
-    projectIdentifier = generateUuid();
-    orgIdentifier = generateUuid();
+    projectIdentifier = builderFactory.getContext().getProjectIdentifier();
+    orgIdentifier = builderFactory.getContext().getOrgIdentifier();
     deploymentStartTimeMs = instant.toEpochMilli();
     CVConfig cvConfig = newCVConfig();
     cvConfigService.save(cvConfig);
@@ -137,8 +134,6 @@ public class TimeSeriesAnalysisServiceImplTest extends CvNextGenTestBase {
     timeSeriesLearningEngineTask.setPickedAt(Instant.now().plus(Duration.ofMinutes(2)));
     timeSeriesLearningEngineTask.setWindowSize(5);
     learningEngineTaskId = learningEngineTaskService.createLearningEngineTask(timeSeriesLearningEngineTask);
-    orgIdentifier = generateUuid();
-    projectIdentifier = generateUuid();
 
     FieldUtils.writeField(timeSeriesAnalysisService, "heatMapService", heatMapService, true);
   }
@@ -763,22 +758,9 @@ public class TimeSeriesAnalysisServiceImplTest extends CvNextGenTestBase {
   }
 
   private CVConfig newCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier("serviceInstanceIdentifier");
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(accountId);
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier(generateUuid());
-    cvConfig.setEnvIdentifier(generateUuid());
-    cvConfig.setOrgIdentifier(orgIdentifier);
-    cvConfig.setProjectIdentifier(projectIdentifier);
-    cvConfig.setIdentifier("groupId");
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName("productName");
-    return cvConfig;
+    return builderFactory.splunkCVConfigBuilder().build();
   }
+
   private VerificationJobInstance createVerificationJobInstance(VerificationJobType type) {
     VerificationJobDTO verificationJobDTO = newVerificationJobDTO(type);
     verificationJobService.create(accountId, verificationJobDTO);

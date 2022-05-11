@@ -129,6 +129,7 @@ import io.harness.rule.OwnerRule;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.ContainerServiceElement;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.DeploymentType;
 import software.wings.api.HelmDeployContextElement;
 import software.wings.api.HelmDeployStateExecutionData;
@@ -228,6 +229,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.k8s.K8sStateHelper;
 import software.wings.utils.ApplicationManifestUtils;
 import software.wings.utils.WingsTestConstants;
@@ -252,6 +254,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.mongodb.morphia.Key;
 
 @OwnedBy(CDP)
@@ -316,10 +319,11 @@ public class HelmDeployStateTest extends CategoryTest {
   @Mock private GitFileConfigHelperService gitFileConfigHelperService;
   @Mock private SubdomainUrlHelperIntfc subdomainUrlHelper;
   @Mock private LogService logService;
-  @Mock private K8sStateHelper k8sStateHelper;
   @Mock private FeatureService featureService;
   @Mock private StateExecutionService stateExecutionService;
   @Mock private TemplateExpressionProcessor templateExpressionProcessor;
+
+  @Spy @InjectMocks private K8sStateHelper k8sStateHelper;
 
   @InjectMocks HelmDeployState helmDeployState = new HelmDeployState("helmDeployState");
   @InjectMocks HelmRollbackState helmRollbackState = new HelmRollbackState("helmRollbackState");
@@ -455,9 +459,17 @@ public class HelmDeployStateTest extends CategoryTest {
         .thenAnswer(i -> i.getArguments()[0]);
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
 
-    on(workflowStandardParams).set("appService", appService);
-    on(workflowStandardParams).set("environmentService", environmentService);
-    on(workflowStandardParams).set("featureFlagService", featureFlagService);
+    WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService =
+        new WorkflowStandardParamsExtensionService(
+            appService, null, artifactService, environmentService, artifactStreamServiceBindingService, null);
+
+    on(helmDeployState).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(helmRollbackState).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(k8sStateHelper).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+
+    ContextElementParamMapperFactory contextElementParamMapperFactory = new ContextElementParamMapperFactory(
+        subdomainUrlHelper, workflowExecutionService, artifactService, artifactStreamService,
+        applicationManifestService, featureFlagService, null, workflowStandardParamsExtensionService);
 
     on(context).set("infrastructureMappingService", infrastructureMappingService);
     on(context).set("infrastructureDefinitionService", infrastructureDefinitionService);
@@ -468,7 +480,9 @@ public class HelmDeployStateTest extends CategoryTest {
     on(context).set("featureFlagService", featureFlagService);
     on(context).set("stateExecutionInstance", stateExecutionInstance);
     on(context).set("sweepingOutputService", sweepingOutputService);
-    on(workflowStandardParams).set("subdomainUrlHelper", subdomainUrlHelper);
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
+
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(subdomainUrlHelper.getPortalBaseUrl(any())).thenReturn("baseUrl");
   }
@@ -1020,8 +1034,6 @@ public class HelmDeployStateTest extends CategoryTest {
         HelmChartSpecification.builder().chartName(CHART_NAME).chartUrl(CHART_URL).chartVersion(CHART_VERSION).build())
         .when(serviceResourceService)
         .getHelmChartSpecification(APP_ID, SERVICE_ID);
-    when(k8sStateHelper.fetchContainerInfrastructureMapping(context))
-        .thenReturn(DirectKubernetesInfrastructureMapping.builder().build());
 
     testHandleAsyncResponseForHelmFetchTaskWithValuesInGit();
     testHandleAsyncResponseForHelmFetchTaskWithNoValuesInGit();
@@ -1265,8 +1277,6 @@ public class HelmDeployStateTest extends CategoryTest {
                         .containerServiceParams(containerServiceParams)
                         .isBindTaskFeatureSet(true)
                         .build());
-    when(k8sStateHelper.fetchContainerInfrastructureMapping(context))
-        .thenReturn(DirectKubernetesInfrastructureMapping.builder().build());
 
     ExecutionResponse executionResponse = helmDeployState.execute(context);
 
@@ -1288,8 +1298,6 @@ public class HelmDeployStateTest extends CategoryTest {
     when(applicationManifestUtils.isValuesInGit(appManifestMap)).thenReturn(true);
     when(applicationManifestUtils.createGitFetchFilesTaskParams(context, app, appManifestMap))
         .thenReturn(GitFetchFilesTaskParams.builder().isBindTaskFeatureSet(true).build());
-    when(k8sStateHelper.fetchContainerInfrastructureMapping(context))
-        .thenReturn(DirectKubernetesInfrastructureMapping.builder().build());
 
     ExecutionResponse executionResponse = helmDeployState.execute(context);
     verify(applicationManifestUtils, times(1)).populateRemoteGitConfigFilePathList(context, appManifestMap);
@@ -2002,9 +2010,6 @@ public class HelmDeployStateTest extends CategoryTest {
     doReturn(appManifest)
         .when(applicationManifestService)
         .getAppManifest(app.getUuid(), null, serviceElement.getUuid(), AppManifestKind.K8S_MANIFEST);
-    doReturn(DirectKubernetesInfrastructureMapping.builder().build())
-        .when(k8sStateHelper)
-        .fetchContainerInfrastructureMapping(context);
     doReturn(true).when(featureFlagService).isEnabled(FeatureName.CUSTOM_MANIFEST, null);
     doReturn(valuesMap)
         .when(applicationManifestUtils)

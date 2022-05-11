@@ -15,9 +15,12 @@ import io.harness.eraro.Level;
 import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperDTO;
 
+import lombok.Setter;
+
 @OwnedBy(HarnessTeam.PIPELINE)
 public class InvalidYamlException extends WingsException {
   private static final String MESSAGE_ARG = "message";
+  @Setter String yaml;
 
   public InvalidYamlException(String message, YamlSchemaErrorWrapperDTO errorResponseDTO) {
     super(message, null, SCHEMA_VALIDATION_FAILED, Level.ERROR, null, null, errorResponseDTO);
@@ -27,5 +30,12 @@ public class InvalidYamlException extends WingsException {
   public InvalidYamlException(String message, Throwable cause, YamlSchemaErrorWrapperDTO errorResponseDTO) {
     super(message, cause, SCHEMA_VALIDATION_FAILED, Level.ERROR, null, null, errorResponseDTO);
     super.param(MESSAGE_ARG, message);
+  }
+
+  public InvalidYamlException(
+      String message, Throwable cause, YamlSchemaErrorWrapperDTO errorResponseDTO, String invalidYaml) {
+    super(message, cause, SCHEMA_VALIDATION_FAILED, Level.ERROR, null, null, errorResponseDTO);
+    super.param(MESSAGE_ARG, message);
+    yaml = invalidYaml;
   }
 }

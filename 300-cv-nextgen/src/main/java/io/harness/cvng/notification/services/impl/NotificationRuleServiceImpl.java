@@ -30,9 +30,7 @@ import io.harness.utils.PageUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,34 +53,6 @@ public class NotificationRuleServiceImpl implements NotificationRuleService {
             .getEntity(projectParams, notificationRuleDTO);
     hPersistence.save(notificationRule);
     return getNotificationRuleResponse(projectParams, notificationRuleDTO.getIdentifier());
-  }
-
-  @Override
-  public List<NotificationRuleRefDTO> create(
-      ProjectParams projectParams, List<NotificationRuleDTO> notificationRuleDTOList) {
-    if (!isNotEmpty(notificationRuleDTOList)) {
-      return Collections.emptyList();
-    }
-    notificationRuleDTOList.forEach(notificationRuleDTO -> validateCreate(projectParams, notificationRuleDTO));
-    NotificationRuleConditionTransformer notificationRuleConditionTransformer =
-        notificationRuleTypeNotificationRuleConditionTransformerMap.get(notificationRuleDTOList.get(0).getType());
-
-    List<NotificationRule> notificationRules = new ArrayList<>();
-    List<NotificationRuleRefDTO> notificationRuleRefs = new ArrayList<>();
-    notificationRuleDTOList.forEach(notificationRuleDTO -> {
-      NotificationRule notificationRule =
-          notificationRuleConditionTransformer.getEntity(projectParams, notificationRuleDTO);
-      notificationRule.setAccountId(projectParams.getAccountIdentifier());
-      notificationRule.setOrgIdentifier(projectParams.getOrgIdentifier());
-      notificationRule.setProjectIdentifier(projectParams.getProjectIdentifier());
-      notificationRules.add(notificationRule);
-      notificationRuleRefs.add(NotificationRuleRefDTO.builder()
-                                   .notificationRuleRef(notificationRule.getIdentifier())
-                                   .enabled(notificationRule.isEnabled())
-                                   .build());
-    });
-    hPersistence.save(notificationRules);
-    return notificationRuleRefs;
   }
 
   @Override
@@ -128,28 +98,6 @@ public class NotificationRuleServiceImpl implements NotificationRuleService {
     updatableEntity.setUpdateOperations(updateOperations, newNotificationRule);
     hPersistence.update(notificationRule, updateOperations);
     return getNotificationRuleResponse(projectParams, notificationRuleDTO.getIdentifier());
-  }
-
-  @Override
-  public List<NotificationRuleRef> update(
-      ProjectParams projectParams, List<NotificationRuleRefDTO> notificationRuleRefDTOs) {
-    if (!isNotEmpty(notificationRuleRefDTOs)) {
-      return Collections.emptyList();
-    }
-    List<NotificationRuleRef> notificationRuleRefs = new ArrayList<>();
-    for (NotificationRuleRefDTO notificationRuleRefDTO : notificationRuleRefDTOs) {
-      NotificationRule notificationRule = getEntity(projectParams, notificationRuleRefDTO.getNotificationRuleRef());
-      NotificationRuleDTO notificationRuleDTO =
-          notificationRuleTypeNotificationRuleConditionTransformerMap.get(notificationRule.getType())
-              .getDto(notificationRule);
-      notificationRuleDTO.setEnabled(notificationRuleRefDTO.isEnabled());
-      update(projectParams, notificationRuleRefDTO.getNotificationRuleRef(), notificationRuleDTO);
-      notificationRuleRefs.add(NotificationRuleRef.builder()
-                                   .notificationRuleRef(notificationRuleRefDTO.getNotificationRuleRef())
-                                   .enabled(notificationRuleRefDTO.isEnabled())
-                                   .build());
-    }
-    return notificationRuleRefs;
   }
 
   @Override
@@ -207,19 +155,23 @@ public class NotificationRuleServiceImpl implements NotificationRuleService {
   }
 
   @Override
-  public List<NotificationRuleRefDTO> getNotificationRuleRefs(ProjectParams projectParams, List<String> identifiers) {
-    if (!isNotEmpty(identifiers)) {
-      return Collections.emptyList();
-    }
-    List<NotificationRule> notificationRules = getEntities(projectParams, identifiers);
-    if (notificationRules.size() == 0) {
-      return Collections.emptyList();
-    }
-    return notificationRules.stream()
-        .map(notificationRule
+  public List<NotificationRuleRef> getNotificationRuleRefs(List<NotificationRuleRefDTO> notificationRuleRefDTOS) {
+    return notificationRuleRefDTOS.stream()
+        .map(notificationRuleRefDTO
+            -> NotificationRuleRef.builder()
+                   .notificationRuleRef(notificationRuleRefDTO.getNotificationRuleRef())
+                   .enabled(notificationRuleRefDTO.isEnabled())
+                   .build())
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<NotificationRuleRefDTO> getNotificationRuleRefDTOs(List<NotificationRuleRef> notificationRuleRefs) {
+    return notificationRuleRefs.stream()
+        .map(notificationRuleRef
             -> NotificationRuleRefDTO.builder()
-                   .notificationRuleRef(notificationRule.getIdentifier())
-                   .enabled(notificationRule.isEnabled())
+                   .notificationRuleRef(notificationRuleRef.getNotificationRuleRef())
+                   .enabled(notificationRuleRef.isEnabled())
                    .build())
         .collect(Collectors.toList());
   }

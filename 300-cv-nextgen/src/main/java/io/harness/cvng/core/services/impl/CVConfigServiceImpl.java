@@ -61,7 +61,7 @@ public class CVConfigServiceImpl implements CVConfigService {
     cvConfig.validate();
     hPersistence.save(cvConfig);
     verificationTaskService.createLiveMonitoringVerificationTask(
-        cvConfig.getAccountId(), cvConfig.getUuid(), cvConfig.getType());
+        cvConfig.getAccountId(), cvConfig.getUuid(), cvConfig.getVerificationTaskTags());
     return cvConfig;
   }
 

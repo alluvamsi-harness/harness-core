@@ -40,7 +40,7 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
   @Override
   public AzureRepoConnector toConnectorEntity(AzureRepoConnectorDTO configDTO) {
     if (configDTO == null) {
-      throw new InvalidRequestException("Configuration DTO has null value");
+      throw new InvalidRequestException("AzureRepo Config DTO is not found");
     }
     if (configDTO.getAuthentication() == null) {
       throw new InvalidRequestException("No Authentication Details Found in the connector");
@@ -63,11 +63,15 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
         .authenticationDetails(azureRepoAuthentication)
         .azureRepoApiAccess(azureRepoApiAccess)
         .url(configDTO.getUrl())
+        .validationProject(configDTO.getValidationProject())
         .validationRepo(configDTO.getValidationRepo())
         .build();
   }
   public AzureRepoAuthentication buildAuthenticationDetails(
       GitAuthType gitAuthType, AzureRepoCredentialsDTO credentialsDTO) {
+    if (gitAuthType == null) {
+      throw new InvalidRequestException("Auth Type not found");
+    }
     switch (gitAuthType) {
       case SSH:
         final AzureRepoSshCredentialsDTO sshCredentialsDTO = (AzureRepoSshCredentialsDTO) credentialsDTO;
@@ -79,13 +83,15 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
         final AzureRepoHttpAuthenticationType type = httpCredentialsDTO.getType();
         return AzureRepoHttpAuthentication.builder().type(type).auth(getHttpAuth(type, httpCredentialsDTO)).build();
       default:
-        throw new UnknownEnumTypeException(
-            "AzureRepo Auth Type", gitAuthType == null ? null : gitAuthType.getDisplayName());
+        throw new UnknownEnumTypeException("AzureRepo Auth Type ", gitAuthType.getDisplayName());
     }
   }
 
   private AzureRepoHttpAuth getHttpAuth(
       AzureRepoHttpAuthenticationType type, AzureRepoHttpCredentialsDTO httpCredentialsDTO) {
+    if (type == null) {
+      throw new InvalidRequestException("AzureRepo Http Auth Type not found");
+    }
     switch (type) {
       case USERNAME_AND_TOKEN:
         final AzureRepoUsernameTokenDTO azureRepoUsernameTokenDTO =
@@ -97,7 +103,7 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
             .usernameRef(usernameReference)
             .build();
       default:
-        throw new UnknownEnumTypeException("AzureRepo Http Auth Type", type == null ? null : type.getDisplayName());
+        throw new UnknownEnumTypeException("AzureRepo Http Auth Type ", type.getDisplayName());
     }
   }
 
@@ -110,6 +116,9 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
   }
 
   private AzureRepoApiAccess getApiAcessByType(AzureRepoApiAccessSpecDTO spec, AzureRepoApiAccessType apiAccessType) {
+    if (apiAccessType == null) {
+      throw new InvalidRequestException("AzureRepo Api Access Type not found");
+    }
     switch (apiAccessType) {
       case TOKEN:
         final AzureRepoTokenSpecDTO tokenSpec = (AzureRepoTokenSpecDTO) spec;
@@ -117,8 +126,7 @@ public class AzureRepoDTOToEntity implements ConnectorDTOToEntityMapper<AzureRep
             .tokenRef(SecretRefHelper.getSecretConfigString(tokenSpec.getTokenRef()))
             .build();
       default:
-        throw new UnknownEnumTypeException(
-            "AzureRepo Api Access Type", apiAccessType == null ? null : apiAccessType.getDisplayName());
+        throw new UnknownEnumTypeException("AzureRepo Api Access Type ", apiAccessType.getDisplayName());
     }
   }
 

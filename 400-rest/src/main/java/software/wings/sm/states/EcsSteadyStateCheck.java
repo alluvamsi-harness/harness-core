@@ -70,6 +70,7 @@ import software.wings.sm.ExecutionResponse.ExecutionResponseBuilder;
 import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.State;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.stencils.DefaultValue;
 
 import com.github.reinert.jjschema.Attributes;
@@ -94,6 +95,7 @@ public class EcsSteadyStateCheck extends State {
   @Inject private transient InfrastructureMappingService infrastructureMappingService;
   @Inject private transient FeatureFlagService featureFlagService;
   @Inject private transient ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
+  @Inject private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Attributes(title = "Ecs Service") @Getter @Setter private String ecsServiceName;
 
@@ -109,7 +111,7 @@ public class EcsSteadyStateCheck extends State {
     try {
       WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
       Application app = appService.get(context.getAppId());
-      Environment env = workflowStandardParams.getEnv();
+      Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
       InfrastructureMapping infrastructureMapping =
           infrastructureMappingService.get(app.getUuid(), context.fetchInfraMappingId());
       if (!(infrastructureMapping instanceof EcsInfrastructureMapping)) {

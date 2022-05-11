@@ -24,6 +24,7 @@ import io.harness.ccm.utils.LogAccountIdentifier;
 import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewType;
 import io.harness.ccm.views.graphql.QLCEView;
+import io.harness.ccm.views.helper.AwsAccountFieldHelper;
 import io.harness.ccm.views.service.CEReportScheduleService;
 import io.harness.ccm.views.service.CEViewService;
 import io.harness.ccm.views.service.ViewCustomFieldService;
@@ -87,11 +88,13 @@ public class PerspectiveResource {
   private final BudgetCostService budgetCostService;
   private final BudgetService budgetService;
   private final CCMNotificationService notificationService;
+  private final AwsAccountFieldHelper awsAccountFieldHelper;
 
   @Inject
   public PerspectiveResource(CEViewService ceViewService, CEReportScheduleService ceReportScheduleService,
       ViewCustomFieldService viewCustomFieldService, BigQueryService bigQueryService, BigQueryHelper bigQueryHelper,
-      BudgetCostService budgetCostService, BudgetService budgetService, CCMNotificationService notificationService) {
+      BudgetCostService budgetCostService, BudgetService budgetService, CCMNotificationService notificationService,
+      AwsAccountFieldHelper awsAccountFieldHelper) {
     this.ceViewService = ceViewService;
     this.ceReportScheduleService = ceReportScheduleService;
     this.viewCustomFieldService = viewCustomFieldService;
@@ -100,6 +103,7 @@ public class PerspectiveResource {
     this.budgetCostService = budgetCostService;
     this.budgetService = budgetService;
     this.notificationService = notificationService;
+    this.awsAccountFieldHelper = awsAccountFieldHelper;
   }
 
   @GET
@@ -265,7 +269,9 @@ public class PerspectiveResource {
           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
       @QueryParam("perspectiveId") @Parameter(required = true,
           description = "Unique identifier for the Perspective") @NotBlank @Valid String perspectiveId) {
-    return ResponseDTO.newResponse(ceViewService.get(perspectiveId));
+    CEView ceView = ceViewService.get(perspectiveId);
+    awsAccountFieldHelper.mergeAwsAccountNameInAccountRules(ceView.getViewRules(), accountId);
+    return ResponseDTO.newResponse(ceView);
   }
 
   @GET

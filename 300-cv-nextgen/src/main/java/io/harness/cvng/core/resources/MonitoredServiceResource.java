@@ -89,6 +89,17 @@ public class MonitoredServiceResource {
   public static final String DELETE_PERMISSION = "chi_monitoredservice_delete";
 
   @POST
+  @Path("/yaml")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "saves monitored service from yaml or template", nickname = "saveMonitoredServiceFromYaml")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = EDIT_PERMISSION)
+  public RestResponse<MonitoredServiceResponse> saveMonitoredServiceFromYaml(
+      @ApiParam(required = true) @NotNull @BeanParam ProjectParams projectParam, @NotNull @Valid @Body String yaml) {
+    return new RestResponse<>(monitoredServiceService.createFromYaml(projectParam, yaml));
+  }
+
+  @POST
   @Timed
   @ExceptionMetered
   @ApiOperation(value = "saves monitored service data", nickname = "saveMonitoredService")
@@ -133,6 +144,19 @@ public class MonitoredServiceResource {
         String.format(
             "Identifier %s does not match with path identifier %s", monitoredServiceDTO.getIdentifier(), identifier));
     return new RestResponse<>(monitoredServiceService.update(accountId, monitoredServiceDTO));
+  }
+
+  @PUT
+  @Path("/{identifier}/yaml")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "update monitored service from yaml or template", nickname = "updateMonitoredServiceFromYaml")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = EDIT_PERMISSION)
+  public RestResponse<MonitoredServiceResponse> updateMonitoredServiceFromYaml(
+      @ApiParam(required = true) @NotNull @BeanParam ProjectParams projectParam,
+      @ApiParam(required = true) @NotNull @PathParam("identifier") String identifier,
+      @NotNull @Valid @Body String yaml) {
+    return new RestResponse<>(monitoredServiceService.updateFromYaml(projectParam, identifier, yaml));
   }
 
   @PUT

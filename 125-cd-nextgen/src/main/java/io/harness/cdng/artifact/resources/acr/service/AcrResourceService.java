@@ -10,8 +10,8 @@ package io.harness.cdng.artifact.resources.acr.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.delegate.beans.azure.AcrRegistriesDTO;
-import io.harness.delegate.beans.azure.AcrRepositoriesDTO;
+import io.harness.cdng.artifact.resources.acr.dtos.AcrRegistriesDTO;
+import io.harness.cdng.artifact.resources.acr.dtos.AcrRepositoriesDTO;
 import io.harness.delegate.beans.azure.AcrResponseDTO;
 
 @OwnedBy(HarnessTeam.CDP)

@@ -42,6 +42,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.NGAccess;
+import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
@@ -54,6 +55,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -115,7 +117,7 @@ public class AzureHelperService {
   }
 
   public DelegateResponseData getResponseData(
-      BaseNGAccess ngAccess, ExecutionCapabilityDemander executionCapabilityDemander) {
+      Ambiance ambiance, BaseNGAccess ngAccess, ExecutionCapabilityDemander executionCapabilityDemander) {
     TaskParameters taskParameters = null;
     String taskType = null;
     Collection<? extends String> taskSelectors = null;
@@ -149,6 +151,7 @@ public class AzureHelperService {
             .taskParameters(taskParameters)
             .taskType(taskType)
             .taskSelectors(taskSelectors)
+            .logStreamingAbstractions(createLogStreamingAbstractions(ngAccess, ambiance))
             .build();
 
     return delegateGrpcClientWrapper.executeSyncTask(delegateTaskRequest);
@@ -174,7 +177,13 @@ public class AzureHelperService {
 
   public DelegateResponseData executeSyncTask(
       ExecutionCapabilityDemander params, BaseNGAccess ngAccess, String ifFailedMessage) {
-    DelegateResponseData responseData = getResponseData(ngAccess, params);
+    DelegateResponseData responseData = getResponseData(null, ngAccess, params);
+    return getTaskExecutionResponse(responseData, ifFailedMessage);
+  }
+
+  public DelegateResponseData executeSyncTask(
+      Ambiance ambiance, ExecutionCapabilityDemander params, BaseNGAccess ngAccess, String ifFailedMessage) {
+    DelegateResponseData responseData = getResponseData(ambiance, ngAccess, params);
     return getTaskExecutionResponse(responseData, ifFailedMessage);
   }
 
@@ -185,5 +194,22 @@ public class AzureHelperService {
             .map(delegateResponse -> (AcrArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
     return AcrResourceMapper.toAcrResponse(acrArtifactDelegateResponses);
+  }
+
+  private LinkedHashMap<String, String> createLogStreamingAbstractions(BaseNGAccess ngAccess, Ambiance ambiance) {
+    LinkedHashMap<String, String> logStreamingAbstractions = new LinkedHashMap<>();
+    logStreamingAbstractions.put(SetupAbstractionKeys.accountId, ngAccess.getAccountIdentifier());
+    logStreamingAbstractions.put(SetupAbstractionKeys.orgIdentifier, ngAccess.getOrgIdentifier());
+    logStreamingAbstractions.put(SetupAbstractionKeys.projectIdentifier, ngAccess.getProjectIdentifier());
+    if (ambiance != null) {
+      logStreamingAbstractions.put(SetupAbstractionKeys.pipelineId, ambiance.getMetadata().getPipelineIdentifier());
+      logStreamingAbstractions.put(
+          SetupAbstractionKeys.runSequence, String.valueOf(ambiance.getMetadata().getRunSequence()));
+
+      for (int i = 0; i < ambiance.getLevelsList().size(); i++) {
+        logStreamingAbstractions.put("level" + i, ambiance.getLevels(i).getIdentifier());
+      }
+    }
+    return logStreamingAbstractions;
   }
 }

@@ -171,7 +171,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -2446,6 +2446,15 @@ public class WorkflowServiceHelper {
         }
 
         phase.setTemplateExpressions(phaseTemplateExpressions);
+
+        // CDS-36932
+        // When the environment change, we clear the infrastructure definitions to force the user
+        // to review every phase and manually fix it. That behavior is a feature and not a bug.
+        if (envChanged) {
+          unsetInfraMappingDetails(phase);
+          unsetInfraDefinitionsDetails(phase);
+          resetNodeSelection(phase);
+        }
       }
     }
     Map<String, WorkflowPhase> rollbackWorkflowPhaseIdMap = canaryOrchestrationWorkflow.getRollbackWorkflowPhaseIdMap();
@@ -2453,6 +2462,7 @@ public class WorkflowServiceHelper {
       rollbackWorkflowPhaseIdMap.values().forEach(phase -> {
         if (envChanged) {
           unsetInfraMappingDetails(phase);
+          unsetInfraDefinitionsDetails(phase);
           resetNodeSelection(phase);
         }
         if (infraChanged) {
@@ -2766,14 +2776,12 @@ public class WorkflowServiceHelper {
     phase.setComputeProviderId(null);
     phase.setInfraMappingId(null);
     phase.setInfraMappingName(null);
-    // phase.setDeploymentType(null);
   }
 
   public void unsetInfraDefinitionsDetails(WorkflowPhase phase) {
     phase.setComputeProviderId(null);
     phase.setInfraDefinitionId(null);
     phase.setInfraDefinitionName(null);
-    // phase.setDeploymentType(null);
   }
 
   public boolean isExecutionForK8sV2Service(WorkflowExecution workflowExecution) {

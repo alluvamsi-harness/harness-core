@@ -50,6 +50,8 @@ public class AzureRepoConnectorDTO extends ConnectorConfigDTO implements ScmConn
   @Schema(description = "Account | Repository connector type")
   GitConnectionType connectionType;
   @NotBlank @NotNull @Schema(description = "SSH | HTTP URL based on type of connection") String url;
+  @Schema(description = "The project to validate AzureRepo credentials. Only valid for Account type connector")
+  String validationProject;
   @Schema(description = "The repo to validate AzureRepo credentials. Only valid for Account type connector")
   String validationRepo;
   @Valid
@@ -62,11 +64,12 @@ public class AzureRepoConnectorDTO extends ConnectorConfigDTO implements ScmConn
   @Schema(description = "Selected Connectivity Modes") Set<String> delegateSelectors;
 
   @Builder
-  public AzureRepoConnectorDTO(GitConnectionType connectionType, String url, String validationRepo,
-      AzureRepoAuthenticationDTO authentication, AzureRepoApiAccessDTO apiAccess, Set<String> delegateSelectors,
-      boolean executeOnDelegate) {
+  public AzureRepoConnectorDTO(GitConnectionType connectionType, String url, String validationProject,
+      String validationRepo, AzureRepoAuthenticationDTO authentication, AzureRepoApiAccessDTO apiAccess,
+      Set<String> delegateSelectors, boolean executeOnDelegate) {
     this.connectionType = connectionType;
     this.url = url;
+    this.validationProject = validationProject;
     this.validationRepo = validationRepo;
     this.authentication = authentication;
     this.apiAccess = apiAccess;

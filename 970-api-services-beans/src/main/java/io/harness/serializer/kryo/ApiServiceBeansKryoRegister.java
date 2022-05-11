@@ -32,6 +32,7 @@ import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
 import io.harness.deployment.InstanceDetails;
 import io.harness.ecs.EcsContainerDetails;
 import io.harness.exception.HelmClientException;
+import io.harness.exception.SecretManagementDelegateException;
 import io.harness.git.UsernamePasswordAuthRequest;
 import io.harness.git.model.AuthInfo;
 import io.harness.git.model.ChangeType;
@@ -110,6 +111,7 @@ import io.harness.servicenow.ServiceNowFieldNG;
 import io.harness.servicenow.ServiceNowFieldSchemaNG;
 import io.harness.servicenow.ServiceNowFieldTypeNG;
 import io.harness.servicenow.ServiceNowFieldValueNG;
+import io.harness.servicenow.ServiceNowTemplate;
 import io.harness.servicenow.ServiceNowTicketNG;
 import io.harness.shell.AccessType;
 import io.harness.shell.AuthenticationScheme;
@@ -125,6 +127,7 @@ import software.wings.beans.AmazonClientSDKDefaultBackoffStrategy;
 import software.wings.beans.AwsCrossAccountAttributes;
 import software.wings.beans.AzureImageDefinition;
 import software.wings.beans.AzureImageGallery;
+import software.wings.beans.AzureKubernetesCluster;
 import software.wings.beans.ExecutionCredential;
 import software.wings.beans.GcpKubernetesCluster;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsPackage;
@@ -409,5 +412,8 @@ public class ApiServiceBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactFileMetadata.class, 97112);
     kryo.register(GcpKubernetesCluster.class, 5537);
     kryo.register(KustomizeConfig.class, 7323);
+    kryo.register(AzureKubernetesCluster.class, 5538);
+    kryo.register(SecretManagementDelegateException.class, 5585);
+    kryo.register(ServiceNowTemplate.class, 97113);
   }
 }

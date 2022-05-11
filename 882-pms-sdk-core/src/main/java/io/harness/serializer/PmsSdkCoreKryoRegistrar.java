@@ -10,6 +10,7 @@ package io.harness.serializer;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.async.AsyncResponseCallback;
 import io.harness.pms.sdk.core.adviser.abort.OnAbortAdviserParameters;
 import io.harness.pms.sdk.core.adviser.fail.OnFailAdviserParameters;
 import io.harness.pms.sdk.core.adviser.ignore.IgnoreAdviserParameters;
@@ -20,6 +21,7 @@ import io.harness.pms.sdk.core.adviser.success.OnSuccessAdviserParameters;
 import io.harness.pms.sdk.core.data.ExecutionSweepingOutput;
 import io.harness.pms.sdk.core.execution.AsyncSdkProgressCallback;
 import io.harness.pms.sdk.core.execution.AsyncSdkResumeCallback;
+import io.harness.pms.sdk.core.execution.AsyncSdkSingleCallback;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StatusNotifyResponseData;
@@ -50,5 +52,7 @@ public class PmsSdkCoreKryoRegistrar implements KryoRegistrar {
     kryo.register(ExecutionSweepingOutput.class, 88202);
     kryo.register(AsyncSdkResumeCallback.class, 88204);
     kryo.register(AsyncSdkProgressCallback.class, 88205);
+    kryo.register(AsyncSdkSingleCallback.class, 88206);
+    kryo.register(AsyncResponseCallback.class, 88407);
   }
 }

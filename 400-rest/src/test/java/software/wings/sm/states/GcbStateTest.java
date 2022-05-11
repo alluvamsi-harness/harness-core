@@ -82,6 +82,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.GcbState.GcbDelegateResponse;
 import software.wings.sm.states.gcbconfigs.GcbOptions;
 import software.wings.sm.states.gcbconfigs.GcbRemoteBuildSpec;
@@ -123,6 +124,7 @@ public class GcbStateTest extends CategoryTest {
   @Mock private SettingsService settingService;
   @Mock private InfrastructureMappingService infrastructureMappingService;
   @Mock private StateExecutionServiceImpl stateExecutionService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private GcbState state = spy(new GcbState("gcb"));
 

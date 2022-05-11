@@ -60,6 +60,7 @@ import io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceConnect
 import io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceSettingConstants;
 import io.harness.delegate.beans.azure.appservicesettings.AzureAppServiceSettingDTO;
 import io.harness.delegate.beans.azure.registry.AzureRegistryType;
+import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
@@ -249,9 +250,9 @@ import io.harness.delegate.exception.TaskNGDataException;
 import io.harness.delegate.task.ListNotifyResponseData;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryBaseArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
@@ -385,6 +386,7 @@ import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.delegate.task.http.HttpTaskParametersNg;
 import io.harness.delegate.task.jira.JiraTaskNGParameters;
 import io.harness.delegate.task.jira.JiraTaskNGResponse;
+import io.harness.delegate.task.k8s.AzureK8sInfraDelegateConfig;
 import io.harness.delegate.task.k8s.DeleteResourcesType;
 import io.harness.delegate.task.k8s.DirectK8sInfraDelegateConfig;
 import io.harness.delegate.task.k8s.GcpK8sInfraDelegateConfig;
@@ -534,6 +536,7 @@ import io.harness.secretmanagerclient.ValueType;
 import io.harness.secretmanagerclient.WinRmAuthScheme;
 import io.harness.serializer.KryoRegistrar;
 
+import software.wings.api.terraform.TfVarGitSource;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.EcrConfig;
 import software.wings.beans.GcpConfig;
@@ -549,11 +552,14 @@ import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
 import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.JenkinsTaskParams;
+import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
+import software.wings.beans.infrastructure.instance.info.KubernetesContainerInfo;
 import software.wings.beans.s3.FetchS3FilesCommandParams;
 import software.wings.beans.s3.FetchS3FilesExecutionResponse;
 import software.wings.beans.s3.S3Bucket;
 import software.wings.beans.s3.S3FetchFileResult;
 import software.wings.beans.s3.S3File;
+import software.wings.beans.s3.S3FileRequest;
 import software.wings.beans.servicenow.ServiceNowFields;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
@@ -573,7 +579,17 @@ import software.wings.beans.yaml.GitFileChange;
 import software.wings.beans.yaml.GitFilesBetweenCommitsRequest;
 import software.wings.beans.yaml.GitPushResult;
 import software.wings.delegatetasks.servicenow.ServiceNowAction;
+import software.wings.helpers.ext.cloudformation.request.CloudFormationCommandRequest;
+import software.wings.helpers.ext.cloudformation.request.CloudFormationCreateStackRequest;
+import software.wings.helpers.ext.cloudformation.request.CloudFormationDeleteStackRequest;
+import software.wings.helpers.ext.cloudformation.request.CloudFormationListStacksRequest;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateStackResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationListStacksResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationRollbackInfo;
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
+import software.wings.helpers.ext.cloudformation.response.StackSummaryInfo;
 import software.wings.helpers.ext.ecs.request.EcsCommandRequest;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandResponse;
@@ -592,6 +608,7 @@ import software.wings.service.impl.appdynamics.AppdynamicsTier;
 import software.wings.service.impl.aws.model.AwsAmiPreDeploymentData;
 import software.wings.service.impl.aws.model.AwsAsgGetRunningCountData;
 import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
+import software.wings.service.impl.aws.model.AwsLambdaFunctionParams;
 import software.wings.service.impl.aws.model.AwsLambdaVpcConfig;
 import software.wings.service.impl.aws.model.AwsSecurityGroup;
 import software.wings.service.impl.aws.model.AwsSubnet;
@@ -652,6 +669,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(GitPushResult.class, 5210);
     kryo.register(GitPushResult.RefUpdate.class, 5215);
     kryo.register(JenkinsTaskParams.class, 5234);
+    kryo.register(AwsLambdaFunctionParams.class, 5449);
     kryo.register(GitFetchFilesRequest.class, 5470);
     kryo.register(GitFetchFilesResult.class, 5471);
     kryo.register(JenkinsSubTaskType.class, 5515);
@@ -667,6 +685,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(FetchS3FilesExecutionResponse.class, 8068);
     kryo.register(FetchS3FilesCommandParams.class, 8069);
     kryo.register(FetchS3FilesExecutionResponse.FetchS3FilesCommandStatus.class, 8070);
+    kryo.register(TfVarGitSource.class, 8097);
     kryo.register(GitConfig.ProviderType.class, 40022);
     kryo.register(AlwaysFalseValidationCapability.class, 19036);
     kryo.register(AppDynamicsConnectionTaskParams.class, 19107);
@@ -883,8 +902,8 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HttpStepResponse.class, 19439);
     kryo.register(NexusArtifactDelegateRequest.class, 19448);
     kryo.register(NexusArtifactDelegateResponse.class, 19456);
-    kryo.register(ArtifactoryDockerArtifactDelegateRequest.class, 19472);
-    kryo.register(ArtifactoryDockerArtifactDelegateResponse.class, 19473);
+    kryo.register(ArtifactoryArtifactDelegateRequest.class, 19472);
+    kryo.register(ArtifactoryArtifactDelegateResponse.class, 19473);
     kryo.register(ArtifactoryGenericArtifactDelegateRequest.class, 19483);
     kryo.register(ArtifactoryGenericArtifactDelegateResponse.class, 19484);
 
@@ -1250,7 +1269,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(SpotInstConfig.class, 7221);
     kryo.register(KubernetesSteadyStateCheckResponse.class, 5277);
     kryo.register(KubernetesSwapServiceSelectorsResponse.class, 5366);
-
+    kryo.register(EcsContainerInfo.class, 5166);
+    kryo.register(KubernetesContainerInfo.class, 5165);
+    kryo.register(S3FileRequest.class, 8067);
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
     kryo.register(WinRmAuthScheme.class, 600002);
@@ -1259,6 +1280,17 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(WinRmAuthDTO.class, 600005);
     kryo.register(WinRmConfigValidationTaskResponse.class, 600010);
 
+    kryo.register(CloudFormationCommandExecutionResponse.class, 5337);
+    kryo.register(CloudFormationCommandRequest.CloudFormationCommandType.class, 5333);
+    kryo.register(CloudFormationCommandRequest.class, 5332);
+    kryo.register(CloudFormationCreateStackRequest.class, 5334);
+    kryo.register(CloudFormationDeleteStackRequest.class, 5335);
+    kryo.register(CloudFormationListStacksRequest.class, 5336);
+    kryo.register(CloudFormationCommandResponse.class, 5338);
+    kryo.register(CloudFormationCreateStackResponse.class, 5339);
+    kryo.register(CloudFormationListStacksResponse.class, 5340);
+    kryo.register(StackSummaryInfo.class, 5341);
+    kryo.register(CloudFormationRollbackInfo.class, 7216);
     kryo.register(ServerlessAwsLambdaServerInstanceInfo.class, 563500);
     kryo.register(ServerlessGitFetchRequest.class, 563501);
     kryo.register(ServerlessGitFetchResponse.class, 563502);
@@ -1291,5 +1323,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ServerlessAwsLambdaRollbackResult.class, 563529);
     kryo.register(ServerlessInstallationCapability.class, 563530);
     kryo.register(ArtifactoryBaseArtifactDelegateRequest.class, 563531);
+    kryo.register(AzureK8sInfraDelegateConfig.class, 563532);
+    kryo.register(AzureAcrTokenTaskResponse.class, 563533);
   }
 }

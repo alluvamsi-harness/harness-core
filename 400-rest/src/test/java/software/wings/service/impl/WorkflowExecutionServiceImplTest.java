@@ -616,8 +616,9 @@ public class WorkflowExecutionServiceImplTest extends WingsBaseTest {
   }
 
   private WorkflowExecution triggerPipeline(String appId, Pipeline pipeline) throws InterruptedException {
-    Artifact artifact = wingsPersistence.saveAndGet(
-        Artifact.class, anArtifact().withAppId(app.getUuid()).withDisplayName(ARTIFACT_NAME).build());
+    String artifactKey =
+        wingsPersistence.save(anArtifact().withAppId(app.getUuid()).withDisplayName(ARTIFACT_NAME).build());
+    Artifact artifact = wingsPersistence.getWithAppId(Artifact.class, app.getUuid(), artifactKey);
     ExecutionArgs executionArgs = new ExecutionArgs();
     executionArgs.setArtifacts(asList(artifact));
     executionArgs.setWorkflowType(WorkflowType.PIPELINE);

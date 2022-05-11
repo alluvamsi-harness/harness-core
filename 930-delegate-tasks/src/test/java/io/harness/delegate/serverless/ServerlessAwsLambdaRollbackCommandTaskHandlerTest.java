@@ -128,7 +128,7 @@ public class ServerlessAwsLambdaRollbackCommandTaskHandlerTest extends CategoryT
 
     doReturn(Optional.of(previousVersionTimeStamp))
         .when(serverlessAwsCommandTaskHelper)
-        .getPreviousVersionTimeStamp(output);
+        .getPreviousVersionTimeStamp(any(), any(), any());
 
     doReturn(rollbackServerlessCliResponse)
         .when(serverlessAwsCommandTaskHelper)

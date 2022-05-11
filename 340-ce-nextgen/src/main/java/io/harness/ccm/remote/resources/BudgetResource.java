@@ -196,7 +196,7 @@ public class BudgetResource {
   update(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
              NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @NotNull @Valid String accountId,
       @Valid @NotNull @Parameter(required = true, description = "Unique identifier for the budget") @PathParam("id")
-      String budgetId, @RequestBody(required = true, description = "The Budget object") @NotNull Budget budget) {
+      String budgetId, @RequestBody(required = true, description = "The Budget object") @NotNull @Valid Budget budget) {
     budgetService.update(budgetId, budget);
     return ResponseDTO.newResponse("Successfully updated the budget");
   }

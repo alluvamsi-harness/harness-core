@@ -21,6 +21,7 @@ import io.harness.beans.yaml.extended.CIShellType;
 import io.harness.beans.yaml.extended.ImagePullPolicy;
 import io.harness.beans.yaml.extended.TIBuildTool;
 import io.harness.beans.yaml.extended.TILanguage;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.beans.yaml.extended.infrastrucutre.k8.Toleration;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.ngexception.CIStageExecutionUserException;
@@ -76,6 +77,14 @@ public class RunTimeInputHandler {
       return CIShellType.SH;
     } else {
       return CIShellType.fromString(shellType.fetchFinalValue().toString());
+    }
+  }
+
+  public OSType resolveOSType(ParameterField<OSType> osType) {
+    if (osType == null || osType.isExpression() || osType.getValue() == null) {
+      return OSType.LINUX;
+    } else {
+      return OSType.fromString(osType.fetchFinalValue().toString());
     }
   }
 

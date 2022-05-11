@@ -37,4 +37,8 @@ public class ServiceNowCreateSpecParameters implements SpecParameters {
   Map<String, ParameterField<String>> fields;
 
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
+
+  // template fields
+  ParameterField<String> templateName;
+  ParameterField<Boolean> useServiceNowTemplate;
 }

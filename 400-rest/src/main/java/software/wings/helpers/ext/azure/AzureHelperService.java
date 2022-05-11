@@ -34,6 +34,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.api.DeploymentType;
 import software.wings.beans.AzureAvailabilitySet;
 import software.wings.beans.AzureConfig;
+import software.wings.beans.AzureImageGallery;
 import software.wings.beans.AzureInfrastructureMapping;
 import software.wings.beans.AzureTag;
 import software.wings.beans.AzureVaultConfig;
@@ -360,6 +361,23 @@ public class AzureHelperService {
       log.error("Listing vaults failed for account Id {}", accountId, ex);
       throw new AzureServiceException("Failed to list vaults.", INVALID_AZURE_VAULT_CONFIGURATION, USER);
     }
+  }
+
+  public List<AzureImageGallery> listImageGalleries(AzureConfig azureConfig,
+      List<EncryptedDataDetail> encryptionDetails, String subscriptionId, String resourceGroupName) {
+    encryptionService.decrypt(azureConfig, encryptionDetails, false);
+    Azure azure = getAzureClient(azureConfig, subscriptionId);
+    return azure.galleries()
+        .listByResourceGroup(resourceGroupName)
+        .stream()
+        .map(ig
+            -> AzureImageGallery.builder()
+                   .name(ig.name())
+                   .subscriptionId(subscriptionId)
+                   .resourceGroupName(resourceGroupName)
+                   .regionName(ig.regionName())
+                   .build())
+        .collect(Collectors.toList());
   }
 
   private List<Vault> listVaultsInternal(String accountId, AzureVaultConfig azureVaultConfig) throws IOException {

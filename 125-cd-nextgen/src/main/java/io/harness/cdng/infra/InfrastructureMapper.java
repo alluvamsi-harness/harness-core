@@ -14,6 +14,7 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
+import io.harness.cdng.infra.beans.K8sAzureInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
 import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
@@ -21,6 +22,7 @@ import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
+import io.harness.cdng.infra.yaml.K8sAzureInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
@@ -78,11 +80,26 @@ public class InfrastructureMapper {
                 service, environmentOutcome, serverlessAwsLambdaInfrastructure.getInfrastructureKeyValues()))
             .build();
 
+      case InfrastructureKind.KUBERNETES_AZURE:
+        K8sAzureInfrastructure k8sAzureInfrastructure = (K8sAzureInfrastructure) infrastructure;
+        validateK8sAzureInfrastructure(k8sAzureInfrastructure);
+        return K8sAzureInfrastructureOutcome.builder()
+            .connectorRef(k8sAzureInfrastructure.getConnectorRef().getValue())
+            .namespace(k8sAzureInfrastructure.getNamespace().getValue())
+            .cluster(k8sAzureInfrastructure.getCluster().getValue())
+            .releaseName(getValueOrExpression(k8sAzureInfrastructure.getReleaseName()))
+            .environment(environmentOutcome)
+            .infrastructureKey(InfrastructureKey.generate(
+                service, environmentOutcome, k8sAzureInfrastructure.getInfrastructureKeyValues()))
+            .subscription(k8sAzureInfrastructure.getSubscriptionId().getValue())
+            .resourceGroup(k8sAzureInfrastructure.getResourceGroup().getValue())
+            .build();
+
       case InfrastructureKind.PDC:
         PdcInfrastructure pdcInfrastructure = (PdcInfrastructure) infrastructure;
         validatePdcInfrastructure(pdcInfrastructure);
         return PdcInfrastructureOutcome.builder()
-            .sshKeyRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getSshKeyRef()))
+            .credentialsRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getCredentialsRef()))
             .hosts(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHosts()))
             .connectorRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getConnectorRef()))
             .hostFilters(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHostFilters()))
@@ -124,8 +141,34 @@ public class InfrastructureMapper {
     }
   }
 
+  private void validateK8sAzureInfrastructure(K8sAzureInfrastructure infrastructure) {
+    if (ParameterField.isNull(infrastructure.getNamespace())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getNamespace()))) {
+      throw new InvalidArgumentsException(Pair.of("namespace", "cannot be empty"));
+    }
+
+    if (!hasValueOrExpression(infrastructure.getReleaseName())) {
+      throw new InvalidArgumentsException(Pair.of("releaseName", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getCluster())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getCluster()))) {
+      throw new InvalidArgumentsException(Pair.of("cluster", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getSubscriptionId())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getSubscriptionId()))) {
+      throw new InvalidArgumentsException(Pair.of("subscription", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getResourceGroup())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getResourceGroup()))) {
+      throw new InvalidArgumentsException(Pair.of("resourceGroup", "cannot be empty"));
+    }
+  }
+
   private void validatePdcInfrastructure(PdcInfrastructure infrastructure) {
-    if (!hasValueOrExpression(infrastructure.getSshKeyRef())) {
+    if (!hasValueOrExpression(infrastructure.getCredentialsRef())) {
       throw new InvalidArgumentsException(Pair.of("sshKeyRef", "cannot be empty"));
     }
 

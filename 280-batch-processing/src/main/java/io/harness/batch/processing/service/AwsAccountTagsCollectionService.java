@@ -15,22 +15,18 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static java.lang.String.format;
 
 import io.harness.aws.AwsClientImpl;
+import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.ng.NGConnectorHelper;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.pricing.gcp.bigquery.BQConst;
 import io.harness.batch.processing.shard.AccountShardService;
 import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.service.intf.AWSOrganizationHelperService;
-import io.harness.connector.ConnectorFilterPropertiesDTO;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResourceClient;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.delegate.beans.connector.CEFeatures;
-import io.harness.delegate.beans.connector.CcmConnectorFilter;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
-import io.harness.filter.FilterType;
-import io.harness.ng.beans.PageResponse;
-import io.harness.utils.RestCallToNGManagerClientUtils;
 
 import software.wings.beans.Account;
 
@@ -50,8 +46,8 @@ import com.google.cloud.bigquery.TableInfo;
 import com.google.cloud.bigquery.TimePartitioning;
 import com.google.inject.Singleton;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +63,7 @@ public class AwsAccountTagsCollectionService {
   @Autowired AWSOrganizationHelperService awsOrganizationHelperService;
   @Autowired BigQueryService bigQueryService;
   @Autowired AwsClientImpl awsClient;
+  @Autowired NGConnectorHelper ngConnectorHelper;
 
   public void update() {
     List<Account> accounts = accountShardService.getCeEnabledAccounts();
@@ -88,36 +85,8 @@ public class AwsAccountTagsCollectionService {
   }
 
   public List<ConnectorResponseDTO> getNextGenAwsConnectorResponses(String accountId) {
-    List<ConnectorResponseDTO> nextGenConnectorResponses = new ArrayList<>();
-    PageResponse<ConnectorResponseDTO> response = null;
-    ConnectorFilterPropertiesDTO connectorFilterPropertiesDTO =
-        ConnectorFilterPropertiesDTO.builder()
-            .types(Arrays.asList(ConnectorType.CE_AWS))
-            .ccmConnectorFilter(CcmConnectorFilter.builder().featuresEnabled(Arrays.asList(CEFeatures.BILLING)).build())
-            .build();
-    connectorFilterPropertiesDTO.setFilterType(FilterType.CONNECTOR);
-    int page = 0;
-    int size = 100;
-    try {
-      do {
-        response = getConnectors(accountId, page, size, connectorFilterPropertiesDTO);
-        if (response != null && isNotEmpty(response.getContent())) {
-          nextGenConnectorResponses.addAll(response.getContent());
-        }
-        page++;
-      } while (response != null && isNotEmpty(response.getContent()));
-      log.info("Processing batch size of {}", nextGenConnectorResponses.size());
-      return nextGenConnectorResponses;
-    } catch (Exception ex) {
-      log.warn("Error", ex);
-    }
-    return nextGenConnectorResponses;
-  }
-
-  PageResponse getConnectors(
-      String accountId, int page, int size, ConnectorFilterPropertiesDTO connectorFilterPropertiesDTO) {
-    return RestCallToNGManagerClientUtils.execute(
-        connectorResourceClient.listConnectors(accountId, null, null, page, size, connectorFilterPropertiesDTO, false));
+    return ngConnectorHelper.getNextGenConnectors(
+        accountId, Arrays.asList(ConnectorType.CE_AWS), Arrays.asList(CEFeatures.BILLING), Collections.emptyList());
   }
 
   public void processAndInsertTags(CEAwsConnectorDTO ceAwsConnectorDTO, Account account) {

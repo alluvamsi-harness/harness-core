@@ -48,9 +48,6 @@ public class ScmGitProviderMapper {
   @Inject(optional = true) GithubService githubService;
   private static final String SCM_SKIP_SSL = "SCM_SKIP_SSL";
   private static final String ADDITIONAL_CERTS_PATH = "ADDITIONAL_CERTS_PATH";
-  private static final String azure_repo_name_separator = "/_git/";
-  private static final String azure_repo_url_prefix = "dev.azure.com/";
-  private static final String azure_repo_org_separator = "/";
 
   public Provider mapToSCMGitProvider(ScmConnector scmConnector) {
     return mapToSCMGitProvider(scmConnector, false);
@@ -89,12 +86,14 @@ public class ScmGitProviderMapper {
     String org = GitClientHelper.getAzureRepoOrg(orgAndProject);
     String project = GitClientHelper.getAzureRepoProject(orgAndProject);
 
+    String azureRepoApiURL = GitClientHelper.getAzureRepoApiURL(azureRepoConnector.getUrl());
     AzureRepoApiAccessDTO apiAccess = azureRepoConnector.getApiAccess();
     AzureRepoTokenSpecDTO azureRepoUsernameTokenApiAccessDTO = (AzureRepoTokenSpecDTO) apiAccess.getSpec();
     String personalAccessToken = String.valueOf(azureRepoUsernameTokenApiAccessDTO.getTokenRef().getDecryptedValue());
     AzureProvider.Builder azureProvider =
         AzureProvider.newBuilder().setOrganization(org).setProject(project).setPersonalAccessToken(personalAccessToken);
-    Provider.Builder builder = Provider.newBuilder().setDebug(debug).setAzure(azureProvider);
+    Provider.Builder builder =
+        Provider.newBuilder().setDebug(debug).setAzure(azureProvider).setEndpoint(azureRepoApiURL);
     return builder.setSkipVerify(skipVerify).setAdditionalCertsPath(getAdditionalCertsPath()).build();
   }
 
@@ -158,7 +157,7 @@ public class ScmGitProviderMapper {
 
   private GitlabProvider createGitLabProvider(GitlabConnectorDTO gitlabConnector) {
     String accessToken = getAccessToken(gitlabConnector);
-    return GitlabProvider.newBuilder().setPersonalToken(accessToken).build();
+    return GitlabProvider.newBuilder().setAccessToken(accessToken).build();
   }
 
   private String getAccessToken(GitlabConnectorDTO gitlabConnector) {

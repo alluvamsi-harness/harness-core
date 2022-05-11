@@ -27,7 +27,7 @@ import software.wings.beans.Application;
 import software.wings.beans.InfrastructureProvisioner;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.Service;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.shellscript.provisioner.ShellScriptInfrastructureProvisioner;
 import software.wings.beans.shellscript.provisioner.ShellScriptInfrastructureProvisioner.Yaml;
 import software.wings.beans.yaml.ChangeContext;
@@ -143,8 +143,8 @@ public class ShellScriptProvisionerYamlHandlerTest extends YamlHandlerTestBase {
     provisioner.setScriptBody(SCRIPT_BODY);
 
     List<NameValuePair> variables =
-        Arrays.asList(NameValuePair.builder().name("var1").valueType(Type.ENCRYPTED_TEXT.name()).build(),
-            NameValuePair.builder().name("var2").valueType(Type.TEXT.name()).build());
+        Arrays.asList(NameValuePair.builder().name("var1").valueType(ServiceVariableType.ENCRYPTED_TEXT.name()).build(),
+            NameValuePair.builder().name("var2").valueType(ServiceVariableType.TEXT.name()).build());
     provisioner.setVariables(variables);
     return provisioner;
   }

@@ -99,6 +99,7 @@ import software.wings.beans.AwsAmiInfrastructureMapping;
 import software.wings.beans.AwsAmiInfrastructureMapping.AwsAmiInfrastructureMappingKeys;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.AwsInfrastructureMapping;
+import software.wings.beans.AwsInfrastructureMapping.AwsInfrastructureMappingKeys;
 import software.wings.beans.AwsLambdaInfraStructureMapping;
 import software.wings.beans.AzureConfig;
 import software.wings.beans.AzureInfrastructureMapping;
@@ -536,6 +537,8 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
       }
     }
 
+    updateMissingFields(infraMapping, savedInfraMapping);
+
     String accountId = appService.getAccountIdByAppId(infraMapping.getAppId());
     if (!savedInfraMapping.isSample()) {
       eventPublishHelper.publishAccountEvent(
@@ -552,6 +555,20 @@ public class InfrastructureMappingServiceImpl implements InfrastructureMappingSe
     }
 
     return savedInfraMapping;
+  }
+
+  private void updateMissingFields(InfrastructureMapping infraMapping, InfrastructureMapping savedInfraMapping) {
+    if (savedInfraMapping instanceof AwsInfrastructureMapping && infraMapping instanceof AwsInfrastructureMapping
+        && ((AwsInfrastructureMapping) savedInfraMapping).getAwsInstanceFilter() == null
+        && ((AwsInfrastructureMapping) infraMapping).getAwsInstanceFilter() != null) {
+      try {
+        wingsPersistence.updateField(AwsInfrastructureMapping.class, savedInfraMapping.getUuid(),
+            AwsInfrastructureMappingKeys.awsInstanceFilter,
+            ((AwsInfrastructureMapping) infraMapping).getAwsInstanceFilter());
+      } catch (Exception e) {
+        log.error("Encountered exception while updating AwsInfrastructureMapping {}.", savedInfraMapping.getUuid(), e);
+      }
+    }
   }
 
   @Override

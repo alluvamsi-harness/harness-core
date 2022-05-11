@@ -36,7 +36,7 @@ import software.wings.beans.Application;
 import software.wings.beans.KmsConfig;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.Service;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TerraformInfrastructureProvisioner;
 import software.wings.beans.TerraformInfrastructureProvisioner.Yaml;
@@ -137,9 +137,9 @@ public class TerraformInfrastructureProvisionerYamlHandlerTest extends YamlHandl
     String yamlContent = getYamlContent(yamlFromObject);
     assertThat(yamlContent).isEqualTo(validYamlContent);
 
-    List<NameValuePair> variables =
-        Arrays.asList(NameValuePair.builder().name("access_key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.ENCRYPTED_TEXT.toString()).build());
+    List<NameValuePair> variables = Arrays.asList(
+        NameValuePair.builder().name("access_key").valueType(ServiceVariableType.TEXT.toString()).build(),
+        NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.ENCRYPTED_TEXT.toString()).build());
     TerraformInfrastructureProvisioner provisioner = TerraformInfrastructureProvisioner.builder()
                                                          .appId(APP_ID)
                                                          .uuid("UUID1")
@@ -204,9 +204,9 @@ public class TerraformInfrastructureProvisionerYamlHandlerTest extends YamlHandl
     assertThat(tfYaml.getBackendConfigs()).isNull();
     assertThat(tfYaml.getEnvironmentVariables()).isNull();
 
-    List<NameValuePair> envVariables =
-        Arrays.asList(NameValuePair.builder().name("access_key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.ENCRYPTED_TEXT.toString()).build());
+    List<NameValuePair> envVariables = Arrays.asList(
+        NameValuePair.builder().name("access_key").valueType(ServiceVariableType.TEXT.toString()).build(),
+        NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.ENCRYPTED_TEXT.toString()).build());
     TerraformInfrastructureProvisioner provisioner = TerraformInfrastructureProvisioner.builder()
                                                          .appId(APP_ID)
                                                          .uuid("UUID1")

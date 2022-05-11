@@ -25,12 +25,15 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.analysis.beans.ExceptionInfo;
 import io.harness.cvng.analysis.entities.CanaryLogAnalysisLearningEngineTask;
 import io.harness.cvng.analysis.entities.LearningEngineTask;
 import io.harness.cvng.analysis.entities.LearningEngineTask.ExecutionStatus;
 import io.harness.cvng.analysis.entities.TimeSeriesLearningEngineTask;
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
+import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
@@ -64,16 +67,20 @@ public class LearningEngineTaskServiceImplTest extends CvNextGenTestBase {
 
   @Inject private LearningEngineTaskService learningEngineTaskService;
   @Inject private VerificationTaskService verificationTaskService;
+  @Inject private CVConfigService cvConfigService;
   private String accountId;
   private String cvConfigId;
   private String verificationTaskId;
+  private BuilderFactory builderFactory;
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
-    accountId = generateUuid();
-    cvConfigId = generateUuid();
-    verificationTaskId =
-        verificationTaskService.createLiveMonitoringVerificationTask(accountId, cvConfigId, APP_DYNAMICS);
+    builderFactory = BuilderFactory.getDefault();
+    CVConfig cvConfig = builderFactory.splunkCVConfigBuilder().build();
+    cvConfigService.save(cvConfig);
+    accountId = builderFactory.getContext().getAccountId();
+    cvConfigId = cvConfig.getUuid();
+    verificationTaskId = verificationTaskService.getServiceGuardVerificationTaskId(accountId, cvConfigId);
   }
 
   @Test

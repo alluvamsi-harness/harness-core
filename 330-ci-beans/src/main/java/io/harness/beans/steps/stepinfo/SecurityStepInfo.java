@@ -27,12 +27,15 @@ import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.yaml.YamlSchemaTypes;
+import io.harness.yaml.core.VariableExpression;
 import io.harness.yaml.core.variables.OutputNGVariable;
 import io.harness.yaml.extended.ci.container.ContainerResource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
@@ -56,7 +59,12 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(STO)
 @RecasterAlias("io.harness.beans.steps.stepinfo.SecurityStepInfo")
 public class SecurityStepInfo implements PluginCompatibleStep, WithConnectorRef {
-  public static final int DEFAULT_RETRY = 1;
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  private String uuid;
+
+  @VariableExpression(skipVariableExpression = true) public static final int DEFAULT_RETRY = 1;
   @JsonIgnore public static final TypeInfo typeInfo = TypeInfo.builder().stepInfoType(CIStepInfoType.SECURITY).build();
   @JsonIgnore
   public static final StepType STEP_TYPE = StepType.newBuilder()
@@ -70,19 +78,24 @@ public class SecurityStepInfo implements PluginCompatibleStep, WithConnectorRef 
   @EntityIdentifier
   private String identifier;
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) private String name;
-  @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
+  @VariableExpression(skipVariableExpression = true) @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
 
-  @YamlSchemaTypes(value = {string}) private ParameterField<Map<String, JsonNode>> settings;
+  @VariableExpression(skipVariableExpression = true)
+  @YamlSchemaTypes(value = {string})
+  private ParameterField<Map<String, JsonNode>> settings;
 
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
   private ContainerResource resources;
 
-  private List<OutputNGVariable> outputVariables;
+  @YamlSchemaTypes(value = {runtime})
+  @VariableExpression(skipVariableExpression = true)
+  @ApiModelProperty(dataType = "[Lio.harness.yaml.core.variables.OutputNGVariable;")
+  private ParameterField<List<OutputNGVariable>> outputVariables;
 
-  @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
   private ParameterField<Boolean> privileged;
+  @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ImagePullPolicy")
   private ParameterField<ImagePullPolicy> imagePullPolicy;
@@ -91,9 +104,9 @@ public class SecurityStepInfo implements PluginCompatibleStep, WithConnectorRef 
   @ConstructorProperties({"identifier", "name", "retry", "settings", "connectorRef", "resources", "outputVariables",
       "runAsUser", "privileged", "imagePullPolicy"})
   public SecurityStepInfo(String identifier, String name, Integer retry, ParameterField<Map<String, JsonNode>> settings,
-      ParameterField<String> connectorRef, ContainerResource resources, List<OutputNGVariable> outputVariables,
-      ParameterField<Integer> runAsUser, ParameterField<Boolean> privileged,
-      ParameterField<ImagePullPolicy> imagePullPolicy) {
+      ParameterField<String> connectorRef, ContainerResource resources,
+      ParameterField<List<OutputNGVariable>> outputVariables, ParameterField<Integer> runAsUser,
+      ParameterField<Boolean> privileged, ParameterField<ImagePullPolicy> imagePullPolicy) {
     this.identifier = identifier;
     this.name = name;
     this.retry = Optional.ofNullable(retry).orElse(DEFAULT_RETRY);

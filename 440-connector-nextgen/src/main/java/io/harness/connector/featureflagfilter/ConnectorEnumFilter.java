@@ -8,6 +8,7 @@
 package io.harness.connector.featureflagfilter;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.FeatureName.AZURE_REPO_CONNECTOR;
 import static io.harness.beans.FeatureName.SSH_NG;
 import static io.harness.remote.client.RestClientUtils.getResponse;
 
@@ -28,6 +29,7 @@ public class ConnectorEnumFilter extends EnumFeatureFlagFilter {
 
   public ConnectorEnumFilter() {
     put(SSH_NG, Sets.newHashSet(ConnectorType.PDC));
+    put(AZURE_REPO_CONNECTOR, Sets.newHashSet(ConnectorType.AZURE_REPO));
   }
 
   @Override

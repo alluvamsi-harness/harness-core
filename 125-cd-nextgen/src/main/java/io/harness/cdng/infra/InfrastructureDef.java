@@ -19,6 +19,7 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.walktree.beans.VisitableChildren;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
+import io.harness.yaml.core.VariableExpression;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -49,7 +50,10 @@ public class InfrastructureDef implements Visitable {
   @NotNull
   Infrastructure spec;
 
-  @JsonProperty("provisioner") @Nullable ExecutionElementConfig provisioner;
+  @JsonProperty("provisioner")
+  @Nullable
+  @VariableExpression(skipVariableExpression = true)
+  ExecutionElementConfig provisioner;
 
   // For Visitor Framework Impl
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) }) @ApiModelProperty(hidden = true) String metadata;

@@ -90,7 +90,7 @@ func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, frame
 }
 
 // SelectTests returns a list of tests which should be run intelligently
-func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, repo, sha, source, target, body string) (types.SelectTestsResp, error) {
+func (c *HTTPClient) SelectTests(ctx context.Context, org, project, pipeline, build, stage, step, repo, sha, source, target, body string) (types.SelectTestsResp, error) {
 	path := fmt.Sprintf(testEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target)
 	var resp types.SelectTestsResp
 	var e types.SelectTestsReq
@@ -98,15 +98,15 @@ func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, rep
 	if err != nil {
 		return types.SelectTestsResp{}, err
 	}
-	ctx := context.WithValue(context.Background(), "reqId", sha)
+	ctx = context.WithValue(ctx, "reqId", sha)
 	_, err = c.do(ctx, c.Endpoint+path, "POST", &e, &resp)
 	return resp, err
 }
 
 // UploadCg uploads avro encoded callgraph to server
-func (c *HTTPClient) UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
+func (c *HTTPClient) UploadCg(ctx context.Context, org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs)
-	ctx := context.WithValue(context.Background(), "reqId", sha)
+	ctx = context.WithValue(ctx, "reqId", sha)
 	backoff := createBackoff(45 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", &cg, nil, false, backoff)
 	return err

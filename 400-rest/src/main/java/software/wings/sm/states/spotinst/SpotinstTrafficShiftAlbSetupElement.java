@@ -18,12 +18,10 @@ import io.harness.delegate.task.aws.LbDetailsForAlbTrafficShift;
 import io.harness.spotinst.model.ElastiGroup;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -54,11 +52,6 @@ public class SpotinstTrafficShiftAlbSetupElement implements ContextElement, Swee
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.SPOTINST_SERVICE_SETUP;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

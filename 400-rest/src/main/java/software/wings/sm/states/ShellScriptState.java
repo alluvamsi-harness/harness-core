@@ -100,6 +100,7 @@ import software.wings.sm.State;
 import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.mixin.SweepingOutputStateMixin;
 import software.wings.stencils.DefaultValue;
 
@@ -143,6 +144,7 @@ public class ShellScriptState extends State implements SweepingOutputStateMixin 
   @Inject @Transient private FeatureFlagService featureFlagService;
   @Transient @Inject KryoSerializer kryoSerializer;
   @Inject @Transient private SSHVaultService sshVaultService;
+  @Inject @Transient private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Getter @Setter @Attributes(title = "Execute on Delegate") private boolean executeOnDelegate;
 
@@ -342,9 +344,10 @@ public class ShellScriptState extends State implements SweepingOutputStateMixin 
     String infrastructureMappingId = context.fetchInfraMappingId();
 
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
-    String envId = (workflowStandardParams == null || workflowStandardParams.getEnv() == null)
+    String envId = (workflowStandardParams == null
+                       || workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null)
         ? null
-        : workflowStandardParams.getEnv().getUuid();
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
 
     String appId = workflowStandardParams == null ? null : workflowStandardParams.getAppId();
 

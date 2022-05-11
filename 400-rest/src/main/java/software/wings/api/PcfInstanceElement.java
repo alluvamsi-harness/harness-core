@@ -15,12 +15,9 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 import software.wings.sm.VerificationElement;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -61,14 +58,6 @@ public class PcfInstanceElement implements ContextElement, VerificationElement {
   @Override
   public String getUuid() {
     return uuid;
-  }
-
-  // @TODO why needed ?
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(PCF_INSTANCE, this);
-    return map;
   }
 
   @Override

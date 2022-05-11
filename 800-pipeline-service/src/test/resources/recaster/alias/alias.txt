@@ -55,6 +55,7 @@ io.harness.steps.approval.step.harness.HarnessApprovalStepNode
 io.harness.plancreator.steps.barrier.BarrierStepNode
 io.harness.steps.shellscript.ShellScriptStepNode
 io.harness.steps.template.TemplateStepNode
+io.harness.steps.template.stage.TemplateStageNode
 io.harness.steps.jira.JiraIssueOutcome
 io.harness.advisers.rollback.OnFailRollbackOutput
 io.harness.steps.jira.create.JiraCreateSpecParameters
@@ -105,3 +106,5 @@ io.harness.plancreator.stages.parallel.ParallelStageElementConfig
 io.harness.plancreator.stages.StageElementWrapperConfig
 io.harness.plancreator.execution.StepsExecutionConfig
 io.harness.yaml.core.parallelStepElementConfig
+io.harness.steps.servicenow.ServiceNowTicketOutcome
+io.harness.steps.customstage.CustomStageNode

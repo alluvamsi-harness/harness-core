@@ -50,4 +50,13 @@ public interface FileStoreRepositoryCustom {
    * @return sorted page of NG files
    */
   Page<NGFile> findAllAndSort(Criteria criteria, Sort sortBy, Pageable pageable);
+
+  /**
+   * List NG files by pages.
+   *
+   * @param criteria the query criteria
+   * @param pageable the page request
+   * @return page of NG files
+   */
+  Page<NGFile> findAll(Criteria criteria, Pageable pageable);
 }

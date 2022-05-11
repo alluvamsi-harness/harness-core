@@ -29,6 +29,7 @@ public class PipelineNotificationUtilsTest extends CategoryTest {
   public void testGetStatusForImage() {
     assertEquals(PipelineNotificationUtils.getStatusForImage(null), "running");
     assertEquals(PipelineNotificationUtils.getStatusForImage(Status.SUCCEEDED), "completed");
+    assertEquals(PipelineNotificationUtils.getStatusForImage(Status.IGNORE_FAILED), "completed");
     assertEquals(PipelineNotificationUtils.getStatusForImage(Status.FAILED), "failed");
     assertEquals(PipelineNotificationUtils.getStatusForImage(Status.ERRORED), "failed");
     assertEquals(PipelineNotificationUtils.getStatusForImage(Status.PAUSED), "paused");
@@ -46,6 +47,7 @@ public class PipelineNotificationUtilsTest extends CategoryTest {
   public void testGetNodeStatus() {
     assertEquals(PipelineNotificationUtils.getNodeStatus(null), "started");
     assertEquals(PipelineNotificationUtils.getNodeStatus(Status.SUCCEEDED), "completed");
+    assertEquals(PipelineNotificationUtils.getStatusForImage(Status.IGNORE_FAILED), "completed");
     assertEquals(PipelineNotificationUtils.getNodeStatus(Status.FAILED), "failed");
     assertEquals(PipelineNotificationUtils.getNodeStatus(Status.ERRORED), "failed");
     assertEquals(PipelineNotificationUtils.getNodeStatus(Status.PAUSED), "paused");
@@ -63,6 +65,8 @@ public class PipelineNotificationUtilsTest extends CategoryTest {
   public void testGetThemeColor() {
     assertEquals(
         PipelineNotificationUtils.getThemeColor(Status.SUCCEEDED), PipelineNotificationConstants.SUCCEEDED_COLOR);
+    assertEquals(
+        PipelineNotificationUtils.getThemeColor(Status.IGNORE_FAILED), PipelineNotificationConstants.SUCCEEDED_COLOR);
     assertEquals(PipelineNotificationUtils.getThemeColor(Status.EXPIRED), PipelineNotificationConstants.FAILED_COLOR);
     assertEquals(
         PipelineNotificationUtils.getThemeColor(Status.APPROVAL_REJECTED), PipelineNotificationConstants.FAILED_COLOR);

@@ -36,6 +36,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
+import software.wings.delegatetasks.azure.AzureAsyncTaskHelper;
 import software.wings.service.intfc.security.EncryptionService;
 
 import com.google.common.cache.CacheBuilder;
@@ -65,6 +66,7 @@ public class ContainerDeploymentDelegateBaseHelper {
   @Inject private SecretDecryptionService secretDecryptionService;
   @Inject private GkeClusterHelper gkeClusterHelper;
   @Inject private EncryptionService encryptionService;
+  @Inject private AzureAsyncTaskHelper azureAsyncTaskHelper;
 
   public static final LoadingCache<String, Object> lockObjects =
       CacheBuilder.newBuilder().expireAfterAccess(30, TimeUnit.MINUTES).build(CacheLoader.from(Object::new));
@@ -124,6 +126,12 @@ public class ContainerDeploymentDelegateBaseHelper {
       return gkeClusterHelper.getCluster(getGcpServiceAccountKeyFileContent(gcpCredentials),
           gcpCredentials.getGcpCredentialType() == INHERIT_FROM_DELEGATE, gcpK8sInfraDelegateConfig.getCluster(),
           gcpK8sInfraDelegateConfig.getNamespace());
+    } else if (clusterConfigDTO instanceof AzureK8sInfraDelegateConfig) {
+      AzureK8sInfraDelegateConfig azureK8sInfraDelegateConfig = (AzureK8sInfraDelegateConfig) clusterConfigDTO;
+      return azureAsyncTaskHelper.getClusterConfig(azureK8sInfraDelegateConfig.getAzureConnectorDTO(),
+          azureK8sInfraDelegateConfig.getSubscription(), azureK8sInfraDelegateConfig.getResourceGroup(),
+          azureK8sInfraDelegateConfig.getCluster(), azureK8sInfraDelegateConfig.getNamespace(),
+          azureK8sInfraDelegateConfig.getEncryptionDataDetails());
     } else {
       throw new InvalidRequestException("Unhandled K8sInfraDelegateConfig " + clusterConfigDTO.getClass());
     }

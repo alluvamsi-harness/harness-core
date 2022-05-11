@@ -235,7 +235,7 @@ public class WorkflowYamlHandlerTest extends WorkflowYamlHandlerTestBase {
                            -> testCRUD(workflowYamlFiles.ROLLING_WORKFLOW_INCOMPLETE, rollingWorkflowYamlHandler,
                                OrchestrationWorkflowType.ROLLING))
         .isInstanceOf(JsonMappingException.class)
-        .hasMessageContaining("expected FIELD_NAME: missing property 'type' that is to contain type id");
+        .hasMessageContaining("missing type id property 'type'");
   }
 
   @Test
@@ -329,7 +329,7 @@ public class WorkflowYamlHandlerTest extends WorkflowYamlHandlerTestBase {
                            -> testCRUD(workflowYamlFiles.BUILD_WORKFLOW_INCOMPLETE, buildWorkflowYamlHandler,
                                OrchestrationWorkflowType.BUILD))
         .isInstanceOf(JsonMappingException.class)
-        .hasMessageContaining("expected FIELD_NAME: missing property 'type' that is to contain type id");
+        .hasMessageContaining("missing type id property 'type'");
   }
 
   @Test

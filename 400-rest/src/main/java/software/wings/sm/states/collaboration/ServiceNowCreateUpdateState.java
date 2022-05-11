@@ -54,6 +54,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.State;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.mixin.SweepingOutputStateMixin;
 
 import com.google.inject.Inject;
@@ -83,6 +84,7 @@ public class ServiceNowCreateUpdateState extends State implements SweepingOutput
   @Inject private transient SettingsService settingsService;
   @Transient @Inject KryoSerializer kryoSerializer;
   @Inject @Transient private FeatureFlagService featureFlagService;
+  @Inject private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   private static final long ASYNC_TASK_TIMEOUT_MILLIS = 60 * 1000;
   private static final String ISSUE_NUMBER = "issueNumber";
@@ -140,9 +142,10 @@ public class ServiceNowCreateUpdateState extends State implements SweepingOutput
     String envId = null;
     String envType = null;
     if (isScopingHonored) {
-      envId = (workflowStandardParams == null || workflowStandardParams.getEnv() == null)
+      envId = (workflowStandardParams == null
+                  || workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null)
           ? null
-          : workflowStandardParams.getEnv().getUuid();
+          : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
       envType = context.getEnvType();
     }
 

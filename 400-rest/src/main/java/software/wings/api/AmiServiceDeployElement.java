@@ -14,11 +14,9 @@ import io.harness.context.ContextElementType;
 
 import software.wings.beans.InstanceUnitType;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.google.common.collect.Lists;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 
@@ -46,11 +44,6 @@ public class AmiServiceDeployElement implements ContextElement {
 
   @Override
   public String getName() {
-    return null;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
     return null;
   }
 

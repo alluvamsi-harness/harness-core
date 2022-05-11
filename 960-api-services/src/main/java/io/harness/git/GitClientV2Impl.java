@@ -83,12 +83,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -132,6 +135,8 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 @Slf4j
 @OwnedBy(CDP)
 public class GitClientV2Impl implements GitClientV2 {
+  private static final int GIT_COMMAND_TIMEOUT = 60;
+  private static final int GIT_COMMAND_RETRY = 2;
   @Inject private GitClientHelper gitClientHelper;
   /**
    * factory for creating HTTP connections. By default, JGit uses JDKHttpConnectionFactory which doesn't work well with
@@ -330,7 +335,11 @@ public class GitClientV2Impl implements GitClientV2 {
       // Init Git repo
       LsRemoteCommand lsRemoteCommand = Git.lsRemoteRepository();
       lsRemoteCommand = (LsRemoteCommand) getAuthConfiguredCommand(lsRemoteCommand, request);
-      lsRemoteCommand.setRemote(repoUrl).setHeads(true).setTags(true).call();
+      RetryPolicy<Object> retryPolicy = getRetryPolicyForCommand(format("[Retrying failed git validation, attempt: {}"),
+          format("Git validation failed after retrying {} times"));
+      lsRemoteCommand.setTimeout(GIT_COMMAND_TIMEOUT).setRemote(repoUrl).setHeads(true).setTags(true);
+      final LsRemoteCommand finalLsRemoteCommand = lsRemoteCommand;
+      Failsafe.with(retryPolicy).get(() -> finalLsRemoteCommand.call());
       log.info(
           gitClientHelper.getGitLogMessagePrefix(request.getRepoType()) + "Remote branches found, validation success.");
     } catch (Exception e) {
@@ -343,6 +352,14 @@ public class GitClientV2Impl implements GitClientV2 {
     }
   }
 
+  private RetryPolicy<Object> getRetryPolicyForCommand(String failedAttemptMessage, String failureMessage) {
+    return new RetryPolicy<>()
+        .handle(Exception.class)
+        .withMaxAttempts(GIT_COMMAND_RETRY)
+        .withBackoff(5, 10, ChronoUnit.SECONDS)
+        .onFailedAttempt(event -> log.info(failedAttemptMessage, event.getAttemptCount(), event.getLastFailure()))
+        .onFailure(event -> log.error(failureMessage, event.getAttemptCount(), event.getFailure()));
+  }
   @Override
   public DiffResult diff(DiffRequest request) {
     String startCommitIdStr = request.getLastProcessedCommitId();

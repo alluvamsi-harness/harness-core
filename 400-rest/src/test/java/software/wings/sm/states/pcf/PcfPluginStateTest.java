@@ -60,6 +60,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -81,6 +82,7 @@ import io.harness.rule.Owner;
 import io.harness.tasks.ResponseData;
 
 import software.wings.WingsBaseTest;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.DeploymentType;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
@@ -99,7 +101,7 @@ import software.wings.beans.PcfInfrastructureMapping;
 import software.wings.beans.Service;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.beans.WorkflowExecution;
@@ -143,6 +145,7 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.utils.ApplicationManifestUtils;
 
 import com.google.common.collect.ImmutableMap;
@@ -224,13 +227,21 @@ public class PcfPluginStateTest extends WingsBaseTest {
   private StateExecutionInstance stateExecutionInstance =
       pcfStateTestHelper.getStateExecutionInstanceForPluginState(workflowStandardParams, phaseElement, serviceElement);
 
-  private List<ServiceVariable> serviceVariableList =
-      asList(ServiceVariable.builder().type(Type.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
-          ServiceVariable.builder().type(Type.ENCRYPTED_TEXT).name("VAR_2").value("value2".toCharArray()).build());
+  private List<ServiceVariable> serviceVariableList = asList(
+      ServiceVariable.builder().type(ServiceVariableType.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
+      ServiceVariable.builder()
+          .type(ServiceVariableType.ENCRYPTED_TEXT)
+          .name("VAR_2")
+          .value("value2".toCharArray())
+          .build());
 
-  private List<ServiceVariable> safeDisplayServiceVariableList =
-      asList(ServiceVariable.builder().type(Type.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
-          ServiceVariable.builder().type(Type.ENCRYPTED_TEXT).name("VAR_2").value("*******".toCharArray()).build());
+  private List<ServiceVariable> safeDisplayServiceVariableList = asList(
+      ServiceVariable.builder().type(ServiceVariableType.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
+      ServiceVariable.builder()
+          .type(ServiceVariableType.ENCRYPTED_TEXT)
+          .name("VAR_2")
+          .value("*******".toCharArray())
+          .build());
 
   private Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
 
@@ -273,16 +284,6 @@ public class PcfPluginStateTest extends WingsBaseTest {
 
     EmbeddedUser currentUser = EmbeddedUser.builder().name("test").email("test@harness.io").build();
     workflowStandardParams.setCurrentUser(currentUser);
-
-    on(workflowStandardParams).set("appService", appService);
-    on(workflowStandardParams).set("environmentService", environmentService);
-    on(workflowStandardParams).set("artifactService", artifactService);
-    on(workflowStandardParams).set("serviceTemplateService", serviceTemplateService);
-    on(workflowStandardParams).set("configuration", configuration);
-    on(workflowStandardParams).set("artifactStreamService", artifactStreamService);
-    on(workflowStandardParams).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    on(workflowStandardParams).set("featureFlagService", featureFlagService);
-    on(workflowStandardParams).set("subdomainUrlHelper", subdomainUrlHelper);
 
     Activity activity = Activity.builder().build();
     activity.setUuid(ACTIVITY_ID);
@@ -336,6 +337,18 @@ public class PcfPluginStateTest extends WingsBaseTest {
     doNothing().when(serviceHelper).addPlaceholderTexts(any());
     when(subdomainUrlHelper.getPortalBaseUrl(any())).thenReturn("baseUrl");
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
+
+    WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService =
+        spy(new WorkflowStandardParamsExtensionService(
+            appService, null, artifactService, environmentService, artifactStreamServiceBindingService, null));
+
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(pcfPluginState).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+
+    ContextElementParamMapperFactory contextElementParamMapperFactory = new ContextElementParamMapperFactory(
+        subdomainUrlHelper, workflowExecutionService, artifactService, artifactStreamService,
+        applicationManifestService, featureFlagService, null, workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
   }
 
   @Test

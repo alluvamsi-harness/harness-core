@@ -12,6 +12,7 @@
     "type": "AzureRepo",
     "spec": {
       "url": "url",
+      "validationProject": "validationProject",
       "validationRepo": "validationRepo",
       "authentication": {
         "type": "Http",

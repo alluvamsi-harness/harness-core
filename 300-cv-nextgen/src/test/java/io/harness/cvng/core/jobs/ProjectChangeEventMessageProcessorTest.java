@@ -17,19 +17,17 @@ import io.harness.CvNextGenTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.VerificationApplication;
-import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.beans.job.TestVerificationJobDTO;
 import io.harness.cvng.beans.job.VerificationJobDTO;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.MetricPack;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.entities.TimeSeriesThreshold;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.MetricPackService;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.verificationjob.services.api.VerificationJobService;
 import io.harness.eventsframework.entity_crud.project.ProjectEntityChangeDTO;
 import io.harness.persistence.PersistentEntity;
@@ -52,10 +50,12 @@ public class ProjectChangeEventMessageProcessorTest extends CvNextGenTestBase {
   @Inject private CVConfigService cvConfigService;
   @Inject private VerificationJobService verificationJobService;
   @Inject private MetricPackService metricPackService;
+  private BuilderFactory builderFactory;
 
   @Before
   public void setup() throws IllegalAccessException {
     MockitoAnnotations.initMocks(this);
+    builderFactory = BuilderFactory.getDefault();
   }
 
   @Test
@@ -181,25 +181,11 @@ public class ProjectChangeEventMessageProcessorTest extends CvNextGenTestBase {
   }
 
   private CVConfig createCVConfig(String accountId, String orgIdentifier, String projectIdentifier) {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig, accountId, orgIdentifier, projectIdentifier);
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier(generateUuid());
-    return cvConfig;
-  }
-
-  private void fillCommon(CVConfig cvConfig, String accountId, String orgIdentifier, String projectIdentifier) {
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(accountId);
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier("service");
-    cvConfig.setEnvIdentifier("env");
-    cvConfig.setOrgIdentifier(orgIdentifier);
-    cvConfig.setProjectIdentifier(projectIdentifier);
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName(generateUuid());
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
+    return builderFactory.splunkCVConfigBuilder()
+        .accountId(accountId)
+        .projectIdentifier(projectIdentifier)
+        .orgIdentifier(orgIdentifier)
+        .build();
   }
 
   private VerificationJobDTO createVerificationJobDTO(String orgIdentifier, String projectIdentifier) {

@@ -33,7 +33,7 @@ import org.junit.experimental.categories.Category;
 
 @OwnedBy(HarnessTeam.CDC)
 public class DeploymentStagePMSPlanCreatorTest extends CDNGTestBase {
-  @Inject DeploymentStagePMSPlanCreator deploymentStagePMSPlanCreator;
+  @Inject DeploymentStagePMSPlanCreatorV2 deploymentStagePMSPlanCreator;
   @Test
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)

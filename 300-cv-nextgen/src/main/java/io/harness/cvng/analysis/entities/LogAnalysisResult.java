@@ -112,6 +112,29 @@ public final class LogAnalysisResult implements PersistentEntity, UuidAware, Cre
     }
   }
 
+  public static LogAnalysisTag RadarChartTagToLogAnalysisTag(RadarChartTag radarChartTag) {
+    return LogAnalysisTag.values()[radarChartTag.ordinal()];
+  }
+
+  public static RadarChartTag LogAnalysisTagToRadarChartTag(LogAnalysisTag logAnalysisTag) {
+    return RadarChartTag.values()[logAnalysisTag.ordinal()];
+  }
+
+  public enum RadarChartTag {
+    KNOWN_EVENT(0),
+    UNEXPECTED_FREQUENCY(1),
+    UNKNOWN_EVENT(2);
+
+    private Integer severity;
+
+    RadarChartTag(int severity) {
+      this.severity = severity;
+    }
+    public static Set<RadarChartTag> getAnomalousTags() {
+      return Sets.newHashSet(UNKNOWN_EVENT, UNEXPECTED_FREQUENCY);
+    }
+  }
+
   public enum LogAnalysisTag {
     KNOWN(0),
     UNEXPECTED(1),

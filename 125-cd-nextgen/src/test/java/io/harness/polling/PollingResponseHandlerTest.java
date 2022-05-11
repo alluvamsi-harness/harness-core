@@ -42,7 +42,7 @@ import io.harness.delegate.beans.polling.ManifestPollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingDelegateResponse;
 import io.harness.delegate.beans.polling.PollingResponseInfc;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
@@ -408,7 +408,7 @@ public class PollingResponseHandlerTest extends CategoryTest {
     return IntStream.rangeClosed(startIndex, endIndex)
         .boxed()
         .map(i
-            -> ArtifactoryDockerArtifactDelegateResponse.builder()
+            -> ArtifactoryArtifactDelegateResponse.builder()
                    .sourceType(ARTIFACTORY_REGISTRY)
                    .tag(String.valueOf(i))
                    .build())

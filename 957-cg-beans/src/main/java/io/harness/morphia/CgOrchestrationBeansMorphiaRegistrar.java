@@ -14,8 +14,13 @@ import io.harness.beans.MigratedEntityMapping;
 import io.harness.beans.SweepingOutput;
 import io.harness.beans.terraform.TerraformPlanParam;
 
+import software.wings.api.ServiceElement;
+import software.wings.beans.BaseFile;
 import software.wings.beans.Log;
 import software.wings.beans.TerraGroupProvisioners;
+import software.wings.beans.appmanifest.HelmChart;
+import software.wings.beans.artifact.Artifact;
+import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.entityinterface.ApplicationAccess;
 import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.metrics.TimeSeriesMetricDefinition;
@@ -40,11 +45,16 @@ public class CgOrchestrationBeansMorphiaRegistrar implements MorphiaRegistrar {
     set.add(MigratedEntityMapping.class);
     set.add(Log.class);
     set.add(CVActivityLog.class);
+    set.add(Artifact.class);
+    set.add(HelmChart.class);
+    set.add(BaseFile.class);
   }
 
   @Override
   public void registerImplementationClasses(MorphiaRegistrarHelperPut h, MorphiaRegistrarHelperPut w) {
     w.put("metrics.TimeSeriesMetricDefinition", TimeSeriesMetricDefinition.class);
     w.put("api.TerraformPlanParam", TerraformPlanParam.class);
+    w.put("api.ServiceElement", ServiceElement.class);
+    w.put("beans.artifact.ArtifactFile", ArtifactFile.class);
   }
 }

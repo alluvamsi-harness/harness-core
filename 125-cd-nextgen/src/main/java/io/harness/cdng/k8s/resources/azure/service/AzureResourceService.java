@@ -10,9 +10,9 @@ package io.harness.cdng.k8s.resources.azure.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.delegate.beans.azure.AzureClustersDTO;
-import io.harness.delegate.beans.azure.AzureResourceGroupsDTO;
-import io.harness.delegate.beans.azure.AzureSubscriptionsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureClustersDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionsDTO;
 
 @OwnedBy(HarnessTeam.CDP)
 public interface AzureResourceService {

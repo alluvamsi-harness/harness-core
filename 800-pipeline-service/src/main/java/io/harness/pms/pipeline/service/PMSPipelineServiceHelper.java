@@ -9,7 +9,11 @@ package io.harness.pms.pipeline.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.telemetry.Destination.AMPLITUDE;
 
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+
+import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.data.structure.EmptyPredicate;
@@ -24,6 +28,7 @@ import io.harness.filter.service.FilterService;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
+import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.opaclient.model.OpaConstants;
 import io.harness.pms.PmsFeatureFlagService;
@@ -39,10 +44,13 @@ import io.harness.pms.governance.ExpansionRequest;
 import io.harness.pms.governance.ExpansionRequestsExtractor;
 import io.harness.pms.governance.ExpansionsMerger;
 import io.harness.pms.governance.JsonExpander;
+import io.harness.pms.instrumentaion.PipelineInstrumentationConstants;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
+import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.serializer.JsonUtils;
+import io.harness.telemetry.TelemetryReporter;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -50,6 +58,7 @@ import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -73,6 +82,13 @@ public class PMSPipelineServiceHelper {
   @Inject private final ExpansionRequestsExtractor expansionRequestsExtractor;
   @Inject private final PmsFeatureFlagService pmsFeatureFlagService;
   @Inject private final PmsGitSyncHelper gitSyncHelper;
+  @Inject private final TelemetryReporter telemetryReporter;
+
+  public static String PIPELINE_SAVE = "pipeline_save";
+  public static String PIPELINE_SAVE_ACTION_TYPE = "action";
+  public static String PIPELINE_NAME = "pipelineName";
+  public static String ORG_ID = "orgId";
+  public static String PROJECT_ID = "projectId";
 
   public static void validatePresenceOfRequiredFields(Object... fields) {
     Lists.newArrayList(fields).forEach(field -> Objects.requireNonNull(field, "One of the required fields is null."));
@@ -158,6 +174,7 @@ public class PMSPipelineServiceHelper {
         return validatePipelineYamlAndSetTemplateRefIfAnyInternal(pipelineEntity, checkAgainstOPAPolicies);
       }
     } catch (io.harness.yaml.validator.InvalidYamlException ex) {
+      ex.setYaml(pipelineEntity.getData());
       throw ex;
     } catch (Exception ex) {
       YamlSchemaErrorWrapperDTO errorWrapperDTO =
@@ -166,7 +183,7 @@ public class PMSPipelineServiceHelper {
                   YamlSchemaErrorDTO.builder().message(ex.getMessage()).fqn("$.pipeline").build()))
               .build();
       throw new io.harness.yaml.validator.InvalidYamlException(
-          HarnessStringUtils.emptyIfNull(ex.getMessage()), ex, errorWrapperDTO);
+          HarnessStringUtils.emptyIfNull(ex.getMessage()), ex, errorWrapperDTO, pipelineEntity.getData());
     }
   }
 
@@ -224,5 +241,65 @@ public class PMSPipelineServiceHelper {
       expansionRequestMetadataBuilder.setGitSyncBranchContext(gitSyncBranchContextBytes);
     }
     return expansionRequestMetadataBuilder.build();
+  }
+
+  public Criteria formCriteria(String accountId, String orgId, String projectId, String filterIdentifier,
+      PipelineFilterPropertiesDto filterProperties, boolean deleted, String module, String searchTerm) {
+    Criteria criteria = new Criteria();
+    if (isNotEmpty(accountId)) {
+      criteria.and(PipelineEntityKeys.accountId).is(accountId);
+    }
+    if (isNotEmpty(orgId)) {
+      criteria.and(PipelineEntityKeys.orgIdentifier).is(orgId);
+    }
+    if (isNotEmpty(projectId)) {
+      criteria.and(PipelineEntityKeys.projectIdentifier).is(projectId);
+    }
+
+    criteria.and(PipelineEntityKeys.deleted).is(deleted);
+
+    if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties != null) {
+      throw new InvalidRequestException("Can not apply both filter properties and saved filter together");
+    } else if (EmptyPredicate.isNotEmpty(filterIdentifier) && filterProperties == null) {
+      populateFilterUsingIdentifier(criteria, accountId, orgId, projectId, filterIdentifier);
+    } else if (EmptyPredicate.isEmpty(filterIdentifier) && filterProperties != null) {
+      PMSPipelineServiceHelper.populateFilter(criteria, filterProperties);
+    }
+
+    Criteria moduleCriteria = new Criteria();
+    if (EmptyPredicate.isNotEmpty(module)) {
+      // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
+      // criteria = { "$or": [ { "filters": {} } , { "filters.MODULE": { $exists: true } } ] }
+      moduleCriteria.orOperator(where(PipelineEntityKeys.filters).is(new Document()),
+          where(String.format("%s.%s", PipelineEntityKeys.filters, module)).exists(true));
+    }
+
+    Criteria searchCriteria = new Criteria();
+    if (EmptyPredicate.isNotEmpty(searchTerm)) {
+      searchCriteria.orOperator(where(PipelineEntityKeys.identifier)
+                                    .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+          where(PipelineEntityKeys.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+          where(PipelineEntityKeys.tags + "." + NGTagKeys.key)
+              .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
+          where(PipelineEntityKeys.tags + "." + NGTagKeys.value)
+              .regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS));
+    }
+
+    criteria.andOperator(moduleCriteria, searchCriteria);
+
+    return criteria;
+  }
+
+  // TODO(Brijesh): Make this async.
+  public void sendPipelineSaveTelemetryEvent(PipelineEntity entity, String actionType) {
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put(PIPELINE_NAME, entity.getName());
+    properties.put(ORG_ID, entity.getOrgIdentifier());
+    properties.put(PROJECT_ID, entity.getProjectIdentifier());
+    properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
+    properties.put(PipelineInstrumentationConstants.MODULE_NAME,
+        PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
+    telemetryReporter.sendTrackEvent(PIPELINE_SAVE, null, entity.getAccountId(), properties,
+        Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }
 }

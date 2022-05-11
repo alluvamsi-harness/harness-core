@@ -184,6 +184,10 @@ if [[ "" != "$TI_SERVICE_ENDPOINT" ]]; then
   yq write -i $CONFIG_FILE tiServiceConfig.baseUrl "$TI_SERVICE_ENDPOINT"
 fi
 
+if [[ "" != "$STO_SERVICE_ENDPOINT" ]]; then
+  yq write -i $CONFIG_FILE stoServiceConfig.baseUrl "$STO_SERVICE_ENDPOINT"
+fi
+
 if [[ "" != "$API_URL" ]]; then
   yq write -i $CONFIG_FILE apiUrl "$API_URL"
 fi
@@ -212,12 +216,20 @@ if [[ "" != "$TI_SERVICE_GLOBAL_TOKEN" ]]; then
   yq write -i $CONFIG_FILE tiServiceConfig.globalToken "$TI_SERVICE_GLOBAL_TOKEN"
 fi
 
+if [[ "" != "$STO_SERVICE_GLOBAL_TOKEN" ]]; then
+  yq write -i $CONFIG_FILE stoServiceConfig.globalToken "$STO_SERVICE_GLOBAL_TOKEN"
+fi
+
 if [[ "" != "$NEXT_GEN_MANAGER_SECRET" ]]; then
   yq write -i $CONFIG_FILE ngManagerServiceSecret "$NEXT_GEN_MANAGER_SECRET"
 fi
 
 if [[ "" != "$JWT_AUTH_SECRET" ]]; then
   yq write -i $CONFIG_FILE jwtAuthSecret "$JWT_AUTH_SECRET"
+fi
+
+if [[ "" != "$ENABLE_AUTH" ]]; then
+  yq write -i $CONFIG_FILE enableAuth "$ENABLE_AUTH"
 fi
 
 if [[ "" != "$JWT_IDENTITY_SERVICE_SECRET" ]]; then

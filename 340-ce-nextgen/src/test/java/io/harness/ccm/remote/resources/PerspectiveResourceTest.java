@@ -26,6 +26,7 @@ import io.harness.ccm.service.intf.CCMNotificationService;
 import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewState;
 import io.harness.ccm.views.entities.ViewType;
+import io.harness.ccm.views.helper.AwsAccountFieldHelper;
 import io.harness.ccm.views.service.CEReportScheduleService;
 import io.harness.ccm.views.service.CEViewService;
 import io.harness.ccm.views.service.ViewCustomFieldService;
@@ -46,6 +47,7 @@ public class PerspectiveResourceTest extends CategoryTest {
   private BudgetCostService budgetCostService = mock(BudgetCostService.class);
   private BudgetService budgetService = mock(BudgetService.class);
   private CCMNotificationService notificationService = mock(CCMNotificationService.class);
+  private AwsAccountFieldHelper awsAccountFieldHelper = mock(AwsAccountFieldHelper.class);
   private PerspectiveResource perspectiveResource;
 
   private final String ACCOUNT_ID = "ACCOUNT_ID";
@@ -77,7 +79,7 @@ public class PerspectiveResourceTest extends CategoryTest {
     when(notificationService.delete(PERSPECTIVE_ID, ACCOUNT_ID)).thenReturn(true);
 
     perspectiveResource = new PerspectiveResource(ceViewService, ceReportScheduleService, viewCustomFieldService,
-        bigQueryService, bigQueryHelper, budgetCostService, budgetService, notificationService);
+        bigQueryService, bigQueryHelper, budgetCostService, budgetService, notificationService, awsAccountFieldHelper);
   }
 
   @Test

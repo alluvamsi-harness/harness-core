@@ -114,6 +114,7 @@ public class CENextGenApplication extends Application<CENextGenConfiguration> {
   public void initialize(Bootstrap<CENextGenConfiguration> bootstrap) {
     initializeLogging();
     bootstrap.addCommand(new InspectCommand<>(this));
+    bootstrap.addCommand(new GenerateOpenApiSpecCommand());
     // Enable variable substitution with environment variables
     bootstrap.setConfigurationSourceProvider(getConfigurationProvider(bootstrap.getConfigurationSourceProvider()));
     bootstrap.addBundle(getSwaggerBundle());

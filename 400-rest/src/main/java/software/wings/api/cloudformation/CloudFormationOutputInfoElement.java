@@ -15,7 +15,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,13 +41,6 @@ public class CloudFormationOutputInfoElement implements CloudFormationElement {
   @Override
   public String getName() {
     return null;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("cloudformation", newStackOutputs);
-    return map;
   }
 
   @Override

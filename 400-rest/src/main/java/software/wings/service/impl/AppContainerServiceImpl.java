@@ -97,14 +97,16 @@ public class AppContainerServiceImpl implements AppContainerService {
   @Override
   public AppContainer save(AppContainer appContainer, InputStream in, FileBucket fileBucket) {
     uploadAppContainerFile(appContainer, in, fileBucket);
-    return wingsPersistence.saveAndGet(AppContainer.class, appContainer);
+    String appContainerKey = wingsPersistence.save(appContainer);
+    return wingsPersistence.getWithAppId(AppContainer.class, appContainer.getAppId(), appContainerKey);
   }
   /**
    * {@inheritDoc}
    */
   @Override
   public AppContainer save(AppContainer appContainer) {
-    return wingsPersistence.saveAndGet(AppContainer.class, appContainer);
+    String appContainerKey = wingsPersistence.save(appContainer);
+    return wingsPersistence.getWithAppId(AppContainer.class, appContainer.getAppId(), appContainerKey);
   }
 
   /**

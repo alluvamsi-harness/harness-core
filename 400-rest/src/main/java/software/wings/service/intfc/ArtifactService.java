@@ -22,6 +22,7 @@ import software.wings.beans.artifact.Artifact.ContentStatus;
 import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
+import software.wings.beans.artifact.ArtifactView;
 import software.wings.service.intfc.ownership.OwnedByArtifactStream;
 
 import java.io.File;
@@ -177,7 +178,7 @@ public interface ArtifactService extends OwnedByArtifactStream {
    * @param appId        the app id
    * @return the artifact
    */
-  Artifact getWithServices(String artifactId, String appId);
+  ArtifactView getWithServices(String artifactId, String appId);
 
   Artifact getWithSource(String artifactId);
   /**

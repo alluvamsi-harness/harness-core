@@ -18,10 +18,7 @@ import io.harness.pms.contracts.advisers.NextStepAdvise;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
 import io.harness.pms.sdk.core.adviser.OrchestrationAdviserTypes;
-import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
-import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
-import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.serializer.KryoSerializer;
 
 import com.google.common.base.Preconditions;
@@ -46,14 +43,6 @@ public class NextStageAdviser implements Adviser {
 
   @Override
   public boolean canAdvise(AdvisingEvent advisingEvent) {
-    if (advisingEvent.getToStatus() == ABORTED) {
-      return false;
-    }
-    // This is required so that the next stage does not run if the given stage is rolled back. If removed, the next step
-    // would be marked as skipped, rather than NotStarted
-    OptionalSweepingOutput optionalSweepingOutput =
-        executionSweepingOutputService.resolveOptional(advisingEvent.getAmbiance(),
-            RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.STOP_STAGE_SEQUENCE));
-    return !optionalSweepingOutput.isFound();
+    return advisingEvent.getToStatus() != ABORTED;
   }
 }

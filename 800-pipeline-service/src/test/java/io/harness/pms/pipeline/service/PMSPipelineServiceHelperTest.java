@@ -9,6 +9,7 @@ package io.harness.pms.pipeline.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.NAMAN;
+import static io.harness.rule.OwnerRule.SAMARTH;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,6 +40,7 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.rule.Owner;
+import io.harness.telemetry.TelemetryReporter;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -63,6 +65,7 @@ public class PMSPipelineServiceHelperTest extends CategoryTest {
   @Mock private ExpansionRequestsExtractor expansionRequestsExtractor;
   @Mock private JsonExpander jsonExpander;
   @Mock PmsFeatureFlagService pmsFeatureFlagService;
+  @Mock TelemetryReporter telemetryReporter;
 
   String accountIdentifier = "account";
   String orgIdentifier = "org";
@@ -73,7 +76,7 @@ public class PMSPipelineServiceHelperTest extends CategoryTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     pmsPipelineServiceHelper = new PMSPipelineServiceHelper(filterService, filterCreatorMergeService, null, null, null,
-        jsonExpander, expansionRequestsExtractor, pmsFeatureFlagService, gitSyncHelper);
+        jsonExpander, expansionRequestsExtractor, pmsFeatureFlagService, gitSyncHelper, telemetryReporter);
   }
 
   @Test
@@ -231,5 +234,20 @@ public class PMSPipelineServiceHelperTest extends CategoryTest {
     verify(gitSyncHelper, times(1)).getGitSyncBranchContextBytesThreadLocal();
     verify(expansionRequestsExtractor, times(1)).fetchExpansionRequests(dummyYaml);
     verify(jsonExpander, times(1)).fetchExpansionResponses(dummyRequestSet, expansionRequestMetadata);
+  }
+
+  @Test
+  @Owner(developers = SAMARTH)
+  @Category(UnitTests.class)
+  public void testFormCriteria() {
+    Criteria form = pmsPipelineServiceHelper.formCriteria(
+        accountIdentifier, orgIdentifier, projectIdentifier, null, null, false, null, null);
+
+    assertThat(form.getCriteriaObject().get("accountId").toString().contentEquals(accountIdentifier)).isEqualTo(true);
+    assertThat(form.getCriteriaObject().get("orgIdentifier").toString().contentEquals(orgIdentifier)).isEqualTo(true);
+    assertThat(form.getCriteriaObject().get("projectIdentifier").toString().contentEquals(projectIdentifier))
+        .isEqualTo(true);
+    assertThat(form.getCriteriaObject().containsKey("status")).isEqualTo(false);
+    assertThat(form.getCriteriaObject().get("deleted")).isEqualTo(false);
   }
 }

@@ -278,6 +278,26 @@ public class HelmTaskHelper {
     ChartMuseumServer chartMuseumServer = null;
     String resourceDirectory = null;
     boolean useRepoFlags = false;
+    /*
+     repoName will be a combination of the connectorId and bucket name;
+     this way, parallel deployments with charts in different buckets will work fine
+     */
+    final String modifiedRepoName =
+        helmChartConfigParams.getRepoName() + "-" + helmChartConfigParams.getHelmRepoConfig().getBucketName();
+
+    String cacheDir = "";
+    if (helmChartConfigParams.isUseRepoFlags()) {
+      if (helmChartConfigParams.isDeleteRepoCacheDir()) {
+        cacheDir = Paths
+                       .get(RESOURCE_DIR_BASE, modifiedRepoName,
+                           RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT), "cache")
+                       .toAbsolutePath()
+                       .normalize()
+                       .toString();
+      } else {
+        cacheDir = Paths.get(RESOURCE_DIR_BASE, modifiedRepoName, "cache").toAbsolutePath().normalize().toString();
+      }
+    }
 
     try {
       resourceDirectory = createNewDirectoryAtPath(RESOURCE_DIR_BASE);
@@ -285,19 +305,26 @@ public class HelmTaskHelper {
           connectorConfig, resourceDirectory, helmChartConfigParams.getBasePath(),
           helmChartConfigParams.isUseLatestChartMuseumVersion());
 
-      helmTaskHelperBase.addChartMuseumRepo(helmChartConfigParams.getRepoName(),
-          helmChartConfigParams.getRepoDisplayName(), chartMuseumServer.getPort(), chartDirectory,
-          helmChartConfigParams.getHelmVersion(), timeoutInMillis);
-      helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
-          helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
-          helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
-          helmCommandFlag, timeoutInMillis, false, "");
+      helmTaskHelperBase.addChartMuseumRepo(modifiedRepoName, helmChartConfigParams.getRepoDisplayName(),
+          chartMuseumServer.getPort(), chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
+          cacheDir);
+      helmTaskHelperBase.fetchChartFromRepo(modifiedRepoName, helmChartConfigParams.getRepoDisplayName(),
+          helmChartConfigParams.getChartName(), helmChartConfigParams.getChartVersion(), chartDirectory,
+          helmChartConfigParams.getHelmVersion(), helmCommandFlag, timeoutInMillis, false, cacheDir);
     } finally {
       if (chartMuseumServer != null) {
         chartMuseumClient.stopChartMuseumServer(chartMuseumServer.getStartedProcess());
       }
-      removeRepo(helmChartConfigParams.getRepoName(), chartDirectory, helmChartConfigParams.getHelmVersion(),
-          timeoutInMillis, useRepoFlags, EMPTY);
+      removeRepo(modifiedRepoName, chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
+          useRepoFlags, EMPTY);
+      if (helmChartConfigParams.isUseRepoFlags() && helmChartConfigParams.isDeleteRepoCacheDir()) {
+        try {
+          FileUtils.forceDelete(new File(cacheDir));
+        } catch (IOException ie) {
+          log.error("Deletion of charts folder failed due to : {}",
+              ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+        }
+      }
       cleanup(resourceDirectory);
     }
   }
@@ -440,7 +467,7 @@ public class HelmTaskHelper {
           helmRepoConfig, connectorConfig, resourceDirectory, basePath, useLatestChartMuseumVersion);
 
       helmTaskHelperBase.addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), workingDirectory,
-          helmVersion, DEFAULT_TIMEOUT_IN_MILLIS);
+          helmVersion, DEFAULT_TIMEOUT_IN_MILLIS, "");
     } finally {
       if (chartMuseumServer != null) {
         chartMuseumClient.stopChartMuseumServer(chartMuseumServer.getStartedProcess());
@@ -637,7 +664,7 @@ public class HelmTaskHelper {
     try {
       helmTaskHelperBase.addChartMuseumRepo(helmChartConfigParams.getRepoName(),
           helmChartConfigParams.getRepoDisplayName(), chartMuseumServer.getPort(), chartDirectory,
-          helmChartConfigParams.getHelmVersion(), timeoutInMillis);
+          helmChartConfigParams.getHelmVersion(), timeoutInMillis, "");
 
       String command = fetchHelmChartVersionsCommand(helmChartConfigParams.getHelmVersion(),
           helmChartConfigParams.getChartName(), helmChartConfigParams.getRepoName(), chartDirectory);

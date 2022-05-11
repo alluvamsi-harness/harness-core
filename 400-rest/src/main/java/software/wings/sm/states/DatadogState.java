@@ -53,6 +53,7 @@ import software.wings.service.intfc.datadog.DatadogService;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.stencils.DefaultValue;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 import software.wings.verification.datadog.DatadogCVServiceConfiguration;
@@ -93,6 +94,8 @@ import org.slf4j.Logger;
 @BreakDependencyOn("software.wings.service.intfc.DelegateService")
 public class DatadogState extends AbstractMetricAnalysisState {
   @Inject @SchemaIgnore private transient DatadogService datadogService;
+  @Inject @SchemaIgnore private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
+
   private static final int DATA_COLLECTION_RATE_MINS = 5;
   private static final URL DATADOG_URL = DatadogState.class.getResource("/apm/datadog.yml");
   private static final URL DATADOG_METRICS_URL = DatadogState.class.getResource("/apm/datadog_metrics.yml");
@@ -184,7 +187,9 @@ public class DatadogState extends AbstractMetricAnalysisState {
                               .values()));
 
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
-    String envId = workflowStandardParams == null ? null : workflowStandardParams.getEnv().getUuid();
+    String envId = workflowStandardParams == null
+        ? null
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
     String serverConfigId =
         getResolvedConnectorId(context, DatadogStateKeys.analysisServerConfigId, analysisServerConfigId);
     String serviceName = this.datadogServiceName;

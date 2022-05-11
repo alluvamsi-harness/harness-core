@@ -7,6 +7,7 @@
 
 package io.harness.integrationstage;
 
+import static io.harness.common.CIExecutionConstants.OSX_STEP_MOUNT_PATH;
 import static io.harness.common.CIExecutionConstants.STEP_WORK_DIR;
 import static io.harness.rule.OwnerRule.ALEKSANDAR;
 import static io.harness.rule.OwnerRule.SHUBHAM;
@@ -17,13 +18,17 @@ import static org.mockito.Mockito.when;
 import io.harness.beans.FeatureName;
 import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml.VmPoolYamlSpec;
 import io.harness.category.element.UnitTests;
 import io.harness.ci.integrationstage.BuildJobEnvInfoBuilder;
 import io.harness.ci.integrationstage.VmInitializeStepUtils;
 import io.harness.executionplan.CIExecutionTestBase;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.plancreator.stages.stage.StageElementConfig;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -73,8 +78,34 @@ public class BuildJobEnvInfoBuilderTest extends CIExecutionTestBase {
                                    .volToMountPath(volToMountPath)
                                    .connectorRefs(new ArrayList<>())
                                    .build();
-    BuildJobEnvInfo actual = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(
-        stageElementConfig, VmInfraYaml.builder().build(), null, new ArrayList<>(), ACCOUNT_ID);
+    BuildJobEnvInfo actual = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(stageElementConfig,
+        VmInfraYaml.builder()
+            .spec(VmPoolYaml.builder().spec(VmPoolYamlSpec.builder().identifier("test").build()).build())
+            .build(),
+        null, new ArrayList<>(), ACCOUNT_ID);
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM)
+  @Category(UnitTests.class)
+  public void getVmBuildJobEnvInfoOSX() {
+    when(featureFlagService.isEnabled(FeatureName.CI_VM_INFRASTRUCTURE, "accountId")).thenReturn(true);
+    StageElementConfig stageElementConfig = vmBuildJobTestHelper.getVmStage("test");
+    Map<String, String> volToMountPath = new HashMap<>();
+    volToMountPath.put("harness", OSX_STEP_MOUNT_PATH);
+    BuildJobEnvInfo expected = VmBuildJobInfo.builder()
+                                   .workDir(OSX_STEP_MOUNT_PATH)
+                                   .volToMountPath(volToMountPath)
+                                   .connectorRefs(new ArrayList<>())
+                                   .build();
+    BuildJobEnvInfo actual = buildJobEnvInfoBuilder.getCIBuildJobEnvInfo(stageElementConfig,
+        VmInfraYaml.builder()
+            .spec(VmPoolYaml.builder()
+                      .spec(VmPoolYamlSpec.builder().os(ParameterField.createValueField(OSType.OSX)).build())
+                      .build())
+            .build(),
+        null, new ArrayList<>(), ACCOUNT_ID);
     assertThat(actual).isEqualTo(expected);
   }
 }

@@ -81,6 +81,7 @@ import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.AwsStateHelper;
 import software.wings.utils.ServiceVersionConvention;
 
@@ -113,6 +114,7 @@ public class SpotInstStateHelper {
   @Inject private AwsCommandHelper commandHelper;
   @Inject private SweepingOutputService sweepingOutputService;
   @Inject private AwsStateHelper awsStateHelper;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   public SpotInstSetupStateExecutionData prepareStateExecutionData(
       ExecutionContext context, SpotInstServiceSetup serviceSetup) {
@@ -120,7 +122,7 @@ public class SpotInstStateHelper {
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
 
     Application app = appService.get(context.getAppId());
-    Environment env = workflowStandardParams.fetchRequiredEnv();
+    Environment env = workflowStandardParamsExtensionService.fetchRequiredEnv(workflowStandardParams);
     ServiceElement serviceElement = phaseElement.getServiceElement();
 
     Artifact artifact = ((DeploymentExecutionContext) context).getDefaultArtifactForService(serviceElement.getUuid());
@@ -443,8 +445,8 @@ public class SpotInstStateHelper {
   SpotinstTrafficShiftDataBag getDataBag(ExecutionContext context) {
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
     notNullCheck("Workflow Standard Params are null", workflowStandardParams);
-    Application app = workflowStandardParams.fetchRequiredApp();
-    Environment env = workflowStandardParams.fetchRequiredEnv();
+    Application app = workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams);
+    Environment env = workflowStandardParamsExtensionService.fetchRequiredEnv(workflowStandardParams);
     AwsAmiInfrastructureMapping infrastructureMapping =
         (AwsAmiInfrastructureMapping) infrastructureMappingService.get(app.getUuid(), context.fetchInfraMappingId());
     notNullCheck("Inframapping is null", infrastructureMapping);

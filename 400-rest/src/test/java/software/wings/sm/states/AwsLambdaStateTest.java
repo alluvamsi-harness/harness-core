@@ -90,6 +90,7 @@ import software.wings.service.intfc.StateExecutionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.utils.WingsTestConstants;
 
 import java.util.Collections;
@@ -120,6 +121,7 @@ public class AwsLambdaStateTest extends CategoryTest {
   @Mock private ServiceTemplateService serviceTemplateService;
   @Mock private DelegateService delegateService;
   @Mock private StateExecutionService stateExecutionService;
+  @Mock WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Spy @InjectMocks AwsLambdaState awsLambdaState;
   private SettingAttribute awsSetting =
@@ -152,9 +154,9 @@ public class AwsLambdaStateTest extends CategoryTest {
     EmbeddedUser mockCurrentUser = mock(EmbeddedUser.class);
     doReturn(mockCurrentUser).when(mockParams).getCurrentUser();
     doReturn(mockParams).when(mockContext).getContextElement(ContextElementType.STANDARD);
-    doReturn(app).when(mockParams).fetchRequiredApp();
-    doReturn(env).when(mockParams).getEnv();
-    doReturn(env).when(mockParams).getEnv();
+    doReturn(app).when(workflowStandardParamsExtensionService).fetchRequiredApp(mockParams);
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     doReturn(mock(Service.class)).when(serviceResourceService).getWithDetails(anyString(), anyString());
     final ServiceCommand serviceCommandMock = mock(ServiceCommand.class);
     doReturn(serviceCommandMock)
@@ -200,8 +202,8 @@ public class AwsLambdaStateTest extends CategoryTest {
     EmbeddedUser mockCurrentUser = mock(EmbeddedUser.class);
     doReturn(mockCurrentUser).when(mockParams).getCurrentUser();
     doReturn(mockParams).when(mockContext).getContextElement(ContextElementType.STANDARD);
-    doReturn(app).when(mockParams).fetchRequiredApp();
-    doReturn(env).when(mockParams).getEnv();
+    doReturn(app).when(workflowStandardParamsExtensionService).fetchRequiredApp(mockParams);
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
 
     DockerArtifactStream mockDockerArtifactStream = mock(DockerArtifactStream.class);
     ArtifactStreamAttributes artifactStreamAttributes = ArtifactStreamAttributes.builder()

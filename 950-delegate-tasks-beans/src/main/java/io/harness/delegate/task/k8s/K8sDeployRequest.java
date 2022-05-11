@@ -16,6 +16,7 @@ import static io.harness.delegate.task.k8s.ManifestType.KUSTOMIZE;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.connector.awsconnector.AwsCapabilityHelper;
+import io.harness.delegate.beans.connector.azureconnector.AzureCapabilityHelper;
 import io.harness.delegate.beans.connector.gcp.GcpCapabilityHelper;
 import io.harness.delegate.beans.connector.k8Connector.K8sTaskCapabilityHelper;
 import io.harness.delegate.beans.connector.scm.GitCapabilityHelper;
@@ -69,6 +70,11 @@ public interface K8sDeployRequest extends TaskParameters, ExecutionCapabilityDem
     if (k8sInfraDelegateConfig instanceof GcpK8sInfraDelegateConfig) {
       capabilities.addAll(GcpCapabilityHelper.fetchRequiredExecutionCapabilities(
           ((GcpK8sInfraDelegateConfig) k8sInfraDelegateConfig).getGcpConnectorDTO(), maskingEvaluator));
+    }
+
+    if (k8sInfraDelegateConfig instanceof AzureK8sInfraDelegateConfig) {
+      capabilities.addAll(AzureCapabilityHelper.fetchRequiredExecutionCapabilities(
+          ((AzureK8sInfraDelegateConfig) k8sInfraDelegateConfig).getAzureConnectorDTO(), maskingEvaluator));
     }
 
     if (getManifestDelegateConfig() != null) {

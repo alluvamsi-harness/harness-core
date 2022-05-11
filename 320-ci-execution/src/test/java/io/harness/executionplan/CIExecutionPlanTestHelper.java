@@ -21,9 +21,9 @@ import static io.harness.common.CIExecutionConstants.PLUGIN_ENV_PREFIX;
 import static io.harness.common.CIExecutionConstants.PORT_PREFIX;
 import static io.harness.common.CIExecutionConstants.PORT_STARTING_RANGE;
 import static io.harness.common.CIExecutionConstants.SERVICE_ARG_COMMAND;
-import static io.harness.common.CIExecutionConstants.STEP_COMMAND;
 import static io.harness.common.CIExecutionConstants.STEP_REQUEST_MEMORY_MIB;
 import static io.harness.common.CIExecutionConstants.STEP_REQUEST_MILLI_CPU;
+import static io.harness.common.CIExecutionConstants.UNIX_STEP_COMMAND;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.PLUGIN;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.RUN;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.SERVICE;
@@ -54,6 +54,7 @@ import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.executionargs.CIExecutionArgs;
 import io.harness.beans.script.ScriptInfo;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageConfigImpl;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.yaml.extended.CustomSecretVariable;
 import io.harness.beans.yaml.extended.CustomTextVariable;
@@ -535,7 +536,7 @@ public class CIExecutionPlanTestHelper {
         .envVars(ImmutableMap.of("HARNESS_SERVICE_ENTRYPOINT", "redis", "HARNESS_SERVICE_ARGS", "start"))
         .containerType(SERVICE)
         .args(args)
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(SERVICE_LIMIT_CPU)
@@ -563,7 +564,7 @@ public class CIExecutionPlanTestHelper {
         .name(SERVICE_CTR_NAME)
         .containerType(SERVICE)
         .args(args)
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(SERVICE_LIMIT_CPU)
@@ -586,7 +587,7 @@ public class CIExecutionPlanTestHelper {
         .name("step-" + index.toString())
         .containerType(RUN)
         .args(Arrays.asList(PORT_PREFIX, port.toString()))
-        .commands(Arrays.asList(STEP_COMMAND))
+        .commands(Arrays.asList(UNIX_STEP_COMMAND))
         .ports(Arrays.asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -611,7 +612,7 @@ public class CIExecutionPlanTestHelper {
         .name(RUN_STEP_ID)
         .containerType(RUN)
         .args(asList(PORT_PREFIX, port.toString()))
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -636,7 +637,7 @@ public class CIExecutionPlanTestHelper {
         .name("step-" + index.toString())
         .containerType(PLUGIN)
         .args(Arrays.asList(PORT_PREFIX, port.toString()))
-        .commands(Arrays.asList(STEP_COMMAND))
+        .commands(Arrays.asList(UNIX_STEP_COMMAND))
         .ports(Arrays.asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -664,7 +665,7 @@ public class CIExecutionPlanTestHelper {
         .name("step-" + index.toString())
         .containerType(PLUGIN)
         .args(Arrays.asList(PORT_PREFIX, port.toString()))
-        .commands(Arrays.asList(STEP_COMMAND))
+        .commands(Arrays.asList(UNIX_STEP_COMMAND))
         .ports(Arrays.asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -696,7 +697,7 @@ public class CIExecutionPlanTestHelper {
         .name(CLONE_STEP_ID)
         .containerType(PLUGIN)
         .args(asList(PORT_PREFIX, port.toString()))
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -727,7 +728,7 @@ public class CIExecutionPlanTestHelper {
         .name(PLUGIN_STEP_ID)
         .containerType(PLUGIN)
         .args(asList(PORT_PREFIX, port.toString()))
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -1276,7 +1277,7 @@ public class CIExecutionPlanTestHelper {
         .build();
   }
   public IntegrationStageConfig getIntegrationStageConfig() {
-    return IntegrationStageConfig.builder()
+    return IntegrationStageConfigImpl.builder()
         .execution(getExecutionElementConfig())
         .infrastructure(getInfrastructureWithVolume())
         .sharedPaths(createValueField(newArrayList("share/")))

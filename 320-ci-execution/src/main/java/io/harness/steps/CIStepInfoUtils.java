@@ -46,10 +46,10 @@ public class CIStepInfoUtils {
   public static List<String> getOutputVariables(PluginCompatibleStep step) {
     switch (step.getNonYamlInfo().getStepInfoType()) {
       case SECURITY:
-        List<OutputNGVariable> outputVars = ((SecurityStepInfo) step).getOutputVariables();
+        ParameterField<List<OutputNGVariable>> outputVars = ((SecurityStepInfo) step).getOutputVariables();
 
-        if (isNotEmpty(outputVars)) {
-          return outputVars.stream().map(OutputNGVariable::getName).collect(Collectors.toList());
+        if (isNotEmpty(outputVars.getValue())) {
+          return outputVars.getValue().stream().map(OutputNGVariable::getName).collect(Collectors.toList());
         }
 
         return Collections.emptyList();

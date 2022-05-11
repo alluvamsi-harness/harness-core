@@ -20,13 +20,11 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.azure.AzureClient;
 import io.harness.azure.AzureEnvironmentType;
-import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.context.ARMDeploymentSteadyStateContext;
 import io.harness.azure.context.AzureClientContext;
 import io.harness.azure.model.ARMScopeType;
@@ -89,7 +87,6 @@ public class AzureManagementClientImplTest extends CategoryTest {
   @Mock private Azure.Configurable configurable;
   @Mock private Azure.Authenticated authenticated;
   @Mock private Azure azure;
-  @Mock private AzureManagementClient azureManagementClientMock;
 
   @InjectMocks AzureManagementClientImpl azureManagementClient;
 
@@ -619,21 +616,6 @@ public class AzureManagementClientImplTest extends CategoryTest {
     doReturn(extendedInner).when(deploymentsInner).getAtTenantScope(eq(deploymentName));
     armDeploymentOutputs = azureManagementClient.getARMDeploymentOutputs(context);
     assertThat(armDeploymentOutputs).isNotEmpty();
-  }
-
-  @Test
-  @Owner(developers = OwnerRule.MLUKIC)
-  @Category(UnitTests.class)
-  public void testValidateAzureConnectionWithMSI() {
-    azureManagementClientMock.validateAzureConnection(false, null, AzureEnvironmentType.AZURE);
-    verify(azureManagementClientMock).validateAzureConnection(false, null, AzureEnvironmentType.AZURE);
-
-    azureManagementClientMock.validateAzureConnection(true, "TestClientId", AzureEnvironmentType.AZURE);
-    verify(azureManagementClientMock).validateAzureConnection(true, "TestClientId", AzureEnvironmentType.AZURE);
-
-    azureManagementClient.validateAzureConnection(true, "TestClientId", AzureEnvironmentType.AZURE);
-
-    azureManagementClient.validateAzureConnection(false, null, AzureEnvironmentType.AZURE);
   }
 
   private DeploymentExtendedInner mockDeploymentExtendedInnerForStatus() {

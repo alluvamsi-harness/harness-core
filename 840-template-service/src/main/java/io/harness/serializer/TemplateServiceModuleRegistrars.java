@@ -14,7 +14,9 @@ import io.harness.filter.serializer.FiltersRegistrars;
 import io.harness.gitsync.serializer.GitSyncSdkRegistrar;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.serializer.kryo.NGTemplateKryoRegistrar;
+import io.harness.serializer.kryo.NotificationBeansKryoRegistrar;
 import io.harness.serializer.morphia.NGTemplateMorphiaRegistrar;
+import io.harness.serializer.morphia.NotificationBeansMorphiaRegistrar;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -44,6 +46,8 @@ public class TemplateServiceModuleRegistrars {
           .addAll(NGCoreRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(AccessControlClientRegistrars.kryoRegistrars)
+          .addAll(PmsCommonsModuleRegistrars.kryoRegistrars)
+          .add(NotificationBeansKryoRegistrar.class)
           .build();
 
   public final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -63,7 +67,9 @@ public class TemplateServiceModuleRegistrars {
           .addAll(YamlBeansModuleRegistrars.morphiaRegistrars)
           .addAll(NGCoreRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
+          .addAll(PmsCommonsModuleRegistrars.morphiaRegistrars)
           .add(NGTemplateMorphiaRegistrar.class)
+          .add(NotificationBeansMorphiaRegistrar.class)
           .build();
 
   public final ImmutableSet<Class<? extends TypeConverter>> morphiaConverters =

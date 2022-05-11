@@ -68,6 +68,10 @@
                                 },
                                 "__uuid": "9fm08qHxS82HyPAfbZYR2A"
                               },
+                              "moduleSource": {
+                                "useConnectorCredentials": true,
+                                "__uuid": "djfaBeuQRK6WVU_F5_7NUw"
+                              },
                               "__uuid": "djf-dQeNSrOMmAgTud8boQ"
                             },
                             "secretManagerRef": "harnessSecretManager",

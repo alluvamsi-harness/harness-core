@@ -31,6 +31,7 @@ import org.springframework.data.annotation.TypeAlias;
 public class AzureRepoConnector extends Connector {
   @NotEmpty GitConnectionType connectionType;
   @NotEmpty String url;
+  String validationProject;
   String validationRepo;
   @NotEmpty GitAuthType authType;
   @NotEmpty AzureRepoAuthentication authenticationDetails;

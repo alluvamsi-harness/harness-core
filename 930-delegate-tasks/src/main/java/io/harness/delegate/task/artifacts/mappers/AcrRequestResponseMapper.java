@@ -11,9 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.azure.AzureEnvironmentType;
-import io.harness.azure.model.AzureNGConfig;
-import io.harness.azure.model.AzureNGInheritDelegateCredentialsConfig;
-import io.harness.azure.model.AzureNGManualCredentialsConfig;
+import io.harness.azure.model.AzureAuthenticationType;
+import io.harness.azure.model.AzureConfig;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientKeyCertDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
@@ -36,7 +35,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.CDP)
 public class AcrRequestResponseMapper {
-  public AzureNGConfig toAzureInternalConfig(
+  public AzureConfig toAzureInternalConfig(
       AcrArtifactDelegateRequest acrArtifactDelegateRequest, SecretDecryptionService secretDecryptionService) {
     AzureCredentialDTO credential = acrArtifactDelegateRequest.getAzureConnectorDTO().getCredential();
     List<EncryptedDataDetail> encryptedDataDetails = acrArtifactDelegateRequest.getEncryptedDataDetails();
@@ -46,10 +45,10 @@ public class AcrRequestResponseMapper {
     return toAzureInternalConfig(
         credential, encryptedDataDetails, azureCredentialType, azureEnvironmentType, secretDecryptionService);
   }
-  public AzureNGConfig toAzureInternalConfig(AzureCredentialDTO credential,
+  public AzureConfig toAzureInternalConfig(AzureCredentialDTO credential,
       List<EncryptedDataDetail> encryptedDataDetails, AzureCredentialType azureCredentialType,
       AzureEnvironmentType azureEnvironmentType, SecretDecryptionService secretDecryptionService) {
-    AzureNGConfig azureNGConfig = null;
+    AzureConfig azureConfig = AzureConfig.builder().azureEnvironmentType(azureEnvironmentType).build();
     switch (azureCredentialType) {
       case INHERIT_FROM_DELEGATE: {
         AzureInheritFromDelegateDetailsDTO azureInheritFromDelegateDetailsDTO =
@@ -59,17 +58,10 @@ public class AcrRequestResponseMapper {
         if (azureMSIAuthDTO instanceof AzureMSIAuthUADTO) {
           AzureUserAssignedMSIAuthDTO azureUserAssignedMSIAuthDTO =
               ((AzureMSIAuthUADTO) azureMSIAuthDTO).getCredentials();
-          azureNGConfig = AzureNGInheritDelegateCredentialsConfig.builder()
-                              .isUserAssignedManagedIdentity(true)
-                              .clientId(azureUserAssignedMSIAuthDTO.getClientId())
-                              .azureEnvironmentType(azureEnvironmentType)
-                              .build();
+          azureConfig.setAzureAuthenticationType(AzureAuthenticationType.MANAGED_IDENTITY_USER_ASSIGNED);
+          azureConfig.setClientId(azureUserAssignedMSIAuthDTO.getClientId());
         } else if (azureMSIAuthDTO instanceof AzureMSIAuthSADTO) {
-          azureNGConfig = AzureNGInheritDelegateCredentialsConfig.builder()
-                              .isUserAssignedManagedIdentity(false)
-                              .clientId(null)
-                              .azureEnvironmentType(azureEnvironmentType)
-                              .build();
+          azureConfig.setAzureAuthenticationType(AzureAuthenticationType.MANAGED_IDENTITY_SYSTEM_ASSIGNED);
         } else {
           throw new IllegalStateException(
               "Unexpected ManagedIdentity credentials type : " + azureMSIAuthDTO.getClass().getName());
@@ -80,22 +72,19 @@ public class AcrRequestResponseMapper {
         AzureManualDetailsDTO azureManualDetailsDTO = (AzureManualDetailsDTO) credential.getConfig();
         secretDecryptionService.decrypt(
             ((AzureManualDetailsDTO) credential.getConfig()).getAuthDTO().getCredentials(), encryptedDataDetails);
-        azureNGConfig = AzureNGManualCredentialsConfig.builder()
-                            .azureEnvironmentType(azureEnvironmentType)
-                            .clientId(azureManualDetailsDTO.getClientId())
-                            .tenantId(azureManualDetailsDTO.getTenantId())
-                            .build();
-
+        azureConfig.setClientId(azureManualDetailsDTO.getClientId());
+        azureConfig.setTenantId(azureManualDetailsDTO.getTenantId());
         switch (azureManualDetailsDTO.getAuthDTO().getAzureSecretType()) {
           case SECRET_KEY:
+            azureConfig.setAzureAuthenticationType(AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET);
             AzureClientSecretKeyDTO secretKey =
                 (AzureClientSecretKeyDTO) azureManualDetailsDTO.getAuthDTO().getCredentials();
-            ((AzureNGManualCredentialsConfig) azureNGConfig).setKey(secretKey.getSecretKey().getDecryptedValue());
+            azureConfig.setKey(secretKey.getSecretKey().getDecryptedValue());
             break;
           case KEY_CERT:
+            azureConfig.setAzureAuthenticationType(AzureAuthenticationType.SERVICE_PRINCIPAL_CERT);
             AzureClientKeyCertDTO cert = (AzureClientKeyCertDTO) azureManualDetailsDTO.getAuthDTO().getCredentials();
-            ((AzureNGManualCredentialsConfig) ((AzureNGManualCredentialsConfig) azureNGConfig))
-                .setCert(String.valueOf(cert.getClientCertRef().getDecryptedValue()).getBytes());
+            azureConfig.setCert(String.valueOf(cert.getClientCertRef().getDecryptedValue()).getBytes());
             break;
           default:
             throw new IllegalStateException(
@@ -106,7 +95,7 @@ public class AcrRequestResponseMapper {
       default:
         throw new IllegalStateException("Unexpected azure credential type : " + azureCredentialType);
     }
-    return azureNGConfig;
+    return azureConfig;
   }
 
   public AcrArtifactDelegateResponse toAcrResponse(

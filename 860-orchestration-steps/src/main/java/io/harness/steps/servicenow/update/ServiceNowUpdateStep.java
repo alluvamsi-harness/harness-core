@@ -28,6 +28,9 @@ import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.servicenow.ServiceNowActionNG;
 import io.harness.steps.StepSpecTypeConstants;
+import io.harness.steps.StepUtils;
+import io.harness.steps.servicenow.ServiceNowStepHelperService;
+import io.harness.steps.servicenow.ServiceNowStepUtils;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.utils.IdentifierRefHelper;
 
@@ -41,6 +44,7 @@ public class ServiceNowUpdateStep extends TaskExecutableWithRollbackAndRbac<Serv
       StepType.newBuilder().setType(StepSpecTypeConstants.SERVICENOW_UPDATE).setStepCategory(StepCategory.STEP).build();
 
   @Inject private PipelineRbacHelper pipelineRbacHelper;
+  @Inject private ServiceNowStepHelperService serviceNowStepHelperService;
 
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
@@ -62,14 +66,24 @@ public class ServiceNowUpdateStep extends TaskExecutableWithRollbackAndRbac<Serv
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
     ServiceNowUpdateSpecParameters specParameters = (ServiceNowUpdateSpecParameters) stepParameters.getSpec();
     ServiceNowTaskNGParametersBuilder paramsBuilder =
-        ServiceNowTaskNGParameters.builder().action(ServiceNowActionNG.UPDATE_TICKET);
-    return null;
+        ServiceNowTaskNGParameters.builder()
+            .action(ServiceNowActionNG.UPDATE_TICKET)
+            .ticketType(specParameters.getTicketType().getValue())
+            .ticketNumber(specParameters.getTicketNumber().getValue())
+            .templateName(specParameters.getTemplateName().getValue())
+            .useServiceNowTemplate(specParameters.getUseServiceNowTemplate().getValue())
+            .delegateSelectors(
+                StepUtils.getDelegateSelectorListFromTaskSelectorYaml(specParameters.getDelegateSelectors()))
+            .fields(ServiceNowStepUtils.processServiceNowFieldsInSpec(specParameters.getFields()));
+    return serviceNowStepHelperService.prepareTaskRequest(paramsBuilder, ambiance,
+        specParameters.getConnectorRef().getValue(), stepParameters.getTimeout().getValue(),
+        "ServiceNow Task: Update Ticket");
   }
 
   @Override
   public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
       ThrowingSupplier<ServiceNowTaskNGResponse> responseSupplier) throws Exception {
-    return null;
+    return serviceNowStepHelperService.prepareStepResponse(responseSupplier);
   }
 
   @Override

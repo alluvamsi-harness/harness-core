@@ -11,7 +11,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.advisers.RollbackCustomAdviser;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
-import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.infra.steps.InfrastructureSectionStep;
 import io.harness.cdng.infra.steps.InfrastructureStep;
@@ -22,11 +21,9 @@ import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
-import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.YamlException;
 import io.harness.plancreator.execution.ExecutionElementConfig;
-import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
@@ -34,7 +31,6 @@ import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.plan.YamlUpdates;
 import io.harness.pms.contracts.steps.SkipType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
-import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.adviser.OrchestrationAdviserTypes;
 import io.harness.pms.sdk.core.adviser.success.OnSuccessAdviserParameters;
 import io.harness.pms.sdk.core.plan.PlanNode;
@@ -65,14 +61,13 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(HarnessTeam.CDC)
 @UtilityClass
 public class InfrastructurePmsPlanCreator {
-  public PlanNode getInfraStepPlanNode(PipelineInfrastructure pipelineInfrastructure, YamlField infraField) {
-    PipelineInfrastructure actualInfraConfig = getActualInfraConfig(pipelineInfrastructure, infraField);
+  public PlanNode getInfraStepPlanNode(PipelineInfrastructure pipelineInfrastructure) {
     return PlanNode.builder()
         .uuid(UUIDGenerator.generateUuid())
         .name(PlanCreatorConstants.INFRA_NODE_NAME)
         .identifier(PlanCreatorConstants.SPEC_IDENTIFIER)
         .stepType(InfrastructureStep.STEP_TYPE)
-        .stepParameters(actualInfraConfig.getInfrastructureDefinition().getSpec())
+        .stepParameters(pipelineInfrastructure.getInfrastructureDefinition().getSpec())
         .facilitatorObtainment(
             FacilitatorObtainment.newBuilder()
                 .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
@@ -81,13 +76,11 @@ public class InfrastructurePmsPlanCreator {
   }
 
   public LinkedHashMap<String, PlanCreationResponse> createPlanForInfraSection(YamlNode infraSectionNode,
-      String infraStepNodeUuid, PipelineInfrastructure infrastructure, KryoSerializer kryoSerializer,
-      YamlField infraField) {
+      String infraStepNodeUuid, PipelineInfrastructure infrastructure, KryoSerializer kryoSerializer) {
     LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
-    PipelineInfrastructure actualInfraConfig = getActualInfraConfig(infrastructure, infraField);
 
     InfraSectionStepParameters infraSectionStepParameters =
-        getInfraSectionStepParams(actualInfraConfig, infraStepNodeUuid);
+        getInfraSectionStepParams(infrastructure, infraStepNodeUuid);
 
     PlanNodeBuilder planNodeBuilder =
         PlanNode.builder()
@@ -102,7 +95,7 @@ public class InfrastructurePmsPlanCreator {
                     .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILD).build())
                     .build());
 
-    if (!isProvisionerConfigured(actualInfraConfig)) {
+    if (!isProvisionerConfigured(infrastructure)) {
       planNodeBuilder.skipGraphType(SkipType.SKIP_NODE);
     }
 
@@ -197,31 +190,6 @@ public class InfrastructurePmsPlanCreator {
   /**
    * Method returns actual InfraStructure object by resolving useFromStage if present.
    */
-  public PipelineInfrastructure getActualInfraConfig(
-      PipelineInfrastructure pipelineInfrastructure, YamlField infraField) {
-    if (pipelineInfrastructure.getUseFromStage() != null) {
-      if (pipelineInfrastructure.getInfrastructureDefinition() != null) {
-        throw new InvalidArgumentsException("Infrastructure definition should not exist with UseFromStage.");
-      }
-      try {
-        //  Add validation for not chaining of stages
-        StageElementConfig stageElementConfig = YamlUtils.read(
-            PlanCreatorUtils.getStageConfig(infraField, pipelineInfrastructure.getUseFromStage().getStage())
-                .getNode()
-                .toString(),
-            StageElementConfig.class);
-        DeploymentStageConfig deploymentStage = (DeploymentStageConfig) stageElementConfig.getStageType();
-        if (deploymentStage != null) {
-          return pipelineInfrastructure.applyUseFromStage(deploymentStage.getInfrastructure());
-        } else {
-          throw new InvalidArgumentsException("Stage identifier given in useFromStage doesn't exist.");
-        }
-      } catch (IOException ex) {
-        throw new InvalidRequestException("cannot convert stage YamlField to Stage Object");
-      }
-    }
-    return pipelineInfrastructure;
-  }
 
   public LinkedHashMap<String, PlanCreationResponse> createPlanForProvisioner(PipelineInfrastructure actualInfraConfig,
       YamlField infraField, String infraStepNodeId, KryoSerializer kryoSerializer) {

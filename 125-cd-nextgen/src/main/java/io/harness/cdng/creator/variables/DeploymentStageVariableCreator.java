@@ -59,7 +59,45 @@ public class DeploymentStageVariableCreator extends AbstractStageVariableCreator
   @Override
   public LinkedHashMap<String, VariableCreationResponse> createVariablesForChildrenNodesV2(
       VariableCreationContext ctx, DeploymentStageNode config) {
-    return createVariablesForChildrenNodes(ctx, ctx.getCurrentField());
+    YamlField currentField = ctx.getCurrentField();
+    LinkedHashMap<String, VariableCreationResponse> responseMap = new LinkedHashMap<>();
+
+    // add dependencies for provision node
+    YamlField infraField = currentField.getNode()
+                               .getField(YAMLFieldNameConstants.SPEC)
+                               .getNode()
+                               .getField(YamlTypes.PIPELINE_INFRASTRUCTURE);
+
+    if (VariableCreatorHelper.isNotYamlFieldEmpty(infraField)) {
+      Map<String, YamlField> infraDependencyMap = new LinkedHashMap<>();
+      YamlField infraDefNode = infraField.getNode().getField(YamlTypes.INFRASTRUCTURE_DEF);
+      if (VariableCreatorHelper.isNotYamlFieldEmpty(infraDefNode)
+          && VariableCreatorHelper.isNotYamlFieldEmpty(infraDefNode.getNode().getField(YamlTypes.SPEC))) {
+        YamlField provisionerField = infraDefNode.getNode().getField(YAMLFieldNameConstants.PROVISIONER);
+        if (provisionerField != null) {
+          infraDependencyMap.putAll(InfraVariableCreator.addDependencyForProvisionerSteps(provisionerField));
+        }
+      }
+      responseMap.put(infraField.getNode().getUuid(),
+          VariableCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(infraDependencyMap))
+              .build());
+    }
+
+    // add dependencies for execution node
+    YamlField executionField = currentField.getNode()
+                                   .getField(YAMLFieldNameConstants.SPEC)
+                                   .getNode()
+                                   .getField(YAMLFieldNameConstants.EXECUTION);
+    if (VariableCreatorHelper.isNotYamlFieldEmpty(executionField)) {
+      Map<String, YamlField> executionDependencyMap = new HashMap<>();
+      executionDependencyMap.put(executionField.getNode().getUuid(), executionField);
+      responseMap.put(executionField.getNode().getUuid(),
+          VariableCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(executionDependencyMap))
+              .build());
+    }
+    return responseMap;
   }
 
   @Override

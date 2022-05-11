@@ -17,7 +17,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.intfc.CIYamlSchemaService;
 import io.harness.beans.FeatureFlag;
-import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageConfigImpl;
 import io.harness.beans.stages.IntegrationStageNode;
 import io.harness.encryption.Scope;
 import io.harness.jackson.JsonNodeUtils;
@@ -48,7 +48,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -84,14 +83,13 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   }
 
   @Override
-  public PartialSchemaDTO getMergedIntegrationStageYamlSchema(String accountIdentifier, String projectIdentifier,
+  public PartialSchemaDTO getMergedStageYamlSchema(String accountIdentifier, String projectIdentifier,
       String orgIdentifier, Scope scope, List<YamlSchemaWithDetails> stepSchemaWithDetails) {
-    return getIntegrationStageYamlSchemaUtil(
-        accountIdentifier, projectIdentifier, orgIdentifier, scope, stepSchemaWithDetails);
+    return getStageYamlSchemaUtil(accountIdentifier, projectIdentifier, orgIdentifier, scope, stepSchemaWithDetails);
   }
 
   @Override
-  public List<YamlSchemaWithDetails> getIntegrationStageYamlSchemaWithDetails(
+  public List<YamlSchemaWithDetails> getStageYamlSchemaWithDetails(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
     List<YamlSchemaWithDetails> yamlSchemaWithDetailsList = yamlSchemaProvider.getCrossFunctionalStepsSchemaDetails(
         projectIdentifier, orgIdentifier, scope,
@@ -109,13 +107,12 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   }
 
   @Override
-  public List<PartialSchemaDTO> getIntegrationStageYamlSchema(
+  public PartialSchemaDTO getStageYamlSchema(
       String accountIdentifier, String projectIdentifier, String orgIdentifier, Scope scope) {
-    return Collections.singletonList(
-        getIntegrationStageYamlSchemaUtil(accountIdentifier, projectIdentifier, orgIdentifier, scope, null));
+    return getStageYamlSchemaUtil(accountIdentifier, projectIdentifier, orgIdentifier, scope, null);
   }
 
-  public PartialSchemaDTO getIntegrationStageYamlSchemaUtil(String accountIdentifier, String projectIdentifier,
+  public PartialSchemaDTO getStageYamlSchemaUtil(String accountIdentifier, String projectIdentifier,
       String orgIdentifier, Scope scope, List<YamlSchemaWithDetails> stepSchemaWithDetails) {
     JsonNode integrationStageSchema =
         yamlSchemaProvider.getYamlSchema(EntityType.INTEGRATION_STAGE, orgIdentifier, projectIdentifier, scope);
@@ -217,7 +214,7 @@ public class CIYamlSchemaServiceImpl implements CIYamlSchemaService {
   }
 
   private String getIntegrationStageTypeName() {
-    JsonTypeName annotation = IntegrationStageConfig.class.getAnnotation(JsonTypeName.class);
+    JsonTypeName annotation = IntegrationStageConfigImpl.class.getAnnotation(JsonTypeName.class);
     return annotation.value();
   }
 }

@@ -12,12 +12,14 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.cdng.artifact.bean.ArtifactConfig;
+import io.harness.cdng.artifact.bean.yaml.AcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.CustomArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.DockerHubArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.GcrArtifactConfig;
 import io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig;
+import io.harness.cdng.artifact.outcome.AcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryGenericArtifactOutcome;
@@ -29,8 +31,9 @@ import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
 import io.harness.cdng.artifact.utils.ArtifactUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
@@ -46,7 +49,9 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(CDC)
 public class ArtifactResponseToOutcomeMapper {
-  private final String IMAGE_PULL_SECRET = "<+imagePullSecret.";
+  private final String IMAGE_PULL_SECRET_START = "<+imagePullSecret.";
+  private final String IMAGE_PULL_SECRET_END = ">";
+
   public ArtifactOutcome toArtifactOutcome(
       ArtifactConfig artifactConfig, ArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
     switch (artifactConfig.getSourceType()) {
@@ -77,8 +82,8 @@ public class ArtifactResponseToOutcomeMapper {
             RepositoryFormat.valueOf(artifactoryRegistryArtifactConfig.getRepositoryFormat().getValue());
         switch (repositoryType) {
           case docker:
-            ArtifactoryDockerArtifactDelegateResponse artifactoryDelegateResponse =
-                (ArtifactoryDockerArtifactDelegateResponse) artifactDelegateResponse;
+            ArtifactoryArtifactDelegateResponse artifactoryDelegateResponse =
+                (ArtifactoryArtifactDelegateResponse) artifactDelegateResponse;
             artifactOutcome = getArtifactoryArtifactOutcome(
                 artifactoryRegistryArtifactConfig, artifactoryDelegateResponse, useDelegateResponse);
             return artifactOutcome;
@@ -92,6 +97,11 @@ public class ArtifactResponseToOutcomeMapper {
             throw new UnsupportedOperationException(
                 String.format("Repository Format [%s] for Artifactory Not Supported", repositoryType));
         }
+      case ACR:
+        AcrArtifactConfig acrArtifactConfig = (AcrArtifactConfig) artifactConfig;
+        AcrArtifactDelegateResponse acrArtifactDelegateResponse =
+            (AcrArtifactDelegateResponse) artifactDelegateResponse;
+        return getAcrArtifactOutcome(acrArtifactConfig, acrArtifactDelegateResponse, useDelegateResponse);
       case CUSTOM_ARTIFACT:
         CustomArtifactConfig customArtifactConfig = (CustomArtifactConfig) artifactConfig;
         return getCustomArtifactOutcome(customArtifactConfig);
@@ -113,7 +123,7 @@ public class ArtifactResponseToOutcomeMapper {
         .identifier(dockerConfig.getIdentifier())
         .type(ArtifactSourceType.DOCKER_REGISTRY.getDisplayName())
         .primaryArtifact(dockerConfig.isPrimaryArtifact())
-        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(dockerConfig) + ">")
+        .imagePullSecret(createImagePullSecret(ArtifactUtils.getArtifactKey(dockerConfig)))
         .build();
   }
 
@@ -130,7 +140,7 @@ public class ArtifactResponseToOutcomeMapper {
         .identifier(gcrArtifactConfig.getIdentifier())
         .type(ArtifactSourceType.GCR.getDisplayName())
         .primaryArtifact(gcrArtifactConfig.isPrimaryArtifact())
-        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(gcrArtifactConfig) + ">")
+        .imagePullSecret(createImagePullSecret(ArtifactUtils.getArtifactKey(gcrArtifactConfig)))
         .build();
   }
 
@@ -147,7 +157,7 @@ public class ArtifactResponseToOutcomeMapper {
         .identifier(ecrArtifactConfig.getIdentifier())
         .type(ArtifactSourceType.ECR.getDisplayName())
         .primaryArtifact(ecrArtifactConfig.isPrimaryArtifact())
-        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(ecrArtifactConfig) + ">")
+        .imagePullSecret(createImagePullSecret(ArtifactUtils.getArtifactKey(ecrArtifactConfig)))
         .build();
   }
 
@@ -165,13 +175,13 @@ public class ArtifactResponseToOutcomeMapper {
         .identifier(artifactConfig.getIdentifier())
         .type(ArtifactSourceType.NEXUS3_REGISTRY.getDisplayName())
         .primaryArtifact(artifactConfig.isPrimaryArtifact())
-        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(artifactConfig) + ">")
+        .imagePullSecret(createImagePullSecret(ArtifactUtils.getArtifactKey(artifactConfig)))
         .registryHostname(getRegistryHostnameValue(artifactDelegateResponse))
         .build();
   }
 
   private ArtifactoryArtifactOutcome getArtifactoryArtifactOutcome(ArtifactoryRegistryArtifactConfig artifactConfig,
-      ArtifactoryDockerArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
+      ArtifactoryArtifactDelegateResponse artifactDelegateResponse, boolean useDelegateResponse) {
     return ArtifactoryArtifactOutcome.builder()
         .repositoryName(artifactConfig.getRepository().getValue())
         .image(getImageValue(artifactDelegateResponse))
@@ -184,7 +194,7 @@ public class ArtifactResponseToOutcomeMapper {
         .identifier(artifactConfig.getIdentifier())
         .type(ArtifactSourceType.ARTIFACTORY_REGISTRY.getDisplayName())
         .primaryArtifact(artifactConfig.isPrimaryArtifact())
-        .imagePullSecret(IMAGE_PULL_SECRET + ArtifactUtils.getArtifactKey(artifactConfig) + ">")
+        .imagePullSecret(createImagePullSecret(ArtifactUtils.getArtifactKey(artifactConfig)))
         .registryHostname(getRegistryHostnameValue(artifactDelegateResponse))
         .build();
   }
@@ -227,6 +237,27 @@ public class ArtifactResponseToOutcomeMapper {
         .build();
   }
 
+  private AcrArtifactOutcome getAcrArtifactOutcome(AcrArtifactConfig acrArtifactConfig,
+      AcrArtifactDelegateResponse acrArtifactDelegateResponse, boolean useDelegateResponse) {
+    return AcrArtifactOutcome.builder()
+        .subscription(acrArtifactConfig.getSubscriptionId().getValue())
+        .registry(getRegistryHostnameValue(acrArtifactDelegateResponse))
+        .repository(acrArtifactConfig.getRepository().getValue())
+        .image(getImageValue(acrArtifactDelegateResponse))
+        .connectorRef(acrArtifactConfig.getConnectorRef().getValue())
+        .tag(getAcrTag(useDelegateResponse, acrArtifactDelegateResponse.getTag(), acrArtifactConfig.getTag()))
+        .tagRegex(acrArtifactConfig.getTagRegex() != null ? acrArtifactConfig.getTagRegex().getValue() : null)
+        .identifier(acrArtifactConfig.getIdentifier())
+        .type(ArtifactSourceType.ACR.getDisplayName())
+        .primaryArtifact(acrArtifactConfig.isPrimaryArtifact())
+        .imagePullSecret(createImagePullSecret(ArtifactUtils.getArtifactKey(acrArtifactConfig)))
+        .build();
+  }
+
+  private String getAcrTag(boolean useDelegateResponse, String delegateResponseTag, ParameterField<String> configTag) {
+    return useDelegateResponse ? delegateResponseTag : !ParameterField.isNull(configTag) ? configTag.getValue() : null;
+  }
+
   private String getImageValue(ArtifactDelegateResponse artifactDelegateResponse) {
     if (artifactDelegateResponse == null || artifactDelegateResponse.getBuildDetails() == null) {
       return null;
@@ -243,5 +274,9 @@ public class ArtifactResponseToOutcomeMapper {
     return EmptyPredicate.isNotEmpty(artifactDelegateResponse.getBuildDetails().getMetadata())
         ? artifactDelegateResponse.getBuildDetails().getMetadata().get(ArtifactMetadataKeys.REGISTRY_HOSTNAME)
         : null;
+  }
+
+  private String createImagePullSecret(String artifactKey) {
+    return String.format("%s%s%s", IMAGE_PULL_SECRET_START, artifactKey, IMAGE_PULL_SECRET_END);
   }
 }

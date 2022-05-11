@@ -10,6 +10,18 @@
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "EmbeddedUserDetailsDTO": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "FileDTO": {
       "type": "object",
       "required": [
@@ -24,7 +36,7 @@
           "type": "string"
         },
         "createdBy": {
-          "type": "string"
+          "$ref": "#/definitions/EmbeddedUserDetailsDTO"
         },
         "description": {
           "type": "string"
@@ -43,6 +55,9 @@
         },
         "identifier": {
           "type": "string"
+        },
+        "lastUpdatedBy": {
+          "$ref": "#/definitions/EmbeddedUserDetailsDTO"
         },
         "mimeType": {
           "type": "string"
@@ -75,7 +90,7 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "FileDtoYamlWrapper": {
+    "FileStoreRequest": {
       "type": "object",
       "required": [
         "file"

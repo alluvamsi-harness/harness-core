@@ -39,7 +39,7 @@ public class IntegrationStageNode extends IntegrationAbstractStageNode {
 
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  IntegrationStageConfig integrationStageConfig;
+  IntegrationStageConfigImpl integrationStageConfig;
   @Override
   public String getType() {
     return StepSpecTypeConstants.CI_STAGE;

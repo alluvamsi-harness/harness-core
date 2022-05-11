@@ -98,7 +98,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
   @Before
   public void setup() throws IllegalAccessException {
     builderFactory = BuilderFactory.getDefault();
-    AppDynamicsCVConfig appDConfig = dataGenerator.getAppDynamicsCVConfig();
+    AppDynamicsCVConfig appDConfig = builderFactory.appDynamicsCVConfigBuilder().build();
     CVConfig cvConfig = cvConfigService.save(appDConfig);
     accountId = builderFactory.getContext().getAccountId();
     cvConfigId = cvConfig.getUuid();

@@ -36,7 +36,6 @@ import io.harness.cvng.analysis.entities.DeploymentLogAnalysis;
 import io.harness.cvng.analysis.services.api.DeploymentLogAnalysisService;
 import io.harness.cvng.analysis.services.api.VerificationJobInstanceAnalysisService;
 import io.harness.cvng.beans.AppDynamicsDataCollectionInfo;
-import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.activity.ActivityVerificationStatus;
 import io.harness.cvng.beans.job.CanaryVerificationJobDTO;
@@ -54,12 +53,10 @@ import io.harness.cvng.core.entities.AppDynamicsCVConfig.MetricInfo;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig.MetricInfo.MetricInfoBuilder;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.DataCollectionTaskService;
 import io.harness.cvng.core.services.api.MonitoringSourcePerpetualTaskService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.statemachine.beans.AnalysisStatus;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator;
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine.AnalysisStateMachineKeys;
@@ -144,7 +141,7 @@ public class VerificationJobInstanceServiceImplTest extends CvNextGenTestBase {
     projectIdentifier = generateUuid();
     orgIdentifier = generateUuid();
     cvConfigId = generateUuid();
-    monitoringSourceIdentifier = "monitoringIdentifier";
+    monitoringSourceIdentifier = "monitoringIdentifier/healthSourceIdentifier";
     serviceIdentifier = generateUuid();
     deploymentStartTimeMs = Instant.parse("2020-07-27T10:44:06.390Z").toEpochMilli();
     connectorId = generateUuid();
@@ -860,7 +857,7 @@ public class VerificationJobInstanceServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testGetCVConfigsForVerification() {
-    String monSource = "monitoringSource1";
+    String monSource = "monitoringSource1/healthSource";
     VerificationJob job = verificationJobService.fromDto(newCanaryVerificationJobDTO());
     job.setMonitoringSources(Arrays.asList(monSource));
     job.setAccountId(accountId);
@@ -880,7 +877,7 @@ public class VerificationJobInstanceServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void testGetCVConfigsForVerification_defaultJob() {
-    String monSource = "monitoringSource1";
+    String monSource = "monitoringSource1/healthSourceIdentifier";
     VerificationJob job = verificationJobService.fromDto(newHealthVerificationJobDTO());
     job.setAllMonitoringSourcesEnabled(true);
     job.setAccountId(accountId);
@@ -893,7 +890,7 @@ public class VerificationJobInstanceServiceImplTest extends CvNextGenTestBase {
     CVConfig updated = cvConfigService.save(cvConfig);
 
     CVConfig cvConfig2 = newCVConfig();
-    cvConfig2.setIdentifier(monSource + "2");
+    cvConfig2.setIdentifier(monSource + "/2");
     CVConfig updated2 = cvConfigService.save(cvConfig2);
 
     List<CVConfig> cvConfigs = verificationJobInstanceService.getCVConfigsForVerificationJob(job);
@@ -956,22 +953,12 @@ public class VerificationJobInstanceServiceImplTest extends CvNextGenTestBase {
   }
 
   private CVConfig newCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier("serviceInstanceIdentifier");
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(accountId);
-    cvConfig.setConnectorIdentifier(connectorId);
-    cvConfig.setServiceIdentifier(serviceIdentifier);
-    cvConfig.setEnvIdentifier(builderFactory.getContext().getEnvIdentifier());
-    cvConfig.setProjectIdentifier(projectIdentifier);
-    cvConfig.setOrgIdentifier(orgIdentifier);
-    cvConfig.setIdentifier(monitoringSourceIdentifier);
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName("productName");
-    return cvConfig;
+    return builderFactory.splunkCVConfigBuilder()
+        .connectorIdentifier(connectorId)
+        .identifier(monitoringSourceIdentifier)
+        .build();
   }
+
   private VerificationJobInstance createVerificationJobInstance() {
     verificationJobService.create(accountId, newCanaryVerificationJobDTO());
     VerificationJob verificationJob = verificationJobService.getVerificationJob(

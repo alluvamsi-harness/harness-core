@@ -53,13 +53,11 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.Mock;
 
 @OwnedBy(HarnessTeam.CV)
 public class CVNGLogServiceImplTest extends CvNextGenTestBase {
   @Inject private HPersistence hPersistence;
   @Inject private CVNGLogService cvngLogService;
-  @Mock private VerificationTaskService verificationTaskService;
 
   private String accountId;
   private String traceableId;
@@ -78,8 +76,6 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
     startTime = Instant.now().minusSeconds(5);
     endTime = Instant.now();
     createdAt = Instant.now().toEpochMilli();
-    FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
-    when(verificationTaskService.get(any())).thenReturn(null);
   }
 
   @Test

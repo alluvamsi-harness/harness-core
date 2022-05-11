@@ -35,11 +35,14 @@ import io.harness.pms.sdk.core.supporter.async.TestStepParameters;
 import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
+import io.harness.tasks.ResponseData;
 import io.harness.waiter.StringNotifyResponseData;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
+import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +60,11 @@ public class AsyncStrategyTest extends PmsSdkCoreTestBase {
 
   @Inject private StepRegistry stepRegistry;
 
+  private TestAsyncStep step;
   @Before
   public void setup() {
-    stepRegistry.register(TestAsyncStep.ASYNC_STEP_TYPE, new TestAsyncStep());
+    step = new TestAsyncStep("Initialized");
+    stepRegistry.register(TestAsyncStep.ASYNC_STEP_TYPE, step);
   }
 
   @Test
@@ -151,6 +156,30 @@ public class AsyncStrategyTest extends PmsSdkCoreTestBase {
 
     assertThat(ambianceCaptor.getValue()).isEqualTo(ambiance);
   }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestResumeSingle() {
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .putAllSetupAbstractions(setupAbstractions())
+                            .setPlanId(generateUuid())
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(Level.newBuilder()
+                                           .setSetupId(generateUuid())
+                                           .setRuntimeId(generateUuid())
+                                           .setStepType(TestAsyncStep.ASYNC_STEP_TYPE)
+                                           .setIdentifier(generateUuid())
+                                           .build())
+                            .build();
+
+    String callbackId = generateUuid();
+    ResponseData data = StringNotifyResponseData.builder().data("SINGLE_CALLED").build();
+    List<String> allCallbackIds = ImmutableList.of(generateUuid(), callbackId);
+    asyncStrategy.resumeSingle(ambiance, TestStepParameters.builder().build(), allCallbackIds, callbackId, data);
+    assertThat(step.getMessage()).isEqualTo(callbackId);
+  }
+
   private Map<String, String> setupAbstractions() {
     return ImmutableMap.<String, String>builder()
         .put(SetupAbstractionKeys.accountId, generateUuid())

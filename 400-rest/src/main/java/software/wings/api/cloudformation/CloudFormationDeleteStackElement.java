@@ -15,9 +15,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -38,11 +36,6 @@ public class CloudFormationDeleteStackElement implements CloudFormationElement {
 
   @Override
   public String getName() {
-    return null;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
     return null;
   }
 

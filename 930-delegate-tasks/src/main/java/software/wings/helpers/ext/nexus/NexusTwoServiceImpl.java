@@ -46,7 +46,7 @@ import io.harness.stream.StreamUtils;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.common.AlphanumComparator;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionCommonTaskHelper;
 import software.wings.helpers.ext.artifactory.FolderPath;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryFormat;
@@ -94,7 +94,7 @@ import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 @TargetModule(HarnessModule._960_API_SERVICES)
 public class NexusTwoServiceImpl {
   @Inject private ExecutorService executorService;
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
   @Inject private CGNexusHelper CGNexusHelper;
 
   public List<String> collectPackageNames(NexusRequest nexusConfig, String repoId, List<String> packageNames)
@@ -688,7 +688,7 @@ public class NexusTwoServiceImpl {
       ListNotifyResponseData notifyResponseData, String artifactName, String artifactUrl) {
     Pair<String, InputStream> pair = downloadArtifactByUrl(nexusConfig, artifactName, artifactUrl);
     try {
-      artifactCollectionTaskHelper.addDataToResponse(
+      artifactCollectionCommonTaskHelper.addDataToResponse(
           pair, artifactUrl, notifyResponseData, delegateId, taskId, accountId);
     } catch (IOException e) {
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);

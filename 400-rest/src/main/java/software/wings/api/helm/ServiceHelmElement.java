@@ -10,10 +10,8 @@ package software.wings.api.helm;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -27,11 +25,6 @@ public class ServiceHelmElement implements ContextElement {
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.HELM_CHART;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

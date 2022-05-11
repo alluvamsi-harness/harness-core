@@ -54,7 +54,8 @@ import io.harness.cdng.creator.variables.K8sDeleteStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sRollingRollbackStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sRollingStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sScaleStepVariableCreator;
-import io.harness.cdng.creator.variables.ServerlessStepVariableCreator;
+import io.harness.cdng.creator.variables.ServerlessAwsLambdaDeployStepVariableCreator;
+import io.harness.cdng.creator.variables.ServerlessAwsLambdaRollbackStepVariableCreator;
 import io.harness.cdng.provision.terraform.variablecreator.TerraformApplyStepVariableCreator;
 import io.harness.cdng.provision.terraform.variablecreator.TerraformDestroyStepVariableCreator;
 import io.harness.cdng.provision.terraform.variablecreator.TerraformPlanStepVariableCreator;
@@ -156,7 +157,8 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     variableCreators.add(new TerraformRollbackStepVariableCreator());
     variableCreators.add(new HelmDeployStepVariableCreator());
     variableCreators.add(new HelmRollbackStepVariableCreator());
-    variableCreators.add(new ServerlessStepVariableCreator());
+    variableCreators.add(new ServerlessAwsLambdaDeployStepVariableCreator());
+    variableCreators.add(new ServerlessAwsLambdaRollbackStepVariableCreator());
     return variableCreators;
   }
 

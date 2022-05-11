@@ -460,3 +460,6 @@ replace_key_value scopeAccessCheckEnabled "${SCOPE_ACCESS_CHECK:-true}"
 replace_key_value enforcementClientConfiguration.enforcementCheckEnabled "$ENFORCEMENT_CHECK_ENABLED"
 replace_key_value secretsConfiguration.gcpSecretManagerProject "$GCP_SECRET_MANAGER_PROJECT"
 replace_key_value secretsConfiguration.secretResolutionEnabled "$RESOLVE_SECRETS"
+
+replace_key_value opaServerConfig.baseUrl "$OPA_SERVER_BASEURL"
+replace_key_value opaServerConfig.secret "$OPA_SERVER_SECRET"

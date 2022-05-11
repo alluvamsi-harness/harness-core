@@ -47,7 +47,7 @@ public interface CVConstants {
   String LIVE_MONITORING = "live_monitoring";
   String DEPLOYMENT = "deployment";
 
-  String TAG_DATA_SOURCE = "dataSource";
+  String TAG_DATA_SOURCE = "dataSourceType";
   String TAG_VERIFICATION_TYPE = "verificationType";
   String TAG_ACCOUNT_ID = "accountId";
   String TAG_ONBOARDING = "onboarding";

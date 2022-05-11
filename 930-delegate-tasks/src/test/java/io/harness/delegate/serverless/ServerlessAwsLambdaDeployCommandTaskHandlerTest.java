@@ -134,7 +134,7 @@ public class ServerlessAwsLambdaDeployCommandTaskHandlerTest extends CategoryTes
             (ServerlessAwsLambdaManifestConfig) serverlessManifestConfig);
     doReturn(Optional.of(previousVersionTimeStamp))
         .when(serverlessAwsCommandTaskHelper)
-        .getPreviousVersionTimeStamp(output);
+        .getPreviousVersionTimeStamp(any(), any(), any());
 
     doReturn(deployServerlessCliResponse)
         .when(serverlessAwsCommandTaskHelper)

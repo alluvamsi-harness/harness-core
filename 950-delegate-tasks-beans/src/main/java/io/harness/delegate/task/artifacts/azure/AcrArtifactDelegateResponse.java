@@ -47,8 +47,7 @@ public class AcrArtifactDelegateResponse extends ArtifactDelegateResponse {
         ? "\nImage pull command: docker pull " + getBuildDetails().getMetadata().get(ArtifactMetadataKeys.IMAGE)
         : null;
     return "type: " + (getSourceType() != null ? getSourceType().getDisplayName() : null)
-        + "\nbuild metadata url: " + buildMetadataUrl + "\nsubscription: " + getSubscription()
-        + "\nregistry: " + getRegistry() + "\nrepository: " + getRepository() + "\ntag: " + getTag()
-        + (EmptyPredicate.isNotEmpty(dockerPullCommand) ? dockerPullCommand : "");
+        + "\nsubscription: " + getSubscription() + "\nregistry: " + getRegistry() + "\nrepository: " + getRepository()
+        + "\ntag: " + getTag() + (EmptyPredicate.isNotEmpty(dockerPullCommand) ? dockerPullCommand : "");
   }
 }

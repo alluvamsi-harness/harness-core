@@ -74,6 +74,7 @@ public class ApprovalPollingJobEntity implements PersistentRegularIterable, Acco
   String activityId;
   long retryInterval;
   List<String> delegateSelectors;
+  int expressionFunctorToken;
 
   ApprovalStateType approvalType;
 

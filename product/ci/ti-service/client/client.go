@@ -26,10 +26,10 @@ type Client interface {
 	Write(ctx context.Context, org, project, pipeline, build, stage, step, report, repo, sha, commitLink string, tests []*types.TestCase) error
 
 	// SelectTests returns list of tests which should be run intelligently
-	SelectTests(org, project, pipeline, build, stage, step, repo, sha, source, target, req string) (types.SelectTestsResp, error)
+	SelectTests(ctx context.Context, org, project, pipeline, build, stage, step, repo, sha, source, target, req string) (types.SelectTestsResp, error)
 
 	// UploadCg uploads avro encoded callgraph to ti server
-	UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error
+	UploadCg(ctx context.Context, org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error
 
 	// DownloadLink returns a list of links where the relevant agent artifacts can be downloaded
 	DownloadLink(ctx context.Context, language, os, arch, framework string) ([]types.DownloadLink, error)

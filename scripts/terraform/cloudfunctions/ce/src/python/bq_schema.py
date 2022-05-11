@@ -38,6 +38,11 @@ aws_cur_table_schema = [
     },
     {
         "mode": "NULLABLE",
+        "name": "servicename",
+        "type": "STRING"
+    },
+    {
+        "mode": "NULLABLE",
         "name": "blendedrate",
         "type": "STRING"
     },
@@ -109,6 +114,11 @@ aws_cur_table_schema = [
     {
         "mode": "NULLABLE",
         "name": "amortisedCost",
+        "type": "FLOAT"
+    },
+    {
+        "mode": "NULLABLE",
+        "name": "netAmortisedCost",
         "type": "FLOAT"
     },
     {

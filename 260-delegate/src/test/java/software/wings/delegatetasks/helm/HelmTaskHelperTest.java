@@ -339,13 +339,14 @@ public class HelmTaskHelperTest extends WingsBaseTest {
 
   private void verifyFetchChartFilesProcessExecutor(String outputDirectory) throws Exception {
     verify(helmTaskHelperBase, times(1))
-        .createProcessExecutor("v3/helm repo add repoName http://127.0.0.1:1234", outputDirectory,
+        .createProcessExecutor("v3/helm repo add repoName-bucketName http://127.0.0.1:1234", outputDirectory,
             LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
     verify(helmTaskHelperBase, times(1))
-        .createProcessExecutor("v3/helm pull repoName/chartName  --untar ", outputDirectory, LONG_TIMEOUT_INTERVAL,
-            Collections.emptyMap());
+        .createProcessExecutor("v3/helm pull repoName-bucketName/chartName  --untar ", outputDirectory,
+            LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
     verify(helmTaskHelperBase, times(1))
-        .createProcessExecutor("v3/helm repo remove repoName", null, LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
+        .createProcessExecutor(
+            "v3/helm repo remove repoName-bucketName", null, LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
     verify(processExecutor, times(3)).execute();
   }
 

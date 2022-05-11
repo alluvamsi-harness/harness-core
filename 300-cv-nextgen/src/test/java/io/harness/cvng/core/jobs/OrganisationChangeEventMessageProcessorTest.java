@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.VerificationApplication;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
@@ -21,7 +22,6 @@ import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.beans.job.TestVerificationJobDTO;
 import io.harness.cvng.beans.job.VerificationJobDTO;
 import io.harness.cvng.core.entities.CVConfig;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.verificationjob.services.api.VerificationJobService;
@@ -44,10 +44,12 @@ public class OrganisationChangeEventMessageProcessorTest extends CvNextGenTestBa
   @Inject private CVConfigService cvConfigService;
   @Inject private VerificationJobService verificationJobService;
   private String projectIdentifier;
+  private BuilderFactory builderFactory;
 
   @Before
   public void setup() {
     projectIdentifier = generateUuid();
+    builderFactory = BuilderFactory.getDefault();
   }
 
   @Test
@@ -144,11 +146,7 @@ public class OrganisationChangeEventMessageProcessorTest extends CvNextGenTestBa
   }
 
   private CVConfig createCVConfig(String accountId, String orgIdentifier) {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig, accountId, orgIdentifier);
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier(generateUuid());
-    return cvConfig;
+    return builderFactory.splunkCVConfigBuilder().accountId(accountId).orgIdentifier(orgIdentifier).build();
   }
 
   private void fillCommon(CVConfig cvConfig, String accountId, String orgIdentifier) {

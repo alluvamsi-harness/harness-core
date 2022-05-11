@@ -74,6 +74,7 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.AwsStateHelper;
 import software.wings.utils.WingsTestConstants;
 
@@ -98,7 +99,8 @@ public class SpotInstDeployStateTest extends WingsBaseTest {
   @Mock private SpotInstStateHelper mockSpotinstStateHelper;
   @Spy private AwsStateHelper mockAwsStateHelper;
   @Mock private SweepingOutputService sweepingOutputService;
-  @Mock StateExecutionService stateExecutionService;
+  @Mock private StateExecutionService stateExecutionService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks SpotInstDeployState state = new SpotInstDeployState("stateName");
 
@@ -115,7 +117,7 @@ public class SpotInstDeployStateTest extends WingsBaseTest {
     Environment env = anEnvironment().uuid(ENV_ID).build();
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).getContextElement(any());
-    doReturn(env).when(mockParams).getEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     Application application = anApplication().appId(APP_ID).accountId(ACCOUNT_ID).uuid(APP_ID).build();
     doReturn(application).when(mockAppService).get(anyString());
     AwsAmiInfrastructureMapping infrastructureMapping =

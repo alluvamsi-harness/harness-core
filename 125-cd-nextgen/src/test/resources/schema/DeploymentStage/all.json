@@ -129,9 +129,6 @@
             "connectorRef": {
               "type": "string"
             },
-            "metadata": {
-              "type": "string"
-            },
             "registry": {
               "type": "string"
             },
@@ -386,9 +383,6 @@
     "ArtifactListConfig": {
       "type": "object",
       "properties": {
-        "metadata": {
-          "type": "string"
-        },
         "primary": {
           "$ref": "#/definitions/PrimaryArtifact"
         },
@@ -445,9 +439,6 @@
               "type": "string"
             },
             "connectorRef": {
-              "type": "string"
-            },
-            "metadata": {
               "type": "string"
             },
             "repository": {
@@ -1150,9 +1141,6 @@
             "imagePath": {
               "type": "string"
             },
-            "metadata": {
-              "type": "string"
-            },
             "tag": {
               "type": "string"
             },
@@ -1404,9 +1392,6 @@
               "type": "string"
             },
             "imagePath": {
-              "type": "string"
-            },
-            "metadata": {
               "type": "string"
             },
             "registryHostname": {
@@ -1803,24 +1788,7 @@
           "$ref": "#/definitions/StepSpecType"
         },
         {
-          "type": "object",
-          "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            }
-          }
+          "type": "object"
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1858,24 +1826,7 @@
           "$ref": "#/definitions/StepSpecType"
         },
         {
-          "type": "object",
-          "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            }
-          }
+          "type": "object"
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1922,21 +1873,6 @@
           "properties": {
             "assertion": {
               "type": "string"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "headers": {
               "type": "array",
@@ -2062,6 +1998,7 @@
           "enum": [
             "KubernetesDirect",
             "KubernetesGcp",
+            "KubernetesAzure",
             "Pdc",
             "ServerlessAwsLambda"
           ]
@@ -2069,6 +2006,22 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "KubernetesAzure"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/K8sAzureInfrastructure"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -2273,21 +2226,6 @@
             "connectorRef": {
               "type": "string"
             },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "issueKey": {
               "type": "string"
             },
@@ -2314,21 +2252,6 @@
           "properties": {
             "connectorRef": {
               "type": "string"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "fields": {
               "type": "array",
@@ -2377,21 +2300,6 @@
           "properties": {
             "connectorRef": {
               "type": "string"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "fields": {
               "type": "array",
@@ -2448,21 +2356,6 @@
         {
           "type": "object",
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "filePaths": {
               "oneOf": [
                 {
@@ -2503,6 +2396,51 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "K8sAzureInfrastructure": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Infrastructure"
+        },
+        {
+          "type": "object",
+          "required": [
+            "cluster",
+            "connectorRef",
+            "namespace",
+            "releaseName",
+            "resourceGroup",
+            "subscriptionId"
+          ],
+          "properties": {
+            "cluster": {
+              "type": "string",
+              "minLength": 1
+            },
+            "connectorRef": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "releaseName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resourceGroup": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subscriptionId": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "K8sBGSwapServicesStepInfo": {
       "allOf": [
         {
@@ -2511,21 +2449,6 @@
         {
           "type": "object",
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "skipDryRun": {
               "type": "boolean"
             }
@@ -2542,21 +2465,6 @@
         {
           "type": "object",
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "skipDryRun": {
               "oneOf": [
                 {
@@ -2580,12 +2488,6 @@
         {
           "type": "object",
           "properties": {
-            "delegateSelectors": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
             "skipDryRun": {
               "type": "boolean"
             }
@@ -2605,21 +2507,6 @@
             "instanceSelection"
           ],
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "instanceSelection": {
               "$ref": "#/definitions/InstanceSelectionWrapper"
             },
@@ -2649,21 +2536,6 @@
             "deleteResources"
           ],
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "deleteResources": {
               "$ref": "#/definitions/DeleteResourcesWrapper"
             },
@@ -2760,21 +2632,6 @@
         {
           "type": "object",
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "skipDryRun": {
               "oneOf": [
                 {
@@ -2798,21 +2655,6 @@
         {
           "type": "object",
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "skipDryRun": {
               "oneOf": [
                 {
@@ -2840,21 +2682,6 @@
             "workload"
           ],
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "instanceSelection": {
               "$ref": "#/definitions/InstanceSelectionWrapper"
             },
@@ -2926,11 +2753,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3249,6 +3072,28 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ModuleSource": {
+      "type": "object",
+      "required": [
+        "useConnectorCredentials"
+      ],
+      "properties": {
+        "useConnectorCredentials": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/ParameterFieldBoolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "NGVariable": {
       "type": "object",
       "discriminator": "type",
@@ -3317,11 +3162,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3746,12 +3587,16 @@
         {
           "type": "object",
           "required": [
-            "sshKeyRef",
+            "credentialsRef",
             "connectorRef"
           ],
           "properties": {
             "connectorRef": {
               "type": "string"
+            },
+            "credentialsRef": {
+              "type": "string",
+              "minLength": 1
             },
             "delegateSelectors": {
               "oneOf": [
@@ -3767,10 +3612,6 @@
                   "minLength": 1
                 }
               ]
-            },
-            "sshKeyRef": {
-              "type": "string",
-              "minLength": 1
             }
           },
           "additionalProperties": false
@@ -3778,10 +3619,14 @@
         {
           "type": "object",
           "required": [
-            "sshKeyRef",
+            "credentialsRef",
             "hosts"
           ],
           "properties": {
+            "credentialsRef": {
+              "type": "string",
+              "minLength": 1
+            },
             "delegateSelectors": {
               "oneOf": [
                 {
@@ -3811,10 +3656,6 @@
                   "minLength": 1
                 }
               ]
-            },
-            "sshKeyRef": {
-              "type": "string",
-              "minLength": 1
             }
           },
           "additionalProperties": false
@@ -3822,13 +3663,17 @@
         {
           "type": "object",
           "required": [
-            "sshKeyRef",
+            "credentialsRef",
             "connectorRef",
             "hostFilters"
           ],
           "properties": {
             "connectorRef": {
               "type": "string"
+            },
+            "credentialsRef": {
+              "type": "string",
+              "minLength": 1
             },
             "delegateSelectors": {
               "oneOf": [
@@ -3859,10 +3704,6 @@
                   "minLength": 1
                 }
               ]
-            },
-            "sshKeyRef": {
-              "type": "string",
-              "minLength": 1
             }
           },
           "additionalProperties": false
@@ -3870,7 +3711,7 @@
         {
           "type": "object",
           "required": [
-            "sshKeyRef",
+            "credentialsRef",
             "connectorRef",
             "attributeFilters"
           ],
@@ -3893,6 +3734,10 @@
             "connectorRef": {
               "type": "string"
             },
+            "credentialsRef": {
+              "type": "string",
+              "minLength": 1
+            },
             "delegateSelectors": {
               "oneOf": [
                 {
@@ -3907,10 +3752,6 @@
                   "minLength": 1
                 }
               ]
-            },
-            "sshKeyRef": {
-              "type": "string",
-              "minLength": 1
             }
           },
           "additionalProperties": false
@@ -4495,21 +4336,6 @@
           "properties": {
             "commandOptions": {
               "type": "string"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             }
           }
         }
@@ -4577,24 +4403,7 @@
           "$ref": "#/definitions/StepSpecType"
         },
         {
-          "type": "object",
-          "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            }
-          }
+          "type": "object"
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -4606,11 +4415,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -4793,21 +4598,6 @@
             "connectorRef": {
               "type": "string"
             },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "rejectionCriteria": {
               "$ref": "#/definitions/CriteriaSpecWrapper"
             },
@@ -4831,26 +4621,12 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
               "type": "string"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "fields": {
               "type": "array",
@@ -4898,26 +4674,12 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
               "type": "string"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "fields": {
               "type": "array",
@@ -4958,31 +4720,13 @@
       "type": "object",
       "discriminator": "type",
       "properties": {
-        "artifactOverrideSets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ArtifactOverrideSetWrapper"
-          }
-        },
         "artifacts": {
           "$ref": "#/definitions/ArtifactListConfig"
-        },
-        "manifestOverrideSets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ManifestOverrideSetWrapper"
-          }
         },
         "manifests": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/ManifestConfigWrapper"
-          }
-        },
-        "variableOverrideSets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/NGVariableOverrideSetWrapper"
           }
         },
         "variables": {
@@ -5279,21 +5023,6 @@
             "source"
           ],
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "environmentVariables": {
               "type": "array",
               "items": {
@@ -5513,11 +5242,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "metadata": {
-              "type": "string"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -5532,24 +5257,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/ManifestConfigWrapper"
-          }
-        },
-        "useArtifactOverrideSets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "useManifestOverrideSets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "useVariableOverrideSets": {
-          "type": "array",
-          "items": {
-            "type": "string"
           }
         },
         "variables": {
@@ -6422,21 +6129,6 @@
             "configuration": {
               "$ref": "#/definitions/TerraformStepConfiguration"
             },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "metadata": {
               "type": "string"
             },
@@ -6486,6 +6178,9 @@
         "store"
       ],
       "properties": {
+        "moduleSource": {
+          "$ref": "#/definitions/ModuleSource"
+        },
         "store": {
           "$ref": "#/definitions/StoreConfigWrapper"
         }
@@ -6506,21 +6201,6 @@
           "properties": {
             "configuration": {
               "$ref": "#/definitions/TerraformStepConfiguration"
-            },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
             },
             "metadata": {
               "type": "string"
@@ -6666,21 +6346,6 @@
             "configuration": {
               "$ref": "#/definitions/TerraformPlanExecutionData"
             },
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "provisionerIdentifier": {
               "type": "string"
             }
@@ -6700,21 +6365,6 @@
             "provisionerIdentifier"
           ],
           "properties": {
-            "delegateSelectors": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string",
-                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
-                  "minLength": 1
-                }
-              ]
-            },
             "provisionerIdentifier": {
               "type": "string"
             }
@@ -6947,8 +6597,23 @@
         {
           "type": "object",
           "properties": {
-            "metadata": {
-              "type": "string"
+            "artifactOverrideSets": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ArtifactOverrideSetWrapper"
+              }
+            },
+            "manifestOverrideSets": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ManifestOverrideSetWrapper"
+              }
+            },
+            "variableOverrideSets": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NGVariableOverrideSetWrapper"
+              }
             }
           }
         }

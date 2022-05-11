@@ -25,7 +25,7 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(PL)
 public class AuditServiceConfiguration {
   @JsonProperty("mongo") @ConfigSecret MongoConfig mongoConfig;
-  @JsonProperty("enableAuditService") boolean enableAuditService;
+  @JsonProperty("enableAuditService") boolean enableAuditService = true;
   @JsonProperty("hostname") String hostname;
   @JsonProperty("basePathPrefix") String basePathPrefix;
 }

@@ -32,9 +32,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.CVNGTestConstants;
 import io.harness.cvng.beans.AppDynamicsDataCollectionInfo;
-import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataCollectionExecutionStatus;
 import io.harness.cvng.beans.DataCollectionInfo;
 import io.harness.cvng.beans.DataCollectionTaskDTO;
@@ -64,7 +64,6 @@ import io.harness.cvng.core.services.api.DataCollectionTaskService;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.MonitoringSourcePerpetualTaskService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.verificationjob.entities.TestVerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
@@ -119,14 +118,16 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
   private String dataCollectionWorkerId;
   private String verificationTaskId;
   private CVConfig cvConfig;
+  private BuilderFactory builderFactory;
   @Inject private Map<Type, DataCollectionTaskManagementService> dataCollectionTaskManagementServiceMapBinder;
 
   @Before
   public void setupTests() throws IllegalAccessException {
     initMocks(this);
-    accountId = generateUuid();
-    orgIdentifier = generateUuid();
-    projectIdentifier = generateUuid();
+    builderFactory = BuilderFactory.getDefault();
+    accountId = builderFactory.getContext().getAccountId();
+    orgIdentifier = builderFactory.getContext().getOrgIdentifier();
+    projectIdentifier = builderFactory.getContext().getProjectIdentifier();
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
     cvConfig = cvConfigService.save(createCVConfig());
     cvConfigId = cvConfig.getUuid();
@@ -1001,22 +1002,12 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
   }
 
   private AppDynamicsCVConfig getCVConfig() {
-    AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
-    cvConfig.setProjectIdentifier(projectIdentifier);
+    AppDynamicsCVConfig cvConfig = builderFactory.appDynamicsCVConfigBuilder().build();
     cvConfig.setUuid(cvConfigId);
-    cvConfig.setAccountId(accountId);
     cvConfig.setApplicationName("cv-app");
     cvConfig.setTierName("docker-tier");
-    cvConfig.setVerificationType(VerificationType.TIME_SERIES);
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier("serviceIdentifier");
-    cvConfig.setEnvIdentifier("envIdentifier");
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
     cvConfig.setApplicationName("applicationName");
     cvConfig.setTierName("tierName");
-    cvConfig.setOrgIdentifier(orgIdentifier);
-    cvConfig.setEnabled(true);
     cvConfig.setMetricPack(
         metricPackService.getMetricPacks(accountId, orgIdentifier, projectIdentifier, DataSourceType.APP_DYNAMICS)
             .get(0));
@@ -1024,21 +1015,8 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
   }
 
   private SplunkCVConfig getSplunkCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    cvConfig.setEnabled(true);
-    cvConfig.setCreatedAt(clock.millis());
-    cvConfig.setProjectIdentifier(projectIdentifier);
+    SplunkCVConfig cvConfig = builderFactory.splunkCVConfigBuilder().build();
     cvConfig.setUuid(cvConfigId);
-    cvConfig.setAccountId(accountId);
-    cvConfig.setVerificationType(VerificationType.TIME_SERIES);
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier("serviceIdentifier");
-    cvConfig.setEnvIdentifier("envIdentifier");
-    cvConfig.setOrgIdentifier(orgIdentifier);
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setQuery("excetpion");
-    cvConfig.setServiceInstanceIdentifier("host");
     return cvConfig;
   }
 
@@ -1098,26 +1076,10 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
   }
 
   private CVConfig createCVConfig() {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig);
+    SplunkCVConfig cvConfig = builderFactory.splunkCVConfigBuilder().build();
     cvConfig.setQuery("exception");
     cvConfig.setServiceInstanceIdentifier(generateUuid());
     return cvConfig;
-  }
-
-  private void fillCommon(CVConfig cvConfig) {
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(accountId);
-    cvConfig.setEnabled(true);
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier(generateUuid());
-    cvConfig.setEnvIdentifier(generateUuid());
-    cvConfig.setProjectIdentifier(projectIdentifier);
-    cvConfig.setOrgIdentifier(orgIdentifier);
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName(generateUuid());
   }
 
   private VerificationJobInstance createVerificationJobInstance() {

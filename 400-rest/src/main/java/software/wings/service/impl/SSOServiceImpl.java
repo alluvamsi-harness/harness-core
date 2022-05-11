@@ -39,6 +39,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.beans.Account;
 import software.wings.beans.Event;
 import software.wings.beans.SyncTaskContext;
+import software.wings.beans.sso.LdapAuthType;
 import software.wings.beans.sso.LdapGroupResponse;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.LdapTestResponse;
@@ -214,6 +215,7 @@ public class SSOServiceImpl implements SSOService {
       }
     }
   }
+
   @Override
   public SSOConfig setAuthenticationMechanism(String accountId, AuthenticationMechanism mechanism) {
     checkIfOperationIsAllowed(accountId, mechanism);
@@ -373,7 +375,7 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapConnectionSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
-    ldapSettings.encryptFields(secretManager);
+    ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
       SyncTaskContext syncTaskContext = SyncTaskContext.builder()
@@ -394,7 +396,7 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapUserSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
-    ldapSettings.encryptFields(secretManager);
+    ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
       SyncTaskContext syncTaskContext = SyncTaskContext.builder()
@@ -415,7 +417,7 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapGroupSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
-    ldapSettings.encryptFields(secretManager);
+    ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
       SyncTaskContext syncTaskContext = SyncTaskContext.builder()
@@ -501,9 +503,15 @@ public class SSOServiceImpl implements SSOService {
       return false;
     }
     LdapSettings savedSettings = ssoSettingService.getLdapSettingsByUuid(settings.getUuid());
-    settings.getConnectionSettings().setEncryptedBindPassword(
-        savedSettings.getConnectionSettings().getEncryptedBindPassword());
-    return true;
+    if (savedSettings.getConnectionSettings().getPasswordType().equals(LdapAuthType.INLINE_SECRET)) {
+      settings.getConnectionSettings().setEncryptedBindPassword(
+          savedSettings.getConnectionSettings().getEncryptedBindPassword());
+      return true;
+    } else {
+      settings.getConnectionSettings().setEncryptedBindSecret(
+          savedSettings.getConnectionSettings().getEncryptedBindSecret());
+      return true;
+    }
   }
 
   @Override

@@ -30,6 +30,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.clienttools.InstallUtils;
 import io.harness.delegate.task.shell.ConfigFileMetaData;
 import io.harness.delegate.task.winrm.WinRmSession;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
@@ -64,7 +65,7 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(JUnitParamsRunner.class)
-@PrepareForTest({WinRmSession.class, SshHelperUtils.class})
+@PrepareForTest({WinRmSession.class, SshHelperUtils.class, InstallUtils.class})
 @OwnedBy(CDP)
 @TargetModule(_930_DELEGATE_TASKS)
 public class FileBasedWinRmExecutorTest extends CategoryTest {
@@ -95,11 +96,13 @@ public class FileBasedWinRmExecutorTest extends CategoryTest {
 
   private void testCopyConfigFilesForExecutor(int size, FileBasedWinRmExecutor executor) throws IOException {
     mockStatic(SshHelperUtils.class);
+    mockStatic(InstallUtils.class);
     mockRemoteCommandStatus(executor, SUCCESS);
     PowerMockito
         .when(SshHelperUtils.executeLocalCommand(
             anyString(), any(LogCallback.class), any(Writer.class), anyBoolean(), anyMapOf(String.class, String.class)))
         .thenReturn(true);
+    PowerMockito.when(InstallUtils.getPath(any(), any())).thenReturn("/tmp/dummypath/tool");
     doReturn(buildByteInputStream(size))
         .when(delegateFileManager)
         .downloadByConfigFileId(anyString(), anyString(), anyString(), anyString());

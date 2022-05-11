@@ -10,14 +10,12 @@ package io.harness.cdng.creator.plan.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
-import io.harness.cdng.artifact.bean.yaml.ArtifactOverrideSets.ArtifactOverrideSetsStepParametersWrapper;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.licenserestriction.EnforcementValidator;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSets.ManifestOverrideSetsStepParametersWrapper;
 import io.harness.cdng.service.ServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceUseFromStage;
@@ -71,7 +69,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.CDC)
 public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
@@ -356,27 +353,9 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
     ServiceSpecStepParameters stepParameters =
         ServiceSpecStepParameters.builder()
             .originalVariables(ParameterField.createValueField(serviceSpec.getVariables()))
-            .originalVariableOverrideSets(ParameterField.createValueField(serviceSpec.getVariableOverrideSets()))
             .stageOverrideVariables(actualServiceConfig.getStageOverrides() == null
                     ? null
                     : ParameterField.createValueField(actualServiceConfig.getStageOverrides().getVariables()))
-            .stageOverridesUseVariableOverrideSets(actualServiceConfig.getStageOverrides() == null
-                    ? null
-                    : actualServiceConfig.getStageOverrides().getUseVariableOverrideSets())
-            .artifactOverrideSets(serviceSpec.getArtifactOverrideSets() == null
-                    ? null
-                    : serviceSpec.getArtifactOverrideSets().stream().collect(Collectors.toMap(overrideSet
-                        -> overrideSet.getOverrideSet().getIdentifier(),
-                        overrideSet
-                        -> ArtifactOverrideSetsStepParametersWrapper.fromArtifactOverrideSets(
-                            overrideSet.getOverrideSet()))))
-            .manifestOverrideSets(serviceSpec.getManifestOverrideSets() == null
-                    ? null
-                    : serviceSpec.getManifestOverrideSets().stream().collect(Collectors.toMap(overrideSet
-                        -> overrideSet.getOverrideSet().getIdentifier(),
-                        overrideSet
-                        -> ManifestOverrideSetsStepParametersWrapper.fromManifestOverrideSets(
-                            overrideSet.getOverrideSet()))))
             .childrenNodeIds(serviceSpecChildrenIds)
             .build();
     PlanNode node =

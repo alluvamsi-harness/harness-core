@@ -14,6 +14,7 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.network.SafeHttpCall;
 import io.harness.ng.core.dto.AccountDTO;
@@ -69,6 +70,27 @@ public class VariableCreatorMergeService {
   public VariableCreatorMergeService(PmsSdkHelper pmsSdkHelper, PmsGitSyncHelper pmsGitSyncHelper) {
     this.pmsSdkHelper = pmsSdkHelper;
     this.pmsGitSyncHelper = pmsGitSyncHelper;
+  }
+
+  public VariableMergeServiceResponse createVariablesResponses(String yaml, boolean newVersion) {
+    try {
+      return createVariablesResponse(yaml, newVersion);
+    } catch (Exception ex) {
+      log.error("Error happened while creating variables for pipeline:", ex);
+      throw new InvalidRequestException(
+          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
+    }
+  }
+
+  public VariableMergeServiceResponse createVariablesResponsesV2(
+      String accountId, String orgId, String projectId, String yaml) {
+    try {
+      return createVariablesResponseV2(accountId, orgId, projectId, yaml);
+    } catch (Exception ex) {
+      log.error("Error happened while creating variables for pipeline:", ex);
+      throw new InvalidRequestException(
+          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
+    }
   }
 
   public VariableMergeServiceResponse createVariablesResponse(@NotNull String yaml, boolean newVersion)

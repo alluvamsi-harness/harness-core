@@ -50,10 +50,7 @@ public class ArtifactoryClientImplTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Rule
   public WireMockRule wireMockRule =
-      new WireMockRule(WireMockConfiguration.wireMockConfig()
-                           .usingFilesUnderDirectory("960-api-services/src/test/resources")
-                           .port(Options.DYNAMIC_PORT),
-          false);
+      new WireMockRule(WireMockConfiguration.wireMockConfig().port(Options.DYNAMIC_PORT), false);
   @Rule
   public WireMockRule wireMockRule2 =
       new WireMockRule(WireMockConfiguration.wireMockConfig()

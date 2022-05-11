@@ -23,7 +23,7 @@ public enum ModuleType {
   @JsonProperty("CV") CV("Continuous Verification"),
   @JsonProperty("CF") CF("Continuous Features"),
   @JsonProperty("CE") CE("Continuous Efficiency"),
-  @JsonProperty("STO") STO("Security Testing Orchestration", false, true),
+  @JsonProperty("STO") STO("Security Testing Orchestration"),
 
   // Internal
   @JsonProperty("CORE") CORE("Core", true, false),
@@ -58,7 +58,7 @@ public enum ModuleType {
     return moduleList;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static ModuleType fromString(String moduleType) {
     for (ModuleType moduleEnum : ModuleType.values()) {
       if (moduleEnum.name().equalsIgnoreCase(moduleType)) {

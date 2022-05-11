@@ -27,7 +27,9 @@ import io.harness.account.services.AccountService;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
+import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.manifest.yaml.ArtifactoryStorageConfigDTO;
 import io.harness.cdng.manifest.yaml.GitStoreDTO;
 import io.harness.cdng.provision.terraform.TerraformConfig;
@@ -51,6 +53,7 @@ import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -89,6 +92,7 @@ public class TerraformRollbackStepTest extends CategoryTest {
   @Mock private StepHelper stepHelper;
   @Mock private AccountService accountService;
   @Mock private TelemetryReporter telemetryReporter;
+  @Mock private CDFeatureFlagHelper cdFeatureFlagHelper;
 
   @InjectMocks private TerraformRollbackStep terraformRollbackStep;
 
@@ -203,6 +207,56 @@ public class TerraformRollbackStepTest extends CategoryTest {
     TerraformTaskNGParameters taskParameters =
         (TerraformTaskNGParameters) taskDataArgumentCaptor.getValue().getParameters()[0];
     assertThat(taskParameters.getTaskType()).isEqualTo(TFTaskType.APPLY);
+    verify(stepHelper, times(0)).sendRollbackTelemetryEvent(any(), any(), any());
+  }
+
+  @Test
+  @Owner(developers = NAMAN_TALAYCHA)
+  @Category(UnitTests.class)
+  public void testObtainTaskApplyScenarioFFEnabled() {
+    Ambiance ambiance =
+        Ambiance.newBuilder().setPlanExecutionId("executionId").putSetupAbstractions("accountId", "accId").build();
+    TerraformRollbackStepParameters rollbackSpec =
+        TerraformRollbackStepParameters.builder().provisionerIdentifier("id").build();
+    StepElementParameters stepElementParameters = StepElementParameters.builder().spec(rollbackSpec).build();
+
+    doReturn("fullId").when(terraformStepHelper).generateFullIdentifier("id", ambiance);
+    doReturn(EnvironmentType.PROD).when(stepHelper).getEnvironmentType(ambiance);
+    doReturn(true)
+        .when(cdFeatureFlagHelper)
+        .isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH);
+    HIterator<TerraformConfig> iterator = mock(HIterator.class);
+    doReturn(iterator).when(terraformConfigHelper).getIterator(ambiance, "fullId");
+    when(iterator.hasNext()).thenReturn(true, true, false);
+
+    TerraformConfig terraformConfig = TerraformConfig.builder()
+                                          .pipelineExecutionId("oldExecutionId")
+                                          .useConnectorCredentials(true)
+                                          .configFiles(GitStoreDTO.builder().build())
+                                          .build();
+    doReturn(terraformConfig).when(iterator).next();
+
+    doReturn(null).when(executionSweepingOutputService).consume(any(), any(), any(), any());
+    doReturn("fileId").when(terraformStepHelper).getLatestFileId("fullId");
+    GitFetchFilesConfig gitFetchFilesConfig = GitFetchFilesConfig.builder().build();
+    doReturn(gitFetchFilesConfig).when(terraformStepHelper).getGitFetchFilesConfig(any(), any(), any());
+    doReturn(null).when(terraformStepHelper).prepareTerraformVarFileInfo(any(), any());
+    mockStatic(StepUtils.class);
+    PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(TaskRequest.newBuilder().build());
+    ArgumentCaptor<TaskData> taskDataArgumentCaptor = ArgumentCaptor.forClass(TaskData.class);
+
+    TaskRequest taskRequest = terraformRollbackStep.obtainTask(ambiance, stepElementParameters, null);
+
+    assertThat(taskRequest).isNotNull();
+    PowerMockito.verifyStatic(StepUtils.class, times(1));
+    StepUtils.prepareCDTaskRequest(any(), taskDataArgumentCaptor.capture(), any(), any(), any(), any(), any());
+    assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
+    assertThat(taskDataArgumentCaptor.getValue().getParameters()).isNotNull();
+    TerraformTaskNGParameters taskParameters =
+        (TerraformTaskNGParameters) taskDataArgumentCaptor.getValue().getParameters()[0];
+    assertThat(taskParameters.getTaskType()).isEqualTo(TFTaskType.APPLY);
+    assertThat(taskParameters.isTfModuleSourceInheritSSH()).isTrue();
     verify(stepHelper, times(0)).sendRollbackTelemetryEvent(any(), any(), any());
   }
 

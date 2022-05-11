@@ -27,6 +27,8 @@ import io.harness.delegate.beans.serverless.ServerlessAwsLambdaCloudFormationSch
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaFunction.ServerlessAwsLambdaFunctionBuilder;
 import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
+import io.harness.delegate.task.aws.AwsNgConfigMapper;
+import io.harness.delegate.task.serverless.request.ServerlessDeployRequest;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.runtime.serverless.ServerlessAwsLambdaRuntimeException;
@@ -48,6 +50,7 @@ import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import software.wings.beans.LogColor;
 import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
+import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
 
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -62,16 +65,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 @OwnedBy(CDP)
 @Singleton
 @Slf4j
 public class ServerlessAwsCommandTaskHelper {
   @Inject private ServerlessTaskPluginHelper serverlessTaskPluginHelper;
+  @Inject protected AwsCFHelperServiceDelegate awsCFHelperServiceDelegate;
+  @Inject private AwsNgConfigMapper awsNgConfigMapper;
 
   private static String AWS_LAMBDA_FUNCTION_RESOURCE_TYPE = "AWS::Lambda::Function";
   private static String AWS_LAMBDA_FUNCTION_NAME_PROPERTY_KEY = "FunctionName";
@@ -114,6 +120,21 @@ public class ServerlessAwsCommandTaskHelper {
     }
     return ServerlessCommandTaskHelper.executeCommand(
         command, serverlessDelegateTaskParams.getWorkingDirectory(), executionLogCallback, true, timeoutInMillis);
+  }
+
+  public String getCurrentCloudFormationTemplate(
+      LogCallback executionLogCallback, ServerlessDeployRequest serverlessDeployRequest) {
+    ServerlessAwsLambdaManifestSchema serverlessManifestSchema =
+        parseServerlessManifest(executionLogCallback, serverlessDeployRequest.getManifestContent());
+    ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig =
+        (ServerlessAwsLambdaInfraConfig) serverlessDeployRequest.getServerlessInfraConfig();
+    String cloudFormationStackName =
+        serverlessManifestSchema.getService() + "-" + serverlessAwsLambdaInfraConfig.getStage();
+    String region = serverlessAwsLambdaInfraConfig.getRegion();
+
+    return awsCFHelperServiceDelegate.getStackBody(
+        awsNgConfigMapper.createAwsInternalConfig(serverlessAwsLambdaInfraConfig.getAwsConnectorDTO()), region,
+        cloudFormationStackName);
   }
 
   public ServerlessCliResponse deployList(ServerlessClient serverlessClient,
@@ -255,20 +276,42 @@ public class ServerlessAwsCommandTaskHelper {
     return serverlessAwsLambdaFunctions;
   }
 
-  public Optional<String> getPreviousVersionTimeStamp(String deployListOutput) {
+  public List<String> getDeployListTimeStamps(String deployListOutput) {
+    List<String> timeStamps = new ArrayList<>();
     if (EmptyPredicate.isEmpty(deployListOutput)) {
-      return Optional.empty();
+      return timeStamps;
     }
     Pattern deployTimeOutPattern = Pattern.compile(DEPLOY_TIMESTAMP_REGEX);
     List<String> outputLines = Arrays.asList(deployListOutput.split(NEW_LINE_REGEX));
     List<String> filteredOutputLines = outputLines.stream()
                                            .filter(outputLine -> deployTimeOutPattern.matcher(outputLine).matches())
                                            .collect(Collectors.toList());
-    String lastOutputLine = Iterables.getLast(filteredOutputLines, " ");
-    String lastVersionTimeStamp = Iterables.getLast(Arrays.asList(lastOutputLine.split(WHITESPACE_REGEX)), "");
-    if (StringUtils.isNotBlank(lastVersionTimeStamp)) {
-      return Optional.of(lastVersionTimeStamp);
+    timeStamps =
+        filteredOutputLines.stream()
+            .map(filteredOutputLine -> Iterables.getLast(Arrays.asList(filteredOutputLine.split(WHITESPACE_REGEX)), ""))
+            .collect(Collectors.toList());
+
+    return timeStamps;
+  }
+
+  public Optional<String> getPreviousVersionTimeStamp(
+      List<String> timeStamps, LogCallback executionLogCallback, ServerlessDeployRequest serverlessDeployRequest) {
+    if (!CollectionUtils.isEmpty(timeStamps)) {
+      String currentCloudFormationTemplate =
+          getCurrentCloudFormationTemplate(executionLogCallback, serverlessDeployRequest);
+
+      int timeStampsCount = timeStamps.size();
+      for (int index = timeStampsCount - 1; index >= 0; index--) {
+        String timeStamp = timeStamps.get(index);
+        // Below code uses Boyer-Moore-Algorithm which is faster
+        Pattern pattern = Pattern.compile(timeStamp);
+        Matcher matcher = pattern.matcher(currentCloudFormationTemplate);
+        if (matcher.find()) {
+          return Optional.of(timeStamp);
+        }
+      }
     }
+
     return Optional.empty();
   }
 }

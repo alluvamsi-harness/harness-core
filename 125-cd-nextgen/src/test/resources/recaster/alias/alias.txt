@@ -1,6 +1,7 @@
 io.harness.cdng.k8s.K8sCanaryStepParameters
 io.harness.cdng.provision.terraform.TerraformStepConfigurationParameters
 io.harness.cdng.infra.yaml.K8sGcpInfrastructure
+io.harness.cdng.infra.yaml.K8sAzureInfrastructure
 io.harness.cdng.provision.terraform.steps.rolllback.TerraformRollbackStepInfo
 io.harness.cdng.k8s.K8sApplyStepInfo
 io.harness.cdng.k8s.K8sBGSwapServicesStepParameters
@@ -75,6 +76,7 @@ io.harness.cdng.manifest.yaml.KustomizeManifestOutcome
 io.harness.cdng.manifest.yaml.GitLabStore
 io.harness.cdng.provision.terraform.TerraformPlanExecutionDataParameters
 io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome
+io.harness.cdng.infra.beans.K8sAzureInfrastructureOutcome
 io.harness.cdng.infra.beans.PdcInfrastructureOutcome
 io.harness.cdng.manifest.yaml.S3StoreConfig
 io.harness.cdng.infra.beans.InfraUseFromStage
@@ -101,6 +103,7 @@ io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome
 io.harness.cdng.artifact.bean.yaml.EcrArtifactConfig
 io.harness.steps.shellscript.K8sInfraDelegateConfigOutput
 io.harness.cdng.infra.beans.K8sGcpInfraMapping
+io.harness.cdng.infra.beans.K8sAzureInfraMapping
 io.harness.cdng.infra.beans.PdcInfraMapping
 io.harness.steps.common.pipeline.PipelineSetupStepParameters
 io.harness.cdng.k8s.InstanceSelectionWrapper
@@ -189,6 +192,7 @@ io.harness.cdng.provision.terraform.TerraformRollbackStepNode
 io.harness.cdng.helm.HelmDeployStepNode
 io.harness.cdng.helm.HelmRollbackStepNode
 io.harness.steps.template.TemplateStepNode
+io.harness.steps.template.stage.TemplateStageNode
 io.harness.cdng.manifest.yaml.GcsStoreConfig
 io.harness.ngpipeline.artifact.bean.EcrArtifactOutcome
 io.harness.steps.jira.JiraIssueOutcome
@@ -254,6 +258,7 @@ io.harness.cdng.artifact.NexusArtifactSummary
 io.harness.cdng.artifact.outcome.NexusArtifactOutcome
 io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome
 io.harness.cdng.artifact.outcome.ArtifactoryGenericArtifactOutcome
+io.harness.ngpipeline.artifact.bean.AcrArtifactOutcome
 io.harness.cdng.artifact.bean.yaml.NexusRegistryArtifactConfig
 io.harness.cdng.artifact.bean.yaml.ArtifactoryRegistryArtifactConfig
 io.harness.cdng.artifact.bean.yaml.AcrArtifactConfig
@@ -288,6 +293,7 @@ io.harness.cdng.envGroup.beans.EnvironmentGroupConfig
 io.harness.cdng.service.beans.WinRmServiceSpec
 io.harness.cdng.artifact.CustomArtifactSummary
 io.harness.cdng.artifact.bean.yaml.CustomArtifactConfig
+io.harness.cdng.manifest.yaml.storeConfig.moduleSource.ModuleSource
 io.harness.cdng.infra.beans.ServerlessAwsLambdaInfraMapping
 io.harness.cdng.service.beans.ServerlessAwsLambdaServiceSpec
 io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure
@@ -307,3 +313,9 @@ io.harness.cdng.manifest.yaml.ServerlessAwsLambdaManifestOutcome
 io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome
 io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData
 io.harness.cdng.serverless.beans.ServerlessGitFetchExceptionPassThroughData
+io.harness.steps.servicenow.ServiceNowTicketOutcome
+io.harness.cdng.service.beans.ServiceYamlV2
+io.harness.cdng.environment.yaml.EnvironmentYamlV2
+io.harness.cdng.infra.yaml.InfraStructureDefinition
+io.harness.cdng.envgroup.yaml.EnvironmentGroupYaml
+io.harness.steps.customstage.CustomStageNode

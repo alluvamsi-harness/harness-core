@@ -14,15 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
-import io.harness.cvng.beans.CVMonitoringCategory;
+import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.beans.job.TestVerificationJobDTO;
 import io.harness.cvng.beans.job.VerificationJobDTO;
 import io.harness.cvng.core.entities.CVConfig;
-import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
-import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.verificationjob.services.api.VerificationJobService;
 import io.harness.eventsframework.entity_crud.account.AccountEntityChangeDTO;
 import io.harness.rule.Owner;
@@ -40,10 +38,12 @@ public class AccountChangeEventMessageProcessorTest extends CvNextGenTestBase {
   @Inject private VerificationJobService verificationJobService;
   private String orgIdentifier;
   private String projectIdentifier;
+  private BuilderFactory builderFactory;
   @Before
   public void setup() {
-    orgIdentifier = generateUuid();
-    projectIdentifier = generateUuid();
+    builderFactory = BuilderFactory.getDefault();
+    orgIdentifier = builderFactory.getContext().getOrgIdentifier();
+    projectIdentifier = builderFactory.getContext().getProjectIdentifier();
   }
   @Test
   @Owner(developers = VUK)
@@ -73,27 +73,8 @@ public class AccountChangeEventMessageProcessorTest extends CvNextGenTestBase {
     assertThat(cvConfigService.get(cvConfig.getUuid())).isNull();
     assertThat(retrievedCVConfig).isNull();
   }
-
   private CVConfig createCVConfig(String accountId) {
-    SplunkCVConfig cvConfig = new SplunkCVConfig();
-    fillCommon(cvConfig, accountId);
-    cvConfig.setQuery("exception");
-    cvConfig.setServiceInstanceIdentifier(generateUuid());
-    return cvConfig;
-  }
-
-  private void fillCommon(CVConfig cvConfig, String accountId) {
-    cvConfig.setVerificationType(VerificationType.LOG);
-    cvConfig.setAccountId(accountId);
-    cvConfig.setConnectorIdentifier(generateUuid());
-    cvConfig.setServiceIdentifier("service");
-    cvConfig.setEnvIdentifier("env");
-    cvConfig.setOrgIdentifier(generateUuid());
-    cvConfig.setCategory(CVMonitoringCategory.PERFORMANCE);
-    cvConfig.setProductName(generateUuid());
-    cvConfig.setIdentifier(generateUuid());
-    cvConfig.setMonitoringSourceName(generateUuid());
-    cvConfig.setProjectIdentifier(generateUuid());
+    return builderFactory.splunkCVConfigBuilder().accountId(accountId).build();
   }
 
   private VerificationJobDTO createVerificationJobDTO() {

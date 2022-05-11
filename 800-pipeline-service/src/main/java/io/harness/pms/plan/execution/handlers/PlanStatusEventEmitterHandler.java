@@ -42,7 +42,7 @@ public class PlanStatusEventEmitterHandler implements AsyncInformObserver, PlanS
   @Override
   public void onPlanStatusUpdate(Ambiance ambiance) {
     Status status = planExecutionService.get(ambiance.getPlanExecutionId()).getStatus();
-    if (status == Status.SUCCEEDED) {
+    if (status == Status.SUCCEEDED || status == Status.IGNORE_FAILED) {
       planExecutionSubject.fireInform(NotificationObserver::onSuccess, ambiance);
     } else if (StatusUtils.brokeStatuses().contains(status)) {
       planExecutionSubject.fireInform(NotificationObserver::onFailure, ambiance);

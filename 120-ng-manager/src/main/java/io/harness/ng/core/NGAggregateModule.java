@@ -19,8 +19,12 @@ import io.harness.ng.core.api.impl.AggregateAccountResourceServiceImpl;
 import io.harness.ng.core.api.impl.AggregateOrganizationServiceImpl;
 import io.harness.ng.core.api.impl.AggregateProjectServiceImpl;
 import io.harness.ng.core.api.impl.AggregateUserGroupServiceImpl;
-import io.harness.ng.core.filestore.service.FileStoreService;
-import io.harness.ng.core.filestore.service.FileStoreServiceImpl;
+import io.harness.ng.core.filestore.api.FileActivityService;
+import io.harness.ng.core.filestore.api.FileFailsafeService;
+import io.harness.ng.core.filestore.api.FileStoreService;
+import io.harness.ng.core.filestore.api.impl.FileActivityServiceImpl;
+import io.harness.ng.core.filestore.api.impl.FileFailsafeServiceImpl;
+import io.harness.ng.core.filestore.api.impl.FileStoreServiceImpl;
 import io.harness.ng.core.service.services.ServiceEntityManagementService;
 import io.harness.ng.core.service.services.ServiceEntityManagementServiceImpl;
 
@@ -46,5 +50,7 @@ public class NGAggregateModule extends AbstractModule {
     bind(AggregateUserGroupService.class).to(AggregateUserGroupServiceImpl.class);
     bind(ServiceEntityManagementService.class).to(ServiceEntityManagementServiceImpl.class);
     bind(FileStoreService.class).to(FileStoreServiceImpl.class);
+    bind(FileFailsafeService.class).to(FileFailsafeServiceImpl.class);
+    bind(FileActivityService.class).to(FileActivityServiceImpl.class);
   }
 }

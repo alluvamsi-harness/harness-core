@@ -10,10 +10,12 @@ package io.harness.cdng.artifact.resources.acr.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.resources.acr.dtos.AcrRegistriesDTO;
+import io.harness.cdng.artifact.resources.acr.dtos.AcrRegistryDTO;
+import io.harness.cdng.artifact.resources.acr.dtos.AcrRepositoriesDTO;
+import io.harness.cdng.artifact.resources.acr.dtos.AcrRepositoryDTO;
 import io.harness.cdng.azure.AzureHelperService;
 import io.harness.delegate.beans.DelegateResponseData;
-import io.harness.delegate.beans.azure.AcrRegistriesDTO;
-import io.harness.delegate.beans.azure.AcrRepositoriesDTO;
 import io.harness.delegate.beans.azure.AcrResponseDTO;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
@@ -38,6 +40,7 @@ import com.google.inject.Singleton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Singleton
 @OwnedBy(HarnessTeam.CDP)
@@ -65,7 +68,18 @@ public class AcrResourceServiceImpl implements AcrResourceService {
 
     AzureRegistriesResponse registriesResponse = (AzureRegistriesResponse) azureHelperService.executeSyncTask(
         azureTaskParamsTaskParams, baseNGAccess, "Azure list registries task failure due to error");
-    return registriesResponse.getContainerRegistries();
+    return AcrRegistriesDTO.builder().registries(getRegistryDTOs(registriesResponse)).build();
+  }
+
+  private List<AcrRegistryDTO> getRegistryDTOs(AzureRegistriesResponse registriesResponse) {
+    return registriesResponse.getContainerRegistries()
+        .stream()
+        .map(registry -> createRegistryDTO(registry))
+        .collect(Collectors.toList());
+  }
+
+  private AcrRegistryDTO createRegistryDTO(String registryName) {
+    return AcrRegistryDTO.builder().registry(registryName).build();
   }
 
   @Override
@@ -89,7 +103,18 @@ public class AcrResourceServiceImpl implements AcrResourceService {
 
     AzureRepositoriesResponse repositoriesResponse = (AzureRepositoriesResponse) azureHelperService.executeSyncTask(
         azureTaskParamsTaskParams, baseNGAccess, "Azure list repositories task failure due to error");
-    return repositoriesResponse.getRepositories();
+    return AcrRepositoriesDTO.builder().repositories(getRepositoryDTOs(repositoriesResponse)).build();
+  }
+
+  private List<AcrRepositoryDTO> getRepositoryDTOs(AzureRepositoriesResponse repositoriesResponse) {
+    return repositoriesResponse.getRepositories()
+        .stream()
+        .map(repository -> createRepositoryDTO(repository))
+        .collect(Collectors.toList());
+  }
+
+  private AcrRepositoryDTO createRepositoryDTO(String repoName) {
+    return AcrRepositoryDTO.builder().repository(repoName).build();
   }
 
   @Override

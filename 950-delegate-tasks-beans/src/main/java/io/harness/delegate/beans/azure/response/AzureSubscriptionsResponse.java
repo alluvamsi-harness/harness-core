@@ -9,8 +9,8 @@ package io.harness.delegate.beans.azure.response;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.beans.azure.AzureSubscriptionsDTO;
 
+import java.util.Map;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -20,5 +20,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @OwnedBy(HarnessTeam.CDP)
 public class AzureSubscriptionsResponse extends AzureDelegateTaskResponse {
-  private AzureSubscriptionsDTO subscriptions;
+  private Map<String, String> subscriptions;
 }

@@ -82,6 +82,7 @@ import io.harness.cvng.core.entities.demo.CVNGDemoPerpetualTask;
 import io.harness.cvng.dashboard.entities.HealthVerificationHeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.migration.beans.CVNGSchema;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule;
 import io.harness.cvng.notification.entities.NotificationRule;
 import io.harness.cvng.notification.entities.SLONotificationRule;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator;
@@ -212,6 +213,7 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(VerificationTaskIdAware.class);
     set.add(NotificationRule.class);
     set.add(SLONotificationRule.class);
+    set.add(MonitoredServiceNotificationRule.class);
   }
 
   @Override

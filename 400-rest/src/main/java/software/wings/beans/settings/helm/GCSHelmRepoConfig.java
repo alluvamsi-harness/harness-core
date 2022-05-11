@@ -79,6 +79,11 @@ public class GCSHelmRepoConfig extends SettingValue implements HelmRepoConfig {
     return executionCapabilityList;
   }
 
+  @Override
+  public String getBucketName() {
+    return bucketName;
+  }
+
   @Data
   @NoArgsConstructor
   @EqualsAndHashCode(callSuper = true)

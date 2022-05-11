@@ -36,6 +36,7 @@ import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO.S
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources.HealthSourceSummary;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceYamlDTO;
 import io.harness.cvng.core.beans.monitoredService.RiskData;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricHealthSourceSpec;
@@ -59,9 +60,12 @@ import io.harness.cvng.core.services.api.monitoredService.ChangeSourceService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.core.services.api.monitoredService.ServiceDependencyService;
+import io.harness.cvng.core.utils.template.MonitoredServiceYamlExpressionEvaluator;
+import io.harness.cvng.core.utils.template.TemplateFacade;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
 import io.harness.cvng.dashboard.services.api.LogDashboardService;
 import io.harness.cvng.dashboard.services.api.TimeSeriesDashboardService;
+import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.exception.DuplicateFieldException;
@@ -70,6 +74,7 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.mapper.TagMapper;
 import io.harness.persistence.HPersistence;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.utils.PageUtils;
 
 import com.google.common.base.Preconditions;
@@ -97,6 +102,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.NotFoundException;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -135,6 +141,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   @Inject private CVConfigService cvConfigService;
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private CVNGLogService cvngLogService;
+  @Inject private NotificationRuleService notificationRuleService;
+  @Inject private TemplateFacade templateFacade;
 
   @Override
   public MonitoredServiceResponse create(String accountId, MonitoredServiceDTO monitoredServiceDTO) {
@@ -172,11 +180,37 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                      .build(),
           monitoredServiceDTO.getSources().getChangeSources());
     }
-    saveMonitoredServiceEntity(accountId, monitoredServiceDTO);
+    saveMonitoredServiceEntity(environmentParams, monitoredServiceDTO);
     log.info(
         "Saved monitored service with identifier {} for account {}", monitoredServiceDTO.getIdentifier(), accountId);
     setupUsageEventService.sendCreateEventsForMonitoredService(environmentParams, monitoredServiceDTO);
     return get(environmentParams, monitoredServiceDTO.getIdentifier());
+  }
+
+  @Override
+  public MonitoredServiceResponse createFromYaml(ProjectParams projectParams, String yaml) {
+    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceYaml(projectParams, yaml);
+    return create(projectParams.getAccountIdentifier(), monitoredServiceDTO);
+  }
+
+  @Override
+  public MonitoredServiceResponse updateFromYaml(ProjectParams projectParams, String identifier, String yaml) {
+    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceYaml(projectParams, yaml);
+    monitoredServiceDTO.setIdentifier(identifier);
+    return update(projectParams.getAccountIdentifier(), monitoredServiceDTO);
+  }
+
+  @SneakyThrows
+  private MonitoredServiceDTO getExpandedMonitoredServiceYaml(ProjectParams projectParams, String yaml) {
+    String templateResolvedYaml = templateFacade.resolveYaml(projectParams, yaml);
+    MonitoredServiceYamlExpressionEvaluator yamlExpressionEvaluator =
+        new MonitoredServiceYamlExpressionEvaluator(templateResolvedYaml);
+    MonitoredServiceDTO monitoredServiceDTO =
+        YamlUtils.read(templateResolvedYaml, MonitoredServiceYamlDTO.class).getMonitoredServiceDTO();
+    monitoredServiceDTO = (MonitoredServiceDTO) yamlExpressionEvaluator.resolve(monitoredServiceDTO, false);
+    monitoredServiceDTO.setProjectIdentifier(projectParams.getProjectIdentifier());
+    monitoredServiceDTO.setOrgIdentifier(projectParams.getOrgIdentifier());
+    return monitoredServiceDTO;
   }
 
   private void validateDependencyMetadata(ProjectParams projectParams, Set<ServiceDependencyDTO> dependencyDTOs) {
@@ -286,6 +320,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                       .orgIdentifier(monitoredService.getOrgIdentifier())
                                       .projectIdentifier(monitoredService.getProjectIdentifier())
                                       .build();
+    updateOperations.set(MonitoredServiceKeys.notificationRuleRefs,
+        notificationRuleService.getNotificationRuleRefs(monitoredServiceDTO.getNotificationRuleRefs()));
     validateDependencyMetadata(projectParams, monitoredServiceDTO.getDependencies());
     serviceDependencyService.updateDependencies(
         projectParams, monitoredService.getIdentifier(), monitoredServiceDTO.getDependencies());
@@ -395,7 +431,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   }
 
   private MonitoredServiceResponse createMonitoredServiceDTOFromEntity(
-      MonitoredService monitoredServiceEntity, ProjectParams environmentParams) {
+      MonitoredService monitoredServiceEntity, ProjectParams projectParams) {
     MonitoredServiceDTO monitoredServiceDTO =
         MonitoredServiceDTO.builder()
             .name(monitoredServiceEntity.getName())
@@ -415,7 +451,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                         monitoredServiceEntity.getIdentifier(), monitoredServiceEntity.getHealthSourceIdentifiers()))
                     // TODO: Update this call to get by monitoredServiceIdentifier in the next PR
                     .changeSources(
-                        changeSourceService.get(MonitoredServiceParams.builderWithProjectParams(environmentParams)
+                        changeSourceService.get(MonitoredServiceParams.builderWithProjectParams(projectParams)
                                                     .monitoredServiceIdentifier(monitoredServiceEntity.getIdentifier())
                                                     .build(),
                             monitoredServiceEntity.getChangeSourceIdentifiers()))
@@ -423,11 +459,13 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             // TODO: Figure out dependencies by refList instead of one env
             .dependencies(serviceDependencyService.getDependentServicesForMonitoredService(
                 ProjectParams.builder()
-                    .accountIdentifier(environmentParams.getAccountIdentifier())
-                    .orgIdentifier(environmentParams.getOrgIdentifier())
-                    .projectIdentifier(environmentParams.getProjectIdentifier())
+                    .accountIdentifier(projectParams.getAccountIdentifier())
+                    .orgIdentifier(projectParams.getOrgIdentifier())
+                    .projectIdentifier(projectParams.getProjectIdentifier())
                     .build(),
                 monitoredServiceEntity.getIdentifier()))
+            .notificationRuleRefs(
+                notificationRuleService.getNotificationRuleRefDTOs(monitoredServiceEntity.getNotificationRuleRefs()))
             .build();
     return MonitoredServiceResponse.builder()
         .monitoredService(monitoredServiceDTO)
@@ -693,14 +731,14 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     }
   }
 
-  private void saveMonitoredServiceEntity(String accountId, MonitoredServiceDTO monitoredServiceDTO) {
+  private void saveMonitoredServiceEntity(ProjectParams projectParams, MonitoredServiceDTO monitoredServiceDTO) {
     MonitoredService monitoredServiceEntity =
         MonitoredService.builder()
             .name(monitoredServiceDTO.getName())
             .desc(monitoredServiceDTO.getDescription())
-            .accountId(accountId)
-            .orgIdentifier(monitoredServiceDTO.getOrgIdentifier())
-            .projectIdentifier(monitoredServiceDTO.getProjectIdentifier())
+            .accountId(projectParams.getAccountIdentifier())
+            .orgIdentifier(projectParams.getOrgIdentifier())
+            .projectIdentifier(projectParams.getProjectIdentifier())
             .environmentIdentifier(monitoredServiceDTO.getEnvironmentRef())
             .environmentIdentifierList(monitoredServiceDTO.getEnvironmentRefList())
             .serviceIdentifier(monitoredServiceDTO.getServiceRef())
@@ -708,6 +746,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .type(monitoredServiceDTO.getType())
             .enabled(getMonitoredServiceEnableStatus())
             .tags(TagMapper.convertToList(monitoredServiceDTO.getTags()))
+            .notificationRuleRefs(
+                notificationRuleService.getNotificationRuleRefs(monitoredServiceDTO.getNotificationRuleRefs()))
             .build();
     if (monitoredServiceDTO.getSources() != null) {
       monitoredServiceEntity.setHealthSourceIdentifiers(monitoredServiceDTO.getSources()

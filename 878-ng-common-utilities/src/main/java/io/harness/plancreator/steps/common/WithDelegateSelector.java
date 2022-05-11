@@ -10,10 +10,11 @@ package io.harness.plancreator.steps.common;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 public interface WithDelegateSelector {
-  ParameterField<List<TaskSelectorYaml>> getDelegateSelectors();
+  @JsonIgnore ParameterField<List<TaskSelectorYaml>> getDelegateSelectors();
 
   void setDelegateSelectors(ParameterField<List<TaskSelectorYaml>> delegateSelectors);
 }

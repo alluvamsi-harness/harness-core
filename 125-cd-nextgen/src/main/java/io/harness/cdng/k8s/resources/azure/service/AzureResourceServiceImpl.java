@@ -11,9 +11,12 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.azure.AzureHelperService;
-import io.harness.delegate.beans.azure.AzureClustersDTO;
-import io.harness.delegate.beans.azure.AzureResourceGroupsDTO;
-import io.harness.delegate.beans.azure.AzureSubscriptionsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureClusterDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureClustersDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionsDTO;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
@@ -29,6 +32,7 @@ import com.google.inject.Singleton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Singleton
 @OwnedBy(HarnessTeam.CDP)
@@ -51,7 +55,17 @@ public class AzureResourceServiceImpl implements AzureResourceService {
 
     AzureSubscriptionsResponse subscriptionResponse = (AzureSubscriptionsResponse) azureHelperService.executeSyncTask(
         azureTaskParamsTaskParams, baseNGAccess, "Azure list subscriptions task failure due to error");
-    return subscriptionResponse.getSubscriptions();
+    return AzureSubscriptionsDTO.builder()
+        .subscriptions(subscriptionResponse.getSubscriptions()
+                           .entrySet()
+                           .stream()
+                           .map(entry
+                               -> AzureSubscriptionDTO.builder()
+                                      .subscriptionId(entry.getKey())
+                                      .subscriptionName(entry.getValue())
+                                      .build())
+                           .collect(Collectors.toList()))
+        .build();
   }
 
   @Override
@@ -76,7 +90,12 @@ public class AzureResourceServiceImpl implements AzureResourceService {
     AzureResourceGroupsResponse resourceGroupsResponse =
         (AzureResourceGroupsResponse) azureHelperService.executeSyncTask(
             azureTaskParamsTaskParams, baseNGAccess, "Azure list resource groups task failure due to error");
-    return resourceGroupsResponse.getResourceGroups();
+    return AzureResourceGroupsDTO.builder()
+        .resourceGroups(resourceGroupsResponse.getResourceGroups()
+                            .stream()
+                            .map(resourceGroup -> AzureResourceGroupDTO.builder().resourceGroup(resourceGroup).build())
+                            .collect(Collectors.toList()))
+        .build();
   }
 
   @Override
@@ -100,6 +119,11 @@ public class AzureResourceServiceImpl implements AzureResourceService {
 
     AzureClustersResponse clustersResponse = (AzureClustersResponse) azureHelperService.executeSyncTask(
         azureTaskParamsTaskParams, baseNGAccess, "Azure list cluster task failure due to error");
-    return clustersResponse.getClusters();
+    return AzureClustersDTO.builder()
+        .clusters(clustersResponse.getClusters()
+                      .stream()
+                      .map(cluster -> AzureClusterDTO.builder().cluster(cluster).build())
+                      .collect(Collectors.toList()))
+        .build();
   }
 }
