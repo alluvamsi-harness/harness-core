@@ -17,11 +17,9 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.expression.ExpressionEvaluator;
 
 import software.wings.api.DeploymentType;
-import software.wings.beans.AwsInfrastructureMapping;
 import software.wings.beans.AwsInstanceFilter;
 import software.wings.common.InfrastructureConstants;
 import software.wings.expression.ManagerExpressionEvaluator;
-import software.wings.infra.AwsInstanceInfrastructure;
 
 import com.amazonaws.services.ec2.model.Filter;
 import com.google.common.collect.ArrayListMultimap;
@@ -47,17 +45,6 @@ public class AwsUtils {
       hostNameConvention = InfrastructureConstants.DEFAULT_AWS_HOST_NAME_CONVENTION;
     }
     return expressionEvaluator.substitute(hostNameConvention, context);
-  }
-
-  public List<Filter> getAwsFilters(AwsInfrastructureMapping awsInfrastructureMapping, DeploymentType deploymentType) {
-    AwsInstanceFilter instanceFilter = awsInfrastructureMapping.getAwsInstanceFilter();
-    return getFilters(deploymentType, instanceFilter);
-  }
-
-  public List<Filter> getAwsFilters(
-      AwsInstanceInfrastructure awsInstanceInfrastructure, DeploymentType deploymentType) {
-    AwsInstanceFilter instanceFilter = awsInstanceInfrastructure.getAwsInstanceFilter();
-    return getFilters(deploymentType, instanceFilter);
   }
 
   @NotNull

@@ -21,7 +21,6 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
-import software.wings.beans.AwsInfrastructureMapping;
 import software.wings.service.impl.AwsUtils;
 import software.wings.service.impl.aws.client.CloseableAmazonWebServiceClient;
 import software.wings.service.impl.aws.model.AwsCodeDeployS3LocationData;
@@ -186,9 +185,8 @@ public class AwsCodeDeployHelperServiceDelegateImpl
       } while (nextToken != null);
       if (isNotEmpty(instanceIds)) {
         Set<String> instancesIdsSet = Sets.newHashSet(instanceIds);
-        List<Instance> runningInstances = awsEc2HelperServiceDelegate.listEc2Instances(awsConfig, encryptedDataDetails,
-            region, awsUtils.getAwsFilters(AwsInfrastructureMapping.Builder.anAwsInfrastructureMapping().build(), null),
-            false);
+        List<Instance> runningInstances = awsEc2HelperServiceDelegate.listEc2Instances(
+            awsConfig, encryptedDataDetails, region, awsUtils.getFilters(null, null), false);
         List<Instance> result = new ArrayList<>();
         runningInstances.forEach(instance -> {
           if (instancesIdsSet.contains(instance.getInstanceId())) {
