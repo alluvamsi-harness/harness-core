@@ -102,6 +102,7 @@ import software.wings.beans.trigger.WebhookTriggerParameters;
 import software.wings.beans.yaml.GitFetchFilesFromMultipleRepoResult;
 import software.wings.delegatetasks.BambooTask;
 import software.wings.delegatetasks.DelegateStateType;
+import software.wings.delegatetasks.GcbDelegateResponse;
 import software.wings.delegatetasks.buildsource.BuildCollectParameters;
 import software.wings.delegatetasks.buildsource.BuildSourceExecutionResponse;
 import software.wings.delegatetasks.buildsource.BuildSourceParameters;
@@ -537,6 +538,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(ConditionalOperator.class, 7383);
     kryo.register(ServiceNowApprovalParams.class, 7389);
     kryo.register(GitConnectionCapability.class, 7391);
+    kryo.register(GcbDelegateResponse.class, 7409);
     kryo.register(AwsAmiServiceTrafficShiftAlbSetupResponse.class, 7432);
     kryo.register(AwsAmiServiceTrafficShiftAlbSetupRequest.class, 7433);
     kryo.register(AwsAmiServiceTrafficShiftAlbDeployRequest.class, 7434);

@@ -962,7 +962,7 @@
 7406:software.wings.beans.ApiKeyEntry
 7407:software.wings.security.AppPermissionSummary$ExecutableElementInfo
 7408:software.wings.beans.command.GcbTaskParams
-7409:software.wings.sm.states.GcbState$GcbDelegateResponse
+7409:software.wings.delegatetasks.GcbDelegateResponse
 7410:software.wings.api.GcbExecutionData
 7411:software.wings.helpers.ext.gcb.models.GcbBuildDetails
 7412:software.wings.helpers.ext.gcb.models.GcbBuildStatus

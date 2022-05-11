@@ -468,7 +468,6 @@ import software.wings.sm.states.CVNGState.CVNGStateResponseData;
 import software.wings.sm.states.EcsRunTaskDataBag;
 import software.wings.sm.states.EnvState.EnvExecutionResponseData;
 import software.wings.sm.states.ForkState.ForkStateExecutionData;
-import software.wings.sm.states.GcbState;
 import software.wings.sm.states.RepeatState.RepeatStateExecutionData;
 import software.wings.sm.states.azure.AzureVMSSDeployExecutionSummary;
 import software.wings.sm.states.azure.AzureVMSSSetupContextElement;
@@ -894,7 +893,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ApiKeyEntry.class, 7406);
     kryo.register(AppPermissionSummary.ExecutableElementInfo.class, 7407);
 
-    kryo.register(GcbState.GcbDelegateResponse.class, 7409);
     kryo.register(GcbExecutionData.class, 7410);
     kryo.register(DelegateTaskBroadcast.class, 7428);
     kryo.register(Event.class, 7429);
