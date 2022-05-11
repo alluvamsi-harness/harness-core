@@ -202,7 +202,6 @@ import software.wings.beans.SlackMessage;
 import software.wings.beans.SlackMessageJSON;
 import software.wings.beans.StringValue;
 import software.wings.beans.TechStack;
-import software.wings.beans.TerraformInputVariablesTaskResponse;
 import software.wings.beans.TrialSignupOptions;
 import software.wings.beans.User;
 import software.wings.beans.UserGroupEntityReference;
@@ -674,7 +673,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(LdapUserResponse.class, 5502);
     kryo.register(LdapUserSettings.class, 5497);
     kryo.register(SSOType.class, 5503);
-    kryo.register(TerraformInputVariablesTaskResponse.class, 5522);
     kryo.register(User.class, 5355);
     kryo.register(UserInvite.class, 5182);
     kryo.register(UserInviteSource.SourceType.class, 5507);

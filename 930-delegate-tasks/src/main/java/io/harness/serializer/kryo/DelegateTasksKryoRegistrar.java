@@ -79,6 +79,7 @@ import software.wings.beans.SftpConfig;
 import software.wings.beans.SmbConfig;
 import software.wings.beans.SplunkConfig;
 import software.wings.beans.SumoConfig;
+import software.wings.beans.TerraformInputVariablesTaskResponse;
 import software.wings.beans.VaultConfig;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.apm.Method;
@@ -450,6 +451,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(GitFetchFilesTaskParams.class, 5575);
     kryo.register(GitFetchFilesConfig.class, 5616);
     kryo.register(SecretManagementException.class, 5517);
+    kryo.register(TerraformInputVariablesTaskResponse.class, 5522);
     kryo.register(NewRelicSetupTestNodeData.class, 5529);
     kryo.register(SetupTestNodeData.class, 5530);
     kryo.register(AppdynamicsSetupTestNodeData.class, 5531);
