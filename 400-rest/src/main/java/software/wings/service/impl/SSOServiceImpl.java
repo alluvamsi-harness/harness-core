@@ -39,7 +39,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.beans.Account;
 import software.wings.beans.Event;
 import software.wings.beans.SyncTaskContext;
-import software.wings.beans.sso.LdapAuthType;
+import software.wings.beans.sso.LdapConnectionSettings;
 import software.wings.beans.sso.LdapGroupResponse;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.LdapTestResponse;
@@ -107,6 +107,7 @@ public class SSOServiceImpl implements SSOService {
   @Inject private FeatureFlagService featureFlagService;
   @Inject private AuditServiceHelper auditServiceHelper;
   @Inject private EncryptionService encryptionService;
+  @Inject private SSOServiceHelper ssoServiceHelper;
 
   @Override
   public SSOConfig uploadSamlConfiguration(String accountId, InputStream inputStream, String displayName,
@@ -375,6 +376,10 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapConnectionSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
+    if (featureFlagService.isEnabled(FeatureName.LDAP_SECRET_AUTH, ldapSettings.getAccountId())) {
+      ssoServiceHelper.encryptLdapSecret(
+          ldapSettings.getConnectionSettings(), secretManager, ldapSettings.getAccountId());
+    }
     ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
@@ -386,8 +391,17 @@ public class SSOServiceImpl implements SSOService {
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
           .validateLdapConnectionSettings(ldapSettings, encryptedDataDetail);
     } finally {
-      if (temporaryEncryption) {
-        secretManager.deleteSecret(accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
+      if (!featureFlagService.isEnabled(FeatureName.LDAP_SECRET_AUTH, ldapSettings.getAccountId())) {
+        if (temporaryEncryption) {
+          secretManager.deleteSecret(
+              accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
+        }
+      } else {
+        if (temporaryEncryption
+            && LdapConnectionSettings.INLINE_SECRET.equals(ldapSettings.getConnectionSettings().getPasswordType())) {
+          secretManager.deleteSecret(
+              accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
+        }
       }
     }
   }
@@ -503,15 +517,14 @@ public class SSOServiceImpl implements SSOService {
       return false;
     }
     LdapSettings savedSettings = ssoSettingService.getLdapSettingsByUuid(settings.getUuid());
-    if (savedSettings.getConnectionSettings().getPasswordType().equals(LdapAuthType.INLINE_SECRET)) {
+    if (LdapConnectionSettings.INLINE_SECRET.equals(savedSettings.getConnectionSettings().getPasswordType())) {
       settings.getConnectionSettings().setEncryptedBindPassword(
           savedSettings.getConnectionSettings().getEncryptedBindPassword());
-      return true;
     } else {
       settings.getConnectionSettings().setEncryptedBindSecret(
           savedSettings.getConnectionSettings().getEncryptedBindSecret());
-      return true;
     }
+    return true;
   }
 
   @Override

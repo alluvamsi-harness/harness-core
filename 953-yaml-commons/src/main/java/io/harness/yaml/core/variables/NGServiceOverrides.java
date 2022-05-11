@@ -5,10 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.beans.sso;
+package io.harness.yaml.core.variables;
 
-import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 
-@OwnedBy(PL) public enum LdapAuthType { INLINE_SECRET, SECRET_REF }
+import java.util.List;
+import javax.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Data;
+
+@OwnedBy(CDC)
+@Data
+@Builder
+public class NGServiceOverrides {
+  @NotNull private String serviceRef;
+  @NotNull List<NGVariable> variables;
+}
