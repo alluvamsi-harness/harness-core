@@ -44,6 +44,7 @@ import static io.harness.common.CIExecutionConstants.TI_SERVICE_TOKEN_VARIABLE;
 import static io.harness.common.STOExecutionConstants.STO_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.STOExecutionConstants.STO_SERVICE_TOKEN_VARIABLE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
@@ -233,8 +234,6 @@ public class K8BuildSetupUtils {
     Integer stageRunAsUser = null;
     String resolveStringParameter = null;
     String serviceAccountName = null;
-    String namespace = "default"; // The name here will actually be taken from the db. The namesapce is going to be
-                                  // "accountid-namespace". Each account is going to have its own namespace.
 
     if (resolveStringParameter != null && !resolveStringParameter.equals(UNRESOLVED_PARAMETER)) {
       serviceAccountName = resolveStringParameter;
@@ -242,6 +241,8 @@ public class K8BuildSetupUtils {
 
     List<PodToleration> podTolerations = null;
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
+
+    String namespace = "account-" + getAccountIdentifier(ngAccess.getAccountIdentifier());
 
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
 
@@ -251,8 +252,8 @@ public class K8BuildSetupUtils {
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 
-    final String clusterName = "hosted-cluster";
-    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, clusterName);
+    final String k8sIdetntifier = "account.Harness_Kubernetes_Cluster";
+    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, k8sIdetntifier);
 
     return CIK8InitializeTaskParams.builder()
         .k8sConnector(k8sConnector)
