@@ -145,7 +145,7 @@ public class GitCommandTaskHandler {
 
     if (reposResponse != null && isNotEmpty(reposResponse.getError())) {
       ErrorCode errorCode = convertScmStatusCodeToErrorCode(reposResponse.getStatus());
-      throw new ExplanationException("Invalid API Access Token",
+      throw new ExplanationException("Azure Repo returns an error with code 203",
           SCMRuntimeException.builder().errorCode(errorCode).message(reposResponse.getError()).build());
     }
   }
