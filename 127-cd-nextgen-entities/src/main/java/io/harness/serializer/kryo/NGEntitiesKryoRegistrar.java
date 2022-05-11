@@ -80,6 +80,7 @@ import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.cdng.service.beans.WinRmServiceSpec;
 import io.harness.cdng.variables.beans.NGVariableOverrideSetWrapper;
 import io.harness.cdng.variables.beans.NGVariableOverrideSets;
+import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.serializer.KryoRegistrar;
 
@@ -168,5 +169,6 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(BitbucketStore.class, 12529);
     kryo.register(GitStore.class, 8023);
     kryo.register(InheritFromManifestStoreConfig.class, 12565);
+    kryo.register(Environment.class, 22003);
   }
 }
