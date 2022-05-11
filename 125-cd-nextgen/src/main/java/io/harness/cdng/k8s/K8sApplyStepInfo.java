@@ -76,4 +76,9 @@ public class K8sApplyStepInfo extends K8sApplyBaseStepInfo implements CDStepInfo
         .delegateSelectors(delegateSelectors)
         .build();
   }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> fetchDelegateSelectors() {
+    return getDelegateSelectors();
+  }
 }
