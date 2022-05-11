@@ -624,6 +624,34 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "InheritFromManifestStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "InlineTerraformBackendConfigSpec": {
       "allOf": [
         {
@@ -1303,7 +1331,8 @@
             "Http",
             "S3",
             "Gcs",
-            "Artifactory"
+            "Artifactory",
+            "InheritFromManifest"
           ]
         }
       },
@@ -1417,6 +1446,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/HttpStoreConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "InheritFromManifest"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/InheritFromManifestStoreConfig"
               }
             }
           }

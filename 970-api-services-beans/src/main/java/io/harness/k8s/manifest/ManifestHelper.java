@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.KubernetesValuesException;
 import io.harness.exception.KubernetesYamlException;
+import io.harness.exception.UnsupportedOperationException;
 import io.harness.exception.WingsException;
 import io.harness.k8s.model.HarnessAnnotations;
 import io.harness.k8s.model.Kind;
@@ -473,7 +474,7 @@ public class ManifestHelper {
         || filePath.endsWith(json_file_extension)) {
       return filePath.charAt(0) == '/' ? filePath.substring(1) : filePath;
     } else {
-      throw new WingsException(format("File extension not supported %s", filePath));
+      throw new UnsupportedOperationException(format("File extension not supported %s", filePath));
     }
   }
 
@@ -490,16 +491,16 @@ public class ManifestHelper {
     int index = 0;
     while (index < fileDirectories.size()) {
       if (isBlank(fileDirectories.get(index))) {
-        throw new WingsException("Invalid files path");
+        throw new UnsupportedOperationException("Invalid files path");
       }
       while (fileDirectories.get(index).equals("..")) {
-        if (isEmpty(stack)) {
-          throw new WingsException("Invalid files path");
-        } else if (level.equals(MAX_DIRECTORY_HEIGHT)) {
+        if (level.equals(MAX_DIRECTORY_HEIGHT)) {
           String errorMessage = format(
               "We do not support moving more than %s levels up from the present working directory. Kindly move the required files or configure another values manifest to fetch the files",
               MAX_DIRECTORY_HEIGHT);
-          throw new WingsException(errorMessage);
+          throw new UnsupportedOperationException(errorMessage);
+        } else if (isEmpty(stack)) {
+          throw new UnsupportedOperationException("Invalid files path");
         } else {
           level++;
           stack.pop();
@@ -519,6 +520,6 @@ public class ManifestHelper {
         return i + 1;
       }
     }
-    return -1;
+    return 0;
   }
 }
