@@ -24,6 +24,7 @@ import software.wings.api.ServiceNowExecutionData;
 import software.wings.api.TerraformExecutionData;
 import software.wings.api.jira.JiraExecutionData;
 import software.wings.api.shellscript.provision.ShellScriptProvisionExecutionData;
+import software.wings.api.terragrunt.TerragruntExecutionData;
 import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.AwsSecretsManagerConfig;
@@ -190,6 +191,7 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.BugsnagConfig", BugsnagConfig.class);
     w.put("delegatetasks.buildsource.BuildSourceExecutionResponse", BuildSourceExecutionResponse.class);
     w.put("api.TerraformExecutionData", TerraformExecutionData.class);
+    w.put("api.terragrunt.TerragruntExecutionData", TerragruntExecutionData.class);
     w.put("service.impl.aws.model.AwsAmiServiceDeployResponse", AwsAmiServiceDeployResponse.class);
     w.put("service.impl.aws.model.AwsAmiServiceSetupResponse", AwsAmiServiceSetupResponse.class);
     w.put("service.impl.aws.model.AwsAmiSwitchRoutesResponse", AwsAmiSwitchRoutesResponse.class);

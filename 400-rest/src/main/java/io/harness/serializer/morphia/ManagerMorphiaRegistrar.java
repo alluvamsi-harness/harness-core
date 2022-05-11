@@ -139,7 +139,6 @@ import software.wings.api.pcf.SwapRouteRollbackSweepingOutputPcf;
 import software.wings.api.terraform.TerraformOutputVariables;
 import software.wings.api.terraform.TerraformProvisionInheritPlanElement;
 import software.wings.api.terragrunt.TerragruntApplyMarkerParam;
-import software.wings.api.terragrunt.TerragruntExecutionData;
 import software.wings.api.terragrunt.TerragruntOutputVariables;
 import software.wings.api.terragrunt.TerragruntProvisionInheritPlanElement;
 import software.wings.audit.AuditHeader;
@@ -1070,7 +1069,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.AzureVMSSDeploymentInfo", AzureVMSSDeploymentInfo.class);
     w.put("api.AzureWebAppDeploymentInfo", AzureWebAppDeploymentInfo.class);
     w.put("api.terraform.TerraformProvisionInheritPlanElement", TerraformProvisionInheritPlanElement.class);
-    w.put("api.terragrunt.TerragruntExecutionData", TerragruntExecutionData.class);
     w.put("api.terragrunt.TerragruntProvisionInheritPlanElement", TerragruntProvisionInheritPlanElement.class);
     w.put("api.terragrunt.TerragruntApplyMarkerParam", TerragruntApplyMarkerParam.class);
     w.put("api.TerraformApplyMarkerParam", TerraformApplyMarkerParam.class);
