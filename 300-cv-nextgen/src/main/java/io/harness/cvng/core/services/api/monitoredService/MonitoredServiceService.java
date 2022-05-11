@@ -99,4 +99,5 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
       ProjectParams projectParams, List<String> services, List<String> environments);
   PageResponse<CVNGLogDTO> getCVNGLogs(MonitoredServiceParams monitoredServiceParams,
       LiveMonitoringLogsFilter liveMonitoringLogsFilter, PageParams pageParams);
+  void sendNotification(MonitoredService monitoredService);
 }

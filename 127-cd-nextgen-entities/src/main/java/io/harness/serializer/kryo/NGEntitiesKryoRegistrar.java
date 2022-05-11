@@ -168,7 +168,7 @@ public class NGEntitiesKryoRegistrar implements KryoRegistrar {
     kryo.register(GitLabStore.class, 12528);
     kryo.register(BitbucketStore.class, 12529);
     kryo.register(GitStore.class, 8023);
-    kryo.register(InheritFromManifestStoreConfig.class, 12565);
     kryo.register(Environment.class, 22003);
+    kryo.register(InheritFromManifestStoreConfig.class, 12565);
   }
 }

@@ -279,7 +279,6 @@ environments {"name": "accountId_name", "background": true} {"accountId": 1, "na
 environments {"name": "appId_1", "background": true} {"appId": 1}
 environments {"name": "createdAt_1", "background": true} {"createdAt": 1}
 environments {"name": "yaml", "unique": true} {"appId": 1, "name": 1}
-environmentsNG {"name": "unique_accountId_organizationIdentifier_projectIdentifier_envIdentifier_repo_branch", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1, "yamlGitConfigRef": 1, "branch": 1}
 events {"name": "accountId_1", "background": true} {"accountId": 1}
 events {"name": "appId_1", "background": true} {"appId": 1}
 events {"name": "createdAt_1", "background": true} {"createdAt": 1}

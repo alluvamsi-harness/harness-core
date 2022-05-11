@@ -7,11 +7,23 @@
 
 package io.harness.cvng.notification.beans;
 
+import io.harness.cvng.beans.activity.ActivityType;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Arrays;
+import java.util.List;
+import lombok.Getter;
 
 public enum MonitoredServiceChangeEventType {
   // TODO: use ChangeCategory.java instead, once Alert is changed to Incident.
-  @JsonProperty("Deployment") DEPLOYMENT,
-  @JsonProperty("Infrastructure") INFRASTRUCTURE,
-  @JsonProperty("Incident") INCIDENT;
+  @JsonProperty("Deployment")
+  DEPLOYMENT(Arrays.asList(ActivityType.DEPLOYMENT, ActivityType.HARNESS_CD_CURRENT_GEN, ActivityType.HARNESS_CD)),
+  @JsonProperty("Infrastructure") INFRASTRUCTURE(Arrays.asList(ActivityType.KUBERNETES, ActivityType.CONFIG)),
+  @JsonProperty("Incident") INCIDENT(Arrays.asList(ActivityType.PAGER_DUTY));
+
+  @Getter private List<ActivityType> activityTypes;
+
+  MonitoredServiceChangeEventType(List<ActivityType> activityTypes) {
+    this.activityTypes = activityTypes;
+  }
 }

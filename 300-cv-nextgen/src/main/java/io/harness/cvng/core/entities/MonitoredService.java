@@ -13,7 +13,9 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.MonitoredServiceType;
 import io.harness.cvng.notification.beans.NotificationRuleRef;
+import io.harness.iterator.PersistentRegularIterable;
 import io.harness.mongo.index.CompoundMongoIndex;
+import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.ng.core.common.beans.NGTag;
@@ -53,7 +55,7 @@ import org.mongodb.morphia.annotations.Id;
 @OwnedBy(HarnessTeam.CV)
 @StoreIn(DbAliases.CVNG)
 public final class MonitoredService
-    implements PersistentEntity, UuidAware, AccountAccess, UpdatedAtAware, CreatedAtAware {
+    implements PersistentEntity, UuidAware, AccountAccess, UpdatedAtAware, CreatedAtAware, PersistentRegularIterable {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -83,6 +85,7 @@ public final class MonitoredService
   private long createdAt;
   private boolean enabled;
   List<NotificationRuleRef> notificationRuleRefs;
+  @FdIndex private long nextNotificationIteration;
 
   @NotNull @Singular @Size(max = 128) List<NGTag> tags;
 
@@ -111,5 +114,22 @@ public final class MonitoredService
       return Collections.emptyList();
     }
     return notificationRuleRefs;
+  }
+
+  @Override
+  public Long obtainNextIteration(String fieldName) {
+    if (MonitoredServiceKeys.nextNotificationIteration.equals(fieldName)) {
+      return this.nextNotificationIteration;
+    }
+    throw new IllegalArgumentException("Invalid fieldName " + fieldName);
+  }
+
+  @Override
+  public void updateNextIteration(String fieldName, long nextIteration) {
+    if (MonitoredServiceKeys.nextNotificationIteration.equals(fieldName)) {
+      this.nextNotificationIteration = nextIteration;
+      return;
+    }
+    throw new IllegalArgumentException("Invalid fieldName " + fieldName);
   }
 }

@@ -24,7 +24,6 @@ import io.harness.persistence.UpdatedAtAware;
 import io.harness.persistence.UuidAware;
 
 import com.google.common.collect.ImmutableList;
-import java.time.Instant;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -71,7 +70,6 @@ public abstract class NotificationRule
   String identifier;
   String name;
 
-  private Instant lastSuccessfulCheckTime;
   private long lastUpdatedAt;
   private long createdAt;
   private int version;
