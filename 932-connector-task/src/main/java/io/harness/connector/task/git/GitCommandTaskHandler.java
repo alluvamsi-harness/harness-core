@@ -38,6 +38,7 @@ import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.git.GitCommandExecutionResponse;
 import io.harness.eraro.ErrorCode;
 import io.harness.errorhandling.NGErrorHelper;
+import io.harness.exception.ExplanationException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.exception.runtime.SCMRuntimeException;
@@ -140,6 +141,12 @@ public class GitCommandTaskHandler {
     if (reposResponse != null && reposResponse.getStatus() > 300) {
       ErrorCode errorCode = convertScmStatusCodeToErrorCode(reposResponse.getStatus());
       throw SCMRuntimeException.builder().errorCode(errorCode).message(reposResponse.getError()).build();
+    }
+
+    if (reposResponse != null && isNotEmpty(reposResponse.getError())) {
+      ErrorCode errorCode = convertScmStatusCodeToErrorCode(reposResponse.getStatus());
+      throw new ExplanationException("Invalid API Access Token",
+          SCMRuntimeException.builder().errorCode(errorCode).message(reposResponse.getError()).build());
     }
   }
 
