@@ -120,18 +120,29 @@ public class ScheduledReportServiceImpl {
   }
 
   public void setNextExecution(String accountId, CEReportSchedule schedule) {
-    // This is needed to keep lastUpdatedBy same as before.
-    // Get existing user uuid from the record in collection. This can be null.
-    EmbeddedUser euser = schedule.getLastUpdatedBy();
-    // Get User record for this uuid.
-    if (euser != null) {
-      User user = cloudToHarnessMappingService.getUser(euser.getUuid());
+    User userData = getUserData(schedule);
+    if (null != userData) {
       // Set this in threadlocal so that downstream update in Mongo works fine
-      try (UserThreadLocal.Guard guard = userGuard(user)) {
+      try (UserThreadLocal.Guard guard = userGuard(userData)) {
         ceReportScheduleService.updateNextExecution(accountId, schedule);
       }
     } else {
       ceReportScheduleService.updateNextExecution(accountId, schedule);
     }
+  }
+
+  private User getUserData(CEReportSchedule schedule) {
+    try {
+      // This is needed to keep lastUpdatedBy same as before.
+      // Get existing user uuid from the record in collection. This can be null.
+      EmbeddedUser euser = schedule.getLastUpdatedBy();
+      // Get User record for this uuid.
+      if (euser != null) {
+        return cloudToHarnessMappingService.getUser(euser.getUuid());
+      }
+    } catch (Exception ex) {
+      log.error("Exception getting user", ex);
+    }
+    return null;
   }
 }
