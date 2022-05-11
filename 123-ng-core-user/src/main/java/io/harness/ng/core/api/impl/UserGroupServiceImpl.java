@@ -13,6 +13,8 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.GROUP;
 import static io.harness.exception.WingsException.USER_SRE;
+import static io.harness.ng.accesscontrol.PlatformPermissions.VIEW_USERGROUP_PERMISSION;
+import static io.harness.ng.accesscontrol.PlatformResourceTypes.USERGROUP;
 import static io.harness.ng.core.user.UserMembershipUpdateSource.SYSTEM;
 import static io.harness.ng.core.usergroups.filter.UserGroupFilterType.INCLUDE_INHERITED_GROUPS;
 import static io.harness.ng.core.utils.UserGroupMapper.toDTO;
@@ -29,6 +31,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.accesscontrol.AccessControlAdminClient;
 import io.harness.accesscontrol.AccountIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentAggregateResponseDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
@@ -77,11 +82,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.serializer.HObjectMapper;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -94,8 +96,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.support.TransactionTemplate;
-import io.harness.accesscontrol.AccessControlAdminClient;
-import static io.harness.remote.client.NGRestUtils.getResponse;
 
 @OwnedBy(PL)
 @Singleton
@@ -108,14 +108,15 @@ public class UserGroupServiceImpl implements UserGroupService {
   private final AuthSettingsManagerClient managerClient;
   private final LastAdminCheckService lastAdminCheckService;
   private final AccessControlAdminClient accessControlAdminClient;
+  private final AccessControlClient accessControlClient;
 
   private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
 
   @Inject
   public UserGroupServiceImpl(UserGroupRepository userGroupRepository, UserClient userClient,
-      OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
-      NgUserService ngUserService, AuthSettingsManagerClient managerClient,
-      LastAdminCheckService lastAdminCheckService, AccessControlAdminClient accessControlAdminClient) {
+                              OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
+                              NgUserService ngUserService, AuthSettingsManagerClient managerClient,
+                              LastAdminCheckService lastAdminCheckService, AccessControlAdminClient accessControlAdminClient, AccessControlClient accessControlClient) {
     this.userGroupRepository = userGroupRepository;
     this.outboxService = outboxService;
     this.transactionTemplate = transactionTemplate;
@@ -123,6 +124,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     this.managerClient = managerClient;
     this.lastAdminCheckService = lastAdminCheckService;
     this.accessControlAdminClient = accessControlAdminClient;
+    this.accessControlClient = accessControlClient;
   }
 
   @Override
@@ -516,18 +518,37 @@ public class UserGroupServiceImpl implements UserGroupService {
   private Criteria createInheritedUserGroupFilterCriteria(String accountIdentifier, String orgIdentifier,
                                                           String projectIdentifier, UserGroupFilterType filterType) {
     Criteria criteria = new Criteria();
-    RoleAssignmentFilterDTO roleAssignmentFilterDTO =
-            RoleAssignmentFilterDTO.builder()
-                    .principalTypeFilter(Collections.singleton(USER_GROUP))
-                    .principalScopeLevelFilter(INCLUDE_INHERITED_GROUPS.equals(filterType)
-                            ? Collections.singleton(
-                            ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase())
-                            : null)
-                    .build();
-    RoleAssignmentAggregateResponseDTO roleAssignmentAggregateResponseDTO =
-            NGRestUtils.getResponse(accessControlAdminClient.getAggregatedFilteredRoleAssignments(
-                    accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
-    criteria.and(UserGroupKeys.identifier).in(roleAssignmentAggregateResponseDTO.getRoleAssignments());
+    if (filterType.equals(INCLUDE_INHERITED_GROUPS)) {
+      Set<String> principalScopeLevelFilters = new HashSet<>();
+      if (isNotEmpty(projectIdentifier)) {
+        if(accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, orgIdentifier, null),
+                Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION)) {
+          principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, orgIdentifier, null).toString().toLowerCase());
+        }
+        if(accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, null, null),
+                Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION))
+        {
+          principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, null, null).toString().toLowerCase());
+        }
+      }
+      else if (isNotEmpty(orgIdentifier) && accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, null, null),
+              Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION))
+        {
+          principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, null, null).toString().toLowerCase());
+        }
+
+      if (isNotEmpty(principalScopeLevelFilters)) {
+        RoleAssignmentFilterDTO roleAssignmentFilterDTO =
+                RoleAssignmentFilterDTO.builder()
+                        .principalTypeFilter(Collections.singleton(USER_GROUP))
+                        .principalScopeLevelFilter(principalScopeLevelFilters)
+                        .build();
+        RoleAssignmentAggregateResponseDTO roleAssignmentAggregateResponseDTO =
+                NGRestUtils.getResponse(accessControlAdminClient.getAggregatedFilteredRoleAssignments(
+                        accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
+        criteria.and(UserGroupKeys.identifier).in(roleAssignmentAggregateResponseDTO.getRoleAssignments());
+      }
+    }
     return criteria;
   }
 
