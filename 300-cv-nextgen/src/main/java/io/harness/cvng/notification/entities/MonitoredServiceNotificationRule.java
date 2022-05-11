@@ -47,7 +47,7 @@ public class MonitoredServiceNotificationRule extends NotificationRule {
     public final NotificationRuleConditionType type = NotificationRuleConditionType.CHANGE_IMPACT;
     @NonNull List<MonitoredServiceChangeEventType> changeEventTypes;
     @NonNull Double threshold;
-    @NonNull String period;
+    @NonNull long period;
   }
 
   @SuperBuilder
@@ -55,7 +55,7 @@ public class MonitoredServiceNotificationRule extends NotificationRule {
   public static class MonitoredServiceHealthScoreCondition extends MonitoredServiceNotificationRuleCondition {
     public final NotificationRuleConditionType type = NotificationRuleConditionType.HEALTH_SCORE;
     @NonNull Double threshold;
-    @NonNull String period;
+    @NonNull long period;
   }
 
   @SuperBuilder

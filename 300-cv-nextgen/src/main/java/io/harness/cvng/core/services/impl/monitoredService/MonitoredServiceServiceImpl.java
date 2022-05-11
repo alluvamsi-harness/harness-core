@@ -11,9 +11,11 @@ import static io.harness.cvng.core.beans.params.ServiceEnvironmentParams.builder
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import io.harness.cvng.activity.services.api.ActivityService;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.entities.LogAnalysisResult.LogAnalysisTag;
 import io.harness.cvng.beans.MonitoredServiceType;
+import io.harness.cvng.beans.activity.ActivityType;
 import io.harness.cvng.beans.change.ChangeSourceType;
 import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.client.NextGenService;
@@ -65,6 +67,14 @@ import io.harness.cvng.core.utils.template.TemplateFacade;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
 import io.harness.cvng.dashboard.services.api.LogDashboardService;
 import io.harness.cvng.dashboard.services.api.TimeSeriesDashboardService;
+import io.harness.cvng.notification.beans.NotificationRuleRef;
+import io.harness.cvng.notification.channelDetails.CVNGNotificationChannel;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceChangeImpactCondition;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceChangeObservedCondition;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceHealthScoreCondition;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceNotificationRuleCondition;
+import io.harness.cvng.notification.entities.NotificationRule;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
@@ -73,10 +83,13 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.mapper.TagMapper;
+import io.harness.notification.notificationclient.NotificationClient;
+import io.harness.notification.notificationclient.NotificationResult;
 import io.harness.persistence.HPersistence;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.utils.PageUtils;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
@@ -86,6 +99,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -143,6 +157,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   @Inject private CVNGLogService cvngLogService;
   @Inject private NotificationRuleService notificationRuleService;
   @Inject private TemplateFacade templateFacade;
+  @Inject private NotificationClient notificationClient;
+  @Inject private ActivityService activityService;
 
   @Override
   public MonitoredServiceResponse create(String accountId, MonitoredServiceDTO monitoredServiceDTO) {
@@ -385,6 +401,11 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                                         .build();
     serviceDependencyService.deleteDependenciesForService(monitoredServiceParams, monitoredService.getIdentifier());
     changeSourceService.delete(monitoredServiceParams, monitoredService.getChangeSourceIdentifiers());
+    notificationRuleService.delete(environmentParams,
+        monitoredService.getNotificationRuleRefs()
+            .stream()
+            .map(ref -> ref.getNotificationRuleRef())
+            .collect(Collectors.toList()));
     boolean deleted = hPersistence.delete(monitoredService);
     if (deleted) {
       setupUsageEventService.sendDeleteEventsForMonitoredService(projectParams, identifier);
@@ -1339,5 +1360,97 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         monitoredServiceParams.getAccountIdentifier(), cvConfigIds);
     return cvngLogService.getCVNGLogs(
         monitoredServiceParams.getAccountIdentifier(), verificationTaskIds, liveMonitoringLogsFilter, pageParams);
+  }
+
+  public List<NotificationRule> getNotificationRulesByMonitoredServiceEntity(MonitoredService monitoredService) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(monitoredService.getAccountId())
+                                      .orgIdentifier(monitoredService.getOrgIdentifier())
+                                      .projectIdentifier(monitoredService.getProjectIdentifier())
+                                      .build();
+    List<String> notificationRuleRefs = monitoredService.getNotificationRuleRefs()
+                                            .stream()
+                                            .filter(NotificationRuleRef::isEnabled)
+                                            .map(NotificationRuleRef::getNotificationRuleRef)
+                                            .collect(Collectors.toList());
+    return notificationRuleService.getEntities(projectParams, notificationRuleRefs);
+  }
+
+  @Override
+  public void sendNotification(MonitoredService monitoredService) {
+    List<NotificationRule> notificationRules = getNotificationRulesByMonitoredServiceEntity(monitoredService);
+    Map<String, String> templateData = getNotificationTemplateData(monitoredService);
+
+    for (NotificationRule notificationRule : notificationRules) {
+      List<MonitoredServiceNotificationRuleCondition> conditions =
+          ((MonitoredServiceNotificationRule) notificationRule).getConditions();
+      for (MonitoredServiceNotificationRuleCondition condition : conditions) {
+        if (shouldSendNotification(monitoredService, condition)) {
+          CVNGNotificationChannel notificationChannel = notificationRule.getNotificationMethod();
+          String templateId = getNotificationTemplateId(notificationChannel.getType().getIdentifier());
+          NotificationResult notificationResult =
+              notificationClient.sendNotificationAsync(notificationChannel.getSpec().toNotificationChannel(
+                  monitoredService.getAccountId(), monitoredService.getOrgIdentifier(),
+                  monitoredService.getProjectIdentifier(), templateId, templateData));
+          log.info("Notification with Notification ID {} sent", notificationResult.getNotificationId());
+        }
+      }
+    }
+  }
+
+  private String getNotificationTemplateId(String channelType) {
+    return String.format("cvng_monitoredservice_%s", channelType.toLowerCase());
+  }
+
+  private Map<String, String> getNotificationTemplateData(MonitoredService monitoredService) {
+    return new HashMap<String, String>() {
+      {
+        put("monitoredServiceName", monitoredService.getName());
+        put("projectIdentifier", monitoredService.getProjectIdentifier());
+        put("orgIdentifier", monitoredService.getOrgIdentifier());
+        put("accountIdentifier", monitoredService.getAccountId());
+      }
+    };
+  }
+
+  @VisibleForTesting
+  boolean shouldSendNotification(
+      MonitoredService monitoredService, MonitoredServiceNotificationRuleCondition condition) {
+    MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
+                                                        .accountIdentifier(monitoredService.getAccountId())
+                                                        .orgIdentifier(monitoredService.getOrgIdentifier())
+                                                        .projectIdentifier(monitoredService.getProjectIdentifier())
+                                                        .monitoredServiceIdentifier(monitoredService.getIdentifier())
+                                                        .build();
+    switch (condition.getType()) {
+      case HEALTH_SCORE:
+        MonitoredServiceHealthScoreCondition healthScoreCondition = (MonitoredServiceHealthScoreCondition) condition;
+        return heatMapService.isEveryHeatMapBelowThresholdForRiskTimeBuffer(monitoredServiceParams,
+            monitoredService.getIdentifier(), healthScoreCondition.getThreshold(), healthScoreCondition.getPeriod());
+      case CHANGE_OBSERVED:
+        MonitoredServiceChangeObservedCondition changeObservedCondition =
+            (MonitoredServiceChangeObservedCondition) condition;
+        List<ActivityType> changeObservedActivityTypes = new ArrayList<>();
+        changeObservedCondition.getChangeEventTypes().forEach(
+            changeEventType -> changeObservedActivityTypes.addAll(changeEventType.getActivityTypes()));
+        return activityService
+            .getAnyEventFromListOfActivityTypes(monitoredServiceParams, changeObservedActivityTypes,
+                clock.instant().minus(10, ChronoUnit.MINUTES), clock.instant())
+            .isPresent();
+      case CHANGE_IMPACT:
+        MonitoredServiceChangeImpactCondition changeImpactCondition = (MonitoredServiceChangeImpactCondition) condition;
+        List<ActivityType> changeImpactActivityTypes = new ArrayList<>();
+        changeImpactCondition.getChangeEventTypes().forEach(
+            changeEventType -> changeImpactActivityTypes.addAll(changeEventType.getActivityTypes()));
+        return activityService
+                   .getAnyEventFromListOfActivityTypes(monitoredServiceParams, changeImpactActivityTypes,
+                       clock.instant().minus(changeImpactCondition.getPeriod(), ChronoUnit.MINUTES), clock.instant())
+                   .isPresent()
+            && heatMapService.isEveryHeatMapBelowThresholdForRiskTimeBuffer(monitoredServiceParams,
+                monitoredService.getIdentifier(), changeImpactCondition.getThreshold(),
+                changeImpactCondition.getPeriod());
+      default:
+        return false;
+    }
   }
 }

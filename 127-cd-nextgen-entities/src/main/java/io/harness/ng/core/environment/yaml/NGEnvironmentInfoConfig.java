@@ -14,10 +14,13 @@ import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.validator.NGRegexValidatorConstants;
+import io.harness.yaml.core.variables.NGServiceOverrides;
+import io.harness.yaml.core.variables.NGVariable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -50,6 +53,7 @@ public class NGEnvironmentInfoConfig {
   Map<String, String> tags;
   @NotNull @EntityName @Pattern(regexp = NGRegexValidatorConstants.NAME_PATTERN) String name;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) String description;
-  String color;
   @ApiModelProperty(required = true) EnvironmentType type;
+  List<NGVariable> variables;
+  List<NGServiceOverrides> serviceOverrides;
 }

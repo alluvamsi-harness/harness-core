@@ -49,7 +49,14 @@ public enum PredefinedTemplate {
   CVNG_SLO_EMAIL("cvng_notification_templates/cvng_slo_email.txt", "cvng_slo_email"),
   CVNG_SLO_PAGERDUTY("cvng_notification_templates/cvng_slo_pagerduty.txt", "cvng_slo_pagerduty"),
   CVNG_SLO_MSTEAMS("cvng_notification_templates/cvng_slo_msteams.txt", "cvng_slo_msteams"),
-  ;
+  CVNG_MONITOREDSERVICE_SLACK(
+      "cvng_notification_templates/cvng_monitoredservice_slack.txt", "cvng_monitoredservice_slack"),
+  CVNG_MONITOREDSERVICE_EMAIL(
+      "cvng_notification_templates/cvng_monitoredservice_email.txt", "cvng_monitoredservice_email"),
+  CVNG_MONITOREDSERVICE_PAGERDUTY(
+      "cvng_notification_templates/cvng_monitoredservice_pagerduty.txt", "cvng_monitoredservice_pagerduty"),
+  CVNG_MONITOREDSERVICE_MSTEAMS(
+      "cvng_notification_templates/cvng_monitoredservice_msteams.txt", "cvng_monitoredservice_msteams");
 
   private String path;
   private String identifier;

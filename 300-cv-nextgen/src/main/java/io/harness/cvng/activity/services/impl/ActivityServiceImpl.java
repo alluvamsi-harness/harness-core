@@ -236,6 +236,19 @@ public class ActivityServiceImpl implements ActivityService {
   }
 
   @Override
+  public Optional<Activity> getAnyEventFromListOfActivityTypes(MonitoredServiceParams monitoredServiceParams,
+      List<ActivityType> activityTypes, Instant startTime, Instant endTime) {
+    return Optional.ofNullable(createQuery(monitoredServiceParams)
+                                   .field(ActivityKeys.type)
+                                   .in(activityTypes)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .greaterThanOrEq(startTime)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .lessThan(endTime)
+                                   .get());
+  }
+
+  @Override
   public Optional<Activity> getAnyDemoDeploymentEvent(MonitoredServiceParams monitoredServiceParams, Instant startTime,
       Instant endTime, ActivityVerificationStatus verificationStatus) {
     return Optional.ofNullable(createQuery(monitoredServiceParams)

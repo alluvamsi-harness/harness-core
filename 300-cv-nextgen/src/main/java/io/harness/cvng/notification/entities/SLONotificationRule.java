@@ -50,7 +50,7 @@ public class SLONotificationRule extends NotificationRule {
 
     @Override
     public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
-      return sloHealthIndicator.getErrorBudgetRemainingPercentage() <= this.getThreshold();
+      return sloHealthIndicator.getErrorBudgetRemainingPercentage() < this.getThreshold();
     }
   }
 
@@ -62,7 +62,7 @@ public class SLONotificationRule extends NotificationRule {
 
     @Override
     public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
-      return sloHealthIndicator.getErrorBudgetRemainingMinutes() <= this.getThreshold();
+      return sloHealthIndicator.getErrorBudgetRemainingMinutes() < this.getThreshold();
     }
   }
 
@@ -75,7 +75,7 @@ public class SLONotificationRule extends NotificationRule {
 
     @Override
     public boolean shouldSendNotification(SLOHealthIndicator sloHealthIndicator) {
-      return sloHealthIndicator.getErrorBudgetBurnRate() >= this.getThreshold();
+      return sloHealthIndicator.getErrorBudgetBurnRate() > this.getThreshold();
     }
   }
 

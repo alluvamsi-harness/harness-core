@@ -52,6 +52,8 @@ import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.entities.DataCollectionTask.DataCollectionTaskKeys;
 import io.harness.cvng.core.entities.DeletedCVConfig;
 import io.harness.cvng.core.entities.DeletedCVConfig.DeletedCVConfigKeys;
+import io.harness.cvng.core.entities.MonitoredService;
+import io.harness.cvng.core.entities.MonitoredService.MonitoredServiceKeys;
 import io.harness.cvng.core.entities.MonitoringSourcePerpetualTask;
 import io.harness.cvng.core.entities.MonitoringSourcePerpetualTask.MonitoringSourcePerpetualTaskKeys;
 import io.harness.cvng.core.entities.changeSource.ChangeSource;
@@ -82,6 +84,7 @@ import io.harness.cvng.migration.CVNGSchemaHandler;
 import io.harness.cvng.migration.beans.CVNGSchema;
 import io.harness.cvng.migration.beans.CVNGSchema.CVNGSchemaKeys;
 import io.harness.cvng.migration.service.CVNGMigrationService;
+import io.harness.cvng.notification.jobs.MonitoredServiceNotificationHandler;
 import io.harness.cvng.notification.jobs.SLONotificationHandler;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator.ServiceLevelIndicatorKeys;
@@ -441,6 +444,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
     registerDemoGenerationIterator(injector);
     registerNotificationTemplates(injector);
     registerSLONotificationIterator(injector);
+    registerMonitoredServiceNotificationIterator(injector);
     scheduleSidekickProcessing(injector);
     scheduleMaintenanceActivities(injector, configuration);
 
@@ -913,7 +917,9 @@ public class VerificationApplication extends Application<VerificationConfigurati
   private void registerNotificationTemplates(Injector injector) {
     NotificationClient notificationClient = injector.getInstance(NotificationClient.class);
     List<PredefinedTemplate> templates = new ArrayList<>(Arrays.asList(PredefinedTemplate.CVNG_SLO_SLACK,
-        PredefinedTemplate.CVNG_SLO_EMAIL, PredefinedTemplate.CVNG_SLO_PAGERDUTY, PredefinedTemplate.CVNG_SLO_MSTEAMS));
+        PredefinedTemplate.CVNG_SLO_EMAIL, PredefinedTemplate.CVNG_SLO_PAGERDUTY, PredefinedTemplate.CVNG_SLO_MSTEAMS,
+        PredefinedTemplate.CVNG_MONITOREDSERVICE_SLACK, PredefinedTemplate.CVNG_MONITOREDSERVICE_EMAIL,
+        PredefinedTemplate.CVNG_MONITOREDSERVICE_PAGERDUTY, PredefinedTemplate.CVNG_MONITOREDSERVICE_MSTEAMS));
     for (PredefinedTemplate template : templates) {
       try {
         log.info("Registering {} with NotificationService", template);
@@ -927,7 +933,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
   private void registerSLONotificationIterator(Injector injector) {
     ScheduledThreadPoolExecutor notificationExecutor = new ScheduledThreadPoolExecutor(
         5, new ThreadFactoryBuilder().setNameFormat("slo-notification-iterator").build());
-    SLONotificationHandler sloNotificationHandler = injector.getInstance(SLONotificationHandler.class);
+    SLONotificationHandler notificationHandler = injector.getInstance(SLONotificationHandler.class);
 
     PersistenceIterator dataCollectionIterator =
         MongoPersistenceIterator.<ServiceLevelObjective, MorphiaFilterExpander<ServiceLevelObjective>>builder()
@@ -938,7 +944,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
             .acceptableNoAlertDelay(ofMinutes(10))
             .executorService(notificationExecutor)
             .semaphore(new Semaphore(5))
-            .handler(sloNotificationHandler)
+            .handler(notificationHandler)
             .schedulingType(REGULAR)
             .filterExpander(query -> query.field(ServiceLevelObjectiveKeys.notificationRuleRefs).exists())
             .persistenceProvider(injector.getInstance(MorphiaPersistenceProvider.class))
@@ -946,6 +952,31 @@ public class VerificationApplication extends Application<VerificationConfigurati
             .build();
     injector.injectMembers(dataCollectionIterator);
     notificationExecutor.scheduleWithFixedDelay(() -> dataCollectionIterator.process(), 0, 30, TimeUnit.MINUTES);
+  }
+
+  private void registerMonitoredServiceNotificationIterator(Injector injector) {
+    ScheduledThreadPoolExecutor notificationExecutor = new ScheduledThreadPoolExecutor(
+        5, new ThreadFactoryBuilder().setNameFormat("monitoredservice-notification-iterator").build());
+    MonitoredServiceNotificationHandler notificationHandler =
+        injector.getInstance(MonitoredServiceNotificationHandler.class);
+
+    PersistenceIterator dataCollectionIterator =
+        MongoPersistenceIterator.<MonitoredService, MorphiaFilterExpander<MonitoredService>>builder()
+            .mode(PersistenceIterator.ProcessMode.PUMP)
+            .clazz(MonitoredService.class)
+            .fieldName(MonitoredServiceKeys.nextNotificationIteration)
+            .targetInterval(ofMinutes(10))
+            .acceptableNoAlertDelay(ofMinutes(5))
+            .executorService(notificationExecutor)
+            .semaphore(new Semaphore(5))
+            .handler(notificationHandler)
+            .schedulingType(REGULAR)
+            .filterExpander(query -> query.field(MonitoredServiceKeys.notificationRuleRefs).exists())
+            .persistenceProvider(injector.getInstance(MorphiaPersistenceProvider.class))
+            .redistribute(true)
+            .build();
+    injector.injectMembers(dataCollectionIterator);
+    notificationExecutor.scheduleWithFixedDelay(() -> dataCollectionIterator.process(), 0, 5, TimeUnit.MINUTES);
   }
 
   private void initializeServiceSecretKeys() {
