@@ -18,7 +18,7 @@ import static io.harness.audit.beans.custom.AuditEventDataTypeConstants.OPA_AUDI
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.audit.beans.custom.template.TemplateEventData;
-import io.harness.audit.beans.custom.opa.OpaAuditEvent;
+import io.harness.audit.beans.custom.opa.OpaAuditEventData;
 import io.harness.audit.beans.custom.user.AddCollaboratorAuditEventData;
 import io.harness.audit.beans.custom.user.UserInvitationAuditEventData;
 import io.harness.audit.beans.custom.user.UserInviteAuditEventData;
