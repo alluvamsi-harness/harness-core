@@ -420,10 +420,6 @@ import software.wings.service.impl.aws.model.AwsCodeDeployS3LocationData;
 import software.wings.service.impl.aws.model.AwsEcsAllPhaseRollbackData;
 import software.wings.service.impl.aws.model.AwsElbListElbsRequest;
 import software.wings.service.impl.aws.model.AwsElbListNetworkElbsRequest;
-import software.wings.service.impl.aws.model.request.AwsCloudWatchStatisticsRequest;
-import software.wings.service.impl.aws.model.response.AwsCloudWatchMetricDataResponse;
-import software.wings.service.impl.aws.model.response.AwsCloudWatchStatisticsResponse;
-import software.wings.service.impl.aws.model.response.AwsLambdaDetailsMetricsResponse;
 import software.wings.service.impl.azure.manager.AzureVMSSAllPhaseRollbackData;
 import software.wings.service.impl.email.EmailNotificationCallBack;
 import software.wings.service.impl.instance.sync.response.ContainerSyncResponse;
@@ -487,8 +483,6 @@ import software.wings.verification.VerificationDataAnalysisResponse;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
 import com.amazonaws.services.cloudformation.model.StackStatus;
-import com.amazonaws.services.cloudwatch.model.Datapoint;
-import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import com.amazonaws.services.ecs.model.Deployment;
 import com.amazonaws.services.ecs.model.DeploymentConfiguration;
@@ -808,10 +802,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(SpotInstSetupStateExecutionData.class, 7241);
     kryo.register(SpotinstDeployExecutionSummary.class, 7242);
     kryo.register(SpotinstAllPhaseRollbackData.class, 7245);
-    kryo.register(Dimension.class, 7251);
-    kryo.register(Datapoint.class, 7252);
-    kryo.register(AwsCloudWatchStatisticsResponse.class, 7253);
-    kryo.register(AwsCloudWatchStatisticsRequest.class, 7254);
     kryo.register(K8sSwapServiceElement.class, 7260);
     kryo.register(SlackMessage.class, 7261);
     kryo.register(SlackMessageSenderImpl.class, 7262);
@@ -822,7 +812,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
 
     kryo.register(EnvExecutionResponseData.class, 7270);
     kryo.register(BambooExecutionData.class, 7271);
-    kryo.register(AwsCloudWatchMetricDataResponse.class, 7272);
     kryo.register(ContainerCommandExecutionResponse.class, 7274);
     kryo.register(VerificationDataAnalysisResponse.class, 7275);
     kryo.register(ResourceConstraintStatusData.class, 7276);
@@ -858,7 +847,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(CustomSecretsManagerShellScript.class, 7379);
     kryo.register(ContainerSyncResponse.class, 7384);
     kryo.register(ScriptType.class, 7386);
-    kryo.register(AwsLambdaDetailsMetricsResponse.class, 7388);
     kryo.register(GitValidationParameters.class, 7392);
     kryo.register(AppPermissionSummaryForUI.class, 7395);
     kryo.register(UserRestrictionInfo.class, 7396);

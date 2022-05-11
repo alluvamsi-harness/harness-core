@@ -251,7 +251,11 @@ import software.wings.service.impl.aws.model.AwsS3ListBucketNamesRequest;
 import software.wings.service.impl.aws.model.AwsS3ListBucketNamesResponse;
 import software.wings.service.impl.aws.model.AwsS3Request;
 import software.wings.service.impl.aws.model.AwsS3Request.AwsS3RequestType;
+import software.wings.service.impl.aws.model.request.AwsCloudWatchStatisticsRequest;
 import software.wings.service.impl.aws.model.request.AwsLambdaDetailsRequest;
+import software.wings.service.impl.aws.model.response.AwsCloudWatchMetricDataResponse;
+import software.wings.service.impl.aws.model.response.AwsCloudWatchStatisticsResponse;
+import software.wings.service.impl.aws.model.response.AwsLambdaDetailsMetricsResponse;
 import software.wings.service.impl.aws.model.response.AwsLambdaDetailsResponse;
 import software.wings.service.impl.aws.model.response.HostReachabilityResponse;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
@@ -307,6 +311,8 @@ import software.wings.sm.WorkflowStandardParams;
 import software.wings.utils.ArtifactType;
 import software.wings.verification.stackdriver.StackDriverMetricDefinition;
 
+import com.amazonaws.services.cloudwatch.model.Datapoint;
+import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.esotericsoftware.kryo.Kryo;
 
 public class DelegateTasksKryoRegistrar implements KryoRegistrar {
@@ -515,6 +521,10 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(AssignmentTaskResponse.class, 7238);
     kryo.register(NewRelicDataCollectionInfoV2.class, 7247);
     kryo.register(StackDriverMetricDefinition.class, 7249);
+    kryo.register(Dimension.class, 7251);
+    kryo.register(Datapoint.class, 7252);
+    kryo.register(AwsCloudWatchStatisticsResponse.class, 7253);
+    kryo.register(AwsCloudWatchStatisticsRequest.class, 7254);
     kryo.register(AwsLambdaDetailsRequest.class, 7255);
     kryo.register(AwsLambdaDetailsResponse.class, 7256);
     kryo.register(JiraIssueData.class, 7259);
@@ -522,6 +532,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsS3RequestType.class, 7267);
     kryo.register(AwsS3ListBucketNamesRequest.class, 7268);
     kryo.register(AwsS3ListBucketNamesResponse.class, 7269);
+    kryo.register(AwsCloudWatchMetricDataResponse.class, 7272);
     kryo.register(ElkDataCollectionInfoV2.class, 7283);
     kryo.register(AzureArtifactsPATConfig.class, 7284);
     kryo.register(AzureArtifactsFeed.class, 7286);
@@ -556,6 +567,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(StackDriverMetricDefinition.Aggregation.class, 7380);
     kryo.register(Criteria.class, 7382);
     kryo.register(ConditionalOperator.class, 7383);
+    kryo.register(AwsLambdaDetailsMetricsResponse.class, 7388);
     kryo.register(ServiceNowApprovalParams.class, 7389);
     kryo.register(GitConnectionCapability.class, 7391);
     kryo.register(GcbDelegateResponse.class, 7409);
