@@ -501,7 +501,8 @@ public class SSOServiceImpl implements SSOService {
       return false;
     }
     LdapSettings savedSettings = ssoSettingService.getLdapSettingsByUuid(settings.getUuid());
-    if (LdapConnectionSettings.INLINE_SECRET.equals(savedSettings.getConnectionSettings().getPasswordType())) {
+    if (isEmpty(savedSettings.getConnectionSettings().getPasswordType())
+        || LdapConnectionSettings.INLINE_SECRET.equals(savedSettings.getConnectionSettings().getPasswordType())) {
       settings.getConnectionSettings().setEncryptedBindPassword(
           savedSettings.getConnectionSettings().getEncryptedBindPassword());
     } else {
