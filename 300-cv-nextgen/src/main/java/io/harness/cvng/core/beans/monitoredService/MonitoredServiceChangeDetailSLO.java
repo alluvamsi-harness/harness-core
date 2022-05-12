@@ -5,14 +5,15 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.beans.servicenow;
+package io.harness.cvng.core.beans.monitoredService;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
-public class ServiceNowMetaDTO {
-  private String id;
-  private String displayName;
+public class MonitoredServiceChangeDetailSLO {
+  String identifier;
+  String name;
+  boolean outOfRange;
 }

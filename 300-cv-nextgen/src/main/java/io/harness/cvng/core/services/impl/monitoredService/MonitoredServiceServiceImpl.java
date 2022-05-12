@@ -29,6 +29,7 @@ import io.harness.cvng.core.beans.monitoredService.HealthScoreDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.beans.monitoredService.HistoricalTrend;
 import io.harness.cvng.core.beans.monitoredService.MetricDTO;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceChangeDetailSLO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO.ServiceDependencyDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO.Sources;
@@ -77,7 +78,10 @@ import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.Mo
 import io.harness.cvng.notification.entities.NotificationRule;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
+import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
+import io.harness.cvng.servicelevelobjective.services.api.SLODashboardService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
+import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
@@ -99,6 +103,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,6 +162,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   @Inject private CVNGLogService cvngLogService;
   @Inject private NotificationRuleService notificationRuleService;
   @Inject private TemplateFacade templateFacade;
+  @Inject private SLODashboardService sloDashboardService;
+  @Inject private ServiceLevelObjectiveService serviceLevelObjectiveService;
   @Inject private NotificationClient notificationClient;
   @Inject private ActivityService activityService;
 
@@ -1360,6 +1367,35 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         monitoredServiceParams.getAccountIdentifier(), cvConfigIds);
     return cvngLogService.getCVNGLogs(
         monitoredServiceParams.getAccountIdentifier(), verificationTaskIds, liveMonitoringLogsFilter, pageParams);
+  }
+
+  @Override
+  public List<MonitoredServiceChangeDetailSLO> getMonitoredServiceChangeDetails(
+      ProjectParams projectParams, String monitoredServiceIdentifier, Long startTime, Long endTime) {
+    List<ServiceLevelObjective> serviceLevelObjectiveList =
+        serviceLevelObjectiveService.getByMonitoredServiceIdentifier(projectParams, monitoredServiceIdentifier);
+
+    List<MonitoredServiceChangeDetailSLO> monitoredServiceChangeDetailSLOS = new ArrayList<>();
+
+    for (ServiceLevelObjective serviceLevelObjective : serviceLevelObjectiveList) {
+      LocalDateTime currentLocalDate = LocalDateTime.ofInstant(clock.instant(), serviceLevelObjective.getZoneOffset());
+      ServiceLevelObjective.TimePeriod timePeriod = serviceLevelObjective.getCurrentTimeRange(currentLocalDate);
+      Boolean outOfRange = false;
+      if (!Objects.isNull(startTime) && !Objects.isNull(endTime)) {
+        if ((startTime > timePeriod.getEndTime(serviceLevelObjective.getZoneOffset()).toEpochMilli())
+            || endTime < timePeriod.getStartTime(serviceLevelObjective.getZoneOffset()).toEpochMilli()) {
+          outOfRange = true;
+        }
+      }
+
+      monitoredServiceChangeDetailSLOS.add(MonitoredServiceChangeDetailSLO.builder()
+                                               .identifier(serviceLevelObjective.getIdentifier())
+                                               .name(serviceLevelObjective.getName())
+                                               .outOfRange(outOfRange)
+                                               .build());
+    }
+
+    return monitoredServiceChangeDetailSLOS;
   }
 
   public List<NotificationRule> getNotificationRulesByMonitoredServiceEntity(MonitoredService monitoredService) {

@@ -58,6 +58,7 @@ import io.harness.cvng.core.beans.monitoredService.CountServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthScoreDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.beans.monitoredService.MetricDTO;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceChangeDetailSLO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO.MonitoredServiceDTOBuilder;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO.ServiceDependencyDTO;
@@ -110,6 +111,7 @@ import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
+import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
@@ -155,6 +157,7 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Inject HPersistence hPersistence;
   @Inject ServiceDependencyService serviceDependencyService;
   @Inject ServiceLevelIndicatorService serviceLevelIndicatorService;
+  @Inject ServiceLevelObjectiveService serviceLevelObjectiveService;
   @Inject CVNGLogService cvngLogService;
   @Inject VerificationTaskService verificationTaskService;
   @Inject NotificationRuleService notificationRuleService;
@@ -226,6 +229,40 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     FieldUtils.writeField(monitoredServiceService, "changeSourceService", changeSourceService, true);
     FieldUtils.writeField(heatMapService, "clock", clock, true);
     FieldUtils.writeField(monitoredServiceService, "heatMapService", heatMapService, true);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetMonitoredServiceChangeDetails_inRange() {
+    MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTO();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    serviceLevelObjectiveService.create(
+        builderFactory.getProjectParams(), builderFactory.getServiceLevelObjectiveDTOBuilder().build());
+    List<MonitoredServiceChangeDetailSLO> monitoredServiceChangeDetailSLOS =
+        monitoredServiceService.getMonitoredServiceChangeDetails(
+            builderFactory.getProjectParams(), monitoredServiceDTO.getIdentifier(), null, null);
+    assertThat(monitoredServiceChangeDetailSLOS.size()).isEqualTo(1);
+    assertThat(monitoredServiceChangeDetailSLOS.get(0).getIdentifier()).isEqualTo("sloIdentifier");
+    assertThat(monitoredServiceChangeDetailSLOS.get(0).getName()).isEqualTo("sloName");
+    assertThat(monitoredServiceChangeDetailSLOS.get(0).isOutOfRange()).isEqualTo(false);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetMonitoredServiceChangeDetails_notInRange() {
+    MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTO();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    serviceLevelObjectiveService.create(
+        builderFactory.getProjectParams(), builderFactory.getServiceLevelObjectiveDTOBuilder().build());
+    List<MonitoredServiceChangeDetailSLO> monitoredServiceChangeDetailSLOS =
+        monitoredServiceService.getMonitoredServiceChangeDetails(
+            builderFactory.getProjectParams(), monitoredServiceDTO.getIdentifier(), 1640058000000l, 1641058000000l);
+    assertThat(monitoredServiceChangeDetailSLOS.size()).isEqualTo(1);
+    assertThat(monitoredServiceChangeDetailSLOS.get(0).getIdentifier()).isEqualTo("sloIdentifier");
+    assertThat(monitoredServiceChangeDetailSLOS.get(0).getName()).isEqualTo("sloName");
+    assertThat(monitoredServiceChangeDetailSLOS.get(0).isOutOfRange()).isEqualTo(true);
   }
 
   @Test

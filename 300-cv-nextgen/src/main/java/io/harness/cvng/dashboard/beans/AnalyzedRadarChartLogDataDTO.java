@@ -25,11 +25,11 @@ public class AnalyzedRadarChartLogDataDTO implements Comparable<AnalyzedRadarCha
   String environmentIdentifier;
   String serviceIdentifier;
 
-  LogData logData;
+  RadarChartLogData logData;
 
   @Data
   @Builder
-  public static class LogData {
+  public static class RadarChartLogData {
     String text;
     String clusterId;
     Long label;
