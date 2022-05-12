@@ -29,19 +29,4 @@ public class CustomUserGroupFilter extends UserGroupFilter {
     super(userGroupFilterType);
     this.userGroups = userGroups;
   }
-
-  @Data
-  @EqualsAndHashCode(callSuper = true)
-  @JsonTypeName("CUSTOM")
-  public static final class Yaml extends UserGroupFilterYaml {
-    private List<String> userGroupNames;
-
-    @Builder
-    public Yaml(BlackoutWindowFilterType filterType, List<String> userGroupNames) {
-      super(filterType);
-      setUserGroupNames(userGroupNames);
-    }
-
-    public Yaml() {}
-  }
 }
