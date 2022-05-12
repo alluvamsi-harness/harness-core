@@ -21,6 +21,8 @@ import io.harness.mongo.iterator.filter.SpringFilterExpander;
 import io.harness.mongo.iterator.provider.SpringPersistenceRequiredProvider;
 import io.harness.steps.approval.step.beans.ApprovalStatus;
 import io.harness.steps.approval.step.beans.ApprovalType;
+import io.harness.steps.approval.step.custom.CustomApprovalHelperService;
+import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
 import io.harness.steps.approval.step.jira.JiraApprovalHelperService;
@@ -39,6 +41,7 @@ public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler
   private static final IteratorConfig DEFAULT_ITERATOR_CONFIG =
       IteratorConfig.builder().enabled(true).targetIntervalInSeconds(60).build();
 
+  private final CustomApprovalHelperService customApprovalHelperService;
   private final JiraApprovalHelperService jiraApprovalHelperService;
   private final MongoTemplate mongoTemplate;
   private final PersistenceIteratorFactory persistenceIteratorFactory;
@@ -46,9 +49,11 @@ public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler
   private final ServiceNowApprovalHelperService serviceNowApprovalHelperService;
 
   @Inject
-  public ApprovalInstanceHandler(JiraApprovalHelperService jiraApprovalHelperService, MongoTemplate mongoTemplate,
+  public ApprovalInstanceHandler(CustomApprovalHelperService customApprovalHelperService,
+      JiraApprovalHelperService jiraApprovalHelperService, MongoTemplate mongoTemplate,
       PersistenceIteratorFactory persistenceIteratorFactory, PipelineServiceIteratorsConfig iteratorsConfig,
       ServiceNowApprovalHelperService serviceNowApprovalHelperService) {
+    this.customApprovalHelperService = customApprovalHelperService;
     this.jiraApprovalHelperService = jiraApprovalHelperService;
     this.mongoTemplate = mongoTemplate;
     this.persistenceIteratorFactory = persistenceIteratorFactory;
@@ -82,7 +87,8 @@ public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler
                 -> query.addCriteria(Criteria.where(ApprovalInstanceKeys.status)
                                          .is(ApprovalStatus.WAITING)
                                          .and(ApprovalInstanceKeys.type)
-                                         .in(ApprovalType.JIRA_APPROVAL, ApprovalType.SERVICENOW_APPROVAL)))
+                                         .in(ApprovalType.JIRA_APPROVAL, ApprovalType.SERVICENOW_APPROVAL,
+                                             ApprovalType.CUSTOM_APPROVAL)))
             .schedulingType(REGULAR)
             .persistenceProvider(new SpringPersistenceRequiredProvider<>(mongoTemplate))
             .redistribute(true));
@@ -91,6 +97,10 @@ public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler
   @Override
   public void handle(ApprovalInstance entity) {
     switch (entity.getType()) {
+      case CUSTOM_APPROVAL:
+        CustomApprovalInstance customApprovalInstance = (CustomApprovalInstance) entity;
+        customApprovalHelperService.handlePollingEvent(customApprovalInstance);
+        break;
       case JIRA_APPROVAL:
         JiraApprovalInstance jiraApprovalInstance = (JiraApprovalInstance) entity;
         jiraApprovalHelperService.handlePollingEvent(jiraApprovalInstance);

@@ -12,11 +12,9 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import io.harness.annotations.dev.OwnedBy;
 
 /**
- * Name of the top element in yaml.
- * For example:
+ * Name of the top element in yaml. For example:
  * <p>connector:
- * name: testname
- * projectIdentifier: projectId
+ * name: testname projectIdentifier: projectId
  * </p>
  * In this the top element is <b>connector</b>
  */
@@ -75,6 +73,7 @@ public class EntityYamlRootNames {
   public static final String SERVICENOW_APPROVAL = "ServiceNowApproval";
   public static final String JIRA_APPROVAL = "JiraApproval";
   public static final String HARNESS_APPROVAL = "HarnessApproval";
+  public static final String CUSTOM_APPROVAL = "CustomApproval";
   public static final String BARRIER = "Barrier";
   public static final String FLAG_CONFIGURATION = "FlagConfiguration";
   public static final String OPAPOLICY = "governancePolicy";

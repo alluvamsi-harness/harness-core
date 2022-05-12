@@ -45,6 +45,8 @@ import io.harness.pms.sdk.core.variables.VariableCreator;
 import io.harness.pms.utils.InjectorUtils;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.approval.ApprovalStepVariableCreator;
+import io.harness.steps.approval.step.custom.CustomApprovalStepPlanCreator;
+import io.harness.steps.approval.step.custom.CustomApprovalStepVariableCreator;
 import io.harness.steps.approval.step.harness.HarnessApprovalStepPlanCreator;
 import io.harness.steps.approval.step.jira.JiraApprovalStepPlanCreator;
 import io.harness.steps.approval.step.jira.JiraApprovalStepVariableCreator;
@@ -101,6 +103,7 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     planCreators.add(new PolicyStepPlanCreator());
     planCreators.add(new ServiceNowCreateStepPlanCreator());
     planCreators.add(new ServiceNowUpdateStepPlanCreator());
+    planCreators.add(new CustomApprovalStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }
@@ -138,6 +141,7 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     variableCreators.add(new JiraApprovalStepVariableCreator());
     variableCreators.add(new ServiceNowCreateStepVariableCreator());
     variableCreators.add(new ServiceNowUpdateStepVariableCreator());
+    variableCreators.add(new CustomApprovalStepVariableCreator());
     injectorUtils.injectMembers(variableCreators);
     return variableCreators;
   }

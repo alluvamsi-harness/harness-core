@@ -34,11 +34,18 @@ public abstract class AbstractApprovalCallback {
   @Inject protected ApprovalInstanceService approvalInstanceService;
   @Inject protected NGErrorHelper ngErrorHelper;
 
+  protected void updateApprovalInstanceAndLog(NGLogCallback logCallback, String logMessage, LogColor logColor,
+      CommandExecutionStatus executionStatus, ApprovalStatus approvalStatus, String approvalInstanceId,
+      TicketNG ticketNG) {
+    log.info(logMessage);
+    logCallback.saveExecutionLog(LogHelper.color(logMessage, logColor), LogLevel.INFO, executionStatus);
+    approvalInstanceService.finalizeStatus(approvalInstanceId, approvalStatus, ticketNG);
+  }
+
   protected void updateApprovalInstanceAndLog(NGLogCallback logCallback, String logMessage, LogColor red,
       CommandExecutionStatus executionStatus, ApprovalStatus approvalStatus, String approvalInstanceId) {
-    log.info(logMessage);
-    logCallback.saveExecutionLog(LogHelper.color(logMessage, red), LogLevel.INFO, executionStatus);
-    approvalInstanceService.finalizeStatus(approvalInstanceId, approvalStatus);
+    updateApprovalInstanceAndLog(
+        logCallback, logMessage, red, executionStatus, approvalStatus, approvalInstanceId, null);
   }
 
   protected void handleErrorNotifyResponse(
@@ -60,7 +67,7 @@ public abstract class AbstractApprovalCallback {
     boolean approvalEvaluationResult = evaluateCriteria(ticket, approvalCriteriaSpec);
     if (approvalEvaluationResult) {
       updateApprovalInstanceAndLog(logCallback, "Approval criteria has been met", LogColor.Cyan,
-          CommandExecutionStatus.SUCCESS, ApprovalStatus.APPROVED, instance.getId());
+          CommandExecutionStatus.SUCCESS, ApprovalStatus.APPROVED, instance.getId(), ticket);
       return;
     }
     logCallback.saveExecutionLog("Approval criteria has not been met");
@@ -76,7 +83,7 @@ public abstract class AbstractApprovalCallback {
     boolean rejectionEvaluationResult = evaluateCriteria(ticket, rejectionCriteriaSpec);
     if (rejectionEvaluationResult) {
       updateApprovalInstanceAndLog(logCallback, "Rejection criteria has been met", LogColor.Red,
-          CommandExecutionStatus.FAILURE, ApprovalStatus.REJECTED, instance.getId());
+          CommandExecutionStatus.FAILURE, ApprovalStatus.REJECTED, instance.getId(), ticket);
       return;
     }
     logCallback.saveExecutionLog("Rejection criteria has also not been met");
