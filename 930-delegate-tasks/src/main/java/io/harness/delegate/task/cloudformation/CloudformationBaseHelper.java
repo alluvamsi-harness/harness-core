@@ -11,11 +11,15 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.aws.cf.DeployStackRequest;
 
 import com.amazonaws.services.cloudformation.model.Stack;
+import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
 import java.util.Optional;
 
 @OwnedBy(CDP)
 public interface CloudformationBaseHelper {
   Optional<Stack> getIfStackExists(String customStackName, String suffix, AwsInternalConfig awsConfig, String region);
+
+  DeployStackRequest transformToDeployStackRequest(UpdateStackRequest updateStackRequest);
 }

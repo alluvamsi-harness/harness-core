@@ -8,6 +8,7 @@
 package io.harness.delegate.task.cloudformation;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.TMACARI;
 
 import static java.util.Collections.singletonList;
@@ -22,12 +23,16 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.aws.AWSCloudformationClient;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.aws.cf.DeployStackRequest;
 import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 
 import software.wings.service.intfc.security.EncryptionService;
 
+import com.amazonaws.services.cloudformation.model.Parameter;
 import com.amazonaws.services.cloudformation.model.Stack;
+import com.amazonaws.services.cloudformation.model.Tag;
+import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,5 +66,31 @@ public class CloudFormationBaseHelperImplTest extends CategoryTest {
         customStackName, "foo", AwsInternalConfig.builder().build(), "us-east-1");
     assertThat(stack.isPresent()).isTrue();
     assertThat(stackId).isEqualTo(stack.get().getStackId());
+  }
+
+  @Test
+  @Owner(developers = ARVIND)
+  @Category(UnitTests.class)
+  public void testMapToDeployStackRequest() {
+    Parameter parameter =
+        new Parameter().withParameterKey("V1").withParameterValue("V2").withResolvedValue("V3").withUsePreviousValue(
+            true);
+    Tag tag = new Tag().withKey("K1").withValue("VAL1");
+    UpdateStackRequest updateStackRequest = new UpdateStackRequest()
+                                                .withStackName("S1")
+                                                .withParameters(parameter)
+                                                .withCapabilities("CAPABILITY_IAM")
+                                                .withTags(tag)
+                                                .withRoleARN("ROLE")
+                                                .withTemplateBody("TemplateBody")
+                                                .withTemplateURL("TemplateUrl");
+
+    DeployStackRequest deployStackRequest = cloudFormationBaseHelper.transformToDeployStackRequest(updateStackRequest);
+    assertThat(deployStackRequest.getStackName()).isEqualTo("S1");
+    assertThat(deployStackRequest.getRoleARN()).isEqualTo("ROLE");
+    assertThat(deployStackRequest.getTemplateBody()).isEqualTo("TemplateBody");
+    assertThat(deployStackRequest.getTemplateURL()).isEqualTo("TemplateUrl");
+    assertThat(deployStackRequest.getTags()).containsExactly(tag);
+    assertThat(deployStackRequest.getParameters()).containsExactly(parameter);
   }
 }

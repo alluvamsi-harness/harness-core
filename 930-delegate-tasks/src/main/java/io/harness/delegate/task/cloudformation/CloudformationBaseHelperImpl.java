@@ -14,9 +14,11 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AWSCloudformationClient;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.aws.cf.DeployStackRequest;
 
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.Stack;
+import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
 import com.google.inject.Inject;
 import java.util.List;
 import java.util.Optional;
@@ -41,5 +43,17 @@ public class CloudformationBaseHelperImpl implements CloudformationBaseHelper {
     } else {
       return stacks.stream().filter(stack -> stack.getStackName().endsWith(suffix)).findFirst();
     }
+  }
+
+  public DeployStackRequest transformToDeployStackRequest(UpdateStackRequest updateStackRequest) {
+    return DeployStackRequest.builder()
+        .stackName(updateStackRequest.getStackName())
+        .parameters(updateStackRequest.getParameters())
+        .capabilities(updateStackRequest.getCapabilities())
+        .tags(updateStackRequest.getTags())
+        .roleARN(updateStackRequest.getRoleARN())
+        .templateBody(updateStackRequest.getTemplateBody())
+        .templateURL(updateStackRequest.getTemplateURL())
+        .build();
   }
 }

@@ -8,6 +8,9 @@
 package io.harness.aws;
 
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.aws.cf.DeployStackRequest;
+import io.harness.aws.cf.DeployStackResult;
+import io.harness.logging.LogCallback;
 
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
 import com.amazonaws.services.cloudformation.model.CreateStackResult;
@@ -21,6 +24,7 @@ import com.amazonaws.services.cloudformation.model.StackEvent;
 import com.amazonaws.services.cloudformation.model.StackResource;
 import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
 import com.amazonaws.services.cloudformation.model.UpdateStackResult;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +45,8 @@ public interface AWSCloudformationClient {
 
   UpdateStackResult updateStack(String region, UpdateStackRequest updateStackRequest, AwsInternalConfig awsConfig);
 
-  DeployStackResult deployStack(String region, DeployStackRequest deployStackRequest, AwsInternalConfig awsConfig);
+  DeployStackResult deployStack(String region, DeployStackRequest deployStackRequest, AwsInternalConfig awsConfig,
+      Duration duration, LogCallback executionLogCallback);
 
   DescribeStacksResult describeStacks(
       String region, DescribeStacksRequest describeStacksRequest, AwsInternalConfig awsConfig);

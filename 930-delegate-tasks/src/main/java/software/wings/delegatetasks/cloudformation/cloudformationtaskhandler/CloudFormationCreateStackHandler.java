@@ -15,6 +15,8 @@ import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperIm
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.threading.Morpheus.sleep;
 
+import static software.wings.beans.LogHelper.color;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.time.Duration.ofSeconds;
@@ -24,6 +26,9 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.aws.beans.AwsInternalConfig;
+import io.harness.aws.cf.DeployStackRequest;
+import io.harness.aws.cf.DeployStackResult;
+import io.harness.aws.cf.Status;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
@@ -33,6 +38,8 @@ import io.harness.logging.LogLevel;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.ServiceVariableType;
 import software.wings.beans.command.ExecutionLogCallback;
@@ -62,6 +69,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Singleton;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -367,15 +375,14 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
       ExecutionLogCallback executionLogCallback) {
     ExistingStackInfo existingStackInfo =
         getExistingStackInfo(request.getAwsConfig(), request.getRegion(), originalStack);
-    executionLogCallback.saveExecutionLog(
-        format("# Calling Aws API to Update stack: %s", originalStack.getStackName()));
 
     long stackEventsTs = System.currentTimeMillis();
 
     boolean noStackUpdated;
 
     if (request.isDeploy()) {
-      noStackUpdated = deployStack(request, updateStackRequest, originalStack, executionLogCallback);
+      noStackUpdated =
+          deployStack(request, updateStackRequest, Duration.ofMillis(remainingTimeoutMs), executionLogCallback);
     } else {
       noStackUpdated = updateStack(request, updateStackRequest, originalStack, executionLogCallback);
     }
@@ -389,13 +396,30 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
   }
 
   private boolean deployStack(CloudFormationCreateStackRequest request, UpdateStackRequest updateStackRequest,
-      Stack originalStack, LogCallback executionLogCallback) {
-    throw new InvalidRequestException("Not yet implemented!");
+      Duration duration, LogCallback logCallback) {
+    logCallback.saveExecutionLog(
+        color(format("\n# Using Change Set to update stack: %s\n", updateStackRequest.getStackName()), LogColor.White,
+            LogWeight.Bold),
+        LogLevel.INFO);
+
+    DeployStackRequest deployStackRequest = cloudformationBaseHelper.transformToDeployStackRequest(updateStackRequest);
+    DeployStackResult deployStackResult = awsHelperService.deployStack(request.getRegion(), deployStackRequest,
+        AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()), duration, logCallback);
+
+    if (deployStackResult.getStatus() == Status.FAILURE) {
+      throw new InvalidRequestException(
+          format("CF Change set creation failed: %s", deployStackResult.getStatusReason()));
+    }
+
+    return deployStackResult.isNoUpdatesToPerform();
   }
 
   private void handleAndWaitForStackUpdate(CloudFormationCreateStackRequest request,
       CloudFormationCommandExecutionResponseBuilder builder, Stack originalStack,
       ExecutionLogCallback executionLogCallback, ExistingStackInfo existingStackInfo, long stackEventsTs) {
+    executionLogCallback.saveExecutionLog(
+        format("# Update Stack Request submitted for stack: %s. Now polling for status", originalStack.getStackName()));
+
     int timeOutMs = remainingTimeoutMs;
     long endTime = System.currentTimeMillis() + timeOutMs;
 
@@ -549,10 +573,13 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
 
   private boolean updateStack(CloudFormationCreateStackRequest request, UpdateStackRequest updateStackRequest,
       Stack originalStack, ExecutionLogCallback executionLogCallback) {
+    executionLogCallback.saveExecutionLog(
+        color(format("# Calling AWS API update to update stack: %s", originalStack.getStackName()), LogColor.White,
+            LogWeight.Bold),
+        LogLevel.INFO);
+
     UpdateStackResult updateStackResult = awsHelperService.updateStack(
         request.getRegion(), updateStackRequest, AwsConfigToInternalMapper.toAwsInternalConfig(request.getAwsConfig()));
-    executionLogCallback.saveExecutionLog(
-        format("# Update Stack Request submitted for stack: %s. Now polling for status", originalStack.getStackName()));
 
     boolean noStackUpdated = false;
     if (updateStackResult == null || updateStackResult.getStackId() == null) {
