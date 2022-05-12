@@ -114,7 +114,7 @@ public class VmInitializeStepUtils {
   }
 
   private String getStepMountPath(OSType os) {
-    if (os.equals(OSType.OSX)) {
+    if (os.equals(OSType.Osx)) {
       return OSX_STEP_MOUNT_PATH;
     }
     return STEP_MOUNT_PATH;

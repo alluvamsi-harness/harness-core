@@ -82,7 +82,7 @@ public class RunTimeInputHandler {
 
   public OSType resolveOSType(ParameterField<OSType> osType) {
     if (osType == null || osType.isExpression() || osType.getValue() == null) {
-      return OSType.LINUX;
+      return OSType.Linux;
     } else {
       return OSType.fromString(osType.fetchFinalValue().toString());
     }

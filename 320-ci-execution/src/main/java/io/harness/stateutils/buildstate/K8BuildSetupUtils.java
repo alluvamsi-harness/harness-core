@@ -248,7 +248,7 @@ public class K8BuildSetupUtils {
 
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
-        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null, OSType.LINUX);
+        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null, OSType.Linux);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 

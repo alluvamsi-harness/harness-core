@@ -212,7 +212,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
 
   private OSType getOS(Infrastructure infrastructure) {
     if (infrastructure.getType() != Infrastructure.Type.KUBERNETES_DIRECT) {
-      return OSType.LINUX;
+      return OSType.Linux;
     }
 
     if (((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
