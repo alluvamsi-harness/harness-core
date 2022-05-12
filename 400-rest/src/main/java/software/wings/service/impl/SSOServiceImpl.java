@@ -42,6 +42,7 @@ import software.wings.beans.SyncTaskContext;
 import software.wings.beans.sso.LdapConnectionSettings;
 import software.wings.beans.sso.LdapGroupResponse;
 import software.wings.beans.sso.LdapSettings;
+import software.wings.beans.sso.LdapSettingsMapper;
 import software.wings.beans.sso.LdapTestResponse;
 import software.wings.beans.sso.OauthSettings;
 import software.wings.beans.sso.SAMLProviderType;
@@ -386,7 +387,7 @@ public class SSOServiceImpl implements SSOService {
                                             .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
                                             .build();
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
-          .validateLdapConnectionSettings(ldapSettings, encryptedDataDetail);
+          .validateLdapConnectionSettings(LdapSettingsMapper.ldapSettingsDTO(ldapSettings), encryptedDataDetail);
     } finally {
       deleteTempSecret(temporaryEncryption, encryptedDataDetail, ldapSettings, accountId);
     }
@@ -406,7 +407,7 @@ public class SSOServiceImpl implements SSOService {
                                             .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
                                             .build();
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
-          .validateLdapUserSettings(ldapSettings, encryptedDataDetail);
+          .validateLdapUserSettings(LdapSettingsMapper.ldapSettingsDTO(ldapSettings), encryptedDataDetail);
     } finally {
       deleteTempSecret(temporaryEncryption, encryptedDataDetail, ldapSettings, accountId);
     }
@@ -426,7 +427,7 @@ public class SSOServiceImpl implements SSOService {
                                             .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
                                             .build();
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
-          .validateLdapGroupSettings(ldapSettings, encryptedDataDetail);
+          .validateLdapGroupSettings(LdapSettingsMapper.ldapSettingsDTO(ldapSettings), encryptedDataDetail);
     } finally {
       deleteTempSecret(temporaryEncryption, encryptedDataDetail, ldapSettings, accountId);
     }
@@ -453,7 +454,8 @@ public class SSOServiceImpl implements SSOService {
                                             .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
                                             .build();
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
-          .authenticate(ldapSettings, settingsEncryptedDataDetail, identifier, passwordEncryptedDataDetail);
+          .authenticate(LdapSettingsMapper.ldapSettingsDTO(ldapSettings), settingsEncryptedDataDetail, identifier,
+              passwordEncryptedDataDetail);
     } finally {
       secretManager.deleteSecret(ldapSettings.getAccountId(), passwordEncryptedDataDetail.getEncryptedData().getUuid(),
           new HashMap<>(), false);
@@ -474,7 +476,7 @@ public class SSOServiceImpl implements SSOService {
                                           .timeout(DEFAULT_SYNC_CALL_TIMEOUT)
                                           .build();
     return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
-        .searchGroupsByName(ldapSettings, encryptedDataDetail, nameQuery);
+        .searchGroupsByName(LdapSettingsMapper.ldapSettingsDTO(ldapSettings), encryptedDataDetail, nameQuery);
   }
 
   private boolean isExistingSetting(@NotNull LdapSettings settings) {

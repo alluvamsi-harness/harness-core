@@ -585,7 +585,7 @@
 5492:software.wings.service.impl.analysis.CustomLogDataCollectionInfo
 5493:software.wings.delegatetasks.cv.beans.CustomLogResponseMapper
 5494:software.wings.service.impl.cloudwatch.CloudWatchSetupTestNodeData
-5495:software.wings.beans.sso.LdapSettings
+5495:software.wings.beans.sso.LdapSettingsDTO
 5496:software.wings.beans.sso.LdapConnectionSettings
 5497:software.wings.beans.sso.LdapUserSettings
 5498:software.wings.beans.sso.LdapGroupSettings

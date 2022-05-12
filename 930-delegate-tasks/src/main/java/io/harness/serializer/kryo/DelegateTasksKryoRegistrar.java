@@ -107,6 +107,11 @@ import software.wings.beans.servicenow.ServiceNowMetaDTO;
 import software.wings.beans.servicenow.ServiceNowTaskParameters;
 import software.wings.beans.servicenow.ServiceNowTicketType;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
+import software.wings.beans.sso.LdapConnectionSettings;
+import software.wings.beans.sso.LdapGroupResponse;
+import software.wings.beans.sso.LdapSettingsDTO;
+import software.wings.beans.sso.LdapUserResponse;
+import software.wings.beans.sso.LdapUserSettings;
 import software.wings.beans.trigger.TriggerCommand.TriggerCommandType;
 import software.wings.beans.trigger.WebHookTriggerResponseData;
 import software.wings.beans.trigger.WebhookTriggerParameters;
@@ -668,5 +673,10 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(CollaborationProviderRequest.CommunicationType.class, 5307);
     kryo.register(CollaborationProviderRequest.class, 5306);
     kryo.register(CollaborationProviderResponse.class, 5308);
+    kryo.register(LdapConnectionSettings.class, 5496);
+    kryo.register(LdapGroupResponse.class, 5501);
+    kryo.register(LdapUserResponse.class, 5502);
+    kryo.register(LdapUserSettings.class, 5497);
+    kryo.register(LdapSettingsDTO.class, 5495);
   }
 }

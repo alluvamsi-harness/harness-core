@@ -577,6 +577,8 @@ import software.wings.beans.s3.S3FileRequest;
 import software.wings.beans.servicenow.ServiceNowFields;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
+import software.wings.beans.sso.LdapGroupSettings;
+import software.wings.beans.sso.LdapTestResponse;
 import software.wings.beans.yaml.Change;
 import software.wings.beans.yaml.GitCheckoutResult;
 import software.wings.beans.yaml.GitCloneResult;
@@ -610,6 +612,7 @@ import software.wings.helpers.ext.ecs.response.EcsCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.helpers.ext.helm.response.ReleaseInfo;
+import software.wings.helpers.ext.ldap.LdapResponse;
 import software.wings.service.impl.analysis.ElkConnector;
 import software.wings.service.impl.analysis.ElkValidationType;
 import software.wings.service.impl.analysis.VerificationNodeDataSetupResponse;
@@ -1355,5 +1358,10 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ArtifactoryBaseArtifactDelegateRequest.class, 563531);
     kryo.register(AzureK8sInfraDelegateConfig.class, 563532);
     kryo.register(AzureAcrTokenTaskResponse.class, 563533);
+    kryo.register(LdapTestResponse.Status.class, 5500);
+    kryo.register(LdapGroupSettings.class, 5498);
+    kryo.register(LdapTestResponse.class, 5499);
+    kryo.register(LdapResponse.class, 5504);
+    kryo.register(LdapResponse.Status.class, 5505);
   }
 }
