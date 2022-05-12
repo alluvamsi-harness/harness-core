@@ -20,6 +20,7 @@ import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.RAGHVENDRA;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
+import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 import static io.harness.rule.OwnerRule.YOGESH;
 
 import static software.wings.delegatetasks.helm.HelmTestConstants.ACCOUNT_ID;
@@ -83,6 +84,7 @@ import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfig;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.helpers.ext.chartmuseum.ChartMuseumClient;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
@@ -158,6 +160,53 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     verify(helmTaskHelperBase)
         .addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
             LONG_TIMEOUT_INTERVAL, "");
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void loginOciRegistryTest() {
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+
+    doReturn(new ProcessResult(0, new ProcessOutput(new byte[1])))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), any(HelmCliCommandType.class));
+    helmTaskHelper.loginOciRegistry(OciHelmRepoConfig.builder()
+                                        .chartRepoUrl("localhost:5005/test-charts")
+                                        .username("admin")
+                                        .password("admin".toCharArray())
+                                        .build(),
+        V3, LONG_TIMEOUT_INTERVAL, "/home");
+    verify(helmTaskHelperBase, times(1))
+        .executeCommand(anyMap(), captor.capture(), captor.capture(), captor.capture(), eq(LONG_TIMEOUT_INTERVAL),
+            eq(HelmCliCommandType.OCI_REGISTRY_LOGIN));
+    String command = captor.getAllValues().get(0);
+    String directoryPath = captor.getAllValues().get(1);
+    String errorMsg = captor.getAllValues().get(2);
+    assertThat(command).isEqualTo(
+        "v3/helm registry login localhost:5005/test-charts --username admin --password admin");
+    assertThat(directoryPath).isEqualTo("/home");
+    assertThat(errorMsg).isEqualTo(
+        "Attempt Login to OCI Registry. Command Executed: v3/helm registry login localhost:5005/test-charts --username admin --password *******");
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void loginOciRegistryFailedTest() {
+    doReturn(new ProcessResult(1, new ProcessOutput(new byte[1])))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), any(HelmCliCommandType.class));
+    assertThatExceptionOfType(HelmClientException.class)
+        .isThrownBy(()
+                        -> helmTaskHelper.loginOciRegistry(OciHelmRepoConfig.builder()
+                                                               .chartRepoUrl("localhost:5005/test-charts")
+                                                               .username("admin")
+                                                               .password("admin".toCharArray())
+                                                               .build(),
+                            V3, LONG_TIMEOUT_INTERVAL, "/home"))
+        .withMessageContaining(
+            "Failed to login to the helm OCI Registry repo. Executed command v3/helm registry login localhost:5005/test-charts --username admin --password *******");
   }
 
   @Test
@@ -375,6 +424,32 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .createProcessExecutor("v3/helm repo add repoName http://127.0.0.1:1234  ", outputTemporaryDir.toString(),
             LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
     verify(processExecutor, times(2)).execute();
+    deleteDirectoryAndItsContentIfExists(outputTemporaryDir.toString());
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testDownloadChartFilesForOciHelmRepo() throws Exception {
+    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
+    OciHelmRepoConfig repoConfig =
+        OciHelmRepoConfig.builder().accountId("accountId").chartRepoUrl("localhost:5005/test-charts").build();
+
+    HelmChartConfigParams configParams = getHelmChartConfigParams(repoConfig);
+    configParams.setChartVersion("0.1.0");
+
+    Path outputTemporaryDir = Files.createTempDirectory("chartFile");
+    ProcessResult successfulResult = new ProcessResult(0, null);
+
+    doReturn(chartMuseumServer)
+        .when(chartMuseumClient)
+        .startChartMuseumServer(eq(repoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
+    doReturn(successfulResult).when(processExecutor).execute();
+    helmTaskHelper.downloadChartFiles(configParams, outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, null);
+    verify(helmTaskHelperBase, times(1))
+        .createProcessExecutor("v3/helm pull oci://localhost:5005/test-charts/chartName  --untar --version 0.1.0",
+            outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
+    verify(processExecutor, times(1)).execute();
     deleteDirectoryAndItsContentIfExists(outputTemporaryDir.toString());
   }
 

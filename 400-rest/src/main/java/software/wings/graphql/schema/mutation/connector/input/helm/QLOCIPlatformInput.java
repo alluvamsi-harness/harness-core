@@ -1,8 +1,8 @@
 /*
- * Copyright 2021 Harness Inc. All rights reserved.
- * Use of this source code is governed by the PolyForm Shield 1.0.0 license
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
- * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
 package software.wings.graphql.schema.mutation.connector.input.helm;
@@ -23,10 +23,8 @@ import lombok.Value;
 @Scope(PermissionAttribute.ResourceType.SETTING)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TargetModule(HarnessModule._380_CG_GRAPHQL)
-public class QLHelmConnectorInput {
-  private RequestField<String> name;
-  private RequestField<QLAmazonS3PlatformInput> amazonS3PlatformDetails;
-  private RequestField<QLGCSPlatformInput> gcsPlatformDetails;
-  private RequestField<QLHttpServerPlatformInput> httpServerPlatformDetails;
-  private RequestField<QLOCIPlatformInput> ociPlatformDetails;
+public class QLOCIPlatformInput {
+  private RequestField<String> URL;
+  private RequestField<String> userName;
+  private RequestField<String> passwordSecretId;
 }

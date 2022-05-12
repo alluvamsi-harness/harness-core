@@ -294,6 +294,7 @@ import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfigValidationResponse;
 import software.wings.beans.settings.helm.HelmRepoConfigValidationTaskParams;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.beans.sso.LdapConnectionSettings;
 import software.wings.beans.sso.LdapGroupResponse;
 import software.wings.beans.sso.LdapGroupSettings;
@@ -1012,5 +1013,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
     kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
+    kryo.register(OciHelmRepoConfig.class, 50012);
   }
 }
