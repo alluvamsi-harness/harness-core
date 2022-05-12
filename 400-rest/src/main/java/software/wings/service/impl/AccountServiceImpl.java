@@ -503,6 +503,7 @@ public class AccountServiceImpl implements AccountService {
       featureFlagService.enableAccount(FeatureName.CFNG_ENABLED, account.getUuid());
       featureFlagService.enableAccount(FeatureName.CING_ENABLED, account.getUuid());
       featureFlagService.enableAccount(FeatureName.CVNG_ENABLED, account.getUuid());
+      featureFlagService.enableAccount(FeatureName.USE_IMMUTABLE_DELEGATE, account.getUuid());
     } else if (account.isCreatedFromNG()) {
       updateNextGenEnabled(account.getUuid(), true);
     }
