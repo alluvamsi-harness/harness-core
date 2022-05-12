@@ -54,7 +54,7 @@ public class UtilizationDataServiceImpl {
   private static final String UTILIZATION_DATA_QUERY =
       "SELECT MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, MAX(MAXCPUVALUE) as MAXCPUVALUE, MAX(MAXMEMORYVALUE) as MAXMEMORYVALUE, AVG(AVGCPUVALUE) as AVGCPUVALUE, AVG(AVGMEMORYVALUE) as AVGMEMORYVALUE, AVG(AVGSTORAGECAPACITYVALUE) as AVGSTORAGECAPACITYVALUE ,AVG(AVGSTORAGEUSAGEVALUE) as AVGSTORAGEUSAGEVALUE, AVG(AVGSTORAGEREQUESTVALUE) as AVGSTORAGEREQUESTVALUE ,MAX(MAXSTORAGEUSAGEVALUE) as MAXSTORAGEUSAGEVALUE, MAX(MAXSTORAGEREQUESTVALUE) as MAXSTORAGEREQUESTVALUE, INSTANCEID FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND SETTINGID = '%s' AND CLUSTERID = '%s' AND INSTANCEID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY INSTANCEID;";
   private static final String UTILIZATION_DATA_QUERY_BY_CLUSTER_IDS =
-      "SELECT INSTANCEID AS SERVICEID, CLUSTERID, MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, AVG(AVGCPU) as AVGCPUUTILIZATION, AVG(AVGMEMORY) as AVGMEMORYUTILIZATION, STARTTIME, ENDTIME FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND CLUSTERID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY CLUSTERID, INSTANCEID, STARTTIME, ENDTIME ORDER BY STARTTIME ASC;";
+      "SELECT INSTANCEID AS SERVICEID, CLUSTERID, MAX(MAXCPU) as MAXCPUUTILIZATION, MAX(MAXMEMORY) as MAXMEMORYUTILIZATION, STARTTIME, ENDTIME FROM UTILIZATION_DATA WHERE ACCOUNTID = '%s' AND CLUSTERID IN ('%s') AND STARTTIME >= '%s' AND STARTTIME < '%s' GROUP BY CLUSTERID, INSTANCEID, STARTTIME, ENDTIME ORDER BY STARTTIME ASC;";
 
   public boolean create(List<InstanceUtilizationData> instanceUtilizationDataList) {
     boolean successfulInsert = false;
@@ -147,8 +147,6 @@ public class UtilizationDataServiceImpl {
               String serviceId = resultSet.getString("SERVICEID");
               double maxCpuUtilization = resultSet.getDouble("MAXCPUUTILIZATION");
               double maxMemoryUtilization = resultSet.getDouble("MAXMEMORYUTILIZATION");
-              double avgCpuUtilization = resultSet.getDouble("AVGCPUUTILIZATION");
-              double avgMemoryUtilization = resultSet.getDouble("AVGMEMORYUTILIZATION");
               Instant utilStartTime = resultSet.getTimestamp("STARTTIME").toInstant();
               Instant utilEndTime = resultSet.getTimestamp("ENDTIME").toInstant();
               ClusterIdAndServiceArn clusterIdAndServiceArn = new ClusterIdAndServiceArn(clusterId, serviceId);
@@ -159,8 +157,6 @@ public class UtilizationDataServiceImpl {
                   .add(ECSUtilizationData.builder()
                            .maxCpuUtilization(maxCpuUtilization)
                            .maxMemoryUtilization(maxMemoryUtilization)
-                           .avgCpuUtilization(avgCpuUtilization)
-                           .avgMemoryUtilization(avgMemoryUtilization)
                            .startTime(utilStartTime)
                            .endTime(utilEndTime)
                            .build());
