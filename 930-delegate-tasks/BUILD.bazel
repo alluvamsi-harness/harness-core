@@ -124,6 +124,7 @@ java_library(
     deps = [
         "module",
         "//:lombok",
+        "//932-connector-task:module",
         "//950-delegate-tasks-beans:module",
         "//952-scm-java-client:module",
         "//953-events-api:module",

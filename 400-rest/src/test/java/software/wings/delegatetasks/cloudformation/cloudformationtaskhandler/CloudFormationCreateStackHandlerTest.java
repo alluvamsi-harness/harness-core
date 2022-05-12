@@ -10,7 +10,6 @@ package software.wings.delegatetasks.cloudformation.cloudformationtaskhandler;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.delegate.task.cloudformation.CloudformationBaseHelperImpl.CLOUDFORMATION_STACK_CREATE_BODY;
 import static io.harness.rule.OwnerRule.ARVIND;
-import static io.harness.rule.OwnerRule.PRAKHAR;
 
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.ACTIVITY_ID;
@@ -30,7 +29,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.aws.AWSCloudformationClient;
-import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.aws.cf.DeployStackResult;
 import io.harness.aws.cf.Status;
 import io.harness.category.element.UnitTests;
@@ -50,13 +48,9 @@ import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
 import software.wings.service.intfc.security.EncryptionService;
 
 import com.amazonaws.services.cloudformation.model.Stack;
-import com.amazonaws.services.cloudformation.model.Tag;
 import com.amazonaws.services.cloudformation.model.UpdateStackResult;
 import com.google.inject.Inject;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
@@ -81,59 +75,6 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = PRAKHAR)
-  @Category(UnitTests.class)
-  public void testGetCloudformationTags() throws IOException {
-    CloudFormationCreateStackRequest cloudFormationCreateStackRequest =
-        CloudFormationCreateStackRequest.builder().build();
-    assertThat(cloudFormationCreateStackHandler.getCloudformationTags(cloudFormationCreateStackRequest)).isNull();
-
-    cloudFormationCreateStackRequest.setTags("");
-    assertThat(cloudFormationCreateStackHandler.getCloudformationTags(cloudFormationCreateStackRequest)).isNull();
-
-    cloudFormationCreateStackRequest.setTags("[]");
-    assertThat(cloudFormationCreateStackHandler.getCloudformationTags(cloudFormationCreateStackRequest))
-        .isEqualTo(new ArrayList<Tag>());
-
-    cloudFormationCreateStackRequest.setTags(
-        "[{\r\n\t\"key\": \"tagKey1\",\r\n\t\"value\": \"tagValue1\"\r\n}, {\r\n\t\"key\": \"tagKey2\",\r\n\t\"value\": \"tagValue2\"\r\n}]");
-    List<Tag> expectedTags = Arrays.asList(
-        new Tag().withKey("tagKey1").withValue("tagValue1"), new Tag().withKey("tagKey2").withValue("tagValue2"));
-    assertThat(cloudFormationCreateStackHandler.getCloudformationTags(cloudFormationCreateStackRequest))
-        .isEqualTo(expectedTags);
-  }
-
-  @Test
-  @Owner(developers = PRAKHAR)
-  @Category(UnitTests.class)
-  public void testGetCapabilities() throws IOException {
-    List<String> capabilitiesByTemplateSummary = Arrays.asList("CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND");
-    List<String> userDefinedCapabilities = Collections.singletonList("CAPABILITY_AUTO_EXPAND");
-    doReturn(capabilitiesByTemplateSummary)
-        .when(awsCFHelperServiceDelegate)
-        .getCapabilities(any(AwsInternalConfig.class), anyString(), anyString(), anyString());
-
-    List<String> expectedCapabilities = Arrays.asList("CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND");
-    assertThat(cloudFormationCreateStackHandler.getCapabilities(
-                   AwsConfig.builder().build(), "us-east-2", "data", userDefinedCapabilities, "type"))
-        .hasSameElementsAs(expectedCapabilities);
-
-    userDefinedCapabilities = null;
-    assertThat(cloudFormationCreateStackHandler.getCapabilities(
-                   AwsConfig.builder().build(), "us-east-2", "data", userDefinedCapabilities, "type"))
-        .hasSameElementsAs(expectedCapabilities);
-
-    userDefinedCapabilities = Collections.singletonList("CAPABILITY_AUTO_EXPAND");
-    expectedCapabilities = Collections.singletonList("CAPABILITY_AUTO_EXPAND");
-    doReturn(Collections.emptyList())
-        .when(awsCFHelperServiceDelegate)
-        .getCapabilities(any(AwsInternalConfig.class), anyString(), anyString(), anyString());
-    assertThat(cloudFormationCreateStackHandler.getCapabilities(
-                   AwsConfig.builder().build(), "us-east-2", "data", userDefinedCapabilities, "type"))
-        .hasSameElementsAs(expectedCapabilities);
-  }
-
-  @Test
   @Owner(developers = ARVIND)
   @Category(UnitTests.class)
   public void testUpdateStackUsingDeploy() {
@@ -142,6 +83,7 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
     doReturn(DeployStackResult.builder().status(Status.SUCCESS).noUpdatesToPerform(false).build())
         .when(mockAwsHelperService)
         .deployStack(anyString(), any(), any(), any(), any());
+    doReturn(new HashSet<>()).when(mockCloudformationBaseHelper).getCapabilities(any(), any(), any(), any(), any());
 
     CloudFormationCommandExecutionResponse response = cloudFormationCreateStackHandler.execute(request, null);
     assertThat(response).isNotNull();
@@ -195,9 +137,6 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
         singletonList(new Stack().withStackStatus("CREATE_COMPLETE").withStackName("HarnessStack-" + stackNameSuffix));
     List<Stack> updateProgressList = singletonList(new Stack().withStackStatus("UPDATE_IN_PROGRESS"));
     List<Stack> updateCompleteList = singletonList(new Stack().withStackStatus("UPDATE_COMPLETE"));
-    doReturn(Optional.of(exitingList.get(0)))
-        .when(mockCloudformationBaseHelper)
-        .getIfStackExists(anyString(), any(), any(), anyString());
     doReturn(exitingList).when(mockAwsHelperService).getAllStacks(anyString(), any(), any());
 
     doReturn(Optional.of(updateProgressList.get(0)))
@@ -207,7 +146,9 @@ public class CloudFormationCreateStackHandlerTest extends WingsBaseTest {
     UpdateStackResult updateStackResult = new UpdateStackResult();
     updateStackResult.setStackId("StackId1");
     doReturn(updateStackResult).when(mockAwsHelperService).updateStack(anyString(), any(), any());
-    doReturn("Body").when(awsCFHelperServiceDelegate).getStackBody(any(), anyString(), anyString());
+    doReturn(ExistingStackInfo.builder().stackExisted(true).oldStackBody("Body").build())
+        .when(mockCloudformationBaseHelper)
+        .getExistingStackInfo(any(), any(), any());
     return request;
   }
 }
