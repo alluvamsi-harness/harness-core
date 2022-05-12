@@ -45,6 +45,7 @@ public class EntityYamlRootNames {
   public static final String DEPLOYMENT_STAGE = "deploymentStage";
   public static final String FEATURE_FLAG_STAGE = "featureFlagStage";
   public static final String APPROVAL_STAGE = "approvalStage";
+  public static final String CUSTOM_STAGE = "customStage";
   public static final String TRIGGERS = "trigger";
   public static final String MONITORED_SERVICE = "monitoredService";
   public static final String TEMPLATE = "template";
