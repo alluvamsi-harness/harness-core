@@ -82,7 +82,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.serializer.HObjectMapper;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -114,9 +113,9 @@ public class UserGroupServiceImpl implements UserGroupService {
 
   @Inject
   public UserGroupServiceImpl(UserGroupRepository userGroupRepository, UserClient userClient,
-                              OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
-                              NgUserService ngUserService, AuthSettingsManagerClient managerClient,
-                              LastAdminCheckService lastAdminCheckService, AccessControlAdminClient accessControlAdminClient, AccessControlClient accessControlClient) {
+      OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
+      NgUserService ngUserService, AuthSettingsManagerClient managerClient, LastAdminCheckService lastAdminCheckService,
+      AccessControlAdminClient accessControlAdminClient, AccessControlClient accessControlClient) {
     this.userGroupRepository = userGroupRepository;
     this.outboxService = outboxService;
     this.transactionTemplate = transactionTemplate;
@@ -503,51 +502,85 @@ public class UserGroupServiceImpl implements UserGroupService {
 
   private Criteria createUserGroupFilterCriteria(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String searchTerm, UserGroupFilterType filterType) {
-    Criteria criteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
+    Criteria criteria = new Criteria();
+    Criteria scopeCriteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
     if (isNotBlank(searchTerm)) {
-      criteria.orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
+      scopeCriteria.orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
           Criteria.where(UserGroupKeys.tags).regex(searchTerm, "i"));
     }
     // call access control and get inherited user group ids
     if (filterType == INCLUDE_INHERITED_GROUPS) {
-      criteria.orOperator(createInheritedUserGroupFilterCriteria(accountIdentifier, orgIdentifier, projectIdentifier, filterType));
+      criteria.orOperator(
+          scopeCriteria, createInheritedUserGroupFilterCriteria(accountIdentifier, orgIdentifier, projectIdentifier));
+    } else {
+      criteria.andOperator(scopeCriteria);
     }
     return criteria;
   }
 
-  private Criteria createInheritedUserGroupFilterCriteria(String accountIdentifier, String orgIdentifier,
-                                                          String projectIdentifier, UserGroupFilterType filterType) {
+  private Criteria createInheritedUserGroupFilterCriteria(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     Criteria criteria = new Criteria();
-    if (filterType.equals(INCLUDE_INHERITED_GROUPS)) {
-      Set<String> principalScopeLevelFilters = new HashSet<>();
-      if (isNotEmpty(projectIdentifier)) {
-        if(accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, orgIdentifier, null),
-                Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION)) {
-          principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, orgIdentifier, null).toString().toLowerCase());
-        }
-        if(accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, null, null),
-                Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION))
-        {
-          principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, null, null).toString().toLowerCase());
-        }
-      }
-      else if (isNotEmpty(orgIdentifier) && accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, null, null),
-              Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION))
-        {
-          principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, null, null).toString().toLowerCase());
-        }
+    Set<String> principalScopeLevelFilters = new HashSet<>();
 
-      if (isNotEmpty(principalScopeLevelFilters)) {
-        RoleAssignmentFilterDTO roleAssignmentFilterDTO =
-                RoleAssignmentFilterDTO.builder()
-                        .principalTypeFilter(Collections.singleton(USER_GROUP))
-                        .principalScopeLevelFilter(principalScopeLevelFilters)
-                        .build();
-        RoleAssignmentAggregateResponseDTO roleAssignmentAggregateResponseDTO =
-                NGRestUtils.getResponse(accessControlAdminClient.getAggregatedFilteredRoleAssignments(
-                        accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
-        criteria.and(UserGroupKeys.identifier).in(roleAssignmentAggregateResponseDTO.getRoleAssignments());
-      }
+    if ((isNotEmpty(projectIdentifier) || isNotEmpty(orgIdentifier))
+        && accessControlClient.hasAccess(
+            ResourceScope.of(accountIdentifier, null, null), Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION)) {
+      principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, null, null).toString().toLowerCase());
+    }
+    if (isNotEmpty(projectIdentifier)
+        && accessControlClient.hasAccess(ResourceScope.of(accountIdentifier, orgIdentifier, null),
+            Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION)) {
+      principalScopeLevelFilters.add(ScopeLevel.of(accountIdentifier, orgIdentifier, null).toString().toLowerCase());
+    }
+
+    if (isNotEmpty(principalScopeLevelFilters)) {
+      RoleAssignmentFilterDTO roleAssignmentFilterDTO = RoleAssignmentFilterDTO.builder()
+                                                            .principalTypeFilter(Collections.singleton(USER_GROUP))
+                                                            .principalScopeLevelFilter(principalScopeLevelFilters)
+                                                            .build();
+      RoleAssignmentAggregateResponseDTO roleAssignmentAggregateResponseDTO =
+          NGRestUtils.getResponse(accessControlAdminClient.getAggregatedFilteredRoleAssignments(
+              accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
+      criteria.orOperator(
+          roleAssignmentAggregateResponseDTO.getRoleAssignments()
+              .stream()
+              .map(roleAssignmentDTO
+                  -> Criteria.where(UserGroupKeys.identifier)
+                         .is(roleAssignmentDTO.getPrincipal().getIdentifier())
+                         .andOperator(createScopeCriteriaFromScopeLevel(accountIdentifier, orgIdentifier,
+                             projectIdentifier, roleAssignmentDTO.getPrincipal().getScopeLevel())))
+              .toArray(Criteria[] ::new)
+
+      );
+    }
+    return criteria;
+  }
+
+  private Criteria createScopeCriteriaFromScopeLevel(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String scopeLevel) {
+    Criteria criteria = new Criteria();
+    if (scopeLevel.equalsIgnoreCase(ScopeLevel.ACCOUNT.toString())) {
+      criteria.and(UserGroupKeys.accountIdentifier)
+          .is(accountIdentifier)
+          .and(UserGroupKeys.orgIdentifier)
+          .exists(false)
+          .and(UserGroupKeys.projectIdentifier)
+          .exists(false);
+    } else if (scopeLevel.equalsIgnoreCase(ScopeLevel.ORGANIZATION.toString())) {
+      criteria.and(UserGroupKeys.accountIdentifier)
+          .is(accountIdentifier)
+          .and(UserGroupKeys.orgIdentifier)
+          .is(orgIdentifier)
+          .and(UserGroupKeys.projectIdentifier)
+          .exists(false);
+    } else if (scopeLevel.equalsIgnoreCase(ScopeLevel.PROJECT.toString())) {
+      criteria.and(UserGroupKeys.accountIdentifier)
+          .is(accountIdentifier)
+          .and(UserGroupKeys.orgIdentifier)
+          .is(orgIdentifier)
+          .and(UserGroupKeys.projectIdentifier)
+          .is(projectIdentifier);
     }
     return criteria;
   }
