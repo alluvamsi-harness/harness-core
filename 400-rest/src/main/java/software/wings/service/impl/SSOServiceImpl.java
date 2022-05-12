@@ -376,10 +376,7 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapConnectionSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
-    if (featureFlagService.isEnabled(FeatureName.LDAP_SECRET_AUTH, ldapSettings.getAccountId())) {
-      ssoServiceHelper.encryptLdapSecret(
-          ldapSettings.getConnectionSettings(), secretManager, ldapSettings.getAccountId());
-    }
+    encryptSecretIfFFisEnabled(ldapSettings);
     ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
@@ -391,18 +388,7 @@ public class SSOServiceImpl implements SSOService {
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
           .validateLdapConnectionSettings(ldapSettings, encryptedDataDetail);
     } finally {
-      if (!featureFlagService.isEnabled(FeatureName.LDAP_SECRET_AUTH, ldapSettings.getAccountId())) {
-        if (temporaryEncryption) {
-          secretManager.deleteSecret(
-              accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
-        }
-      } else {
-        if (temporaryEncryption
-            && LdapConnectionSettings.INLINE_SECRET.equals(ldapSettings.getConnectionSettings().getPasswordType())) {
-          secretManager.deleteSecret(
-              accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
-        }
-      }
+      deleteTempSecret(temporaryEncryption, encryptedDataDetail, ldapSettings, accountId);
     }
   }
 
@@ -410,6 +396,7 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapUserSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
+    encryptSecretIfFFisEnabled(ldapSettings);
     ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
@@ -421,9 +408,7 @@ public class SSOServiceImpl implements SSOService {
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
           .validateLdapUserSettings(ldapSettings, encryptedDataDetail);
     } finally {
-      if (temporaryEncryption) {
-        secretManager.deleteSecret(accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
-      }
+      deleteTempSecret(temporaryEncryption, encryptedDataDetail, ldapSettings, accountId);
     }
   }
 
@@ -431,6 +416,7 @@ public class SSOServiceImpl implements SSOService {
   public LdapTestResponse validateLdapGroupSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);
+    encryptSecretIfFFisEnabled(ldapSettings);
     ldapSettings.encryptLdapInlineSecret(secretManager);
     EncryptedDataDetail encryptedDataDetail = ldapSettings.getEncryptedDataDetails(secretManager);
     try {
@@ -442,9 +428,7 @@ public class SSOServiceImpl implements SSOService {
       return delegateProxyFactory.get(LdapDelegateService.class, syncTaskContext)
           .validateLdapGroupSettings(ldapSettings, encryptedDataDetail);
     } finally {
-      if (temporaryEncryption) {
-        secretManager.deleteSecret(accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
-      }
+      deleteTempSecret(temporaryEncryption, encryptedDataDetail, ldapSettings, accountId);
     }
   }
 
@@ -585,5 +569,26 @@ public class SSOServiceImpl implements SSOService {
     }
 
     return SAMLProviderType.OTHER;
+  }
+
+  private void encryptSecretIfFFisEnabled(@NotNull LdapSettings ldapSettings) {
+    if (featureFlagService.isEnabled(FeatureName.LDAP_SECRET_AUTH, ldapSettings.getAccountId())) {
+      ssoServiceHelper.encryptLdapSecret(
+          ldapSettings.getConnectionSettings(), secretManager, ldapSettings.getAccountId());
+    }
+  }
+
+  private void deleteTempSecret(boolean temporaryEncryption, EncryptedDataDetail encryptedDataDetail,
+      LdapSettings ldapSettings, String accountId) {
+    if (!featureFlagService.isEnabled(FeatureName.LDAP_SECRET_AUTH, ldapSettings.getAccountId())) {
+      if (temporaryEncryption) {
+        secretManager.deleteSecret(accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
+      }
+    } else {
+      if (temporaryEncryption
+          && LdapConnectionSettings.INLINE_SECRET.equals(ldapSettings.getConnectionSettings().getPasswordType())) {
+        secretManager.deleteSecret(accountId, encryptedDataDetail.getEncryptedData().getUuid(), new HashMap<>(), false);
+      }
+    }
   }
 }
