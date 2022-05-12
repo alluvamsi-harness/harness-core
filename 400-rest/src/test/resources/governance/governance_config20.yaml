@@ -4,24 +4,16 @@ disableAllDeployments: false
 timeRangeBasedFreezeConfigs:
   - type: TIME_RANGE_BASED_FREEZE_CONFIG
     appSelections:
-      - apps:
-          - test
-          - sample
+      - filterType: ALL
         envSelection:
-          - environments:
-              - prod
-              - qa
-            filterType: CUSTOM
-        serviceSelection:
         - filterType: ALL
-        filterType: CUSTOM
     applicable: false
     description: git sync
-    name: customAppCustomEnv
+    name: allAppAllEnv
     timeRange:
       durationBased: false
       from: '1707388740000'
-      to: '1707392340000'
       timeZone: Asia/Calcutta
+      to: '1707392340000'
     userGroups:
       - Account Administrator
