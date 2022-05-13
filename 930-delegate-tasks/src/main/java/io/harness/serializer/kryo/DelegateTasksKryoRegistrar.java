@@ -90,10 +90,13 @@ import software.wings.beans.approval.Criteria;
 import software.wings.beans.approval.ServiceNowApprovalParams;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactoryCollectionTaskParameters;
+import software.wings.beans.command.EcsResizeParams;
 import software.wings.beans.command.ExecutionLogCallback;
+import software.wings.beans.command.ResizeCommandUnitExecutionData;
 import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.LogzConfig;
 import software.wings.beans.config.NexusConfig;
+import software.wings.beans.container.AwsAutoScalarConfig;
 import software.wings.beans.container.EcsSteadyStateCheckParams;
 import software.wings.beans.container.EcsSteadyStateCheckResponse;
 import software.wings.beans.container.KubernetesSteadyStateCheckParams;
@@ -136,6 +139,10 @@ import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapab
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsFeed;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsPackageVersion;
+import software.wings.helpers.ext.ecs.request.EcsBGRoute53DNSWeightUpdateRequest;
+import software.wings.helpers.ext.ecs.request.EcsDeployRollbackDataFetchRequest;
+import software.wings.helpers.ext.ecs.request.EcsServiceDeployRequest;
+import software.wings.helpers.ext.ecs.response.EcsBGRoute53DNSWeightUpdateResponse;
 import software.wings.helpers.ext.external.comm.CollaborationProviderRequest;
 import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
 import software.wings.helpers.ext.external.comm.EmailRequest;
@@ -678,5 +685,13 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(LdapUserResponse.class, 5502);
     kryo.register(LdapUserSettings.class, 5497);
     kryo.register(LdapSettingsDTO.class, 5495);
+
+    kryo.register(ResizeCommandUnitExecutionData.class, 5053);
+    kryo.register(EcsServiceDeployRequest.class, 7148);
+    kryo.register(EcsBGRoute53DNSWeightUpdateRequest.class, 7103);
+    kryo.register(EcsBGRoute53DNSWeightUpdateResponse.class, 7104);
+    kryo.register(EcsResizeParams.class, 5181);
+    kryo.register(AwsAutoScalarConfig.class, 5559);
+    kryo.register(EcsDeployRollbackDataFetchRequest.class, 8086);
   }
 }

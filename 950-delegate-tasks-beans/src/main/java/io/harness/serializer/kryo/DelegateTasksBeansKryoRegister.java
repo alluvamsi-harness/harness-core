@@ -557,6 +557,7 @@ import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.HostValidationResponse;
+import software.wings.beans.InstanceUnitType;
 import software.wings.beans.JenkinsConfig;
 import software.wings.beans.JenkinsSubTaskType;
 import software.wings.beans.LambdaTestEvent;
@@ -607,8 +608,11 @@ import software.wings.helpers.ext.cloudformation.response.CloudFormationRollback
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
 import software.wings.helpers.ext.cloudformation.response.StackSummaryInfo;
 import software.wings.helpers.ext.ecs.request.EcsCommandRequest;
+import software.wings.helpers.ext.ecs.request.EcsRunTaskDeployRequest;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandResponse;
+import software.wings.helpers.ext.ecs.response.EcsDeployRollbackDataFetchResponse;
+import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.helpers.ext.helm.response.ReleaseInfo;
@@ -1363,5 +1367,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(LdapTestResponse.class, 5499);
     kryo.register(LdapResponse.class, 5504);
     kryo.register(LdapResponse.Status.class, 5505);
+    kryo.register(EcsRunTaskDeployRequest.class, 7501);
+    kryo.register(EcsRunTaskDeployResponse.class, 7502);
+    kryo.register(InstanceUnitType.class, 5221);
+    kryo.register(EcsDeployRollbackDataFetchResponse.class, 8087);
   }
 }
