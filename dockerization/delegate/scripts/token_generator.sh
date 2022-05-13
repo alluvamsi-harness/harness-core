@@ -71,7 +71,3 @@ signature=$(echo "${header_payload}" | hmacsha256_sign | base64_encode)
 JWT_TOKEN="${header_payload}.${signature}"
 
 echo $JWT_TOKEN
-# curl --location --request PUT $MANAGER_URL'/api/admin/rings/'$RING'/'$RING_PROPERTY \
-# --header 'Authorization: Bearer '$JWT_TOKEN \
-# --header 'Content-Type: application/json' \
-# --data ''$IMAGE_REPO:$REPO_IMAGE_TAG
