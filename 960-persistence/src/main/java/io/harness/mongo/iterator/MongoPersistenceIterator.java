@@ -231,7 +231,7 @@ public class MongoPersistenceIterator<T extends PersistentIterable, F extends Fi
       try {
         semaphore.acquire();
       } catch (InterruptedException e) {
-        log.debug("Working on entity was interrupted", e);
+        log.info("Working on entity was interrupted", e);
         iteratorMetricsService.recordIteratorMetrics(iteratorName, ITERATOR_ERROR);
         Thread.currentThread().interrupt();
         return;
@@ -249,7 +249,7 @@ public class MongoPersistenceIterator<T extends PersistentIterable, F extends Fi
 
         long delay = nextIteration == null || nextIteration == 0 ? 0 : startTime - nextIteration;
         try (DelayLogContext ignore2 = new DelayLogContext(delay, OVERRIDE_ERROR)) {
-          log.debug("Working on entity");
+          log.info("Working on entity");
           iteratorMetricsService.recordIteratorMetrics(iteratorName, ITERATOR_WORKING_ON_ENTITY);
           iteratorMetricsService.recordIteratorMetricsWithDuration(
               iteratorName, Duration.ofMillis(delay), ITERATOR_DELAY);
@@ -273,7 +273,7 @@ public class MongoPersistenceIterator<T extends PersistentIterable, F extends Fi
         semaphore.release();
 
         long processTime = currentTimeMillis() - startTime;
-        log.debug("Done with entity");
+        log.info("Done with entity");
         iteratorMetricsService.recordIteratorMetricsWithDuration(
             iteratorName, Duration.ofMillis(processTime), ITERATOR_PROCESSING_TIME);
 
