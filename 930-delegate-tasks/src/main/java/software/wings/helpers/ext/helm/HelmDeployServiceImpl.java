@@ -63,11 +63,11 @@ import io.harness.logging.LogLevel;
 
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
-import software.wings.beans.appmanifest.ManifestFile;
+import software.wings.beans.appmanifest.ManifestFileDTO;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.command.HelmDummyCommandUnit;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.command.HelmDummyCommandUnitConstants;
+import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.beans.yaml.GitFetchFilesResult;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
@@ -76,7 +76,6 @@ import software.wings.delegatetasks.helm.HarnessHelmDeployConfig;
 import software.wings.delegatetasks.helm.HelmCommandHelper;
 import software.wings.delegatetasks.helm.HelmDeployChartSpec;
 import software.wings.delegatetasks.helm.HelmTaskHelper;
-import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
@@ -131,7 +130,6 @@ import org.apache.commons.lang3.StringUtils;
 @OwnedBy(CDP)
 public class HelmDeployServiceImpl implements HelmDeployService {
   public static final String MANIFEST_FILE_NAME = "manifest.yaml";
-  @Inject private transient K8sTaskHelper k8sTaskHelper;
   @Inject private K8sTaskHelperBase k8sTaskHelperBase;
   @Inject private HelmClient helmClient;
   @Inject private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
@@ -176,7 +174,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
       printHelmChartKubernetesResources(commandRequest);
 
       executionLogCallback =
-          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnit.InstallUpgrade);
+          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnitConstants.InstallUpgrade);
       helmChartInfo = getHelmChartDetails(commandRequest);
 
       if (checkNewHelmInstall(commandRequest)) {
@@ -208,13 +206,14 @@ public class HelmDeployServiceImpl implements HelmDeployService {
       }
 
       executionLogCallback =
-          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnit.WaitForSteadyState);
+          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnitConstants.WaitForSteadyState);
 
       List<ContainerInfo> containerInfos = getContainerInfos(commandRequest, k8sWorkloads, useK8sSteadyStateCheck,
           executionLogCallback, commandRequest.getTimeoutInMillis());
       commandResponse.setContainerInfoList(containerInfos);
 
-      executionLogCallback = markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnit.WrapUp);
+      executionLogCallback =
+          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnitConstants.WrapUp);
       return commandResponse;
     } catch (UncheckedTimeoutException e) {
       String msg = TIMED_OUT_IN_STEADY_STATE;
@@ -281,7 +280,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
       if (success) {
         final String namespace = entry.getKey();
         success = success
-            && k8sTaskHelper.doStatusCheckAllResourcesForHelm(client, entry.getValue(), commandRequest.getOcPath(),
+            && k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(client, entry.getValue(), commandRequest.getOcPath(),
                 commandRequest.getWorkingDir(), namespace, commandRequest.getKubeConfigLocation(),
                 (ExecutionLogCallback) executionLogCallback);
         executionLogCallback.saveExecutionLog(
@@ -384,7 +383,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
   @VisibleForTesting
   void fetchInlineChartUrl(HelmCommandRequest commandRequest, long timeoutInMillis) throws Exception {
-    HelmChartSpecification helmChartSpecification = commandRequest.getChartSpecification();
+    HelmChartSpecificationDTO helmChartSpecification = commandRequest.getChartSpecification();
     String workingDirectory = Paths.get(getWorkingDirectory(commandRequest)).toString();
 
     helmTaskHelper.downloadChartFiles(
@@ -494,8 +493,8 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
     HelmCommandResponse commandResponse = renderHelmChart(commandRequest, namespace, chartLocation, valueOverrides);
 
-    ManifestFile manifestFile =
-        ManifestFile.builder().fileName(MANIFEST_FILE_NAME).fileContent(commandResponse.getOutput()).build();
+    ManifestFileDTO manifestFile =
+        ManifestFileDTO.builder().fileName(MANIFEST_FILE_NAME).fileContent(commandResponse.getOutput()).build();
     helmHelper.replaceManifestPlaceholdersWithLocalConfig(manifestFile);
 
     List<KubernetesResource> resources = ManifestHelper.processYaml(manifestFile.getFileContent());
@@ -557,7 +556,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
   @Override
   public HelmCommandResponse rollback(HelmRollbackCommandRequest commandRequest) {
-    LogCallback executionLogCallback = getExecutionLogCallback(commandRequest, HelmDummyCommandUnit.Rollback);
+    LogCallback executionLogCallback = getExecutionLogCallback(commandRequest, HelmDummyCommandUnitConstants.Rollback);
     commandRequest.setExecutionLogCallback(executionLogCallback);
 
     try {
@@ -581,7 +580,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
       }
 
       executionLogCallback =
-          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnit.WaitForSteadyState);
+          markDoneAndStartNew(commandRequest, executionLogCallback, HelmDummyCommandUnitConstants.WaitForSteadyState);
 
       List<ContainerInfo> containerInfos = getContainerInfos(commandRequest, k8sRollbackWorkloads,
           useK8sSteadyStateCheck, executionLogCallback, commandRequest.getTimeoutInMillis());
@@ -930,9 +929,9 @@ public class HelmDeployServiceImpl implements HelmDeployService {
             if (optionalHarnessHelmDeployConfig.isPresent()) {
               HelmDeployChartSpec helmDeployChartSpec = optionalHarnessHelmDeployConfig.get().getHelmDeployChartSpec();
 
-              HelmChartSpecification helmChartSpecification;
+              HelmChartSpecificationDTO helmChartSpecification;
               if (commandRequest.getChartSpecification() == null) {
-                helmChartSpecification = HelmChartSpecification.builder().build();
+                helmChartSpecification = HelmChartSpecificationDTO.builder().build();
               } else {
                 helmChartSpecification = commandRequest.getChartSpecification();
               }
@@ -1103,7 +1102,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
   }
 
   private String getChartVersion(HelmInstallCommandRequest request, String chartInfo) throws Exception {
-    HelmChartSpecification chartSpecification = request.getChartSpecification();
+    HelmChartSpecificationDTO chartSpecification = request.getChartSpecification();
 
     if (isNotBlank(chartSpecification.getChartVersion())) {
       return chartSpecification.getChartVersion();
@@ -1144,7 +1143,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
   private HelmChartInfo getHelmChartInfoFromChartSpec(HelmInstallCommandRequest request) throws Exception {
     String chartInfo;
-    HelmChartSpecification chartSpecification = request.getChartSpecification();
+    HelmChartSpecificationDTO chartSpecification = request.getChartSpecification();
 
     if (isBlank(chartSpecification.getChartUrl())) {
       chartInfo = chartSpecification.getChartName();

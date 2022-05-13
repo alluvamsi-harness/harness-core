@@ -29,7 +29,7 @@ import io.harness.logging.NoopExecutionCallback;
 import io.harness.secret.SecretSanitizerThreadLocal;
 
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.command.HelmDummyCommandUnit;
+import software.wings.beans.command.HelmDummyCommandUnitConstants;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -76,10 +76,10 @@ public class HelmCommandTask extends AbstractDelegateRunnableTask {
     HelmCommandResponse commandResponse;
 
     try {
-      init(helmCommandRequest, getExecutionLogCallback(helmCommandRequest, HelmDummyCommandUnit.Init));
+      init(helmCommandRequest, getExecutionLogCallback(helmCommandRequest, HelmDummyCommandUnitConstants.Init));
 
       helmCommandRequest.setExecutionLogCallback(
-          getExecutionLogCallback(helmCommandRequest, HelmDummyCommandUnit.Prepare));
+          getExecutionLogCallback(helmCommandRequest, HelmDummyCommandUnitConstants.Prepare));
 
       helmCommandRequest.getExecutionLogCallback().saveExecutionLog(
           helmCommandHelper.getDeploymentMessage(helmCommandRequest), LogLevel.INFO, CommandExecutionStatus.RUNNING);

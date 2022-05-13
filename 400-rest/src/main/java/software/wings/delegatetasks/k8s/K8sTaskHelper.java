@@ -60,6 +60,7 @@ import io.harness.manifest.CustomManifestSource;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
 import software.wings.beans.appmanifest.ManifestFile;
+import software.wings.beans.appmanifest.ManifestFileDTO;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.beans.yaml.GitFetchFilesResult;
@@ -125,12 +126,12 @@ public class K8sTaskHelper {
   }
 
   private boolean writeManifestFilesToDirectory(
-      List<ManifestFile> manifestFiles, String manifestFilesDirectory, ExecutionLogCallback executionLogCallback) {
+      List<ManifestFileDTO> manifestFiles, String manifestFilesDirectory, ExecutionLogCallback executionLogCallback) {
     String directoryPath = Paths.get(manifestFilesDirectory).toString();
 
     try {
       for (int i = 0; i < manifestFiles.size(); i++) {
-        ManifestFile manifestFile = manifestFiles.get(i);
+        ManifestFileDTO manifestFile = manifestFiles.get(i);
         if (StringUtils.equals(values_filename, manifestFile.getFileName())) {
           continue;
         }

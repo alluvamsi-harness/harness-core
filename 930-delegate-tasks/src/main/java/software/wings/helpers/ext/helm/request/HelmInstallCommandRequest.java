@@ -19,11 +19,12 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
 import software.wings.service.impl.ContainerServiceParams;
 
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,34 +36,38 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @TargetModule(HarnessModule._950_DELEGATE_TASKS_BEANS)
 @OwnedBy(CDP)
-public class HelmRollbackCommandRequest extends HelmCommandRequest {
+public class HelmInstallCommandRequest extends HelmCommandRequest {
   private Integer newReleaseVersion;
   private Integer prevReleaseVersion;
-  private Integer rollbackVersion;
+  private String namespace;
   private long timeoutInMillis;
+  private Map<String, String> valueOverrides;
+  private boolean optimizedFilesFetch;
 
-  public HelmRollbackCommandRequest(boolean mergeCapabilities) {
-    super(HelmCommandType.ROLLBACK, mergeCapabilities);
+  public HelmInstallCommandRequest(boolean mergeCapabilities) {
+    super(HelmCommandType.INSTALL, mergeCapabilities);
   }
 
   @Builder
-  public HelmRollbackCommandRequest(String accountId, String appId, String kubeConfigLocation, String commandName,
-      String activityId, ContainerServiceParams containerServiceParams, String releaseName, int newReleaseVersion,
-      int prevReleaseVersion, int rollbackVersion, long timeoutInMillis, HelmChartSpecification chartSpecification,
-      String repoName, GitConfig gitConfig, List<EncryptedDataDetail> encryptedDataDetails,
+  public HelmInstallCommandRequest(String accountId, String appId, String kubeConfigLocation, String commandName,
+      String activityId, ContainerServiceParams containerServiceParams, String releaseName,
+      HelmChartSpecificationDTO chartSpecification, int newReleaseVersion, int prevReleaseVersion, String namespace,
+      long timeoutInMillis, Map<String, String> valueOverrides, List<String> variableOverridesYamlFiles,
+      String repoName, GitConfig gitConfig, GitFileConfig gitFileConfig, List<EncryptedDataDetail> encryptedDataDetails,
       LogCallback executionLogCallback, String commandFlags, HelmCommandFlag helmCommandFlag,
       K8sDelegateManifestConfig sourceRepoConfig, HelmVersion helmVersion, String ocPath, String workingDir,
-      GitFileConfig gitFileConfig, List<String> variableOverridesYamlFiles, boolean k8SteadyStateCheckEnabled,
-      boolean mergeCapabilities, boolean isGitHostConnectivityCheck, boolean useLatestChartMuseumVersion,
-      boolean useNewKubectlVersion) {
-    super(HelmCommandType.ROLLBACK, accountId, appId, kubeConfigLocation, commandName, activityId,
+      boolean k8SteadyStateCheckEnabled, boolean mergeCapabilities, boolean isGitHostConnectivityCheck,
+      boolean useLatestChartMuseumVersion, boolean optimizedFilesFetch, boolean useNewKubectlVersion) {
+    super(HelmCommandType.INSTALL, accountId, appId, kubeConfigLocation, commandName, activityId,
         containerServiceParams, releaseName, chartSpecification, repoName, gitConfig, encryptedDataDetails,
         executionLogCallback, commandFlags, helmCommandFlag, sourceRepoConfig, helmVersion, ocPath, workingDir,
         variableOverridesYamlFiles, gitFileConfig, k8SteadyStateCheckEnabled, mergeCapabilities,
         isGitHostConnectivityCheck, useLatestChartMuseumVersion, useNewKubectlVersion);
     this.newReleaseVersion = newReleaseVersion;
     this.prevReleaseVersion = prevReleaseVersion;
-    this.rollbackVersion = rollbackVersion;
+    this.namespace = namespace;
     this.timeoutInMillis = timeoutInMillis;
+    this.valueOverrides = valueOverrides;
+    this.optimizedFilesFetch = optimizedFilesFetch;
   }
 }

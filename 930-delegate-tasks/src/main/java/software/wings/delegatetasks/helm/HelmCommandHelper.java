@@ -18,7 +18,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.WingsException;
 
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
@@ -102,7 +102,7 @@ public class HelmCommandHelper {
     return Optional.empty();
   }
 
-  public boolean isValidChartSpecification(HelmChartSpecification chartSpec) {
+  public boolean isValidChartSpecification(HelmChartSpecificationDTO chartSpec) {
     return !(chartSpec == null || (isBlank(chartSpec.getChartName()) && isBlank(chartSpec.getChartUrl())));
   }
 }

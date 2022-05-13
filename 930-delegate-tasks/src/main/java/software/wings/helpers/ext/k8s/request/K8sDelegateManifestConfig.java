@@ -21,7 +21,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
-import software.wings.beans.appmanifest.ManifestFile;
+import software.wings.beans.appmanifest.ManifestFileDTO;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.kustomize.KustomizeConfig;
@@ -36,7 +36,7 @@ import lombok.Data;
 @TargetModule(_950_DELEGATE_TASKS_BEANS)
 public class K8sDelegateManifestConfig implements NestedAnnotationResolver {
   StoreType manifestStoreTypes;
-  List<ManifestFile> manifestFiles;
+  List<ManifestFileDTO> manifestFiles;
   List<EncryptedDataDetail> encryptedDataDetails;
 
   // Applies to GitFileConfig

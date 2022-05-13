@@ -79,7 +79,7 @@ import software.wings.beans.AwsConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfig;
@@ -487,7 +487,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
   @Owner(developers = ACASIAN)
   @Category(UnitTests.class)
   public void testDownloadChartFilesForEmptyHelmRepoBySpec() throws Exception {
-    HelmChartSpecification helmChartSpecification = getHelmChartSpecification(null);
+    HelmChartSpecificationDTO helmChartSpecification = getHelmChartSpecification(null);
     helmChartSpecification.setChartName("stable/chartName1");
     Path outputTemporaryDir = Files.createTempDirectory("chartFile");
 
@@ -615,8 +615,8 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .build();
   }
 
-  private HelmChartSpecification getHelmChartSpecification(String url) {
-    return HelmChartSpecification.builder().chartName("chartName").chartVersion("").chartUrl(url).build();
+  private HelmChartSpecificationDTO getHelmChartSpecification(String url) {
+    return HelmChartSpecificationDTO.builder().chartName("chartName").chartVersion("").chartUrl(url).build();
   }
 
   @Test

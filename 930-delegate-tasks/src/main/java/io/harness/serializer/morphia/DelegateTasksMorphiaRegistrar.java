@@ -57,7 +57,6 @@ import software.wings.beans.SmbConfig;
 import software.wings.beans.SplunkConfig;
 import software.wings.beans.SumoConfig;
 import software.wings.beans.VaultConfig;
-import software.wings.beans.command.ResizeCommandUnitExecutionData;
 import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.LogzConfig;
 import software.wings.beans.config.NexusConfig;
@@ -71,7 +70,6 @@ import software.wings.delegatetasks.validation.capabilities.GitConnectionCapabil
 import software.wings.delegatetasks.validation.capabilities.SSHHostValidationCapability;
 import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
-import software.wings.helpers.ext.ecs.response.EcsBGRoute53DNSWeightUpdateResponse;
 import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
 import software.wings.helpers.ext.helm.response.HelmCollectChartResponse;
 import software.wings.helpers.ext.mail.EmailData;
@@ -203,7 +201,5 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.ScriptStateExecutionSummary", ScriptStateExecutionSummary.class);
     w.put("api.shellscript.provision.ShellScriptProvisionExecutionData", ShellScriptProvisionExecutionData.class);
     w.put("api.ServiceNowExecutionData", ServiceNowExecutionData.class);
-    w.put("beans.command.ResizeCommandUnitExecutionData", ResizeCommandUnitExecutionData.class);
-    w.put("helpers.ext.ecs.response.EcsBGRoute53DNSWeightUpdateResponse", EcsBGRoute53DNSWeightUpdateResponse.class);
   }
 }

@@ -53,7 +53,7 @@ import io.harness.k8s.model.HelmVersion;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfig;
@@ -180,7 +180,7 @@ public class HelmTaskHelper {
     fetchChartFiles(helmChartConfigParams, workingDirectory, timeoutInMillis, helmCommandFlag);
   }
 
-  public void downloadChartFiles(HelmChartSpecification helmChartSpecification, String destinationDirectory,
+  public void downloadChartFiles(HelmChartSpecificationDTO helmChartSpecification, String destinationDirectory,
       HelmCommandRequest helmCommandRequest, long timeoutInMillis, HelmCommandFlag helmCommandFlag) throws Exception {
     String workingDirectory = createDirectory(Paths.get(destinationDirectory).toString());
     HelmChartConfigParams helmChartConfigParams =

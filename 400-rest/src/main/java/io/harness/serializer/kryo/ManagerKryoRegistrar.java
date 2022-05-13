@@ -207,7 +207,6 @@ import software.wings.beans.UserInvite;
 import software.wings.beans.UserInviteSource;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.ApplicationManifest.ManifestCollectionStatus;
-import software.wings.beans.appmanifest.ManifestFile;
 import software.wings.beans.artifact.AcrArtifactStream;
 import software.wings.beans.artifact.AmazonS3ArtifactStream;
 import software.wings.beans.artifact.AmiArtifactStream;
@@ -266,7 +265,6 @@ import software.wings.beans.container.ContainerCommandExecutionResponse;
 import software.wings.beans.container.ContainerDefinition;
 import software.wings.beans.container.EcsContainerTask;
 import software.wings.beans.container.EcsServiceSpecification;
-import software.wings.beans.container.HelmChartSpecification;
 import software.wings.beans.container.IstioConfig;
 import software.wings.beans.container.KubernetesBlueGreenConfig;
 import software.wings.beans.container.KubernetesContainerTask;
@@ -286,11 +284,6 @@ import software.wings.beans.security.UserGroup;
 import software.wings.beans.security.access.Whitelist;
 import software.wings.beans.security.access.WhitelistConfig;
 import software.wings.beans.security.access.WhitelistStatus;
-import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
-import software.wings.beans.settings.helm.GCSHelmRepoConfig;
-import software.wings.beans.settings.helm.HelmRepoConfigValidationResponse;
-import software.wings.beans.settings.helm.HelmRepoConfigValidationTaskParams;
-import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.beans.sso.SSOType;
 import software.wings.beans.template.CopiedTemplateMetadata;
 import software.wings.beans.template.ImportedTemplateMetadata;
@@ -308,7 +301,6 @@ import software.wings.delegatetasks.buildsource.BuildSourceCleanupCallback;
 import software.wings.delegatetasks.event.EventsDeliveryCallback;
 import software.wings.delegatetasks.manifest.ManifestCollectionExecutionResponse;
 import software.wings.delegatetasks.manifest.ManifestCollectionResponse;
-import software.wings.delegatetasks.validation.capabilities.HelmCommandCapability;
 import software.wings.expression.ShellScriptEnvironmentVariables;
 import software.wings.helpers.ext.cloudformation.CloudFormationCompletionFlag;
 import software.wings.helpers.ext.ecs.request.EcsBGListenerUpdateRequest;
@@ -319,19 +311,10 @@ import software.wings.helpers.ext.ecs.request.EcsServiceSetupRequest;
 import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
-import software.wings.helpers.ext.helm.HelmCommandExecutionResponse;
-import software.wings.helpers.ext.helm.request.HelmCommandRequest;
-import software.wings.helpers.ext.helm.request.HelmInstallCommandRequest;
-import software.wings.helpers.ext.helm.request.HelmReleaseHistoryCommandRequest;
-import software.wings.helpers.ext.helm.request.HelmRollbackCommandRequest;
-import software.wings.helpers.ext.helm.request.HelmValuesFetchTaskParameters;
-import software.wings.helpers.ext.helm.response.HelmReleaseHistoryCommandResponse;
-import software.wings.helpers.ext.helm.response.HelmValuesFetchTaskResponse;
 import software.wings.helpers.ext.k8s.request.K8sApplyTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sBlueGreenDeployTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sCanaryDeployTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sCanaryRollbackTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
 import software.wings.helpers.ext.k8s.request.K8sDeleteTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sInstanceSyncTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sRollingDeployRollbackTaskParameters;
@@ -379,7 +362,6 @@ import software.wings.security.authentication.TwoFactorAuthenticationMechanism;
 import software.wings.security.encryption.secretsmanagerconfigs.CustomSecretsManagerConfig;
 import software.wings.security.encryption.secretsmanagerconfigs.CustomSecretsManagerShellScript;
 import software.wings.security.encryption.secretsmanagerconfigs.CustomSecretsManagerShellScript.ScriptType;
-import software.wings.service.impl.PerpetualTaskCapabilityCheckResponse;
 import software.wings.service.impl.SlackMessageSenderImpl;
 import software.wings.service.impl.WorkflowExecutionUpdate;
 import software.wings.service.impl.WorkflowTree;
@@ -549,7 +531,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
 
     kryo.register(Account.class, 5356);
     kryo.register(AppContainer.class, 5064);
-    kryo.register(ManifestFile.class, 5539);
     kryo.register(Base.class, 5001);
     kryo.register(CanaryWorkflowExecutionAdvisor.class, 5024);
     kryo.register(AbstractCommandUnit.class, 5030);
@@ -589,7 +570,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ContainerDefinition.class, 5162);
     kryo.register(EcsContainerTask.class, 5160);
     kryo.register(EcsServiceSpecification.class, 5546);
-    kryo.register(HelmChartSpecification.class, 5269);
 
     kryo.register(IstioConfig.class, 5466);
     kryo.register(KubernetesBlueGreenConfig.class, 5364);
@@ -633,12 +613,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(EcsBGListenerUpdateRequest.class, 5605);
     kryo.register(EcsListenerUpdateRequestConfigData.class, 5610);
     kryo.register(EcsListenerUpdateCommandResponse.class, 5613);
-    kryo.register(HelmCommandExecutionResponse.class, 5260);
-    kryo.register(HelmCommandRequest.HelmCommandType.class, 5262);
-    kryo.register(HelmInstallCommandRequest.class, 5259);
-    kryo.register(HelmReleaseHistoryCommandRequest.class, 5265);
-    kryo.register(HelmRollbackCommandRequest.class, 5268);
-    kryo.register(HelmReleaseHistoryCommandResponse.class, 5266);
     kryo.register(TwoFactorAuthenticationMechanism.class, 5358);
     kryo.register(TimeSeries.class, 5312);
 
@@ -686,7 +660,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(K8sInstanceSyncResponse.class, 7132);
     kryo.register(K8sContextElement.class, 7133);
     kryo.register(K8sStateExecutionData.class, 7134);
-    kryo.register(K8sDelegateManifestConfig.class, 7135);
     kryo.register(K8sScaleTaskParameters.class, 7136);
     kryo.register(K8sScaleResponse.class, 7137);
     kryo.register(K8sCanaryDeployTaskParameters.class, 7138);
@@ -699,14 +672,8 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(K8sInstanceSyncTaskParameters.class, 7147);
 
     kryo.register(TerraformProvisionInheritPlanElement.class, 7153);
-    kryo.register(HelmRepoConfigValidationTaskParams.class, 7158);
-    kryo.register(HelmRepoConfigValidationResponse.class, 7160);
     kryo.register(TemplateReference.class, 7161);
-    kryo.register(AmazonS3HelmRepoConfig.class, 7162);
-    kryo.register(HelmValuesFetchTaskParameters.class, 7165);
-    kryo.register(HelmValuesFetchTaskResponse.class, 7166);
     kryo.register(MLAnalysisType.class, 7175);
-    kryo.register(GCSHelmRepoConfig.class, 7176);
     kryo.register(K8sTrafficSplitTaskParameters.class, 7181);
     kryo.register(K8sTrafficSplitResponse.class, 7182);
     kryo.register(K8sApplyTaskParameters.class, 7186);
@@ -770,7 +737,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(InstanceInfoVariables.class, 7331);
     kryo.register(ScalyrConfig.class, 7334);
 
-    kryo.register(HelmCommandCapability.class, 7336);
     kryo.register(SpotinstTrafficShiftAlbSetupElement.class, 7338);
     kryo.register(SpotinstTrafficShiftAlbSetupExecutionData.class, 7339);
     kryo.register(SpotinstTrafficShiftAlbDeployExecutionData.class, 7340);
@@ -822,8 +788,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsAmiInfoVariables.class, 8059);
 
     kryo.register(AzureVMSSDeployExecutionSummary.class, 8060);
-
-    kryo.register(PerpetualTaskCapabilityCheckResponse.class, 8061);
     kryo.register(CiK8sTaskResponse.class, 8062);
     kryo.register(TerraformOutputVariables.class, 8063);
     kryo.register(EcsRunTaskStateExecutionData.class, 8084);
@@ -966,7 +930,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ServiceHelmElement.class, 400135);
     kryo.register(ServiceHelmElements.class, 400136);
     kryo.register(AppManifestCollectionExecutionData.class, 400137);
-
     kryo.register(RancherK8sClusterProcessor.RancherClusterElementList.class, 50001);
     kryo.register(RancherClusterElement.class, 50002);
     kryo.register(RancherKubernetesInfrastructureMapping.class, 50003);
@@ -974,6 +937,5 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
     kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
-    kryo.register(OciHelmRepoConfig.class, 50012);
   }
 }
