@@ -49,7 +49,6 @@ import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 
 import io.harness.EntityType;
@@ -389,7 +388,7 @@ public class K8BuildSetupUtils {
     Map<String, String> stoEnvVars = getSTOServiceEnvVariables(accountId);
     Map<String, String> commonEnvVars = getCommonStepEnvVariables(
         k8PodDetails, gitEnvVars, runtimeCodebaseVars, podSetupInfo.getWorkDirPath(), logPrefix, ambiance);
-    Map<String, ConnectorConversionInfo> stepConnectors =
+    Map<String, List<ConnectorConversionInfo>> stepConnectors =
         ((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo()).getStepConnectorRefs();
 
     LiteEngineSecretEvaluator liteEngineSecretEvaluator =
@@ -478,21 +477,26 @@ public class K8BuildSetupUtils {
   private CIK8ContainerParams createCIK8ContainerParams(NGAccess ngAccess,
       ContainerDefinitionInfo containerDefinitionInfo, ConnectorDetails harnessInternalImageConnector,
       Map<String, String> commonEnvVars, Map<String, String> stoEnvVars,
-      Map<String, ConnectorConversionInfo> connectorRefs, Map<String, String> volumeToMountPath, String workDirPath,
-      SecurityContext securityContext, String logPrefix, List<SecretVariableDetails> secretVariableDetails,
+      Map<String, List<ConnectorConversionInfo>> connectorRefs, Map<String, String> volumeToMountPath,
+      String workDirPath, SecurityContext securityContext, String logPrefix,
+      List<SecretVariableDetails> secretVariableDetails,
       Map<String, ConnectorDetails> githubApiTokenFunctorConnectors) {
     Map<String, String> envVars = new HashMap<>();
     if (isNotEmpty(containerDefinitionInfo.getEnvVars())) {
       envVars.putAll(containerDefinitionInfo.getEnvVars()); // Put customer input env variables
     }
-
-    Map<String, ConnectorDetails> stepConnectorDetails = emptyMap();
+    Map<String, ConnectorDetails> stepConnectorDetails = new HashMap<>();
     if (isNotEmpty(containerDefinitionInfo.getStepIdentifier()) && isNotEmpty(connectorRefs)) {
-      ConnectorConversionInfo connectorConversionInfo = connectorRefs.get(containerDefinitionInfo.getStepIdentifier());
-      if (connectorConversionInfo != null) {
-        ConnectorDetails connectorDetails =
-            connectorUtils.getConnectorDetailsWithConversionInfo(ngAccess, connectorConversionInfo);
-        stepConnectorDetails = singletonMap(connectorDetails.getIdentifier(), connectorDetails);
+      List<ConnectorConversionInfo> connectorConversionInfos =
+          connectorRefs.get(containerDefinitionInfo.getStepIdentifier());
+      if (connectorConversionInfos != null && connectorConversionInfos.size() > 0) {
+        for (ConnectorConversionInfo connectorConversionInfo : connectorConversionInfos) {
+          ConnectorDetails connectorDetails =
+              connectorUtils.getConnectorDetailsWithConversionInfo(ngAccess, connectorConversionInfo);
+          IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(connectorConversionInfo.getConnectorRef(),
+              ngAccess.getAccountIdentifier(), ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier());
+          stepConnectorDetails.put(identifierRef.getFullyQualifiedName(), connectorDetails);
+        }
       }
     }
 

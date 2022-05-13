@@ -282,6 +282,7 @@ public class RunTimeInputHandler {
             format("Failed to resolve mandatory field %s in step type %s with identifier %s", fieldName, stepType,
                 stepIdentifier));
       }
+      return null;
     }
 
     if (parameterField.isExpression()) {
