@@ -14,6 +14,8 @@ import io.harness.pms.sdk.core.steps.Step;
 import io.harness.registrar.NGCommonUtilStepsRegistrar;
 import io.harness.states.CleanupStep;
 import io.harness.states.InitializeTaskStep;
+import io.harness.states.STOSpecStep;
+import io.harness.states.SecurityStageStepPMS;
 import io.harness.states.SecurityStep;
 
 import java.util.HashMap;
@@ -21,7 +23,7 @@ import java.util.Map;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-@OwnedBy(HarnessTeam.CI)
+@OwnedBy(HarnessTeam.STO)
 public class STOExecutionRegistrar {
   public Map<StepType, Class<? extends Step>> getEngineSteps() {
     Map<StepType, Class<? extends Step>> engineSteps = new HashMap<>();
@@ -29,6 +31,8 @@ public class STOExecutionRegistrar {
     engineSteps.put(InitializeTaskStep.STEP_TYPE, InitializeTaskStep.class);
     engineSteps.put(CleanupStep.STEP_TYPE, CleanupStep.class);
     engineSteps.put(SecurityStep.STEP_TYPE, SecurityStep.class);
+    engineSteps.put(STOSpecStep.STEP_TYPE, STOSpecStep.class);
+    engineSteps.put(SecurityStageStepPMS.STEP_TYPE, SecurityStageStepPMS.class);
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     return engineSteps;
   }

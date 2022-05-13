@@ -7,7 +7,7 @@
 
 package io.harness.app;
 
-import static io.harness.annotations.dev.HarnessTeam.CI;
+import static io.harness.annotations.dev.HarnessTeam.STO;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 import static io.harness.pms.contracts.plan.ExpansionRequestType.KEY;
@@ -152,11 +152,11 @@ import org.springframework.core.convert.converter.Converter;
 import ru.vyarus.guice.validator.ValidationModule;
 
 @Slf4j
-@OwnedBy(CI)
-public class CIManagerApplication extends Application<CIManagerConfiguration> {
+@OwnedBy(STO)
+public class STOManagerApplication extends Application<STOManagerConfiguration> {
   private static final SecureRandom random = new SecureRandom();
   public static final Store HARNESS_STORE = Store.builder().name("harness").build();
-  private static final String APP_NAME = "CI Manager Service Application";
+  private static final String APP_NAME = "STO Manager Service Application";
   public static final String BASE_PACKAGE = "io.harness.app.resources";
   public static final String NG_PIPELINE_PACKAGE = "io.harness.ngpipeline";
   public static final String ENFORCEMENT_CLIENT_PACKAGE = "io.harness.enforcement.client.resources";
@@ -192,7 +192,7 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
 
   @Override
   public void run(CIManagerConfiguration configuration, Environment environment) {
-    log.info("Starting ci manager app ...");
+    log.info("Starting sto manager app ...");
 
     log.info("Entering startup maintenance mode");
     MaintenanceController.forceMaintenance(true);
@@ -207,9 +207,8 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
       Set<Class<? extends KryoRegistrar>> registrars() {
         return ImmutableSet.<Class<? extends KryoRegistrar>>builder()
             .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
-            .addAll(CiBeansRegistrars.kryoRegistrars)
-            .addAll(CiExecutionRegistrars.kryoRegistrars)
-            .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
+            .addAll(StoBeansRegistrars.kryoRegistrars)
+            .addAll(STOExecutionRegistrar.kryoRegistrars)
             .build();
       }
 
@@ -217,7 +216,7 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
       @Singleton
       Set<Class<? extends MorphiaRegistrar>> morphiaRegistrars() {
         return ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
-            .addAll(CiExecutionRegistrars.morphiaRegistrars)
+            .addAll(STOExecutionRegistrar.morphiaRegistrars)
             .addAll(PrimaryVersionManagerRegistrars.morphiaRegistrars)
             .build();
       }
@@ -252,10 +251,7 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
       @Provides
       @Singleton
       List<YamlSchemaRootClass> yamlSchemaRootClasses() {
-        return ImmutableList.<YamlSchemaRootClass>builder()
-            .addAll(CiBeansRegistrars.yamlSchemaRegistrars)
-            .addAll(StoBeansRegistrars.yamlSchemaRegistrars)
-            .build();
+        return ImmutableList.<YamlSchemaRootClass>builder().addAll(StoBeansRegistrars.yamlSchemaRegistrars).build();
       }
     });
 

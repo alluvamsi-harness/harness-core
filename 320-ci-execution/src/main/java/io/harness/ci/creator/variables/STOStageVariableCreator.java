@@ -28,8 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-@OwnedBy(HarnessTeam.CI)
-public class CIStageVariableCreator extends AbstractStageVariableCreator<IntegrationStageNode> {
+@OwnedBy(HarnessTeam.STO)
+public class STOStageVariableCreator extends AbstractStageVariableCreator<IntegrationStageNode> {
   @Override
   public LinkedHashMap<String, VariableCreationResponse> createVariablesForChildrenNodes(
       VariableCreationContext ctx, YamlField config) {
@@ -93,7 +93,7 @@ public class CIStageVariableCreator extends AbstractStageVariableCreator<Integra
   @Override
   public Map<String, Set<String>> getSupportedTypes() {
     return Collections.singletonMap(
-        YAMLFieldNameConstants.STAGE, Collections.singleton(StepSpecTypeConstants.CI_STAGE));
+        YAMLFieldNameConstants.STAGE, Collections.singleton(StepSpecTypeConstants.SECURITY_STAGE));
   }
 
   @Override

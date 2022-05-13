@@ -50,19 +50,19 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@OwnedBy(HarnessTeam.CI)
-public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
+@OwnedBy(HarnessTeam.STO)
+public class STOStageFilterJsonCreator extends GenericStageFilterJsonCreator {
   @Inject ConnectorUtils connectorUtils;
   @Inject private SimpleVisitorFactory simpleVisitorFactory;
 
   @Override
   public Set<String> getSupportedStageTypes() {
-    return ImmutableSet.of(StepSpecTypeConstants.CI_STAGE);
+    return ImmutableSet.of(StepSpecTypeConstants.SECURITY_STAGE);
   }
 
   @Override
   public PipelineFilter getFilter(FilterCreationContext filterCreationContext, StageElementConfig stageElementConfig) {
-    log.info("Received filter creation request for integration stage {}", stageElementConfig.getIdentifier());
+    log.info("Received filter creation request for security tests stage {}", stageElementConfig.getIdentifier());
     String accountId = filterCreationContext.getSetupMetadata().getAccountId();
     String orgIdentifier = filterCreationContext.getSetupMetadata().getOrgId();
     String projectIdentifier = filterCreationContext.getSetupMetadata().getProjectId();
@@ -107,7 +107,7 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
 
     validateStage(stageElementConfig);
 
-    log.info("Successfully created filter for integration stage {}", stageElementConfig.getIdentifier());
+    log.info("Successfully created filter for security tests stage {}", stageElementConfig.getIdentifier());
     return ciFilterBuilder.build();
   }
 
