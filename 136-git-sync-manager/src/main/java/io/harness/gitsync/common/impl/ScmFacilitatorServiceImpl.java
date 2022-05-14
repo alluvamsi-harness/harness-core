@@ -189,8 +189,6 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
 
   @Override
   public ScmCreatePRResponseDTO createPR(ScmCreatePRRequestDTO scmCreatePRRequestDTO) {
-    scmCreatePRRequestDTO.validate();
-
     Scope scope = scmCreatePRRequestDTO.getScope();
     ScmConnector scmConnector =
         gitSyncConnectorHelper.getScmConnectorForGivenRepo(scope.getAccountIdentifier(), scope.getOrgIdentifier(),
@@ -262,24 +260,6 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
     }
 
     return;
-  }
-
-  @Override
-  public String getDefaultBranch(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName) {
-    final ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
-        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
-    GetUserRepoResponse getUserRepoResponse =
-        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
-            -> scmClientFacilitatorService.getRepoDetails(
-                accountIdentifier, orgIdentifier, projectIdentifier, scmConnector),
-            scmConnector);
-
-    if (isFailureResponse(getUserRepoResponse.getStatus())) {
-      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.GET_DEFAULT_BRANCH, scmConnector.getConnectorType(),
-          getUserRepoResponse.getStatus(), getUserRepoResponse.getError());
-    }
-    return getUserRepoResponse.getRepo().getBranch();
   }
 
   @Override
