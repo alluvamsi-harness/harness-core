@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FileContentBatchResponse;
 import io.harness.beans.IdentifierRef;
 import io.harness.beans.PageRequestDTO;
+import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitFileDetails.GitFileDetailsBuilder;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
@@ -114,6 +115,12 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     final GitFilePathDetails gitFilePathDetails = getGitFilePathDetails(filePath, branchName, commitId);
     return scmClient.getFileContent(connector, gitFilePathDetails);
+  }
+
+  @Override
+  public CreatePRResponse createPullRequest(
+      Scope scope, String connectorRef, String repoName, String sourceBranch, String targetBranch, String title) {
+    return null;
   }
 
   @Override

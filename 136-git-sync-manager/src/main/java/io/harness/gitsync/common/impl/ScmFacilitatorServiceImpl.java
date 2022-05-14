@@ -23,7 +23,6 @@ import io.harness.gitsync.common.dtos.GitBranchDetailsDTO;
 import io.harness.gitsync.common.dtos.GitBranchesResponseDTO;
 import io.harness.gitsync.common.dtos.GitRepositoryResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
-import io.harness.gitsync.common.dtos.ScmCreateBranchRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
@@ -35,14 +34,12 @@ import io.harness.gitsync.common.scmerrorhandling.ScmApiErrorHandlingHelper;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
-import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
-import io.harness.product.ci.scm.proto.Repository;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 
 import com.google.inject.Inject;
@@ -123,22 +120,23 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
     ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(scope.getAccountIdentifier(),
         scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmCreateFileRequestDTO.getConnectorRef(),
         scmCreateFileRequestDTO.getRepoName());
-    CreateFileResponse createFileResponse =
-        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
-            -> scmClientFacilitatorService.createFile(InfoForGitPush.builder()
-                                                          .accountId(scope.getAccountIdentifier())
-                                                          .orgIdentifier(scope.getOrgIdentifier())
-                                                          .projectIdentifier(scope.getProjectIdentifier())
-                                                          .filePath(scmCreateFileRequestDTO.getFilePath())
-                                                          .baseBranch(scmCreateFileRequestDTO.getBaseBranch())
-                                                          .branch(scmCreateFileRequestDTO.getBranchName())
-                                                          .commitMsg(scmCreateFileRequestDTO.getCommitMessage())
-                                                          .completeFilePath(scmCreateFileRequestDTO.getFilePath())
-                                                          .isNewBranch(scmCreateFileRequestDTO.isCommitToNewBranch())
-                                                          .scmConnector(scmConnector)
-                                                          .yaml(scmCreateFileRequestDTO.getFileContent())
-                                                          .build()),
-            scmConnector);
+    CreateFileResponse createFileResponse = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
+        -> scmClientFacilitatorService.createFile(
+            InfoForGitPush.builder()
+                .accountId(scope.getAccountIdentifier())
+                .orgIdentifier(scope.getOrgIdentifier())
+                .projectIdentifier(scope.getProjectIdentifier())
+                .filePath(scmCreateFileRequestDTO.getFilePath())
+                .baseBranch(scmCreateFileRequestDTO.getBaseBranch())
+                .branch(scmCreateFileRequestDTO.getBranchName())
+                .commitMsg(scmCreateFileRequestDTO.getCommitMessage())
+                //                                                          .completeFilePath(scmCreateFileRequestDTO.getFilePath())
+                .isNewBranch(scmCreateFileRequestDTO.isCommitToNewBranch())
+                .scmConnector(scmConnector)
+                .yaml(scmCreateFileRequestDTO.getFileContent())
+                .build()),
+        scmConnector);
 
     if (isFailureResponse(createFileResponse.getStatus())) {
       ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_FILE, scmConnector.getConnectorType(),
@@ -158,23 +156,24 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
     ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(scope.getAccountIdentifier(),
         scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmUpdateFileRequestDTO.getConnectorRef(),
         scmUpdateFileRequestDTO.getRepoName());
-    UpdateFileResponse updateFileResponse =
-        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
-            -> scmClientFacilitatorService.updateFile(InfoForGitPush.builder()
-                                                          .accountId(scope.getAccountIdentifier())
-                                                          .orgIdentifier(scope.getOrgIdentifier())
-                                                          .projectIdentifier(scope.getProjectIdentifier())
-                                                          .filePath(scmUpdateFileRequestDTO.getFilePath())
-                                                          .baseBranch(scmUpdateFileRequestDTO.getBaseBranch())
-                                                          .branch(scmUpdateFileRequestDTO.getBranchName())
-                                                          .commitMsg(scmUpdateFileRequestDTO.getCommitMessage())
-                                                          .completeFilePath(scmUpdateFileRequestDTO.getFilePath())
-                                                          .isNewBranch(scmUpdateFileRequestDTO.isCommitToNewBranch())
-                                                          .scmConnector(scmConnector)
-                                                          .oldFileSha(scmUpdateFileRequestDTO.getOldFileSha())
-                                                          .yaml(scmUpdateFileRequestDTO.getFileContent())
-                                                          .build()),
-            scmConnector);
+    UpdateFileResponse updateFileResponse = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
+        -> scmClientFacilitatorService.updateFile(
+            InfoForGitPush.builder()
+                .accountId(scope.getAccountIdentifier())
+                .orgIdentifier(scope.getOrgIdentifier())
+                .projectIdentifier(scope.getProjectIdentifier())
+                .filePath(scmUpdateFileRequestDTO.getFilePath())
+                .baseBranch(scmUpdateFileRequestDTO.getBaseBranch())
+                .branch(scmUpdateFileRequestDTO.getBranchName())
+                .commitMsg(scmUpdateFileRequestDTO.getCommitMessage())
+                //                                                          .completeFilePath(scmUpdateFileRequestDTO.getFilePath())
+                .isNewBranch(scmUpdateFileRequestDTO.isCommitToNewBranch())
+                .scmConnector(scmConnector)
+                .oldFileSha(scmUpdateFileRequestDTO.getOldFileSha())
+                .yaml(scmUpdateFileRequestDTO.getFileContent())
+                .build()),
+        scmConnector);
 
     if (isFailureResponse(updateFileResponse.getStatus())) {
       ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.UPDATE_FILE, scmConnector.getConnectorType(),
@@ -237,29 +236,6 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
         .blobId(fileContent.getBlobId())
         .commitId(fileContent.getCommitId())
         .build();
-  }
-
-  public void createBranch(ScmCreateBranchRequestDTO scmCreateBranchRequestDTO) {
-    Scope scope = scmCreateBranchRequestDTO.getScope();
-    ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(scope.getAccountIdentifier(),
-        scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmCreateBranchRequestDTO.getConnectorRef(),
-        scmCreateBranchRequestDTO.getRepoName());
-    createBranch(
-        scmCreateBranchRequestDTO.getBranchName(), scmCreateBranchRequestDTO.getBaseBranchName(), scmConnector);
-  }
-
-  private void createBranch(String branch, String baseBranch, ScmConnector scmConnector) {
-    CreateBranchResponse createBranchResponse =
-        scmOrchestratorService.processScmRequestUsingConnectorSettings(scmClientFacilitatorService
-            -> scmClientFacilitatorService.createBranch(branch, baseBranch, scmConnector),
-            scmConnector);
-
-    if (isFailureResponse(createBranchResponse.getStatus())) {
-      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_BRANCH, scmConnector.getConnectorType(),
-          createBranchResponse.getStatus(), createBranchResponse.getError());
-    }
-
-    return;
   }
 
   @Override
