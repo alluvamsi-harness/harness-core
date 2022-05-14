@@ -27,7 +27,7 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.CDP)
 @RecasterAlias("io.harness.cdng.infra.beans.PdcInfrastructureOutcome")
 public class PdcInfrastructureOutcome implements InfrastructureOutcome {
-  String sshKeyRef;
+  String credentialsRef;
   List<String> hosts;
   String connectorRef;
   List<String> hostFilters;

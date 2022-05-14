@@ -65,7 +65,10 @@ import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.logging.AutoLogContext;
 import io.harness.ng.core.activityhistory.NGActivityType;
 import io.harness.ng.core.dto.ErrorDetail;
+import io.harness.ng.opa.entities.connector.OpaConnectorService;
+import io.harness.opaclient.model.OpaConstants;
 import io.harness.perpetualtask.PerpetualTaskId;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.telemetry.helpers.ConnectorInstrumentationHelper;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
@@ -100,6 +103,7 @@ public class ConnectorServiceImpl implements ConnectorService {
   private final NGErrorHelper ngErrorHelper;
   private final GitSyncSdkService gitSyncSdkService;
   private final ConnectorInstrumentationHelper instrumentationHelper;
+  private final OpaConnectorService opaConnectorService;
 
   @Inject
   public ConnectorServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService defaultConnectorService,
@@ -108,7 +112,8 @@ public class ConnectorServiceImpl implements ConnectorService {
       ConnectorRepository connectorRepository, @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer,
       ExecutorService executorService, ConnectorErrorMessagesHelper connectorErrorMessagesHelper,
       HarnessManagedConnectorHelper harnessManagedConnectorHelper, NGErrorHelper ngErrorHelper,
-      GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper) {
+      GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper,
+      OpaConnectorService opaConnectorService) {
     this.defaultConnectorService = defaultConnectorService;
     this.secretManagerConnectorService = secretManagerConnectorService;
     this.connectorActivityService = connectorActivityService;
@@ -121,6 +126,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     this.ngErrorHelper = ngErrorHelper;
     this.gitSyncSdkService = gitSyncSdkService;
     this.instrumentationHelper = instrumentationHelper;
+    this.opaConnectorService = opaConnectorService;
   }
 
   private ConnectorService getConnectorService(ConnectorType connectorType) {
@@ -153,32 +159,44 @@ public class ConnectorServiceImpl implements ConnectorService {
   }
 
   private ConnectorResponseDTO createInternal(
-      ConnectorDTO connector, String accountIdentifier, ChangeType gitChangeType) {
+      ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
     PerpetualTaskId connectorHeartbeatTaskId = null;
-    try (AutoLogContext ignore1 = new NgAutoLogContext(connector.getConnectorInfo().getProjectIdentifier(),
-             connector.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
+    try (AutoLogContext ignore1 = new NgAutoLogContext(connectorDTO.getConnectorInfo().getProjectIdentifier(),
+             connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =
-             new ConnectorLogContext(connector.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
-      ConnectorInfoDTO connectorInfo = connector.getConnectorInfo();
+             new ConnectorLogContext(connectorDTO.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
+      ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
       connectorInfo.getConnectorConfig().validate();
-      final boolean executeOnDelegate = defaultConnectorService.checkConnectorExecutableOnDelegate(connectorInfo);
       boolean isHarnessManagedSecretManager =
           harnessManagedConnectorHelper.isHarnessManagedSecretManager(connectorInfo);
+      ConnectorResponseDTO connectorResponse = new ConnectorResponseDTO();
+      GovernanceMetadata governanceMetadata = null;
+      if (!isHarnessManagedSecretManager) {
+        governanceMetadata = opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier, connectorDTO,
+            connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier(),
+            OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE, connectorDTO.getConnectorInfo().getIdentifier());
+        connectorResponse.setGovernanceMetadata(governanceMetadata);
+        if (governanceMetadata != null && OpaConstants.OPA_STATUS_ERROR.equals(governanceMetadata.getStatus())) {
+          return connectorResponse;
+        }
+      }
+
+      connectorInfo.getConnectorConfig().validate();
+      final boolean executeOnDelegate = defaultConnectorService.checkConnectorExecutableOnDelegate(connectorInfo);
       boolean isDefaultBranchConnector = gitSyncSdkService.isDefaultBranch(accountIdentifier,
-          connector.getConnectorInfo().getOrgIdentifier(), connector.getConnectorInfo().getProjectIdentifier());
+          connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier());
       if (!isHarnessManagedSecretManager && isDefaultBranchConnector && executeOnDelegate) {
         connectorHeartbeatTaskId = connectorHeartbeatService.createConnectorHeatbeatTask(accountIdentifier,
             connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier(), connectorInfo.getIdentifier());
       }
       if (connectorHeartbeatTaskId != null || isHarnessManagedSecretManager || !isDefaultBranchConnector
           || !executeOnDelegate) {
-        ConnectorResponseDTO connectorResponse;
         if (gitChangeType != null) {
-          connectorResponse =
-              getConnectorService(connectorInfo.getConnectorType()).create(connector, accountIdentifier, gitChangeType);
+          connectorResponse = getConnectorService(connectorInfo.getConnectorType())
+                                  .create(connectorDTO, accountIdentifier, gitChangeType);
         } else {
           connectorResponse =
-              getConnectorService(connectorInfo.getConnectorType()).create(connector, accountIdentifier);
+              getConnectorService(connectorInfo.getConnectorType()).create(connectorDTO, accountIdentifier);
         }
         if (connectorResponse != null && isDefaultBranchConnector) {
           ConnectorInfoDTO savedConnector = connectorResponse.getConnector();
@@ -186,21 +204,24 @@ public class ConnectorServiceImpl implements ConnectorService {
           publishEvent(accountIdentifier, savedConnector.getOrgIdentifier(), savedConnector.getProjectIdentifier(),
               savedConnector.getIdentifier(), savedConnector.getConnectorType(),
               EventsFrameworkMetadataConstants.CREATE_ACTION);
-          runTestConnectionAsync(connector, accountIdentifier);
+          runTestConnectionAsync(connectorDTO, accountIdentifier);
           if (connectorHeartbeatTaskId != null) {
             defaultConnectorService.updateConnectorEntityWithPerpetualtaskId(accountIdentifier,
                 connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier(), connectorInfo.getIdentifier(),
                 connectorHeartbeatTaskId.getId());
           }
         }
-        instrumentationHelper.sendConnectorCreateEvent(connector.getConnectorInfo(), accountIdentifier);
+        instrumentationHelper.sendConnectorCreateEvent(connectorDTO.getConnectorInfo(), accountIdentifier);
+        if (connectorResponse != null) {
+          connectorResponse.setGovernanceMetadata(governanceMetadata);
+        }
         return connectorResponse;
       } else {
         throw new InvalidRequestException("Connector could not be created because we could not create the heartbeat");
       }
     } catch (Exception ex) {
       if (connectorHeartbeatTaskId != null) {
-        ConnectorInfoDTO connectorInfo = connector.getConnectorInfo();
+        ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
         String fullyQualifiedIdentifier = FullyQualifiedIdentifierHelper.getFullyQualifiedIdentifier(accountIdentifier,
             connectorInfo.getOrgIdentifier(), connectorInfo.getProjectIdentifier(), connectorInfo.getIdentifier());
         deleteConnectorHeartbeatTask(accountIdentifier, fullyQualifiedIdentifier, connectorHeartbeatTaskId.getId());
@@ -240,29 +261,47 @@ public class ConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
-  public ConnectorResponseDTO update(ConnectorDTO connector, String accountIdentifier, ChangeType gitChangeType) {
-    try (AutoLogContext ignore1 = new NgAutoLogContext(connector.getConnectorInfo().getProjectIdentifier(),
-             connector.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
+  public ConnectorResponseDTO update(ConnectorDTO connectorDTO, String accountIdentifier, ChangeType gitChangeType) {
+    try (AutoLogContext ignore1 = new NgAutoLogContext(connectorDTO.getConnectorInfo().getProjectIdentifier(),
+             connectorDTO.getConnectorInfo().getOrgIdentifier(), accountIdentifier, OVERRIDE_ERROR);
          AutoLogContext ignore2 =
-             new ConnectorLogContext(connector.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
-      boolean isDefaultBranchConnector = gitSyncSdkService.isDefaultBranch(accountIdentifier,
-          connector.getConnectorInfo().getOrgIdentifier(), connector.getConnectorInfo().getProjectIdentifier());
-      ConnectorInfoDTO connectorInfo = connector.getConnectorInfo();
-
+             new ConnectorLogContext(connectorDTO.getConnectorInfo().getIdentifier(), OVERRIDE_ERROR)) {
+      ConnectorResponseDTO connectorResponse = new ConnectorResponseDTO();
+      ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
       connectorInfo.getConnectorConfig().validate();
+
+      boolean isHarnessManagedSecretManager =
+          harnessManagedConnectorHelper.isHarnessManagedSecretManager(connectorInfo);
+      GovernanceMetadata governanceMetadata = null;
+
+      if (!isHarnessManagedSecretManager) {
+        governanceMetadata = opaConnectorService.evaluatePoliciesWithEntity(accountIdentifier, connectorDTO,
+            connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier(),
+            OpaConstants.OPA_EVALUATION_ACTION_CONNECTOR_SAVE, connectorDTO.getConnectorInfo().getIdentifier());
+        connectorResponse.setGovernanceMetadata(governanceMetadata);
+        if (governanceMetadata != null && OpaConstants.OPA_STATUS_ERROR.equals(governanceMetadata.getStatus())) {
+          return connectorResponse;
+        }
+      }
+      boolean isDefaultBranchConnector = gitSyncSdkService.isDefaultBranch(accountIdentifier,
+          connectorDTO.getConnectorInfo().getOrgIdentifier(), connectorDTO.getConnectorInfo().getProjectIdentifier());
+
       validateTheUpdateRequestIsValid(connectorInfo, accountIdentifier);
       if (GitContextHelper.isUpdateToNewBranch()) {
-        return create(connector, accountIdentifier, ChangeType.MODIFY);
+        return create(connectorDTO, accountIdentifier, ChangeType.MODIFY);
       }
 
-      ConnectorResponseDTO connectorResponse =
-          getConnectorService(connectorInfo.getConnectorType()).update(connector, accountIdentifier, gitChangeType);
+      connectorResponse =
+          getConnectorService(connectorInfo.getConnectorType()).update(connectorDTO, accountIdentifier, gitChangeType);
       if (isDefaultBranchConnector) {
         ConnectorInfoDTO savedConnector = connectorResponse.getConnector();
         createConnectorUpdateActivity(accountIdentifier, savedConnector);
         publishEvent(accountIdentifier, savedConnector.getOrgIdentifier(), savedConnector.getProjectIdentifier(),
             savedConnector.getIdentifier(), savedConnector.getConnectorType(),
             EventsFrameworkMetadataConstants.UPDATE_ACTION);
+      }
+      if (connectorResponse != null) {
+        connectorResponse.setGovernanceMetadata(governanceMetadata);
       }
       return connectorResponse;
     }

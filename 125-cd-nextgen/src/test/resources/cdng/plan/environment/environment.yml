@@ -1,0 +1,33 @@
+name: dev
+identifier: dev
+tags: []
+description: ""
+orgIdentifier: my_org
+projectIdentifier: my_proj
+variables:
+  - name: var1
+    type: String
+    value: value2
+serviceOverrides:
+  - serviceRef: s1
+    variables:
+      - name: var1
+        type: String
+        value: value1
+infrastructureDefinitions:
+  - identifier: id1
+    type: KubernetesDirect
+    spec:
+      connectorRef: org.KubernetesConnectorForAutomationTest
+      namespace: cdp-k8s-qa-sanity
+      releaseName: releasename-681406
+  - identifier: id2
+    type: NativeHelm
+    spec:
+      connectorRef: org.KubernetesConnectorForAutomationTest
+      namespace: cdp-k8s-dev-sanity
+GitopsClusters:
+  - identifier: id1
+    name: c1 # do we need name also ?
+  - identifier: id2
+    name: c2

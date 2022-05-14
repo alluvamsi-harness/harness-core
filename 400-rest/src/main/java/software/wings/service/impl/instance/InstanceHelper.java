@@ -89,6 +89,7 @@ import software.wings.sm.PipelineSummary;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.PhaseStepSubWorkflow;
 import software.wings.utils.Utils;
 
@@ -140,6 +141,7 @@ public class InstanceHelper {
   @Inject private PerpetualTaskService perpetualTaskService;
   @Inject private FeatureFlagService featureFlagService;
   @Inject private InstanceSyncPerpetualTaskService instanceSyncPerpetualTaskService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   /**
    * The phaseExecutionData is used to process the instance information that is used by the service and infra
@@ -165,7 +167,8 @@ public class InstanceHelper {
         return;
       }
 
-      Artifact artifact = workflowStandardParams.getArtifactForService(phaseExecutionData.getServiceId());
+      Artifact artifact = workflowStandardParamsExtensionService.getArtifactForService(
+          workflowStandardParams, phaseExecutionData.getServiceId());
       if (artifact == null) {
         log.info("artifact is null for stateExecutionInstance:" + stateExecutionInstanceId);
       }

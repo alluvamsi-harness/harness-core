@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.variable.resources;
 
+import static io.harness.ng.core.variable.VariablePermissions.VARIABLE_EDIT_PERMISSION;
 import static io.harness.rule.OwnerRule.MEENAKSHI;
 import static io.harness.rule.OwnerRule.NISHANT;
 
@@ -14,11 +15,13 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.category.element.UnitTests;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -46,17 +49,19 @@ import org.mockito.MockitoAnnotations;
 public class VariableResourceTest extends CategoryTest {
   @Mock private VariableService variableService;
   @Mock private VariableMapper variableMapper;
+  @Mock private AccessControlClient accessControlClient;
   private VariableResource variableResource;
 
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
   @Captor ArgumentCaptor<VariableDTO> variableDTOArgumentCaptor;
   @Captor ArgumentCaptor<Variable> variableArgumentCaptor;
+  @Captor ArgumentCaptor<String> permissionArgumentCaptor;
   @Rule public ExpectedException expectedExceptionRule = ExpectedException.none();
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    variableResource = new VariableResource(variableService, variableMapper);
+    variableResource = new VariableResource(variableService, variableMapper, accessControlClient);
   }
 
   @Test
@@ -69,6 +74,7 @@ public class VariableResourceTest extends CategoryTest {
     StringVariable variable = StringVariable.builder().build();
     when(variableService.create(anyString(), any())).thenReturn(variable);
     when(variableMapper.toResponseWrapper(any())).thenReturn(VariableResponseDTO.builder().build());
+    doNothing().when(accessControlClient).checkForAccessOrThrow(any(), any(), anyString());
     variableResource.create(accountIdentifier, variableRequestDTO);
 
     verify(variableService, times(1)).create(stringArgumentCaptor.capture(), variableDTOArgumentCaptor.capture());
@@ -77,6 +83,9 @@ public class VariableResourceTest extends CategoryTest {
 
     verify(variableMapper, times(1)).toResponseWrapper(variableArgumentCaptor.capture());
     assertThat(variableArgumentCaptor.getValue()).isEqualTo(variable);
+
+    verify(accessControlClient, times(1)).checkForAccessOrThrow(any(), any(), permissionArgumentCaptor.capture());
+    assertThat(permissionArgumentCaptor.getValue()).isEqualTo(VARIABLE_EDIT_PERMISSION);
   }
 
   @Test

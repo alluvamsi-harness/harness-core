@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.filestore.FileUsage;
 import io.harness.ng.core.filestore.NGFileType;
 
@@ -35,8 +36,8 @@ public final class FileNodeDTO extends FileStoreNodeDTO {
   @Schema(description = "Tags of the File Store Node") private List<NGTag> tags;
 
   @Builder
-  public FileNodeDTO(String identifier, String name, Long lastModifiedAt, String lastModifiedBy, FileUsage fileUsage,
-      String description, List<NGTag> tags) {
+  public FileNodeDTO(String identifier, String name, Long lastModifiedAt, EmbeddedUserDetailsDTO lastModifiedBy,
+      FileUsage fileUsage, String description, List<NGTag> tags) {
     super(NGFileType.FILE, identifier, name, lastModifiedAt, lastModifiedBy);
     this.fileUsage = fileUsage;
     this.description = description;

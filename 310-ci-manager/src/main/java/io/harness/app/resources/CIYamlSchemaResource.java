@@ -16,8 +16,6 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.intfc.CIYamlSchemaService;
 import io.harness.app.intfc.STOYamlSchemaService;
-import io.harness.beans.stages.IntegrationStageNode;
-import io.harness.beans.steps.nodes.RunStepNode;
 import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
 import io.harness.common.EntityTypeConstants;
 import io.harness.encryption.Scope;
@@ -25,9 +23,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.plancreator.stages.stage.AbstractStageNode;
 import io.harness.plancreator.stages.stage.StageElementConfig;
-import io.harness.plancreator.steps.AbstractStepNode;
 import io.harness.plancreator.steps.StepElementConfig;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.yaml.schema.YamlSchemaResource;
@@ -41,7 +37,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import java.util.ArrayList;
 import java.util.List;
@@ -173,23 +168,5 @@ public class CIYamlSchemaResource implements YamlSchemaResource {
     }
     return ResponseDTO.newResponse(
         ciYamlSchemaService.getIndividualYamlSchema(entityType, orgIdentifier, projectIdentifier, scope));
-  }
-
-  @GET
-  @Path("/dummy-abstractStage-api")
-  @ApiOperation(value = "This is dummy api to expose abstractStageNode", nickname = "dummyAbstractStageNodeApi")
-  @Hidden
-  // do not delete this.
-  public ResponseDTO<AbstractStageNode> getAbstractStageNode() {
-    return ResponseDTO.newResponse(new IntegrationStageNode());
-  }
-
-  @GET
-  @Path("/dummy-abstractStep-api")
-  @ApiOperation(value = "This is dummy api to expose abstractStepNode", nickname = "dummyAbstractStepNodeApi")
-  @Hidden
-  // do not delete this.
-  public ResponseDTO<AbstractStepNode> getAbstractStepNode() {
-    return ResponseDTO.newResponse(new RunStepNode());
   }
 }

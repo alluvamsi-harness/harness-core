@@ -13,6 +13,7 @@ import io.harness.cvng.activity.entities.Activity;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
 import io.harness.cvng.beans.activity.ActivityStatusDTO;
+import io.harness.cvng.beans.activity.ActivityType;
 import io.harness.cvng.beans.activity.ActivityVerificationStatus;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
@@ -35,6 +36,8 @@ public interface ActivityService {
 
   Optional<Activity> getAnyKubernetesEvent(
       MonitoredServiceParams monitoredServiceParams, Instant startTime, Instant endTime);
+  Optional<Activity> getAnyEventFromListOfActivityTypes(MonitoredServiceParams monitoredServiceParams,
+      List<ActivityType> activityTypes, Instant startTime, Instant endTime);
   Optional<Activity> getAnyDemoDeploymentEvent(MonitoredServiceParams monitoredServiceParams, Instant startTime,
       Instant endTime, ActivityVerificationStatus verificationStatus);
 

@@ -8,6 +8,7 @@
 package io.harness.ng.core.mapper;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.ng.core.mapper.EmbeddedUserDTOMapper.fromEmbeddedUser;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
@@ -27,7 +28,7 @@ public class FileStoreNodeDTOMapper {
         .description(ngFile.getDescription())
         .tags(ngFile.getTags())
         .lastModifiedAt(ngFile.getLastModifiedAt())
-        .lastModifiedBy(ngFile.getLastModifiedBy())
+        .lastModifiedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
         .build();
   }
 
@@ -36,7 +37,7 @@ public class FileStoreNodeDTOMapper {
         .identifier(ngFile.getIdentifier())
         .name(ngFile.getName())
         .lastModifiedAt(ngFile.getLastModifiedAt())
-        .lastModifiedBy(ngFile.getLastModifiedBy())
+        .lastModifiedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
         .build();
   }
 }

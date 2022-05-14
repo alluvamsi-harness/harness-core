@@ -48,7 +48,8 @@ public class CIExecutionConstants {
   public static final String PATH_SEPARATOR = "/";
 
   // Constant for
-  public static final String STEP_COMMAND = "/addon/bin/ci-addon";
+  public static final String UNIX_STEP_COMMAND = "/addon/bin/ci-addon";
+  public static final String WIN_STEP_COMMAND = "C:\\addon\\bin\\addon.exe";
   public static final Integer STEP_REQUEST_MEMORY_MIB = 10;
   public static final Integer STEP_REQUEST_MILLI_CPU = 10;
   public static final Integer PORT_STARTING_RANGE = 20002;
@@ -63,8 +64,11 @@ public class CIExecutionConstants {
 
   // Container constants for setting up addon binary
   public static final String SETUP_ADDON_CONTAINER_NAME = "setup-addon";
-  public static final String SETUP_ADDON_ARGS =
+  public static final String UNIX_SETUP_ADDON_ARGS =
       "mkdir -p /addon/bin; mkdir -p /addon/tmp; chmod -R 776 /addon/tmp; cp /usr/local/bin/ci-addon-linux-amd64 /addon/bin/ci-addon; chmod +x /addon/bin/ci-addon; cp /usr/local/bin/java-agent.jar /addon/bin/java-agent.jar; chmod +x /addon/bin/java-agent.jar";
+
+  public static final String WIN_SETUP_ADDON_ARGS =
+      "mkdir /addon/bin; mkdir /addon/tmp; cp C:/addon.exe /addon/bin/addon.exe";
 
   public static final String ADDON_VOLUME = "addon";
   public static final String ADDON_VOL_MOUNT_PATH = "/addon";
@@ -132,6 +136,7 @@ public class CIExecutionConstants {
 
   // Deprecated
   public static final List<String> SH_COMMAND = Collections.unmodifiableList(Arrays.asList("sh", "-c", "--"));
+  public static final List<String> PWSH_COMMAND = Collections.unmodifiableList(Arrays.asList("pwsh", "-Command"));
 
   public static final String IMAGE_PATH_SPLIT_REGEX = ":";
   public static final String PVC_DEFAULT_STORAGE_CLASS = "faster";

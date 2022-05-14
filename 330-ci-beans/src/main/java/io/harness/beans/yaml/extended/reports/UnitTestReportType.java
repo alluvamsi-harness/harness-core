@@ -18,7 +18,7 @@ public enum UnitTestReportType {
 
   private final String yamlName;
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static UnitTestReportType getUnitTestReportType(@JsonProperty("type") String yamlName) {
     for (UnitTestReportType unitTestReportType : UnitTestReportType.values()) {
       if (unitTestReportType.yamlName.equalsIgnoreCase(yamlName)) {

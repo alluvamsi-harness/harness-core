@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.Condition;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.filestore.FileUsage;
 import io.harness.ng.core.filestore.NGFileType;
 
@@ -74,7 +75,10 @@ public class FileDTO {
   @Schema(description = "Tags") @Valid private List<NGTag> tags;
   @Schema(description = "Mime type of the File") @FormDataParam("mimeType") private String mimeType;
   @Schema(description = "Whether File is draft or not") @JsonProperty(access = Access.READ_ONLY) private Boolean draft;
-  @Schema(description = "File created by user") @FormDataParam("createdBy") private String createdBy;
+  @Schema(description = "File created by user") @FormDataParam("createdBy") private EmbeddedUserDetailsDTO createdBy;
+  @Schema(description = "File updated by user")
+  @FormDataParam("lastUpdatedBy")
+  private EmbeddedUserDetailsDTO lastUpdatedBy;
 
   @JsonIgnore
   public boolean isFile() {
@@ -94,7 +98,7 @@ public class FileDTO {
   @Builder
   public FileDTO(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier,
       String name, FileUsage fileUsage, NGFileType type, String parentIdentifier, String description, List<NGTag> tags,
-      String mimeType, Boolean draft, String createdBy) {
+      String mimeType, Boolean draft, EmbeddedUserDetailsDTO createdBy, EmbeddedUserDetailsDTO lastUpdatedBy) {
     this.accountIdentifier = accountIdentifier;
     this.orgIdentifier = orgIdentifier;
     this.projectIdentifier = projectIdentifier;
@@ -108,5 +112,6 @@ public class FileDTO {
     this.mimeType = mimeType;
     this.draft = draft;
     this.createdBy = createdBy;
+    this.lastUpdatedBy = lastUpdatedBy;
   }
 }

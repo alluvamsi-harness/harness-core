@@ -16,9 +16,7 @@ import io.harness.context.ContextElementType;
 
 import software.wings.beans.command.CodeDeployParams;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -45,11 +43,6 @@ public class AwsCodeDeployRequestElement implements ContextElement {
   @Override
   public String getName() {
     return AWS_CODE_DEPLOY_REQUEST_PARAM;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

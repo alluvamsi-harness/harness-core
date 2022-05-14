@@ -15,11 +15,9 @@ import io.harness.beans.SweepingOutput;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The type Service instance ids param.
@@ -41,11 +39,6 @@ public class ServiceInstanceIdsParam implements ContextElement, SweepingOutput {
   @Override
   public String getName() {
     return SERVICE_INSTANCE_IDS_PARAMS;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   /**

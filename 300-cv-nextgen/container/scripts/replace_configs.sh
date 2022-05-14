@@ -171,3 +171,7 @@ replace_key_value notificationClient.secrets.notificationClientSecret "$PLATFORM
 replace_key_value accessControlClientConfig.enableAccessControl "$ACCESS_CONTROL_ENABLED"
 replace_key_value accessControlClientConfig.accessControlServiceConfig.baseUrl "$ACCESS_CONTROL_BASE_URL"
 replace_key_value accessControlClientConfig.accessControlServiceSecret "$ACCESS_CONTROL_SECRET"
+
+replace_key_value templateServiceClientConfig.baseUrl "$TEMPLATE_SERVICE_ENDPOINT"
+replace_key_value templateServiceSecret "$TEMPLATE_SERVICE_SECRET"
+

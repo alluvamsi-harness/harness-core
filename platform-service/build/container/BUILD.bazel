@@ -19,8 +19,8 @@ container_image(
 pkg_tar(
     name = "files",
     srcs = [
-        "//platform-service/service:config.yml",
-        "//platform-service/service:keystore.jks",
+        "//platform-service/config:config.yml",
+        "//platform-service/config:keystore.jks",
     ],
     files = {
         "@alpn_boot_8.1.13.v20181017//file": "alpn-boot-8.1.13.v20181017.jar",

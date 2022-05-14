@@ -8,22 +8,30 @@
 package io.harness.ng.core.filestore.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.rule.OwnerRule.BOJAN;
 import static io.harness.rule.OwnerRule.VLAD;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.category.element.UnitTests;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
+import io.harness.ng.core.entitysetupusage.entity.EntitySetupUsage.EntitySetupUsageKeys;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
+import io.harness.ng.core.filestore.NGFileType;
+import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.rule.Owner;
 
+import java.util.Arrays;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -37,8 +45,11 @@ import org.springframework.data.domain.Sort;
 @RunWith(MockitoJUnitRunner.class)
 public class FileReferenceServiceTest extends CategoryTest {
   private static final String ACCOUNT_IDENTIFIER = "accountIdentifier";
+  private static final String ORG_IDENTIFIER = "orgIdentifier";
+  private static final String PROJECT_IDENTIFIER = "projectIdentifier";
 
   @Mock private EntitySetupUsageService entitySetupUsageService;
+  @Mock private FileStoreRepository fileStoreRepository;
 
   @InjectMocks private FileReferenceServiceImpl fileReferenceService;
 
@@ -47,8 +58,8 @@ public class FileReferenceServiceTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldVerifyFileNotReferencedByOtherEntities() {
     NGFile file = NGFile.builder().identifier("testFile").accountIdentifier(ACCOUNT_IDENTIFIER).build();
-    boolean result = fileReferenceService.isFileReferencedByOtherEntities(file);
-    assertThat(result).isFalse();
+    Long result = fileReferenceService.countEntitiesReferencingFile(file);
+    assertThat(result).isEqualTo(0l);
   }
 
   @Test
@@ -57,11 +68,12 @@ public class FileReferenceServiceTest extends CategoryTest {
   public void shouldVerifyFileIsReferencedByOtherEntities() {
     String identifier = "testFile";
     NGFile file = NGFile.builder().identifier(identifier).accountIdentifier(ACCOUNT_IDENTIFIER).build();
-    when(entitySetupUsageService.isEntityReferenced(
+    Long count = 123l;
+    when(entitySetupUsageService.referredByEntityCount(
              ACCOUNT_IDENTIFIER, ACCOUNT_IDENTIFIER + "/" + identifier, EntityType.FILES))
-        .thenReturn(true);
-    boolean result = fileReferenceService.isFileReferencedByOtherEntities(file);
-    assertThat(result).isTrue();
+        .thenReturn(count);
+    Long result = fileReferenceService.countEntitiesReferencingFile(file);
+    assertThat(result).isEqualTo(count);
   }
 
   @Test
@@ -79,6 +91,60 @@ public class FileReferenceServiceTest extends CategoryTest {
         .thenReturn(references);
     Page<EntitySetupUsageDTO> result =
         fileReferenceService.getReferencedBy(searchPageParams, file, EntityType.PIPELINES);
+    assertThat(result).isEqualTo(references);
+  }
+
+  @Test
+  @Owner(developers = VLAD)
+  @Category(UnitTests.class)
+  public void shouldVerifyFolderIsReferencedByOtherEntities() {
+    String identifier1 = "testFolder1";
+    NGFile folder1 =
+        NGFile.builder().identifier(identifier1).accountIdentifier(ACCOUNT_IDENTIFIER).type(NGFileType.FOLDER).build();
+    String identifier2 = "testFolder2";
+    NGFile folder2 = NGFile.builder()
+                         .identifier(identifier2)
+                         .accountIdentifier(ACCOUNT_IDENTIFIER)
+                         .parentIdentifier(identifier1)
+                         .type(NGFileType.FOLDER)
+                         .build();
+    Long count1 = 123L;
+    Long count2 = 234L;
+    when(entitySetupUsageService.referredByEntityCount(
+             ACCOUNT_IDENTIFIER, ACCOUNT_IDENTIFIER + "/" + identifier1, EntityType.FILES))
+        .thenReturn(count1);
+    when(entitySetupUsageService.referredByEntityCount(
+             ACCOUNT_IDENTIFIER, ACCOUNT_IDENTIFIER + "/" + identifier2, EntityType.FILES))
+        .thenReturn(count2);
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
+             folder1.getAccountIdentifier(), folder1.getOrgIdentifier(), folder1.getProjectIdentifier(),
+             folder1.getIdentifier()))
+        .thenReturn(Arrays.asList(folder2));
+
+    assertThatThrownBy(() -> fileReferenceService.validateReferenceByAndThrow(folder1))
+        .isInstanceOf(ReferencedEntityException.class)
+        .hasMessage("Folder [testFolder1], or its subfolders, contain file(s) referenced by " + (count1 + count2)
+            + " other entities and can not be deleted.");
+  }
+
+  @Test
+  @Owner(developers = BOJAN)
+  @Category(UnitTests.class)
+  public void shouldFetchReferencedByForScope() {
+    String referredEntityFQScope = IdentifierRef.builder()
+                                       .accountIdentifier(ACCOUNT_IDENTIFIER)
+                                       .orgIdentifier(ORG_IDENTIFIER)
+                                       .projectIdentifier(PROJECT_IDENTIFIER)
+                                       .build()
+                                       .getFullyQualifiedScopeIdentifier();
+    io.harness.ng.core.beans.SearchPageParams searchPageParams = SearchPageParams.builder().page(1).size(10).build();
+    Page<EntitySetupUsageDTO> references = mock(Page.class);
+    when(entitySetupUsageService.listAllEntityUsagePerEntityScope(searchPageParams.getPage(),
+             searchPageParams.getSize(), ACCOUNT_IDENTIFIER, referredEntityFQScope, EntityType.FILES,
+             EntityType.PIPELINES, Sort.by(Sort.Direction.ASC, EntitySetupUsageKeys.referredByEntityName)))
+        .thenReturn(references);
+    Page<EntitySetupUsageDTO> result = fileReferenceService.getAllReferencedByInScope(
+        ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, searchPageParams, EntityType.PIPELINES);
     assertThat(result).isEqualTo(references);
   }
 }

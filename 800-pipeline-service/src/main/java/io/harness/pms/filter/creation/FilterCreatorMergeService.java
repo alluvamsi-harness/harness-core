@@ -92,10 +92,11 @@ public class FilterCreatorMergeService {
     if (GitContextHelper.isFullSyncFlow()) {
       deleteExistingSetupUsages(pipelineEntity);
     }
-    List<EntityDetailProtoDTO> referredEntities = response.getReferredEntitiesList();
-    referredEntities.addAll(pmsPipelineTemplateHelper.getTemplateReferencesForGivenYaml(pipelineEntity.getAccountId(),
-        pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getYaml()));
-    pipelineSetupUsageHelper.publishSetupUsageEvent(pipelineEntity, referredEntities);
+    List<EntityDetailProtoDTO> templateReferences =
+        pmsPipelineTemplateHelper.getTemplateReferencesForGivenYaml(pipelineEntity.getAccountId(),
+            pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getYaml());
+    response = response.toBuilder().addAllReferredEntities(templateReferences).build();
+    pipelineSetupUsageHelper.publishSetupUsageEvent(pipelineEntity, response.getReferredEntitiesList());
     return FilterCreatorMergeServiceResponse.builder()
         .filters(filters)
         .stageCount(response.getStageCount())

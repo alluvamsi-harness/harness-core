@@ -186,11 +186,19 @@ public class GitSyncConnectorHelper {
 
   public ScmConnector getDecryptedConnector(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoUrl) {
-    YamlGitConfigDTO yamlGitConfigDTO =
-        yamlGitConfigService.getByProjectIdAndRepo(accountIdentifier, orgIdentifier, projectIdentifier, repoUrl);
+    Optional<YamlGitConfigDTO> yamlGitConfigDTO = yamlGitConfigService.getByProjectIdAndRepoOptional(
+        accountIdentifier, orgIdentifier, projectIdentifier, repoUrl);
+    String repo = null;
+    String connectorBranch = null;
+
+    if (yamlGitConfigDTO.isPresent()) {
+      repo = yamlGitConfigDTO.get().getGitConnectorsRepo();
+      connectorBranch = yamlGitConfigDTO.get().getGitConnectorsBranch();
+    }
+
     try {
-      ScmConnector connector = getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef,
-          yamlGitConfigDTO.getGitConnectorsRepo(), yamlGitConfigDTO.getGitConnectorsBranch());
+      ScmConnector connector =
+          getScmConnector(accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repo, connectorBranch);
       final ScmConnector scmConnector =
           decryptGitApiAccessHelper.decryptScmApiAccess(connector, accountIdentifier, projectIdentifier, orgIdentifier);
       scmConnector.setUrl(repoUrl);

@@ -124,31 +124,6 @@ public class VariableFunctorTest extends CategoryTest {
   @Owner(developers = NISHANT)
   @Category(UnitTests.class)
   @PrepareForTest(AmbianceUtils.class)
-  public void testGet_getVariableValueMapProject() {
-    String accountIdentifier = randomAlphabetic(10);
-    String orgIdentifier = randomAlphabetic(10);
-    String projectIdentifier = randomAlphabetic(10);
-    String variableIdentifier = randomAlphabetic(5);
-    String fixedValue = randomAlphabetic(10);
-    mockStatic(AmbianceUtils.class);
-    when(AmbianceUtils.getNgAccess(any())).thenReturn(getNgAccess(accountIdentifier, orgIdentifier, projectIdentifier));
-    when(variableService.list(anyObject(), anyObject(), anyObject()))
-        .thenReturn(Collections.singletonList(getVariableDTO(variableIdentifier, fixedValue)));
-    Object variableMap = variableFunctor.get(Ambiance.newBuilder().build(), "project");
-    verify(variableService, times(1))
-        .list(accountIdentifierCaptor.capture(), orgIdentifierCaptor.capture(), projectIdentifierCaptor.capture());
-    assertThat(accountIdentifierCaptor.getValue()).isEqualTo(accountIdentifier);
-    assertThat(orgIdentifierCaptor.getValue()).isEqualTo(orgIdentifier);
-    assertThat(projectIdentifierCaptor.getValue()).isEqualTo(projectIdentifier);
-    Map<String, Object> expectedMap = new HashMap<>();
-    expectedMap.put(variableIdentifier, fixedValue);
-    assertThat(variableMap).isEqualTo(expectedMap);
-  }
-
-  @Test
-  @Owner(developers = NISHANT)
-  @Category(UnitTests.class)
-  @PrepareForTest(AmbianceUtils.class)
   public void testGet_getVariableValueAccount() {
     String accountIdentifier = randomAlphabetic(10);
     String variableIdentifier = randomAlphabetic(5);
@@ -283,8 +258,8 @@ public class VariableFunctorTest extends CategoryTest {
     when(AmbianceUtils.getNgAccess(any())).thenReturn(getNgAccess(accountIdentifier, null, null));
     exceptionRule.expect(InvalidArgumentsException.class);
     exceptionRule.expectMessage(
-        String.format("Variable of %s scope cannot be used at %s scope", ScopeLevel.PROJECT, ScopeLevel.ACCOUNT));
-    variableFunctor.get(Ambiance.newBuilder().build(), "project");
+        String.format("Variable of %s scope cannot be used at %s scope", ScopeLevel.ORGANIZATION, ScopeLevel.ACCOUNT));
+    variableFunctor.get(Ambiance.newBuilder().build(), "org");
   }
 
   public NGAccess getNgAccess(String accountIdentifier, String orgIdentifier, String projectIdentifier) {

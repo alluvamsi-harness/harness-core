@@ -9,6 +9,8 @@ package io.harness.azure.client;
 
 import io.harness.azure.model.AzureConfig;
 
+import software.wings.helpers.ext.azure.AzureIdentityAccessTokenResponse;
+
 import com.microsoft.azure.management.graphrbac.BuiltInRole;
 import com.microsoft.azure.management.graphrbac.RoleAssignment;
 import java.util.List;
@@ -40,7 +42,13 @@ public interface AzureAuthorizationClient {
   /**
    * Validate azure connection with a provided clientId, tenantId, secret and environment type. Will throw exception if
    *  connection can't be made
-   * @param azureNGConfig all information required for Azure connection
+   * @param azureConfig all information required for Azure connection
    */
-  void validateAzureConnection(AzureConfig azureNGConfig);
+  boolean validateAzureConnection(AzureConfig azureConfig);
+
+  /**
+   * Authenticate within Azure and get access token in return
+   * @param azureConfig all information required for Azure connection
+   */
+  AzureIdentityAccessTokenResponse getUserAccessToken(AzureConfig azureConfig);
 }

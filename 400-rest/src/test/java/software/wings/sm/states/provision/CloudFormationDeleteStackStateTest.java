@@ -72,6 +72,7 @@ import software.wings.settings.SettingVariableTypes;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
@@ -98,6 +99,7 @@ public class CloudFormationDeleteStackStateTest extends WingsBaseTest {
   @Mock private SettingsService settingsService;
   @Mock private StateExecutionService stateExecutionService;
   @Mock private FeatureFlagService featureFlagService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private CloudFormationDeleteStackState state = new CloudFormationDeleteStackState("stateName");
 
@@ -109,7 +111,7 @@ public class CloudFormationDeleteStackStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
     Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
 
     Application application = new Application();
     application.setAccountId(ACCOUNT_ID);

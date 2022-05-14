@@ -984,7 +984,7 @@ public class AccountServiceImpl implements AccountService {
       // Prefer using delegateConfiguration from DelegateRing.
       List<String> delegateVersionFromRing = delegateVersionService.getDelegateJarVersions(accountId);
       if (isNotEmpty(delegateVersionFromRing)) {
-        return DelegateConfiguration.builder().delegateVersions(delegateVersionFromRing).build();
+        return DelegateConfiguration.builder().delegateVersions(new ArrayList<>(delegateVersionFromRing)).build();
       }
       log.warn("Unable to get Delegate version from ring, falling back to regular flow");
     }
@@ -1022,18 +1022,12 @@ public class AccountServiceImpl implements AccountService {
     if (licenseService.isAccountDeleted(accountId)) {
       throw new InvalidRequestException("Deleted AccountId: " + accountId);
     }
-    Account account = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
-                          .filter(AccountKeys.uuid, accountId)
-                          .project("delegateConfiguration", true)
-                          .get();
-    if (account.getDelegateConfiguration() == null) {
+
+    DelegateConfiguration delegateConfig = getDelegateConfiguration(accountId);
+    if (delegateConfig == null) {
       return null;
     }
-    return account.getDelegateConfiguration()
-        .getDelegateVersions()
-        .stream()
-        .reduce((first, last) -> last)
-        .orElse(EMPTY);
+    return delegateConfig.getDelegateVersions().stream().reduce((first, last) -> last).orElse(EMPTY);
   }
 
   @Override

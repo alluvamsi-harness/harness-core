@@ -29,6 +29,7 @@ import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.FileContent;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.Repository;
@@ -58,7 +59,7 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
   String branch = "branch";
   String defaultBranch = "default";
   String connectorRef = "connectorRef";
-  GithubConnectorDTO githubConnector;
+  ConnectorInfoDTO connectorInfo;
   PageRequest pageRequest;
 
   @Before
@@ -66,12 +67,12 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
     MockitoAnnotations.initMocks(this);
     scmFacilitatorService = new ScmFacilitatorServiceImpl(gitSyncConnectorHelper, scmOrchestratorService);
     pageRequest = PageRequest.builder().build();
-    githubConnector = GithubConnectorDTO.builder()
-                          .connectionType(GitConnectionType.ACCOUNT)
-                          .apiAccess(GithubApiAccessDTO.builder().build())
-                          .url(repoURL)
-                          .build();
-    ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
+    GithubConnectorDTO githubConnector = GithubConnectorDTO.builder()
+                                             .connectionType(GitConnectionType.ACCOUNT)
+                                             .apiAccess(GithubApiAccessDTO.builder().build())
+                                             .url(repoURL)
+                                             .build();
+    connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
     doReturn((ScmConnector) connectorInfo.getConnectorConfig())
         .when(gitSyncConnectorHelper)
         .getScmConnector(any(), any(), any(), any());
@@ -86,7 +87,7 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
             Repository.newBuilder().setName("repo2").setNamespace("harness").build(),
             Repository.newBuilder().setName("repo3").setNamespace("harnessxy").build());
     GetUserReposResponse getUserReposResponse = GetUserReposResponse.newBuilder().addAllRepos(repositories).build();
-    when(scmOrchestratorService.processScmRequestUsingConnector(any(), any())).thenReturn(getUserReposResponse);
+    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any())).thenReturn(getUserReposResponse);
     List<GitRepositoryResponseDTO> repositoryResponseDTOList = scmFacilitatorService.listReposByRefConnector(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, pageRequest, "");
     assertThat(repositoryResponseDTOList.size()).isEqualTo(2);
@@ -102,12 +103,26 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
                                                                           .setDefaultBranch(defaultBranch)
                                                                           .addAllBranches(Arrays.asList(branch))
                                                                           .build();
-    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any(), any(), any(), any()))
+    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any()))
         .thenReturn(listBranchesWithDefaultResponse);
     GitBranchesResponseDTO gitBranchesResponseDTO = scmFacilitatorService.listBranchesV2(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName, pageRequest, "");
     assertThat(gitBranchesResponseDTO.getDefaultBranch().getName()).isEqualTo(defaultBranch);
     assertThat(gitBranchesResponseDTO.getBranches().size()).isEqualTo(1);
     assertThat(gitBranchesResponseDTO.getBranches().get(0).getName()).isEqualTo(branch);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testGetDefaultBranch() {
+    GetUserRepoResponse getUserRepoResponse =
+        GetUserRepoResponse.newBuilder()
+            .setRepo(Repository.newBuilder().setName(repoName).setBranch(defaultBranch).build())
+            .build();
+    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any())).thenReturn(getUserRepoResponse);
+    String branchName = scmFacilitatorService.getDefaultBranch(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
+    assertThat(branchName).isEqualTo(defaultBranch);
   }
 }

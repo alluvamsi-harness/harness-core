@@ -62,4 +62,21 @@ public interface AzureContainerRegistryClient extends AzureResourceClient {
    * @return list of repositories
    */
   List<String> listRepositories(AzureConfig azureConfig, String subscriptionId, String registryUrl);
+
+  /**
+   * Returns ACR refresh token
+   * @param registryUrl
+   * @param azureAccessToken
+   * @return ACR refresh token
+   */
+  String getAcrRefreshToken(String registryUrl, String azureAccessToken);
+
+  /**
+   * Returns ACR access token
+   * @param registryUrl
+   * @param azureAccessToken
+   * @param scope
+   * @return ACR access token for specific scope
+   */
+  String getAcrAccessToken(String registryUrl, String azureAccessToken, String scope);
 }

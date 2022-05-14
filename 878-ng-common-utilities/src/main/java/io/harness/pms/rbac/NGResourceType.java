@@ -22,4 +22,5 @@ public class NGResourceType {
   public final String SECRETS = "SECRET";
   public final String ENVIRONMENT_GROUP = "ENVIRONMENT_GROUP";
   public final String FILE = "FILE";
+  public final String VARIABLE = "VARIABLE";
 }

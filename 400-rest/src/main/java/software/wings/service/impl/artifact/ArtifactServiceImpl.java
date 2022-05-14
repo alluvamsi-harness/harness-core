@@ -74,6 +74,7 @@ import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStream.ArtifactStreamKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactStreamType;
+import software.wings.beans.artifact.ArtifactView;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.NexusArtifactStream;
 import software.wings.collect.CollectEvent;
@@ -106,7 +107,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.executable.ValidateOnExecution;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
@@ -523,11 +526,14 @@ public class ArtifactServiceImpl implements ArtifactService {
         .get();
   }
 
+  @SneakyThrows
   @Override
-  public Artifact getWithServices(String artifactId, String appId) {
+  public ArtifactView getWithServices(String artifactId, String appId) {
     Artifact artifact = wingsPersistence.get(Artifact.class, artifactId);
-    artifact.setServices(artifactStreamServiceBindingService.listServices(appId, artifact.getArtifactStreamId()));
-    return artifact;
+    ArtifactView artifactView = new ArtifactView();
+    BeanUtils.copyProperties(artifactView, artifact);
+    artifactView.setServices(artifactStreamServiceBindingService.listServices(appId, artifact.getArtifactStreamId()));
+    return artifactView;
   }
 
   @Override

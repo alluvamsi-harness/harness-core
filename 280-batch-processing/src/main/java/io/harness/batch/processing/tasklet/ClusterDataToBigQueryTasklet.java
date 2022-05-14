@@ -44,6 +44,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -389,41 +390,38 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
     }
 
     List<Label> labels = new ArrayList<>();
+    Set<String> labelKeySet = new HashSet<>();
     if (ImmutableSet.of(InstanceType.K8S_POD.name(), InstanceType.K8S_POD_FARGATE.name())
             .contains(instanceBillingData.getInstanceType())) {
       if (null != k8sWorkloadLabel) {
-        k8sWorkloadLabel.forEach((key, value) -> {
-          Label workloadLabel = new Label();
-          workloadLabel.setKey(key);
-          workloadLabel.setValue(value);
-          labels.add(workloadLabel);
-        });
+        k8sWorkloadLabel.forEach((key, value) -> appendLabel(key, value, labelKeySet, labels));
       }
     }
 
     if (null != labelMap) {
-      labelMap.forEach((key, value) -> {
-        Label label = new Label();
-        label.setKey(key);
-        label.setValue(value);
-        labels.add(label);
-      });
+      labelMap.forEach((key, value) -> appendLabel(key, value, labelKeySet, labels));
     }
 
     if (null != instanceBillingData.getAppId()) {
       List<HarnessTags> harnessTags = harnessTagService.getHarnessTags(accountId, instanceBillingData.getAppId());
       harnessTags.addAll(harnessTagService.getHarnessTags(accountId, instanceBillingData.getServiceId()));
       harnessTags.addAll(harnessTagService.getHarnessTags(accountId, instanceBillingData.getEnvId()));
-      harnessTags.forEach(harnessTag -> {
-        Label harnessLabel = new Label();
-        harnessLabel.setKey(harnessTag.getKey());
-        harnessLabel.setValue(harnessTag.getValue());
-        labels.add(harnessLabel);
-      });
+      harnessTags.forEach(harnessTag -> appendLabel(harnessTag.getKey(), harnessTag.getValue(), labelKeySet, labels));
     }
 
     clusterBillingData.setLabels(Arrays.asList(labels.toArray()));
     return clusterBillingData;
+  }
+
+  @VisibleForTesting
+  public void appendLabel(String key, String value, Set<String> labelKeySet, List<Label> labels) {
+    Label label = new Label();
+    if (!labelKeySet.contains(key)) {
+      label.setKey(key);
+      label.setValue(value);
+      labels.add(label);
+      labelKeySet.add(key);
+    }
   }
 
   @NotNull

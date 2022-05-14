@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ServiceNowResourceServiceImpl implements ServiceNowResourceService {
-  private static final Duration TIMEOUT = Duration.ofSeconds(60);
+  private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
   private final ConnectorService connectorService;
   private final SecretManagerClientService secretManagerClientService;

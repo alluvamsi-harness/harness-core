@@ -18,11 +18,8 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The Class ServiceElement.
@@ -96,17 +93,6 @@ public class ServiceTemplateElement implements ContextElement {
   @Override
   public ContextElement cloneMin() {
     return aServiceTemplateElement().withUuid(uuid).withName(name).build();
-  }
-
-  /* (non-Javadoc)
-   * @see software.wings.sm.ContextElement#paramMap()
-   */
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(SERVICE_TEMPLATE, this);
-    map.putAll(serviceElement.paramMap(context));
-    return map;
   }
 
   /**

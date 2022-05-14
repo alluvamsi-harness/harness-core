@@ -8,23 +8,31 @@
 package io.harness.ng.core.filestore.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.ng.core.EntityDetail.EntityDetailKeys;
 import static io.harness.ng.core.Resource.ResourceKeys;
 import static io.harness.ng.core.entitysetupusage.entity.EntitySetupUsage.EntitySetupUsageKeys;
 
+import static java.lang.String.format;
+
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.exception.UnexpectedException;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.entities.NGFile;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
 import io.harness.ng.core.entitysetupusage.service.EntitySetupUsageService;
+import io.harness.ng.core.filestore.NGFileType;
 import io.harness.ng.core.filestore.api.FileReferenceService;
+import io.harness.repositories.filestore.spring.FileStoreRepository;
 import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,14 +47,15 @@ public class FileReferenceServiceImpl implements FileReferenceService {
       EntitySetupUsageKeys.referredByEntity + "." + EntityDetailKeys.entityRef + "." + ResourceKeys.identifier;
 
   private final EntitySetupUsageService entitySetupUsageService;
+  private final FileStoreRepository fileStoreRepository;
 
   @Override
-  public boolean isFileReferencedByOtherEntities(NGFile file) {
+  public Long countEntitiesReferencingFile(NGFile file) {
     IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRefFromEntityIdentifiers(
         file.getIdentifier(), file.getAccountIdentifier(), file.getOrgIdentifier(), file.getProjectIdentifier());
     String referredEntityFQN = identifierRef.getFullyQualifiedName();
     try {
-      return entitySetupUsageService.isEntityReferenced(
+      return entitySetupUsageService.referredByEntityCount(
           file.getAccountIdentifier(), referredEntityFQN, EntityType.FILES);
     } catch (Exception ex) {
       log.error("Encountered exception while requesting the Entity Reference records of [{}], with exception.",
@@ -67,5 +76,55 @@ public class FileReferenceServiceImpl implements FileReferenceService {
     return entitySetupUsageService.listAllEntityUsage(pageParams.getPage(), pageParams.getSize(),
         file.getAccountIdentifier(), referredEntityFQN, EntityType.FILES, entityType, pageParams.getSearchTerm(),
         Sort.by(Sort.Direction.ASC, REFERRED_BY_IDENTIFIER_KEY));
+  }
+
+  @Override
+  public void validateReferenceByAndThrow(NGFile fileOrFolder) {
+    Long count = countEntitiesReferencingFile(fileOrFolder);
+    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
+      count += countEntitiesReferencingFolder(fileOrFolder);
+      if (count > 0L) {
+        throw new ReferencedEntityException(format(
+            "Folder [%s], or its subfolders, contain file(s) referenced by %s other entities and can not be deleted.",
+            fileOrFolder.getIdentifier(), count));
+      }
+    } else {
+      if (count > 0L) {
+        throw new ReferencedEntityException(
+            format("File [%s] is referenced by %s other entities and can not be deleted.", fileOrFolder.getIdentifier(),
+                count));
+      }
+    }
+  }
+
+  private long countEntitiesReferencingFolder(NGFile folder) {
+    List<NGFile> childrenFiles = listFilesByParent(folder);
+    if (isEmpty(childrenFiles)) {
+      return 0L;
+    }
+    return childrenFiles.stream()
+        .filter(Objects::nonNull)
+        .map(this::countEntitiesReferencingFile)
+        .reduce(Long::sum)
+        .orElse(0L);
+  }
+
+  private List<NGFile> listFilesByParent(NGFile parent) {
+    return fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
+        parent.getAccountIdentifier(), parent.getOrgIdentifier(), parent.getProjectIdentifier(),
+        parent.getIdentifier());
+  }
+
+  public Page<EntitySetupUsageDTO> getAllReferencedByInScope(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, SearchPageParams pageParams, EntityType entityType) {
+    String referredEntityFQScope = IdentifierRef.builder()
+                                       .accountIdentifier(accountIdentifier)
+                                       .orgIdentifier(orgIdentifier)
+                                       .projectIdentifier(projectIdentifier)
+                                       .build()
+                                       .getFullyQualifiedScopeIdentifier();
+    return entitySetupUsageService.listAllEntityUsagePerEntityScope(pageParams.getPage(), pageParams.getSize(),
+        accountIdentifier, referredEntityFQScope, EntityType.FILES, entityType,
+        Sort.by(Sort.Direction.ASC, EntitySetupUsageKeys.referredByEntityName));
   }
 }

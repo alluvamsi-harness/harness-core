@@ -11,6 +11,7 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.beans.SearchPageParams;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
@@ -19,6 +20,7 @@ import io.harness.ng.core.filestore.dto.FileFilterDTO;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
@@ -31,10 +33,9 @@ public interface FileStoreService {
    *
    * @param fileDto the file DTO object
    * @param content file content
-   * @param draft whether file is draft or not
    * @return created file DTO object
    */
-  FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft);
+  FileDTO create(@NotNull FileDTO fileDto, InputStream content);
 
   /**
    * Update file.
@@ -108,6 +109,9 @@ public interface FileStoreService {
   Page<FileDTO> listFilesAndFolders(@NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier,
       @NotNull FileFilterDTO fileFilterDTO, Pageable pageable);
 
+  Page<EntitySetupUsageDTO> listReferencedByInScope(SearchPageParams pageParams, @NotNull String accountIdentifier,
+      String orgIdentifier, String projectIdentifier, EntityType entityType);
+
   /**
    * List NG files by pages based on filter criteria.
    *
@@ -131,5 +135,8 @@ public interface FileStoreService {
    * @param projectIdentifier the project identifier
    * @return the list of created by principals.
    */
-  Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier);
+  Set<EmbeddedUserDetailsDTO> getCreatedByList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier);
+
+  List<EntityType> getSupportedEntityTypes();
 }

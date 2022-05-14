@@ -10,6 +10,7 @@ package io.harness.pms.pipeline.service;
 import io.harness.exception.InvalidRequestException;
 import io.harness.lock.AcquiredLock;
 import io.harness.lock.PersistentLocker;
+import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineMetadataV2;
 import io.harness.repositories.pipeline.PipelineMetadataV2Repository;
 
@@ -18,12 +19,37 @@ import com.google.inject.Singleton;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 
 @Singleton
 @Slf4j
 public class PipelineMetadataServiceImpl implements PipelineMetadataService {
   @Inject private PipelineMetadataV2Repository pipelineMetadataV2Repository;
   @Inject private PersistentLocker persistentLocker;
+
+  @Override
+  public int incrementRunSequence(PipelineEntity pipelineEntity) {
+    String accountId = pipelineEntity.getAccountId();
+    String orgIdentifier = pipelineEntity.getOrgIdentifier();
+    String projectIdentifier = pipelineEntity.getProjectIdentifier();
+    int count = incrementExecutionCounter(accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
+    if (count == -1) {
+      try {
+        PipelineMetadataV2 metadata = PipelineMetadataV2.builder()
+                                          .accountIdentifier(pipelineEntity.getAccountIdentifier())
+                                          .orgIdentifier(orgIdentifier)
+                                          .projectIdentifier(projectIdentifier)
+                                          .runSequence(pipelineEntity.getRunSequence() + 1)
+                                          .identifier(pipelineEntity.getIdentifier())
+                                          .build();
+        return save(metadata).getRunSequence();
+      } catch (DuplicateKeyException exception) {
+        // retry insert if above fails
+        return incrementExecutionCounter(accountId, orgIdentifier, projectIdentifier, pipelineEntity.getIdentifier());
+      }
+    }
+    return count;
+  }
 
   @Override
   public int incrementExecutionCounter(

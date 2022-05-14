@@ -169,11 +169,11 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionContext;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import com.google.inject.MembersInjector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -345,7 +345,7 @@ public class CommandStateTest extends WingsBaseTest {
   @Mock private ServiceTemplateHelper serviceTemplateHelper;
   @Mock private TemplateExpressionProcessor templateExpressionProcessor;
 
-  @Inject MembersInjector<WorkflowStandardParams> injector;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private CommandState commandState = new CommandState("start1", "START");
 
@@ -415,6 +415,9 @@ public class CommandStateTest extends WingsBaseTest {
     when(activityHelperService.createAndSaveActivity(any(ExecutionContext.class), any(Activity.Type.class), anyString(),
              anyString(), anyList(), any(Artifact.class)))
         .thenReturn(ACTIVITY_WITH_ID);
+
+    FieldUtils.writeField(
+        commandState, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
   }
 
   @Test
@@ -1086,9 +1089,9 @@ public class CommandStateTest extends WingsBaseTest {
     commandState.setExecuteOnDelegate(true);
     commandState.setRollback(true);
 
-    injector.injectMembers(workflowStandardParams);
-    on(workflowStandardParams).set("artifactService", artifactService);
-    on(workflowStandardParams).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
+    on(workflowStandardParamsExtensionService).set("artifactService", artifactService);
+    on(workflowStandardParamsExtensionService)
+        .set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
     workflowStandardParams.setRollbackArtifactIds(singletonList("ROLLBACK_ARTIFACT_ID"));
 
     SettingAttribute settingAttribute = new SettingAttribute();
@@ -1283,8 +1286,8 @@ public class CommandStateTest extends WingsBaseTest {
   private void setWorkflowStandardParams(Artifact artifact, Command command) {
     WorkflowStandardParams workflowStandardParams =
         aWorkflowStandardParams().withAppId(APP_ID).withEnvId(ENV_ID).build();
-    on(workflowStandardParams).set("artifacts", asList(artifact));
-    on(workflowStandardParams).set("appService", appService);
+    when(artifactService.get(ARTIFACT_ID)).thenReturn(artifact);
+    on(workflowStandardParamsExtensionService).set("appService", appService);
 
     when(context.getArtifactForService(SERVICE_ID)).thenReturn(artifact);
     Map<String, Artifact> map = new HashMap<>();

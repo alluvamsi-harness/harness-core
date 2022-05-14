@@ -9,14 +9,12 @@ package io.harness.cvng.core.resources;
 
 import io.harness.EntityType;
 import io.harness.NGCommonEntityConstants;
-import io.harness.cvng.core.beans.CVVerifyStepNode;
 import io.harness.cvng.core.services.api.CVNGYamlSchemaService;
 import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.plancreator.steps.AbstractStepNode;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.security.annotations.PublicApi;
 import io.harness.yaml.schema.YamlSchemaResource;
@@ -30,7 +28,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import java.util.Collections;
 import java.util.List;
@@ -112,14 +109,5 @@ public class CVNGPartialYamlSchemaResource implements YamlSchemaResource {
     }
     return ResponseDTO.newResponse(
         cvngYamlSchemaService.getStepYamlSchema(entityType, orgIdentifier, projectIdentifier, scope));
-  }
-
-  @GET
-  @Path("/dummy-abstractStep-api")
-  @ApiOperation(value = "This is dummy api to expose abstractStepNode", nickname = "dummyAbstractStepNodeApi")
-  @Hidden
-  // do not delete this.
-  public ResponseDTO<AbstractStepNode> getAbstractStepNode() {
-    return ResponseDTO.newResponse(new CVVerifyStepNode());
   }
 }

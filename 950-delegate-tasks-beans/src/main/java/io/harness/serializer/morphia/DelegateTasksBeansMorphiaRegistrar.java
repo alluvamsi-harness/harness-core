@@ -69,7 +69,11 @@ import software.wings.beans.yaml.GitCommitAndPushResult;
 import software.wings.beans.yaml.GitCommitRequest;
 import software.wings.beans.yaml.GitDiffRequest;
 import software.wings.beans.yaml.GitDiffResult;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateStackResponse;
+import software.wings.helpers.ext.ecs.request.EcsRunTaskDeployRequest;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
+import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.sm.states.JenkinsExecutionResponse;
@@ -83,6 +87,8 @@ import java.util.Set;
 @BreakDependencyOn("io.harness.capability.CapabilityRequirement")
 @BreakDependencyOn("io.harness.capability.CapabilitySubjectPermission")
 public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
+  private String cf = "helpers.ext.cloudformation.";
+
   @Override
   public void registerClasses(Set<Class> set) {
     set.add(CapabilityRequirement.class);
@@ -157,5 +163,9 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.infrastructure.instance.info.K8sPodInfo", K8sPodInfo.class);
     w.put("beans.infrastructure.instance.info.KubernetesContainerInfo", KubernetesContainerInfo.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
+    w.put(cf + "response.CloudFormationCommandExecutionResponse", CloudFormationCommandExecutionResponse.class);
+    w.put(cf + "response.CloudFormationCreateStackResponse", CloudFormationCreateStackResponse.class);
+    w.put("helpers.ext.ecs.response.EcsRunTaskDeployResponse", EcsRunTaskDeployResponse.class);
+    w.put("helpers.ext.ecs.response.EcsRunTaskDeployRequest", EcsRunTaskDeployRequest.class);
   }
 }

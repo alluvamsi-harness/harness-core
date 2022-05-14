@@ -23,6 +23,7 @@ import io.harness.mongo.MongoConfig;
 import io.harness.opaclient.OpaServiceConfiguration;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.secret.ConfigSecret;
+import io.harness.sto.beans.entities.STOServiceConfig;
 import io.harness.telemetry.segment.SegmentConfiguration;
 import io.harness.threading.ThreadPoolConfig;
 import io.harness.timescaledb.TimeScaleDBConfig;
@@ -89,6 +90,7 @@ public class CIManagerConfiguration extends Configuration implements AssetsBundl
   private String ngManagerServiceSecret;
   private LogServiceConfig logServiceConfig;
   private TIServiceConfig tiServiceConfig;
+  private STOServiceConfig stoServiceConfig;
   private OpaServiceConfiguration opaServerConfig;
 
   private String managerServiceSecret;

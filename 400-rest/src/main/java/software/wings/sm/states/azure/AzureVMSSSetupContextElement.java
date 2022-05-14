@@ -16,13 +16,9 @@ import io.harness.delegate.task.azure.AzureVMSSPreDeploymentData;
 import io.harness.delegate.task.azure.request.AzureLoadBalancerDetailForBGDeployment;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.common.collect.ImmutableMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -56,14 +52,6 @@ public class AzureVMSSSetupContextElement implements ContextElement {
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.AZURE_VMSS_SETUP;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("newVMSSName", newVirtualMachineScaleSetName);
-    map.put("oldVMSSName", oldVirtualMachineScaleSetName);
-    return ImmutableMap.of("azurevmss", map);
   }
 
   @Override

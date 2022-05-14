@@ -10,11 +10,11 @@ package software.wings.sm.states.collaboration;
 import static io.harness.rule.OwnerRule.AGORODETKI;
 import static io.harness.rule.OwnerRule.DESCRIPTION_VALUE;
 import static io.harness.rule.OwnerRule.HINGER;
+import static io.harness.servicenow.ServiceNowTicketTypeNG.INCIDENT;
 
 import static software.wings.beans.TaskType.SERVICENOW_ASYNC;
 import static software.wings.delegatetasks.servicenow.ServiceNowAction.CREATE;
 import static software.wings.delegatetasks.servicenow.ServiceNowAction.IMPORT_SET;
-import static software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowTicketType.INCIDENT;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.ACTIVITY_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;

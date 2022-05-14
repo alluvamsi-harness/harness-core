@@ -88,6 +88,10 @@ aeriform("//320-ci-execution:module")
 
 aeriform("//320-ci-execution:tests")
 
+aeriform("//323-sto-execution:module")
+
+aeriform("//323-sto-execution:tests")
+
 aeriform("//325-sto-beans:module")
 
 aeriform("//325-sto-beans:tests")

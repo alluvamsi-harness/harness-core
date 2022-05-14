@@ -21,7 +21,9 @@ import static io.harness.NGCommonEntityConstants.PROJECT_KEY;
 import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.NGResourceFilterConstants.FILTER_KEY;
 import static io.harness.NGResourceFilterConstants.IDENTIFIERS;
+import static io.harness.NGResourceFilterConstants.PAGE_KEY;
 import static io.harness.NGResourceFilterConstants.SEARCH_TERM_KEY;
+import static io.harness.NGResourceFilterConstants.SIZE_KEY;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.filestore.FilePermissionConstants.FILE_ACCESS_PERMISSION;
 import static io.harness.filestore.FilePermissionConstants.FILE_DELETE_PERMISSION;
@@ -34,7 +36,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 
 import io.harness.EntityType;
-import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
@@ -43,6 +44,7 @@ import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -144,7 +146,7 @@ public class FileStoreResource {
 
     validate(file);
 
-    return ResponseDTO.newResponse(fileStoreService.create(file, content, null));
+    return ResponseDTO.newResponse(fileStoreService.create(file, content));
   }
 
   @PUT
@@ -289,8 +291,9 @@ public class FileStoreResource {
     file.setAccountIdentifier(accountIdentifier);
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
+    file.setDraft(true);
 
-    return ResponseDTO.newResponse(fileStoreService.create(file, null, true));
+    return ResponseDTO.newResponse(fileStoreService.create(file, null));
   }
 
   @PUT
@@ -315,6 +318,7 @@ public class FileStoreResource {
     file.setOrgIdentifier(orgIdentifier);
     file.setProjectIdentifier(projectIdentifier);
     file.setIdentifier(identifier);
+    file.setDraft(true);
 
     return ResponseDTO.newResponse(fileStoreService.update(file, null, identifier));
   }
@@ -331,9 +335,9 @@ public class FileStoreResource {
       })
   public ResponseDTO<Page<EntitySetupUsageDTO>>
   getReferencedBy(@Parameter(description = "Page number of navigation. The default value is 0") @QueryParam(
-                      NGResourceFilterConstants.PAGE_KEY) @DefaultValue("0") int page,
+                      PAGE_KEY) @DefaultValue("0") int page,
       @Parameter(description = "Number of entries per page. The default value is 100") @QueryParam(
-          NGResourceFilterConstants.SIZE_KEY) @DefaultValue("100") int size,
+          SIZE_KEY) @DefaultValue("100") int size,
       @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
@@ -346,6 +350,50 @@ public class FileStoreResource {
     return ResponseDTO.newResponse(fileStoreService.listReferencedBy(
         SearchPageParams.builder().page(page).size(size).searchTerm(searchTerm).build(), accountIdentifier,
         orgIdentifier, projectIdentifier, identifier, entityType));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("referenced-by-entity-scope")
+  @ApiOperation(value = "Get referenced by entities in scope", nickname = "getReferencedByInScope")
+  @Operation(operationId = "getReferencedByInScope", summary = "Get Referenced by Entities in scope.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "Returns the list of reference by entities per referenced entity type and scope. ")
+      })
+  public ResponseDTO<Page<EntitySetupUsageDTO>>
+  getReferencedByInScope(@Parameter(description = "Page number of navigation. The default value is 0") @QueryParam(
+                             PAGE_KEY) @DefaultValue("0") int page,
+      @Parameter(description = "Number of entries per page. The default value is 100") @QueryParam(
+          SIZE_KEY) @DefaultValue("100") int size,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier,
+      @Parameter(description = "Entity type") @QueryParam(ENTITY_TYPE) EntityType referredByEntityType) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(FILE, null), FILE_VIEW_PERMISSION);
+
+    return ResponseDTO.newResponse(
+        fileStoreService.listReferencedByInScope(SearchPageParams.builder().page(page).size(size).build(),
+            accountIdentifier, orgIdentifier, projectIdentifier, referredByEntityType));
+  }
+
+  @GET
+  @Consumes({"application/json"})
+  @Path("supported-entity-types")
+  @ApiOperation(value = "Get entity types", nickname = "getEntityTypes")
+  @Operation(operationId = "getEntityTypes", summary = "Get entity types.",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of supported entity types")
+      })
+  public ResponseDTO<List<EntityType>>
+  getSupportedEntityTypes(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier) {
+    accessControlClient.checkForAccessOrThrow(
+        ResourceScope.of(accountIdentifier, null, null), Resource.of(FILE, null), FILE_VIEW_PERMISSION);
+    return ResponseDTO.newResponse(fileStoreService.getSupportedEntityTypes());
   }
 
   @POST
@@ -381,7 +429,7 @@ public class FileStoreResource {
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of created by usernames")
       })
-  public ResponseDTO<Set<String>>
+  public ResponseDTO<Set<EmbeddedUserDetailsDTO>>
   getCreatedByList(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier) {

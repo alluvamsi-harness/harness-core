@@ -79,6 +79,7 @@ import software.wings.beans.Variable;
 import software.wings.beans.VariableType;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.artifact.Artifact;
+import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
@@ -128,6 +129,7 @@ import software.wings.sm.State;
 import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionContext.StateExecutionContextBuilder;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.stencils.Expand;
 import software.wings.utils.MappingUtils;
 
@@ -185,6 +187,7 @@ public class CommandState extends State {
   @Inject @Transient private transient ServiceTemplateHelper serviceTemplateHelper;
   @Inject @Transient private transient TemplateExpressionProcessor templateExpressionProcessor;
   @Inject @Transient private transient SSHVaultService sshVaultService;
+  @Inject @Transient private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Attributes(title = "Command") @Expand(dataProvider = CommandStateEnumDataProvider.class) private String commandName;
 
@@ -779,6 +782,27 @@ public class CommandState extends State {
 
     commandParametersBuilder.artifactFiles(artifact.getArtifactFiles());
     executionDataBuilder.withArtifactName(artifact.getDisplayName()).withActivityId(artifact.getUuid());
+    populateArtifactFileNameToContext(commandParametersBuilder, artifact);
+  }
+
+  private void populateArtifactFileNameToContext(CommandParametersBuilder commandParametersBuilder, Artifact artifact) {
+    String artifactFileName = null;
+    if (artifact == null) {
+      return;
+    }
+    List<ArtifactFile> artifactFileList = artifact.getArtifactFiles();
+    if (artifactFileList == null || artifactFileList.size() == 0) {
+      return;
+    }
+    ArtifactFile artifactFile = artifact.getArtifactFiles().get(0);
+    if (artifactFile.getName() == null) {
+      if (artifact.getMetadata() != null) {
+        artifactFileName = artifact.getMetadata().get(ArtifactMetadataKeys.artifactFileName);
+      }
+    } else {
+      artifactFileName = artifactFile.getName();
+    }
+    commandParametersBuilder.artifactFileName(artifactFileName);
   }
 
   private void getMultiArtifactDetails(ExecutionContext context, CommandStateExecutionData.Builder executionDataBuilder,
@@ -857,15 +881,15 @@ public class CommandState extends State {
           throw new InvalidRequestException(
               format("ArtifactStreamAttributes not found for artifact: %s", artifactVariableName));
         }
-        if (isNotEmpty(artifact.getArtifactFiles())) {
-          String name = artifact.getArtifactFiles().get(0).getName();
-          if (isNotEmpty(name)) {
-            artifactFileName = name;
-          }
-        } else if (artifactStreamAttributes.getMetadata() != null) {
+        if (artifactStreamAttributes.getMetadata() != null) {
           String value = artifactStreamAttributes.getMetadata().get(ArtifactMetadataKeys.artifactFileName);
           if (isNotEmpty(value)) {
             artifactFileName = value;
+          }
+        } else if (isNotEmpty(artifact.getArtifactFiles())) {
+          String name = artifact.getArtifactFiles().get(0).getName();
+          if (isNotEmpty(name)) {
+            artifactFileName = name;
           }
         }
       }
@@ -1116,7 +1140,7 @@ public class CommandState extends State {
     if (isRollback()) {
       if (context.getContextElement(ContextElementType.INSTANCE) == null) {
         WorkflowStandardParams contextElement = context.getContextElement(ContextElementType.STANDARD);
-        return contextElement.getRollbackArtifactForService(serviceId);
+        return workflowStandardParamsExtensionService.getRollbackArtifactForService(contextElement, serviceId);
       }
       Artifact previousArtifact = serviceResourceService.findPreviousArtifact(
           context.getAppId(), context.getWorkflowExecutionId(), context.getContextElement(ContextElementType.INSTANCE));

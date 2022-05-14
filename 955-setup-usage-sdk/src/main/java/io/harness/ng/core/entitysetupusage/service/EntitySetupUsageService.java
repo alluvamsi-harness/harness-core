@@ -40,6 +40,8 @@ public interface EntitySetupUsageService {
 
   Boolean isEntityReferenced(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType);
 
+  Long referredByEntityCount(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType);
+
   // todo(abhinav): make delete and create a transactional operation
   Boolean flushSave(List<EntitySetupUsage> entitySetupUsage, EntityType entityTypeFromChannel,
       boolean deleteOldReferredByRecords, String accountId);
@@ -48,4 +50,7 @@ public interface EntitySetupUsageService {
       EntityType referredByEntityType, EntityType referredEntityType);
 
   long deleteByReferredByEntityType(EntityType referredByEntityType);
+
+  Page<EntitySetupUsageDTO> listAllEntityUsagePerEntityScope(int page, int size, String accountIdentifier,
+      String referredEntityFQScope, EntityType referredEntityType, EntityType referredByEntityType, Sort sort);
 }

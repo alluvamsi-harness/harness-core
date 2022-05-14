@@ -119,6 +119,7 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalSpecParameters
 io.harness.steps.servicenow.approval.ServiceNowApprovalStepNode
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.beans.stages.IntegrationStageNode
+io.harness.beans.stages.SecurityStageNode
 io.harness.steps.approval.stage.ApprovalStageNode
 io.harness.cf.pipeline.FeatureFlagStageNode
 io.harness.plancreator.steps.internal.FlagConfigurationStepNode
@@ -161,3 +162,4 @@ io.harness.plancreator.stages.StageElementWrapperConfig
 io.harness.plancreator.execution.StepsExecutionConfig
 io.harness.yaml.core.parallelStepElementConfig
 io.harness.steps.servicenow.ServiceNowTicketOutcome
+io.harness.steps.customstage.CustomStageNode

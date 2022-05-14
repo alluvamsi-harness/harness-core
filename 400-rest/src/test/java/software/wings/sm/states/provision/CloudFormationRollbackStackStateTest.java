@@ -83,6 +83,7 @@ import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
@@ -111,6 +112,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
   @Mock private ExecutionContextImpl mockContext;
   @Mock private SweepingOutputService sweepingOutputService;
   @Mock protected FeatureFlagService featureFlagService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private CloudFormationRollbackStackState state = new CloudFormationRollbackStackState("stateName");
 
@@ -142,7 +144,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).getContextElement(ContextElementType.STANDARD);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
 
     awsConfig = aSettingAttribute().withValue(AwsConfig.builder().tag(TAG_NAME).build()).build();
     doReturn(awsConfig).when(mockSettingsService).get(anyString());
@@ -165,7 +167,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     doReturn(mockCurrentUser).when(mockParams).getCurrentUser();
     doReturn(mockParams).when(mockContext).getContextElement(ContextElementType.STANDARD);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
 
     Query mockQuery = mock(Query.class);
     doReturn(mockQuery).when(mockWingsPersistence).createQuery(any());
@@ -384,7 +386,7 @@ public class CloudFormationRollbackStackStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
     Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
     state.setProvisionerId(PROVISIONER_ID);
 
     ExecutionResponse response = state.handleAsyncResponse(mockContext, delegateResponse);

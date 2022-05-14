@@ -1,0 +1,4 @@
+summary: "This is a Monitored Service notification from Harness. You have breached your Monitored Service Health with name ${monitoredServiceName} inside project ${projectIdentifier}, organisation ${orgIdentifier} and account ${accountIdentifier}."
+link:
+    href: harness.io
+    text: Harness

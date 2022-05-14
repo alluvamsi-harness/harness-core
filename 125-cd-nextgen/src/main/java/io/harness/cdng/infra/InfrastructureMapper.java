@@ -99,7 +99,7 @@ public class InfrastructureMapper {
         PdcInfrastructure pdcInfrastructure = (PdcInfrastructure) infrastructure;
         validatePdcInfrastructure(pdcInfrastructure);
         return PdcInfrastructureOutcome.builder()
-            .sshKeyRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getSshKeyRef()))
+            .credentialsRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getCredentialsRef()))
             .hosts(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHosts()))
             .connectorRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getConnectorRef()))
             .hostFilters(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHostFilters()))
@@ -168,7 +168,7 @@ public class InfrastructureMapper {
   }
 
   private void validatePdcInfrastructure(PdcInfrastructure infrastructure) {
-    if (!hasValueOrExpression(infrastructure.getSshKeyRef())) {
+    if (!hasValueOrExpression(infrastructure.getCredentialsRef())) {
       throw new InvalidArgumentsException(Pair.of("sshKeyRef", "cannot be empty"));
     }
 

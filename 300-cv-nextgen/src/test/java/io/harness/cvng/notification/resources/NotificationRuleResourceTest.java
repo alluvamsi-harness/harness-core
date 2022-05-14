@@ -15,11 +15,11 @@ import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
+import io.harness.cvng.notification.beans.ErrorBudgetRemainingPercentageConditionSpec;
+import io.harness.cvng.notification.beans.NotificationRuleCondition;
+import io.harness.cvng.notification.beans.NotificationRuleConditionType;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
 import io.harness.cvng.notification.beans.NotificationRuleType;
-import io.harness.cvng.notification.beans.SLONotificationRuleCondition;
-import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionSpec;
-import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionType;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.rule.Owner;
 import io.harness.rule.ResourceTestRule;
@@ -137,9 +137,9 @@ public class NotificationRuleResourceTest extends CvNextGenTestBase {
             .name("notificationRuleDTO")
             .type(NotificationRuleType.SLO)
             .conditions(
-                Arrays.asList(SLONotificationRuleCondition.builder()
-                                  .conditionType(SLONotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
-                                  .spec(SLONotificationRuleConditionSpec.builder().threshold(10.0).build())
+                Arrays.asList(NotificationRuleCondition.builder()
+                                  .type(NotificationRuleConditionType.ERROR_BUDGET_REMAINING_PERCENTAGE)
+                                  .spec(ErrorBudgetRemainingPercentageConditionSpec.builder().threshold(10.0).build())
                                   .build()))
             .build();
     notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
@@ -155,6 +155,19 @@ public class NotificationRuleResourceTest extends CvNextGenTestBase {
     Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE).get();
     assertThat(response.getStatus()).isEqualTo(200);
     assertThat(response.readEntity(String.class)).contains("\"totalItems\":1");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testSaveNotificationRuleData_withMonitoredService() throws IOException {
+    String sloYaml = getYAML("notification/notification-rule-monitored-service.yaml");
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/notification-rule/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(sloYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
   }
 
   private String getYAML(String filePath) throws IOException {

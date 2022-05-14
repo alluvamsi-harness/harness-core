@@ -24,7 +24,7 @@
       "label" : 2,
       "risk" : "UNHEALTHY",
       "radius" : 2.749641708001546,
-      "angle" : 180.0,
+      "angle" : 180,
       "clusterType" : "UNKNOWN_EVENT",
       "count" : 25,
       "frequencyData" : [ 12.0, 13.0 ],

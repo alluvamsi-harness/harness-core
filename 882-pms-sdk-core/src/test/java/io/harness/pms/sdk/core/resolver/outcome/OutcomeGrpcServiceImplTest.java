@@ -124,7 +124,7 @@ public class OutcomeGrpcServiceImplTest extends PmsSdkCoreTestBase {
                  .setName("name")
                  .setValue("")
                  .setGroupName("groupName")
-                 .setValue("{\"__recast\":\"io.harness.pms.sdk.core.data.StringOutcome\",\"message\":null}")
+                 .setValue("{\"__recast\":\"io.harness.pms.sdk.core.data.StringOutcome\"}")
                  .build()))
         .thenReturn(OutcomeConsumeBlobResponse.newBuilder().build());
     outcomeGrpcService.consume(ambiance, "name", StringOutcome.builder().build(), "groupName");
@@ -132,7 +132,7 @@ public class OutcomeGrpcServiceImplTest extends PmsSdkCoreTestBase {
         .consume(OutcomeConsumeBlobRequest.newBuilder()
                      .setAmbiance(ambiance)
                      .setName("name")
-                     .setValue("{\"__recast\":\"io.harness.pms.sdk.core.data.StringOutcome\",\"message\":null}")
+                     .setValue("{\"__recast\":\"io.harness.pms.sdk.core.data.StringOutcome\"}")
                      .setGroupName("groupName")
                      .build());
   }

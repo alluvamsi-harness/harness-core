@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: resourceTypeConfiguration
-version: 7
+version: 9
 resourceTypes:
   - identifier: ACCOUNT
     permissionKey: account
@@ -72,3 +72,7 @@ resourceTypes:
     permissionKey: cert
   - identifier: FILE
     permissionKey: file
+  - identifier: VARIABLE
+    permissionKey: variable
+  - identifier: CHAOS_HUB
+    permissionKey: chaoshub

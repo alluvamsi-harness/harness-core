@@ -100,7 +100,7 @@ public class NGTemplateServiceImpl implements NGTemplateService {
 
     try {
       // populate template references
-      templateReferenceHelper.populateTemplateReferences(templateEntity);
+      //      templateReferenceHelper.populateTemplateReferences(templateEntity);
 
       // Check if this is template identifier first entry, for marking it as stable template.
       boolean firstVersionEntry =
@@ -160,7 +160,7 @@ public class NGTemplateServiceImpl implements NGTemplateService {
     enforcementClientService.checkAvailability(
         FeatureRestrictionName.TEMPLATE_SERVICE, templateEntity.getAccountIdentifier());
     // update template references
-    templateReferenceHelper.populateTemplateReferences(templateEntity);
+    //    templateReferenceHelper.populateTemplateReferences(templateEntity);
     return transactionHelper.performTransaction(() -> {
       makePreviousLastUpdatedTemplateFalse(templateEntity.getAccountIdentifier(), templateEntity.getOrgIdentifier(),
           templateEntity.getProjectIdentifier(), templateEntity.getIdentifier());
@@ -357,14 +357,14 @@ public class NGTemplateServiceImpl implements NGTemplateService {
                format("Deleting template with identifier [%s] and versionLabel [%s].", templateEntity.getIdentifier(),
                    templateEntity.getVersionLabel()))) {
         // delete template references
-        templateReferenceHelper.deleteTemplateReferences(templateEntity);
+        //        templateReferenceHelper.deleteTemplateReferences(templateEntity);
         deleteSingleTemplateHelper(accountId, orgIdentifier, projectIdentifier, templateEntity.getIdentifier(),
             templateEntity, version, canDeleteStableTemplate, comments);
       }
+    }
 
-      if (!canDeleteStableTemplate) {
-        makeGivenTemplateLastUpdatedTemplateTrue(stableTemplate);
-      }
+    if (!canDeleteStableTemplate) {
+      makeGivenTemplateLastUpdatedTemplateTrue(stableTemplate);
     }
     return true;
   }
@@ -486,7 +486,8 @@ public class NGTemplateServiceImpl implements NGTemplateService {
               StringValueUtils.getStringFromStringValue(templateRef.getIdentifier()),
               StringValueUtils.getStringFromStringValue(templateRef.getVersionLabel()));
 
-      unSyncedTemplate.ifPresent(templateEntity -> templateReferenceHelper.populateTemplateReferences(templateEntity));
+      //      unSyncedTemplate.ifPresent(templateEntity ->
+      //      templateReferenceHelper.populateTemplateReferences(templateEntity));
       return makeTemplateUpdateCall(unSyncedTemplate.get(), unSyncedTemplate.get(), ChangeType.ADD, "",
           TemplateUpdateEventType.OTHERS_EVENT, true);
     } catch (DuplicateKeyException ex) {

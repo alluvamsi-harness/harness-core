@@ -23,12 +23,8 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ngtriggers.service.NGTriggerYamlSchemaService;
-import io.harness.plancreator.stages.stage.AbstractStageNode;
-import io.harness.plancreator.steps.AbstractStepNode;
-import io.harness.plancreator.steps.barrier.BarrierStepNode;
 import io.harness.pms.annotations.PipelineServiceAuth;
 import io.harness.pms.pipeline.service.PMSYamlSchemaService;
-import io.harness.steps.approval.stage.ApprovalStageNode;
 import io.harness.yaml.schema.YamlSchemaResource;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,7 +33,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.v3.oas.annotations.Hidden;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -102,23 +97,5 @@ public class PmsYamlSchemaResource implements YamlSchemaResource {
         accountIdentifier, orgIdentifier, projectIdentifier, scope, stepEntityType, yamlGroup);
     return ResponseDTO.newResponse(
         YamlSchemaResponse.builder().schema(schema).schemaErrorResponse(SchemaErrorResponse.builder().build()).build());
-  }
-
-  @GET
-  @Path("/dummy-abstractStage-api")
-  @ApiOperation(value = "This is dummy api to expose abstractStageNode", nickname = "dummyAbstractStageNodeApi")
-  @Hidden
-  // do not delete this.
-  public ResponseDTO<AbstractStageNode> getAbstractStageNode() {
-    return ResponseDTO.newResponse(new ApprovalStageNode());
-  }
-
-  @GET
-  @Path("/dummy-abstractStep-api")
-  @ApiOperation(value = "This is dummy api to expose abstractStepNode", nickname = "dummyAbstractStepNodeApi")
-  @Hidden
-  // do not delete this.
-  public ResponseDTO<AbstractStepNode> getAbstractStepNode() {
-    return ResponseDTO.newResponse(new BarrierStepNode());
   }
 }

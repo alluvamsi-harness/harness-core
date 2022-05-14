@@ -23,6 +23,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -32,6 +33,7 @@ import io.harness.CategoryTest;
 import io.harness.FileStoreConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.beans.Scope;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.ChecksumType;
@@ -40,8 +42,9 @@ import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.ReferencedEntityException;
 import io.harness.file.beans.NGBaseFile;
-import io.harness.ng.core.dto.filestore.CreatedBy;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
@@ -107,7 +110,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
     givenThatDatabaseIsEmpty();
 
-    when(fileReferenceService.isFileReferencedByOtherEntities(any())).thenReturn(false);
+    when(fileReferenceService.countEntitiesReferencingFile(any())).thenReturn(0l);
   }
 
   @Test
@@ -209,9 +212,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
     // Given
     givenThatFileNotExistInDB();
     final FileDTO fileDto = aFileDto();
+    fileDto.setDraft(false);
 
     // When
-    fileStoreService.create(fileDto, getStreamWithDummyContent(), false);
+    fileStoreService.create(fileDto, getStreamWithDummyContent());
 
     // Then
     NGFile expected = builder()
@@ -239,7 +243,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     final FileDTO fileDto = aFileDto();
 
     // When
-    fileStoreService.create(fileDto, getStreamWithDummyContent(), false);
+    fileStoreService.create(fileDto, getStreamWithDummyContent());
 
     // Then
     NGBaseFile baseFile = new NGBaseFile();
@@ -258,7 +262,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
     final FileDTO folderDto = aFolderDto();
 
     // When
-    fileStoreService.create(folderDto, null, false);
+    fileStoreService.create(folderDto, null);
 
     // Then
     verifyZeroInteractions(fileService);
@@ -271,9 +275,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
     // Given
     givenThatFileNotExistInDB();
     final FileDTO fileDto = aFileDto();
+    fileDto.setDraft(true);
 
     // When
-    fileStoreService.create(fileDto, getStreamWithDummyContent(), true);
+    fileStoreService.create(fileDto, getStreamWithDummyContent());
 
     // Then
     verifyZeroInteractions(fileService);
@@ -286,9 +291,10 @@ public class FileStoreServiceImplTest extends CategoryTest {
     // Given
     givenThatFileNotExistInDB();
     final FileDTO fileDto = aFileDto();
+    fileDto.setDraft(true);
 
     // When
-    fileStoreService.create(fileDto, getStreamWithDummyContent(), true);
+    fileStoreService.create(fileDto, getStreamWithDummyContent());
 
     // Then
     NGFile expected = NGFile.builder()
@@ -313,7 +319,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
     FileDTO folderDto = aFolderDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(folderDto, null, false))
+    assertThatThrownBy(() -> fileStoreService.create(folderDto, null))
         .isInstanceOf(DuplicateFieldException.class)
         .hasMessageContaining("Try creating another folder, folder with identifier [identifier] already exists.",
             folderDto.getIdentifier());
@@ -328,7 +334,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
         .thenReturn(Optional.of(builder().build()));
     FileDTO fileDTO = aFileDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent(), false))
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent()))
         .isInstanceOf(DuplicateFieldException.class)
         .hasMessageContaining("Try creating another file, file with identifier [identifier] already exists.");
   }
@@ -345,7 +351,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
         .thenReturn(Optional.empty());
     FileDTO fileDTO = aFileDto();
 
-    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent(), false))
+    assertThatThrownBy(() -> fileStoreService.create(fileDTO, getStreamWithDummyContent()))
         .isInstanceOf(DuplicateFieldException.class)
         .hasMessageContaining(
             "Try creating another file, file with name [file-name] already exists in the parent folder [parent-identifier].",
@@ -415,6 +421,43 @@ public class FileStoreServiceImplTest extends CategoryTest {
     verify(fileFailsafeService).deleteAndPublish(file);
     verify(fileFailsafeService).deleteAndPublish(parentFolder);
     verify(fileService).deleteFile(fileUuid, FileBucket.FILE_STORE);
+  }
+
+  @Test
+  @Owner(developers = VLAD)
+  @Category(UnitTests.class)
+  public void shouldNotDeleteFolderWithReferences() {
+    String fileUuid = "fileUUID";
+    NGFile file = builder().name(IDENTIFIER).fileUuid(fileUuid).build();
+    String folder1 = "folder1";
+    NGFile parentFolder = builder()
+                              .name(folder1)
+                              .identifier(folder1)
+                              .type(NGFileType.FOLDER)
+                              .accountIdentifier(ACCOUNT_IDENTIFIER)
+                              .orgIdentifier(ORG_IDENTIFIER)
+                              .projectIdentifier(PROJECT_IDENTIFIER)
+                              .build();
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+             ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, IDENTIFIER))
+        .thenReturn(Optional.of(file));
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(
+             ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder1))
+        .thenReturn(Optional.of(parentFolder));
+    when(fileStoreRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndParentIdentifier(
+             ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder1))
+        .thenReturn(Arrays.asList(file));
+    when(fileFailsafeService.deleteAndPublish(any())).thenReturn(true);
+    doThrow(
+        new ReferencedEntityException(format(
+            "Folder [%s], or its subfolders, contain file(s) referenced by %s other entities and can not be deleted.",
+            parentFolder.getIdentifier(), 1L)))
+        .when(fileReferenceService)
+        .validateReferenceByAndThrow(parentFolder);
+    assertThatThrownBy(() -> fileStoreService.delete(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, folder1))
+        .isInstanceOf(ReferencedEntityException.class)
+        .hasMessage(
+            "Folder [folder1], or its subfolders, contain file(s) referenced by 1 other entities and can not be deleted.");
   }
 
   @Test
@@ -614,13 +657,15 @@ public class FileStoreServiceImplTest extends CategoryTest {
   public void testListCreatedByShouldReturnAll() {
     when(fileStoreRepository.aggregate(any(), any()))
         .thenReturn(new AggregationResults<>(
-            Lists.newArrayList(new CreatedBy("testuser1"), new CreatedBy("testuser2")), new Document()));
-    Set<String> createdByList =
+            Lists.newArrayList(EmbeddedUser.builder().name("testuser1").email("testuser1@test.com").build(),
+                EmbeddedUser.builder().name("testuser2").email("testuser2@test.com").build()),
+            new Document()));
+    Set<EmbeddedUserDetailsDTO> createdByList =
         fileStoreService.getCreatedByList(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER);
 
     assertThat(createdByList).isNotNull();
     assertThat(createdByList.size()).isEqualTo(2);
-    assertThat(createdByList.stream().findFirst().get()).isEqualTo("testuser1");
+    assertThat(createdByList.stream().findFirst().get().getName()).isEqualTo("testuser1");
   }
 
   private static FileDTO aFileDto() {
@@ -684,21 +729,21 @@ public class FileStoreServiceImplTest extends CategoryTest {
                              .name("folderName1")
                              .identifier("folderIdentifier1")
                              .parentIdentifier(FILE_IDENTIFIER)
-                             .createdBy("testuser1")
+                             .createdBy(EmbeddedUser.builder().name("testuser1").email("testuser1@test.com").build())
                              .build(),
         builder()
             .type(NGFileType.FOLDER)
             .name("folderName2")
             .identifier("folderIdentifier2")
             .parentIdentifier(FILE_IDENTIFIER)
-            .createdBy("testuser1")
+            .createdBy(EmbeddedUser.builder().name("testuser1").email("testuser1@test.com").build())
             .build(),
         builder()
             .type(NGFileType.FILE)
             .name("fileName")
             .identifier("fileIdentifier")
             .parentIdentifier(FILE_IDENTIFIER)
-            .createdBy("testuser2")
+            .createdBy(EmbeddedUser.builder().name("testuser2").email("testuser2@test.com").build())
             .build());
   }
 

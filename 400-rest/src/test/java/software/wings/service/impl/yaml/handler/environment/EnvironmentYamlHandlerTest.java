@@ -51,7 +51,7 @@ import software.wings.beans.Environment.Yaml;
 import software.wings.beans.Service;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.yaml.ChangeContext;
 import software.wings.beans.yaml.GitFileChange;
 import software.wings.beans.yaml.YamlType;
@@ -290,7 +290,7 @@ public class EnvironmentYamlHandlerTest extends YamlHandlerTestBase {
     parentService.setUuid(SERVICE_VARIABLE_ID);
     ServiceVariable existing_1 = ServiceVariable.builder()
                                      .name("sv-1")
-                                     .type(Type.ENCRYPTED_TEXT)
+                                     .type(ServiceVariableType.ENCRYPTED_TEXT)
                                      .envId(ENV_ID)
                                      .serviceId(SERVICE_ID)
                                      .entityType(EntityType.SERVICE_TEMPLATE)
@@ -299,7 +299,7 @@ public class EnvironmentYamlHandlerTest extends YamlHandlerTestBase {
                                      .build();
     ServiceVariable existing_2 = ServiceVariable.builder()
                                      .name("sv-2")
-                                     .type(Type.TEXT)
+                                     .type(ServiceVariableType.TEXT)
                                      .envId(ENV_ID)
                                      .serviceId(SERVICE_ID)
                                      .entityType(EntityType.SERVICE_TEMPLATE)
@@ -385,7 +385,7 @@ public class EnvironmentYamlHandlerTest extends YamlHandlerTestBase {
     Environment environment = getDefaultEnvironment();
     ServiceVariable existing = ServiceVariable.builder()
                                    .name("sv-1")
-                                   .type(Type.TEXT)
+                                   .type(ServiceVariableType.TEXT)
                                    .envId(GLOBAL_ENV_ID)
                                    .entityType(EntityType.ENVIRONMENT)
                                    .build();
@@ -417,7 +417,7 @@ public class EnvironmentYamlHandlerTest extends YamlHandlerTestBase {
 
     ServiceVariable newly_added = ServiceVariable.builder()
                                       .name("sv-2")
-                                      .type(Type.ENCRYPTED_TEXT)
+                                      .type(ServiceVariableType.ENCRYPTED_TEXT)
                                       .envId(GLOBAL_ENV_ID)
                                       .entityType(EntityType.ENVIRONMENT)
                                       .value(encryped_yaml_ref.toCharArray())

@@ -72,7 +72,7 @@ check_branch_name "master"
 echo "STEP2: INFO: Get Previous Tag and Tagging Master Branch according to type of release."
 if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     #Getting Latest Tag on master branch
-    TAG=$(git describe --tags --abbrev=0 --match "*.*.*" 2> /dev/null || echo 0.0.0)
+    TAG=$(git describe --tags --abbrev=0 --match "[0-9]*" 2> /dev/null || echo 0.0.0)
 
     # break down the version number into it's components
     regex="([0-9]+).([0-9]+).([0-9]+)"
@@ -108,7 +108,7 @@ if [[ "$EXECUTE_NEW_CODE" == "true" ]]; then
     esac
 
     # echo the new version number
-    NEW_TAG=${major}.${minor}.${build}
+    export NEW_TAG=${major}.${minor}.${build}
     echo "New version: major.minor.build: $NEW_TAG"
     git tag -a ${NEW_TAG} ${SHA} -m "Release Tag: v${NEW_TAG}"
     print_err "$?" "Tagging Failed"

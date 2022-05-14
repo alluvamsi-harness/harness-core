@@ -22,11 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.EntityType;
 import io.harness.TemplateServiceTestBase;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
@@ -35,7 +37,6 @@ import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ff.FeatureFlagService;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailProtoToRestMapper;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
@@ -43,6 +44,7 @@ import io.harness.ng.core.template.TemplateEntityType;
 import io.harness.pms.contracts.service.EntityReferenceServiceGrpc;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.preflight.PreFlightCheckMetadata;
+import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 import io.harness.template.entity.TemplateEntity;
 import io.harness.template.handler.TemplateYamlConversionHandler;
@@ -69,6 +71,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import retrofit2.Call;
+import retrofit2.Response;
 
 @OwnedBy(HarnessTeam.CDC)
 public class TemplateReferenceHelperTest extends TemplateServiceTestBase {
@@ -81,7 +85,7 @@ public class TemplateReferenceHelperTest extends TemplateServiceTestBase {
   @Mock NGTemplateServiceHelper templateServiceHelper;
   @Inject TemplateYamlConversionHandlerRegistry templateYamlConversionHandlerRegistry;
   @Inject EntityDetailProtoToRestMapper entityDetailProtoToRestMapper;
-  @Mock FeatureFlagService featureFlagService;
+  @Mock AccountClient accountClient;
 
   TemplateReferenceHelper templateReferenceHelper;
 
@@ -96,10 +100,12 @@ public class TemplateReferenceHelperTest extends TemplateServiceTestBase {
     entityReferenceServiceBlockingStub = EntityReferenceServiceGrpc.newBlockingStub(
         grpcCleanupRule.register(InProcessChannelBuilder.forName(serverName).directExecutor().build()));
 
-    templateReferenceHelper =
-        new TemplateReferenceHelper(entityReferenceServiceBlockingStub, templateYamlConversionHelper, pmsGitSyncHelper,
-            templateServiceHelper, templateSetupUsageHelper, featureFlagService);
-    when(featureFlagService.isEnabled(eq(FeatureName.NG_TEMPLATE_REFERENCES_SUPPORT), anyString())).thenReturn(true);
+    templateReferenceHelper = new TemplateReferenceHelper(entityReferenceServiceBlockingStub,
+        templateYamlConversionHelper, pmsGitSyncHelper, templateServiceHelper, templateSetupUsageHelper, accountClient);
+    Call<RestResponse<Boolean>> ffCall = mock(Call.class);
+    when(accountClient.isFeatureFlagEnabled(eq(FeatureName.NG_TEMPLATE_REFERENCES_SUPPORT.name()), anyString()))
+        .thenReturn(ffCall);
+    when(ffCall.execute()).thenReturn(Response.success(new RestResponse<>(true)));
   }
 
   private String readFile(String filename) {

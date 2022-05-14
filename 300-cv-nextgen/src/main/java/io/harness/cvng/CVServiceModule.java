@@ -11,6 +11,7 @@ import static io.harness.cvng.beans.change.ChangeSourceType.HARNESS_CD;
 import static io.harness.cvng.cdng.services.impl.CVNGNotifyEventListener.CVNG_ORCHESTRATION;
 import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_EVENT;
 
+import io.harness.AuthorizationServiceHeader;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.retry.MethodExecutionHelper;
@@ -244,10 +245,12 @@ import io.harness.cvng.dashboard.services.impl.TimeSeriesDashboardServiceImpl;
 import io.harness.cvng.migration.impl.CVNGMigrationServiceImpl;
 import io.harness.cvng.migration.service.CVNGMigrationService;
 import io.harness.cvng.notification.beans.NotificationRuleType;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule.MonitoredServiceNotificationRuleUpdatableEntity;
 import io.harness.cvng.notification.entities.NotificationRule.NotificationRuleUpdatableEntity;
 import io.harness.cvng.notification.entities.SLONotificationRule.SLONotificationRuleUpdatableEntity;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.cvng.notification.services.impl.NotificationRuleServiceImpl;
+import io.harness.cvng.notification.transformer.MonitoredServiceNotificationRuleConditionTransformer;
 import io.harness.cvng.notification.transformer.NotificationRuleConditionTransformer;
 import io.harness.cvng.notification.transformer.SLONotificationRuleConditionTransformer;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
@@ -311,6 +314,7 @@ import io.harness.persistence.HPersistence;
 import io.harness.pms.sdk.core.waiter.AsyncWaitEngine;
 import io.harness.redis.RedisConfig;
 import io.harness.serializer.CvNextGenRegistrars;
+import io.harness.template.TemplateResourceClientModule;
 import io.harness.threading.ThreadPool;
 import io.harness.waiter.AbstractWaiterModule;
 import io.harness.waiter.AsyncWaitEngineImpl;
@@ -380,6 +384,8 @@ public class CVServiceModule extends AbstractModule {
                 .setUncaughtExceptionHandler((t, e) -> log.error("error while processing task", e))
                 .build()));
     install(PrimaryVersionManagerModule.getInstance());
+    install(new TemplateResourceClientModule(verificationConfiguration.getTemplateServiceClientConfig(),
+        verificationConfiguration.getTemplateServiceSecret(), AuthorizationServiceHeader.CV_NEXT_GEN.getServiceId()));
     bind(HPersistence.class).to(MongoPersistence.class);
     bind(TimeSeriesRecordService.class).to(TimeSeriesRecordServiceImpl.class);
     bind(OrchestrationService.class).to(OrchestrationServiceImpl.class);
@@ -777,11 +783,17 @@ public class CVServiceModule extends AbstractModule {
     notificationRuleTypeNotificationRuleConditionTransformerMapBinder.addBinding(NotificationRuleType.SLO)
         .to(SLONotificationRuleConditionTransformer.class)
         .in(Scopes.SINGLETON);
+    notificationRuleTypeNotificationRuleConditionTransformerMapBinder.addBinding(NotificationRuleType.MONITORED_SERVICE)
+        .to(MonitoredServiceNotificationRuleConditionTransformer.class)
+        .in(Scopes.SINGLETON);
 
     MapBinder<NotificationRuleType, NotificationRuleUpdatableEntity> notificationRuleMapBinder =
         MapBinder.newMapBinder(binder(), NotificationRuleType.class, NotificationRuleUpdatableEntity.class);
     notificationRuleMapBinder.addBinding(NotificationRuleType.SLO)
         .to(SLONotificationRuleUpdatableEntity.class)
+        .in(Scopes.SINGLETON);
+    notificationRuleMapBinder.addBinding(NotificationRuleType.MONITORED_SERVICE)
+        .to(MonitoredServiceNotificationRuleUpdatableEntity.class)
         .in(Scopes.SINGLETON);
     bindRetryOnExceptionInterceptor();
   }

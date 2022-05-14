@@ -7,6 +7,11 @@
 
 package io.harness.ng.core.filestore.api.impl;
 
+import static io.harness.EntityType.PIPELINES;
+import static io.harness.EntityType.PIPELINE_STEPS;
+import static io.harness.EntityType.SECRETS;
+import static io.harness.EntityType.SERVICE;
+import static io.harness.EntityType.TEMPLATE;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -26,6 +31,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort
 import io.harness.EntityType;
 import io.harness.FileStoreConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
@@ -34,7 +40,7 @@ import io.harness.file.beans.NGBaseFile;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.ng.core.beans.SearchPageParams;
-import io.harness.ng.core.dto.filestore.CreatedBy;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
@@ -46,6 +52,7 @@ import io.harness.ng.core.filestore.api.FileFailsafeService;
 import io.harness.ng.core.filestore.api.FileStoreService;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.ng.core.filestore.dto.FileFilterDTO;
+import io.harness.ng.core.mapper.EmbeddedUserDTOMapper;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
@@ -54,6 +61,7 @@ import io.harness.stream.BoundedInputStream;
 import software.wings.app.MainConfiguration;
 import software.wings.service.intfc.FileService;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -80,6 +88,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
 @Slf4j
 public class FileStoreServiceImpl implements FileStoreService {
+  private static final List<EntityType> SUPPORTED_ENTITY_TYPES =
+      Lists.newArrayList(PIPELINES, PIPELINE_STEPS, SERVICE, SECRETS, TEMPLATE);
   private final FileService fileService;
   private final FileStoreRepository fileStoreRepository;
   private final MainConfiguration configuration;
@@ -88,7 +98,7 @@ public class FileStoreServiceImpl implements FileStoreService {
   private final FileFailsafeService fileFailsafeService;
 
   @Override
-  public FileDTO create(@NotNull FileDTO fileDto, InputStream content, Boolean draft) {
+  public FileDTO create(@NotNull FileDTO fileDto, InputStream content) {
     log.info("Creating {}: {}", fileDto.getType().name().toLowerCase(), fileDto);
 
     if (isFileExistsByIdentifier(fileDto)) {
@@ -99,7 +109,7 @@ public class FileStoreServiceImpl implements FileStoreService {
       throw new DuplicateFieldException(getDuplicateEntityNameMessage(fileDto));
     }
 
-    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto, draft);
+    NGFile ngFile = FileDTOMapper.getNGFileFromDTO(fileDto);
 
     if (shouldStoreFileContent(content, ngFile)) {
       log.info("Start creating file in file system, identifier: {}", fileDto.getIdentifier());
@@ -164,7 +174,7 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
 
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-    validateIsReferencedBy(file);
+    fileReferenceService.validateReferenceByAndThrow(file);
 
     return deleteFileOrFolder(file);
   }
@@ -204,6 +214,16 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
+  public Page<EntitySetupUsageDTO> listReferencedByInScope(SearchPageParams pageParams,
+      @NotNull String accountIdentifier, String orgIdentifier, String projectIdentifier, EntityType entityType) {
+    if (isEmpty(accountIdentifier)) {
+      throw new InvalidArgumentsException("Account identifier cannot be null or empty");
+    }
+    return fileReferenceService.getAllReferencedByInScope(
+        accountIdentifier, orgIdentifier, projectIdentifier, pageParams, entityType);
+  }
+
+  @Override
   public Page<FileDTO> listFilesWithFilter(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String filterIdentifier, String searchTerm, FilesFilterPropertiesDTO filterProperties, Pageable pageable) {
     if (isNotEmpty(filterIdentifier) && filterProperties != null) {
@@ -225,7 +245,8 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+  public Set<EmbeddedUserDetailsDTO> getCreatedByList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
     Criteria criteria = createScopeCriteria(scope);
     criteria.and(NGFiles.type).is(NGFileType.FILE);
@@ -233,9 +254,19 @@ public class FileStoreServiceImpl implements FileStoreService {
     Aggregation aggregation = Aggregation.newAggregation(
         match(criteria), group(NGFiles.createdBy), sort(Sort.Direction.ASC, NGFiles.createdBy));
 
-    AggregationResults<CreatedBy> aggregate = fileStoreRepository.aggregate(aggregation, CreatedBy.class);
+    AggregationResults<EmbeddedUser> aggregate = fileStoreRepository.aggregate(aggregation, EmbeddedUser.class);
 
-    return aggregate.getMappedResults().stream().map(CreatedBy::getCreatedBy).collect(Collectors.toSet());
+    return aggregate.getMappedResults()
+        .stream()
+        .filter(Objects::nonNull)
+        .filter(EmbeddedUser::existNameAndEmail)
+        .map(EmbeddedUserDTOMapper::fromEmbeddedUser)
+        .collect(Collectors.toSet());
+  }
+
+  @Override
+  public List<EntityType> getSupportedEntityTypes() {
+    return SUPPORTED_ENTITY_TYPES;
   }
 
   private boolean isFileExistsByIdentifier(FileDTO fileDto) {
@@ -289,7 +320,6 @@ public class FileStoreServiceImpl implements FileStoreService {
     ngFile.setFileUuid(ngBaseFile.getFileUuid());
     ngFile.setChecksumType(ngBaseFile.getChecksumType());
     ngFile.setChecksum(ngBaseFile.getChecksum());
-    ngFile.setDraft(false);
   }
 
   // in the case when we need to return the whole folder structure, create recursion on this method
@@ -321,41 +351,6 @@ public class FileStoreServiceImpl implements FileStoreService {
         createCriteriaByScopeAndParentIdentifier(
             Scope.of(accountIdentifier, orgIdentifier, projectIdentifier), parentIdentifier),
         createSortByLastModifiedAtDesc());
-  }
-
-  private void validateIsReferencedBy(NGFile fileOrFolder) {
-    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
-      if (anyFileInFolderHasReferences(fileOrFolder)) {
-        throw new InvalidArgumentsException(format(
-            "Folder [%s], or its subfolders, contain file(s) referenced by other entities and can not be deleted.",
-            fileOrFolder.getIdentifier()));
-      }
-    } else {
-      if (isFileReferencedByOtherEntities(fileOrFolder)) {
-        throw new InvalidArgumentsException(
-            format("File [%s] is referenced by other entities and can not be deleted.", fileOrFolder.getIdentifier()));
-      }
-    }
-  }
-
-  private boolean anyFileInFolderHasReferences(NGFile folder) {
-    List<NGFile> childrenFiles = listFilesByParent(folder);
-    if (isEmpty(childrenFiles)) {
-      return false;
-    }
-    return childrenFiles.stream().filter(Objects::nonNull).anyMatch(this::isReferencedByOtherEntities);
-  }
-
-  private boolean isReferencedByOtherEntities(NGFile fileOrFolder) {
-    if (NGFileType.FOLDER.equals(fileOrFolder.getType())) {
-      return anyFileInFolderHasReferences(fileOrFolder);
-    } else {
-      return isFileReferencedByOtherEntities(fileOrFolder);
-    }
-  }
-
-  private boolean isFileReferencedByOtherEntities(NGFile file) {
-    return fileReferenceService.isFileReferencedByOtherEntities(file);
   }
 
   private boolean deleteFileOrFolder(NGFile fileOrFolder) {

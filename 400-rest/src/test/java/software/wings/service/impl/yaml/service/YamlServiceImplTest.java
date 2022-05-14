@@ -122,7 +122,6 @@ public class YamlServiceImplTest extends WingsBaseTest {
         .isEmpty();
   }
 
-  @Test
   @Owner(developers = ADWAIT)
   @Category(UnitTests.class)
   public void testFilterInvalidFilePaths() throws Exception {
@@ -160,7 +159,6 @@ public class YamlServiceImplTest extends WingsBaseTest {
       assertThat(yamlService.isProcessingAllowed(change, type)).isEqualTo(true);
     }
   }
-
   @Test
   @Owner(developers = ROHIT_KUMAR)
   @Category(UnitTests.class)

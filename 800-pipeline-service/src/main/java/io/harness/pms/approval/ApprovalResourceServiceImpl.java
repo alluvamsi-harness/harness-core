@@ -8,8 +8,10 @@
 package io.harness.pms.approval;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.SERVICENOW_CREATE_UPDATE_NG;
 import static io.harness.security.dto.PrincipalType.USER;
 
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.IdentifierRef;
@@ -31,6 +33,7 @@ import io.harness.security.dto.Principal;
 import io.harness.steps.approval.step.ApprovalInstanceResponseMapper;
 import io.harness.steps.approval.step.ApprovalInstanceService;
 import io.harness.steps.approval.step.beans.ApprovalInstanceResponseDTO;
+import io.harness.steps.approval.step.beans.ApprovalType;
 import io.harness.steps.approval.step.harness.beans.HarnessApprovalActivityRequestDTO;
 import io.harness.steps.approval.step.harness.beans.HarnessApprovalInstanceAuthorizationDTO;
 import io.harness.steps.approval.step.harness.entities.HarnessApprovalInstance;
@@ -39,11 +42,15 @@ import io.harness.usergroups.UserGroupClient;
 import io.harness.utils.IdentifierRefHelper;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import com.google.inject.Inject;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -59,6 +66,7 @@ public class ApprovalResourceServiceImpl implements ApprovalResourceService {
   private final UserGroupClient userGroupClient;
   private final CurrentUserHelper currentUserHelper;
   private final UserClient userClient;
+  @Inject private AccountClient accountClient;
 
   @Inject
   public ApprovalResourceServiceImpl(ApprovalInstanceService approvalInstanceService,
@@ -142,6 +150,21 @@ public class ApprovalResourceServiceImpl implements ApprovalResourceService {
           .build();
     }
     return HarnessApprovalInstanceAuthorizationDTO.builder().authorized(true).build();
+  }
+
+  @Override
+  public String getYamlSnippet(ApprovalType approvalType, String accountId) throws IOException {
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    String yamlFile = approvalType.getDisplayName();
+    boolean isSnowCreateUpdateEnabled =
+        RestClientUtils.getResponse(accountClient.isFeatureFlagEnabled(SERVICENOW_CREATE_UPDATE_NG.name(), accountId));
+
+    if (isSnowCreateUpdateEnabled && ApprovalType.SERVICENOW_APPROVAL.equals(approvalType)) {
+      yamlFile = yamlFile.concat("WithCreateUpdate");
+    }
+    return Resources.toString(
+        Objects.requireNonNull(classLoader.getResource(String.format("approval_stage_yamls/%s.yaml", yamlFile))),
+        StandardCharsets.UTF_8);
   }
 
   private boolean alreadyHasApprovalActivity(HarnessApprovalInstance instance, EmbeddedUser user) {

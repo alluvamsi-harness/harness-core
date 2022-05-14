@@ -24,4 +24,6 @@ public interface SLIRecordService {
       SLIMissingDataType sliMissingDataType, int sliVersion, TimeRangeParams timeRangeParams);
   void delete(List<String> sliIds);
   List<SLIRecord> getLatestCountSLIRecords(String sliId, int count);
+  List<SLIRecord> getSLIRecordsForLookBackDuration(String sliId, long lookBackDuration);
+  double getErrorBudgetBurnRate(String sliId, long lookBackDuration, int totalErrorBudgetMinutes);
 }

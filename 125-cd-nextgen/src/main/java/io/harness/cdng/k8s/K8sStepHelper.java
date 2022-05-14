@@ -741,10 +741,11 @@ public class K8sStepHelper extends CDStepHelper {
     } catch (Exception e) {
       return TaskChainResponse.builder()
           .chainEnd(true)
-          .passThroughData(StepExceptionPassThroughData.builder()
-                               .errorMessage(ExceptionUtils.getMessage(e))
-                               .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, e))
-                               .build())
+          .passThroughData(
+              StepExceptionPassThroughData.builder()
+                  .errorMessage(ExceptionUtils.getMessage(e))
+                  .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, ExceptionUtils.getMessage(e)))
+                  .build())
           .build();
     }
 
@@ -939,8 +940,8 @@ public class K8sStepHelper extends CDStepHelper {
       throw e;
     }
 
-    UnitProgressData unitProgressData =
-        completeUnitProgressData(executionPassThroughData.getLastActiveUnitProgressData(), ambiance, e);
+    UnitProgressData unitProgressData = completeUnitProgressData(
+        executionPassThroughData.getLastActiveUnitProgressData(), ambiance, ExceptionUtils.getMessage(e));
     FailureData failureData = FailureData.newBuilder()
                                   .addFailureTypes(FailureType.APPLICATION_FAILURE)
                                   .setLevel(Level.ERROR.name())

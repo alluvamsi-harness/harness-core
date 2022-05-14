@@ -21,7 +21,7 @@ public enum ExecutionStrategyType {
 
   private String displayName;
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static ExecutionStrategyType getExecutionStrategy(@JsonProperty("type") String displayName) {
     for (ExecutionStrategyType executionStrategyType : ExecutionStrategyType.values()) {
       if (executionStrategyType.displayName.equalsIgnoreCase(displayName)) {

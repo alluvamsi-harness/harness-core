@@ -8,6 +8,8 @@
 package io.harness.ccm.commons.utils;
 
 import static io.harness.ccm.commons.entities.CCMField.ALL;
+import static io.harness.ccm.commons.entities.CCMField.ANOMALOUS_SPEND;
+import static io.harness.ccm.commons.entities.CCMField.COST_IMPACT;
 import static io.harness.ccm.commons.entities.CCMOperator.LIKE;
 import static io.harness.ccm.commons.utils.TimeUtils.toOffsetDateTime;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -37,14 +39,21 @@ import org.jooq.impl.DSL;
 @Slf4j
 public class AnomalyQueryBuilder {
   private static final List<TableField<AnomaliesRecord, String>> ANOMALY_TABLE_ENTITIES =
-      new ArrayList<>(Arrays.asList(ANOMALIES.WORKLOADNAME, ANOMALIES.NAMESPACE, ANOMALIES.CLUSTERNAME,
-          ANOMALIES.AWSACCOUNT, ANOMALIES.AWSSERVICE, ANOMALIES.AWSINSTANCETYPE, ANOMALIES.AWSUSAGETYPE,
-          ANOMALIES.GCPPRODUCT, ANOMALIES.GCPPROJECT, ANOMALIES.GCPSKUDESCRIPTION, ANOMALIES.GCPSKUID));
+      Arrays.asList(ANOMALIES.WORKLOADNAME, ANOMALIES.NAMESPACE, ANOMALIES.CLUSTERNAME, ANOMALIES.AWSACCOUNT,
+          ANOMALIES.AWSSERVICE, ANOMALIES.AWSINSTANCETYPE, ANOMALIES.AWSUSAGETYPE, ANOMALIES.GCPPRODUCT,
+          ANOMALIES.GCPPROJECT, ANOMALIES.GCPSKUDESCRIPTION, ANOMALIES.GCPSKUID);
+
+  // Fields which don't directly correspond to a column in anomalies table
+  private static final List<CCMField> NON_TABLE_FIELDS = Arrays.asList(ANOMALOUS_SPEND, COST_IMPACT, ALL);
 
   @NotNull
   public List<OrderField<?>> getOrderByFields(@NotNull List<CCMSort> sortList) {
     List<OrderField<?>> orderByFields = new ArrayList<>();
-    sortList.forEach(sortField -> orderByFields.add(getOrderByField(sortField)));
+    sortList.forEach(sortField -> {
+      if (!NON_TABLE_FIELDS.contains(sortField.getField())) {
+        orderByFields.add(getOrderByField(sortField));
+      }
+    });
     return orderByFields;
   }
 

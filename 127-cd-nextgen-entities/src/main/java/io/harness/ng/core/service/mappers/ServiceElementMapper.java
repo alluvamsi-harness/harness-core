@@ -33,6 +33,7 @@ public class ServiceElementMapper {
                                       .name(serviceRequestDTO.getName())
                                       .description(serviceRequestDTO.getDescription())
                                       .tags(convertToList(serviceRequestDTO.getTags()))
+                                      .yaml(serviceRequestDTO.getYaml())
                                       .build();
     NGServiceConfig ngServiceConfig = NGServiceEntityMapper.toNGServiceConfig(serviceEntity);
     serviceEntity.setYaml(NGServiceEntityMapper.toYaml(ngServiceConfig));

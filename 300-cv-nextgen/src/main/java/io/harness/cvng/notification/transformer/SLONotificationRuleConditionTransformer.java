@@ -8,53 +8,101 @@
 package io.harness.cvng.notification.transformer;
 
 import io.harness.cvng.core.beans.params.ProjectParams;
+import io.harness.cvng.notification.beans.ErrorBudgetBurnRateConditionSpec;
+import io.harness.cvng.notification.beans.ErrorBudgetRemainingMinutesConditionSpec;
+import io.harness.cvng.notification.beans.ErrorBudgetRemainingPercentageConditionSpec;
+import io.harness.cvng.notification.beans.NotificationRuleCondition;
+import io.harness.cvng.notification.beans.NotificationRuleConditionSpec;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
 import io.harness.cvng.notification.beans.NotificationRuleType;
-import io.harness.cvng.notification.beans.SLONotificationRuleCondition;
-import io.harness.cvng.notification.beans.SLONotificationRuleCondition.SLONotificationRuleConditionSpec;
 import io.harness.cvng.notification.entities.SLONotificationRule;
-import io.harness.cvng.notification.entities.SLONotificationRule.SLONotificationRuleEntityCondition;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLOErrorBudgetBurnRateCondition;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLOErrorBudgetRemainingMinutesCondition;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLOErrorBudgetRemainingPercentageCondition;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLONotificationRuleCondition;
+import io.harness.cvng.notification.utils.NotificationRuleCommonUtils;
+import io.harness.exception.InvalidArgumentsException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class SLONotificationRuleConditionTransformer
-    extends NotificationRuleConditionTransformer<SLONotificationRule, SLONotificationRuleCondition> {
+    extends NotificationRuleConditionTransformer<SLONotificationRule, NotificationRuleConditionSpec> {
   @Override
   public SLONotificationRule getEntity(ProjectParams projectParams, NotificationRuleDTO notificationRuleDTO) {
-    List<SLONotificationRuleCondition> sloNotificationRuleConditions = new ArrayList<>();
-    notificationRuleDTO.getConditions().forEach(
-        condition -> sloNotificationRuleConditions.add((SLONotificationRuleCondition) condition));
-
     return SLONotificationRule.builder()
         .accountId(projectParams.getAccountIdentifier())
         .orgIdentifier(projectParams.getOrgIdentifier())
         .projectIdentifier(projectParams.getProjectIdentifier())
         .identifier(notificationRuleDTO.getIdentifier())
         .name(notificationRuleDTO.getName())
-        .enabled(notificationRuleDTO.isEnabled())
         .type(NotificationRuleType.SLO)
         .notificationMethod(notificationRuleDTO.getNotificationMethod())
-        .conditions(sloNotificationRuleConditions.stream()
-                        .map(condition
-                            -> SLONotificationRuleEntityCondition.builder()
-                                   .conditionType(condition.getConditionType())
-                                   .threshold(condition.getSpec().getThreshold())
-                                   .build())
+        .conditions(notificationRuleDTO.getConditions()
+                        .stream()
+                        .map(condition -> getEntityCondition(condition))
                         .collect(Collectors.toList()))
         .build();
   }
 
   @Override
-  protected List<SLONotificationRuleCondition> getSpec(SLONotificationRule notificationRule) {
+  protected List<NotificationRuleConditionSpec> getSpec(SLONotificationRule notificationRule) {
     return notificationRule.getConditions()
         .stream()
-        .map(condition
-            -> SLONotificationRuleCondition.builder()
-                   .conditionType(condition.getConditionType())
-                   .spec(SLONotificationRuleConditionSpec.builder().threshold(condition.getThreshold()).build())
-                   .build())
+        .map(condition -> getDTOCondition(condition))
         .collect(Collectors.toList());
+  }
+
+  private SLONotificationRuleCondition getEntityCondition(NotificationRuleCondition condition) {
+    switch (condition.getSpec().getType()) {
+      case ERROR_BUDGET_REMAINING_PERCENTAGE:
+        ErrorBudgetRemainingPercentageConditionSpec remainingPercentageConditionSpec =
+            (ErrorBudgetRemainingPercentageConditionSpec) condition.getSpec();
+        return SLOErrorBudgetRemainingPercentageCondition.builder()
+            .threshold(remainingPercentageConditionSpec.getThreshold())
+            .build();
+      case ERROR_BUDGET_REMAINING_MINUTES:
+        ErrorBudgetRemainingMinutesConditionSpec remainingMinutesConditionSpec =
+            (ErrorBudgetRemainingMinutesConditionSpec) condition.getSpec();
+        return SLOErrorBudgetRemainingMinutesCondition.builder()
+            .threshold(remainingMinutesConditionSpec.getThreshold())
+            .build();
+      case ERROR_BUDGET_BURN_RATE:
+        ErrorBudgetBurnRateConditionSpec burnRateConditionSpec = (ErrorBudgetBurnRateConditionSpec) condition.getSpec();
+        return SLOErrorBudgetBurnRateCondition.builder()
+            .threshold(burnRateConditionSpec.getThreshold())
+            .lookBackDuration(
+                NotificationRuleCommonUtils.getDurationInMillis(burnRateConditionSpec.getLookBackDuration()))
+            .build();
+      default:
+        throw new InvalidArgumentsException(
+            "Invalid Monitored Service Notification Rule Condition Type: " + condition.getType());
+    }
+  }
+
+  private NotificationRuleConditionSpec getDTOCondition(SLONotificationRuleCondition condition) {
+    switch (condition.getType()) {
+      case ERROR_BUDGET_REMAINING_PERCENTAGE:
+        SLOErrorBudgetRemainingPercentageCondition remainingPercentageCondition =
+            (SLOErrorBudgetRemainingPercentageCondition) condition;
+        return ErrorBudgetRemainingPercentageConditionSpec.builder()
+            .threshold(remainingPercentageCondition.getThreshold())
+            .build();
+      case ERROR_BUDGET_REMAINING_MINUTES:
+        SLOErrorBudgetRemainingMinutesCondition remainingMinutesCondition =
+            (SLOErrorBudgetRemainingMinutesCondition) condition;
+        return ErrorBudgetRemainingMinutesConditionSpec.builder()
+            .threshold(remainingMinutesCondition.getThreshold())
+            .build();
+      case ERROR_BUDGET_BURN_RATE:
+        SLOErrorBudgetBurnRateCondition burnRateCondition = (SLOErrorBudgetBurnRateCondition) condition;
+        return ErrorBudgetBurnRateConditionSpec.builder()
+            .threshold(burnRateCondition.getThreshold())
+            .lookBackDuration(NotificationRuleCommonUtils.getDurationAsString(burnRateCondition.getLookBackDuration()))
+            .build();
+      default:
+        throw new InvalidArgumentsException(
+            "Invalid Monitored Service Notification Rule Condition Type: " + condition.getType());
+    }
   }
 }

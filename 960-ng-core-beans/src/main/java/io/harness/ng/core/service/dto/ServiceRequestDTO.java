@@ -37,4 +37,6 @@ public class ServiceRequestDTO {
   @EntityName String name;
   String description;
   Map<String, String> tags;
+
+  String yaml;
 }

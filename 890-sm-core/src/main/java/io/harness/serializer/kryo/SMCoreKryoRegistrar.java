@@ -10,8 +10,6 @@ package io.harness.serializer.kryo;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.EncryptedData;
-import io.harness.beans.EncryptedDataParent;
 import io.harness.delegatetasks.DeleteSecretTaskParameters;
 import io.harness.delegatetasks.DeleteSecretTaskResponse;
 import io.harness.delegatetasks.EncryptSecretTaskParameters;
@@ -40,8 +38,6 @@ import com.esotericsoftware.kryo.Kryo;
 public class SMCoreKryoRegistrar implements KryoRegistrar {
   @Override
   public void register(Kryo kryo) {
-    kryo.register(EncryptedData.class, 5124);
-    kryo.register(EncryptedDataParent.class, 7335);
     kryo.register(ValidateSecretReferenceTaskParameters.class, 150001);
     kryo.register(UpsertSecretTaskParameters.class, 150002);
     kryo.register(FetchSecretTaskParameters.class, 150003);

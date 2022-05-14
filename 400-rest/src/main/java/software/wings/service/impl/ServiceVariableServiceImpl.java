@@ -20,8 +20,8 @@ import static io.harness.validation.Validator.notNullCheck;
 import static software.wings.beans.CGConstants.GLOBAL_ENV_ID;
 import static software.wings.beans.EntityType.ENVIRONMENT;
 import static software.wings.beans.EntityType.SERVICE;
-import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
-import static software.wings.beans.ServiceVariable.Type.TEXT;
+import static software.wings.beans.ServiceVariableType.ENCRYPTED_TEXT;
+import static software.wings.beans.ServiceVariableType.TEXT;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.MASKED;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.OBTAIN_VALUE;
 
@@ -51,7 +51,7 @@ import software.wings.beans.Service;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
 import software.wings.beans.ServiceVariable.ServiceVariableKeys;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.dl.WingsPersistence;
 import software.wings.security.PermissionAttribute;
 import software.wings.security.PermissionAttribute.Action;
@@ -269,7 +269,7 @@ public class ServiceVariableServiceImpl implements ServiceVariableService {
     notNullCheck("Service variable", savedServiceVariable);
     if (serviceVariable.getName() != null) {
       if (savedServiceVariable.getName() != null && !savedServiceVariable.getName().equals(serviceVariable.getName())) {
-        if (savedServiceVariable.getType() == Type.ARTIFACT) {
+        if (savedServiceVariable.getType() == ServiceVariableType.ARTIFACT) {
           throw new InvalidRequestException("Artifact variable name can not be changed.");
         } else {
           throw new InvalidRequestException("Service variable name can not be changed.");
@@ -457,7 +457,7 @@ public class ServiceVariableServiceImpl implements ServiceVariableService {
   }
 
   private void addAndSaveSearchTags(ServiceVariable serviceVariable) {
-    if (serviceVariable.getType() != Type.ENCRYPTED_TEXT) {
+    if (serviceVariable.getType() != ServiceVariableType.ENCRYPTED_TEXT) {
       return;
     }
 
@@ -518,7 +518,7 @@ public class ServiceVariableServiceImpl implements ServiceVariableService {
   }
 
   private void removeSearchTagsIfNecessary(ServiceVariable savedServiceVariable, String newValue) {
-    Type savedServiceVariableType = savedServiceVariable.getType();
+    ServiceVariableType savedServiceVariableType = savedServiceVariable.getType();
     if (savedServiceVariableType != ENCRYPTED_TEXT) {
       return;
     }

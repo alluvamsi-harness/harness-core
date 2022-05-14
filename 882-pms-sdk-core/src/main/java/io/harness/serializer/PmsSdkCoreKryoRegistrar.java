@@ -10,6 +10,7 @@ package io.harness.serializer;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.async.AsyncResponseCallback;
 import io.harness.pms.sdk.core.adviser.abort.OnAbortAdviserParameters;
 import io.harness.pms.sdk.core.adviser.fail.OnFailAdviserParameters;
 import io.harness.pms.sdk.core.adviser.ignore.IgnoreAdviserParameters;
@@ -52,5 +53,6 @@ public class PmsSdkCoreKryoRegistrar implements KryoRegistrar {
     kryo.register(AsyncSdkResumeCallback.class, 88204);
     kryo.register(AsyncSdkProgressCallback.class, 88205);
     kryo.register(AsyncSdkSingleCallback.class, 88206);
+    kryo.register(AsyncResponseCallback.class, 88407);
   }
 }

@@ -192,16 +192,7 @@ enum ViewFieldIdentifier {
   CUSTOM
   COMMON
   LABEL
-}
-
-enum ViewFieldIdentifierName {
-  Cluster
-  AWS
-  GCP
-  Azure
-  Custom
-  Common
-  Label
+  BUSINESS_MAPPING
 }
 
 type viewFieldData {
@@ -210,7 +201,7 @@ type viewFieldData {
 
 type viewFieldIdentifierData {
   identifier: ViewFieldIdentifier
-  identifierName: ViewFieldIdentifierName
+  identifierName: String
   values: [viewField]
 }
 
@@ -218,7 +209,7 @@ type viewField {
   fieldId: String
   fieldName: String
   identifier: ViewFieldIdentifier
-  identifierName: ViewFieldIdentifierName
+  identifierName: String
 }
 
 type ViewTimeSeriesData {

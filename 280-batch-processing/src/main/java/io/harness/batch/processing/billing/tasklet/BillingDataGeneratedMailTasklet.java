@@ -64,9 +64,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 @Singleton
 public class BillingDataGeneratedMailTasklet implements Tasklet {
-  public static final String CCM_DATA_GENERATED = "ccm_data_generated";
-  public static final String ACCOUNT_ID = "accountId";
-  public static final String DATA_GENERATED = "dataGenerated";
+  public static final String FIRST_DATA_RECEIVED = "First Data Received";
+  public static final String MODULE = "module";
+  public static final String DATA_TYPE = "dataType";
   @Autowired private CloudToHarnessMappingService cloudToHarnessMappingService;
   @Autowired private DataGeneratedNotificationDao notificationDao;
   @Autowired private TimeScaleDBService timeScaleDBService;
@@ -112,10 +112,10 @@ public class BillingDataGeneratedMailTasklet implements Tasklet {
       Boolean isSegmentDataReadyEventSent = ceMetadataRecord.getSegmentDataReadyEventSent();
       if (isSegmentDataReadyEventSent == null || !isSegmentDataReadyEventSent) {
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put(ACCOUNT_ID, accountId);
-        properties.put(DATA_GENERATED, "CLUSTER");
-        telemetryReporter.sendTrackEvent(
-            CCM_DATA_GENERATED, properties, Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
+        properties.put(MODULE, "CCM");
+        properties.put(DATA_TYPE, "CLUSTER");
+        telemetryReporter.sendTrackEvent(FIRST_DATA_RECEIVED, null, accountId, properties,
+            Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
       }
 
       cloudToHarnessMappingService.upsertCEMetaDataRecord(CEMetadataRecord.builder()

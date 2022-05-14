@@ -966,6 +966,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     try {
       response = call.execute();
       return response.body();
+    } catch (Exception e) {
+      log.error("error executing rest call", e);
+      throw e;
     } finally {
       if (response != null && !response.isSuccessful()) {
         String errorResponse = response.errorBody().string();
@@ -1444,17 +1447,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void startLocalHeartbeat() {
     healthMonitorExecutor.scheduleAtFixedRate(() -> {
       try {
-        log.info("Starting local heartbeat.");
+        log.debug("Starting local heartbeat.");
         sendLocalHeartBeat();
       } catch (Exception e) {
-        log.error("Exception while scheduling local heartbeat", e);
+        log.error("Exception while scheduling local heartbeat and filling status data", e);
       }
       logCurrentTasks();
     }, 0, LOCAL_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
   }
 
   private void sendLocalHeartBeat() {
-    log.info("Filling status data.");
+    log.debug("Filling status data.");
     Map<String, Object> statusData = new HashMap<>();
     if (selfDestruct.get()) {
       statusData.put(DELEGATE_SELF_DESTRUCT, true);
@@ -1652,7 +1655,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     }
 
     if (socket.status() == STATUS.OPEN || socket.status() == STATUS.REOPENED) {
-      log.info("Sending keepAlive packet...");
+      log.debug("Sending keepAlive packet...");
       updateBuilderIfEcsDelegate(builder);
       try {
         HTimeLimiter.callInterruptible21(delegateHealthTimeLimiter, Duration.ofSeconds(15), () -> {
@@ -2555,12 +2558,17 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void applyDelegateExpressionEvaluator(
       DelegateTaskPackage delegateTaskPackage, DelegateExpressionEvaluator delegateExpressionEvaluator) {
-    TaskData taskData = delegateTaskPackage.getData();
-    if (taskData.getParameters() != null && taskData.getParameters().length == 1
-        && taskData.getParameters()[0] instanceof TaskParameters) {
-      log.info("Applying DelegateExpression Evaluator for delegateTask");
-      ExpressionReflectionUtils.applyExpression(taskData.getParameters()[0],
-          (secretMode, value) -> delegateExpressionEvaluator.substitute(value, new HashMap<>()));
+    try {
+      TaskData taskData = delegateTaskPackage.getData();
+      if (taskData.getParameters() != null && taskData.getParameters().length == 1
+          && taskData.getParameters()[0] instanceof TaskParameters) {
+        log.debug("Applying DelegateExpression Evaluator for delegateTask");
+        ExpressionReflectionUtils.applyExpression(taskData.getParameters()[0],
+            (secretMode, value) -> delegateExpressionEvaluator.substitute(value, new HashMap<>()));
+      }
+    } catch (Exception e) {
+      log.error("Exception occurred during applying DelegateExpression Evaluator for delegateTask.", e);
+      throw e;
     }
   }
 

@@ -95,7 +95,7 @@ import software.wings.beans.Service;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
 import software.wings.beans.ServiceVariable.OverrideType;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SettingAttribute.SettingAttributeKeys;
 import software.wings.beans.SettingAttribute.SettingCategory;
@@ -1096,7 +1096,7 @@ public class VaultTest extends WingsBaseTest {
                                                 .accountId(accountId)
                                                 .name(UUID.randomUUID().toString())
                                                 .value(secretId.toCharArray())
-                                                .type(Type.ENCRYPTED_TEXT)
+                                                .type(ServiceVariableType.ENCRYPTED_TEXT)
                                                 .build();
 
     String savedAttributeId = wingsPersistence.save(serviceVariable);
@@ -1112,7 +1112,7 @@ public class VaultTest extends WingsBaseTest {
 
     Map<String, Object> keyValuePairs = new HashMap<>();
     keyValuePairs.put("name", "newName");
-    keyValuePairs.put("type", Type.ENCRYPTED_TEXT);
+    keyValuePairs.put("type", ServiceVariableType.ENCRYPTED_TEXT);
     keyValuePairs.put("value", secretId.toCharArray());
     wingsPersistence.updateFields(ServiceVariable.class, savedAttributeId, keyValuePairs);
     assertThat(wingsPersistence.createQuery(EncryptedData.class).count()).isEqualTo(numOfEncRecords + 2);
@@ -1165,7 +1165,7 @@ public class VaultTest extends WingsBaseTest {
                                                 .accountId(accountId)
                                                 .name(UUID.randomUUID().toString())
                                                 .value(secretId.toCharArray())
-                                                .type(Type.ENCRYPTED_TEXT)
+                                                .type(ServiceVariableType.ENCRYPTED_TEXT)
                                                 .build();
 
     String savedAttributeId = wingsPersistence.save(serviceVariable);

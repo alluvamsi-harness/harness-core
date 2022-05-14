@@ -40,8 +40,16 @@ import software.wings.service.intfc.security.EncryptionService;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.inject.Inject;
+import io.fabric8.istio.api.networking.v1alpha3.Destination;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRoute;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceBuilder;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -51,15 +59,6 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import me.snowdrop.istio.api.IstioResource;
-import me.snowdrop.istio.api.networking.v1alpha3.Destination;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceFluent.SpecNested;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecFluent.HttpNested;
 import org.mongodb.morphia.annotations.Transient;
 
 /**
@@ -95,9 +94,20 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
     }
 
     if (resizeParams.isUseAutoscaler() && resizeParams.isRollback()) {
-      HorizontalPodAutoscaler autoscaler =
+      HasMetadata autoscaler =
           kubernetesContainerService.getAutoscaler(kubernetesConfig, controllerName, resizeParams.getApiVersion());
-      if (autoscaler != null && controllerName.equals(autoscaler.getSpec().getScaleTargetRef().getName())) {
+      HorizontalPodAutoscaler v1AutoScaler = null;
+      io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler v2Beta1AutoScaler = null;
+      String scaleTargetRefName;
+
+      if (autoscaler instanceof HorizontalPodAutoscaler) {
+        v1AutoScaler = (HorizontalPodAutoscaler) autoscaler;
+        scaleTargetRefName = v1AutoScaler.getSpec().getScaleTargetRef().getName();
+      } else {
+        v2Beta1AutoScaler = (io.fabric8.kubernetes.api.model.autoscaling.v2beta1.HorizontalPodAutoscaler) autoscaler;
+        scaleTargetRefName = v2Beta1AutoScaler.getSpec().getScaleTargetRef().getName();
+      }
+      if (autoscaler != null && controllerName.equals(scaleTargetRefName)) {
         executionLogCallback.saveExecutionLog("Deleting horizontal pod autoscaler: " + controllerName);
         kubernetesContainerService.deleteAutoscaler(kubernetesConfig, controllerName);
       }
@@ -143,7 +153,7 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
 
     // Enable HPA
     if (!resizeParams.isRollback() && contextData.deployingToHundredPercent && resizeParams.isUseAutoscaler()) {
-      HorizontalPodAutoscaler hpa =
+      HasMetadata hpa =
           kubernetesContainerService.createOrReplaceAutoscaler(kubernetesConfig, resizeParams.getAutoscalerYaml());
       if (hpa != null) {
         String hpaName = hpa.getMetadata().getName();
@@ -157,20 +167,21 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
       String controllerName = resizeParams.getContainerServiceName();
       String kubernetesServiceName = getServiceNameFromControllerName(controllerName);
       String controllerPrefix = getPrefixFromControllerName(controllerName);
-      IstioResource existingVirtualService =
-          kubernetesContainerService.getIstioVirtualService(kubernetesConfig, kubernetesServiceName);
+      VirtualService existingVirtualService =
+          kubernetesContainerService.getFabric8IstioVirtualService(kubernetesConfig, kubernetesServiceName);
 
       if (existingVirtualService == null) {
         throw new InvalidRequestException(format("Virtual Service [%s] not found", kubernetesServiceName));
       }
 
-      IstioResource virtualServiceDefinition =
+      VirtualService virtualServiceDefinition =
           createVirtualServiceDefinition(contextData, allData, existingVirtualService, kubernetesServiceName);
 
       if (!virtualServiceHttpRouteMatchesExisting(existingVirtualService, virtualServiceDefinition)) {
         executionLogCallback.saveExecutionLog("Setting Istio VirtualService Route destination weights:");
         printVirtualServiceRouteWeights(virtualServiceDefinition, controllerPrefix, executionLogCallback);
-        kubernetesContainerService.createOrReplaceIstioResource(kubernetesConfig, virtualServiceDefinition);
+        kubernetesContainerService.createOrReplaceFabric8IstioVirtualService(
+            kubernetesConfig, virtualServiceDefinition);
       } else {
         executionLogCallback.saveExecutionLog("No change to Istio VirtualService Route rules :");
         printVirtualServiceRouteWeights(existingVirtualService, controllerPrefix, executionLogCallback);
@@ -184,7 +195,7 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
   }
 
   private boolean virtualServiceHttpRouteMatchesExisting(
-      IstioResource existingVirtualService, IstioResource virtualService) {
+      VirtualService existingVirtualService, VirtualService virtualService) {
     if (existingVirtualService == null) {
       return false;
     }
@@ -197,16 +208,16 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
       return false;
     }
 
-    List<DestinationWeight> sorted = new ArrayList<>(virtualServiceHttpRoute.getRoute());
-    List<DestinationWeight> existingSorted = new ArrayList<>(existingVirtualServiceHttpRoute.getRoute());
-    Comparator<DestinationWeight> comparator =
+    List<HTTPRouteDestination> sorted = new ArrayList<>(virtualServiceHttpRoute.getRoute());
+    List<HTTPRouteDestination> existingSorted = new ArrayList<>(existingVirtualServiceHttpRoute.getRoute());
+    Comparator<HTTPRouteDestination> comparator =
         Comparator.comparing(a -> Integer.valueOf(a.getDestination().getSubset()));
     sorted.sort(comparator);
     existingSorted.sort(comparator);
 
     for (int i = 0; i < sorted.size(); i++) {
-      DestinationWeight dw1 = sorted.get(i);
-      DestinationWeight dw2 = existingSorted.get(i);
+      HTTPRouteDestination dw1 = sorted.get(i);
+      HTTPRouteDestination dw2 = existingSorted.get(i);
       if (!dw1.getDestination().getSubset().equals(dw2.getDestination().getSubset())
           || !dw1.getWeight().equals(dw2.getWeight())) {
         return false;
@@ -296,8 +307,8 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
     return ((KubernetesResizeParams) contextData.resizeParams).getTrafficPercent();
   }
 
-  private IstioResource createVirtualServiceDefinition(ContextData contextData, List<ContainerServiceData> allData,
-      IstioResource existingVirtualService, String kubernetesServiceName) {
+  private VirtualService createVirtualServiceDefinition(ContextData contextData, List<ContainerServiceData> allData,
+      VirtualService existingVirtualService, String kubernetesServiceName) {
     VirtualServiceSpec existingVirtualServiceSpec = ((VirtualService) existingVirtualService).getSpec();
 
     SpecNested<VirtualServiceBuilder> virtualServiceSpecNested =
@@ -325,7 +336,7 @@ public class KubernetesResizeCommandUnit extends ContainerResizeCommandUnit {
           Destination destination = new Destination();
           destination.setHost(kubernetesServiceName);
           destination.setSubset(Integer.toString(revision.get()));
-          DestinationWeight destinationWeight = new DestinationWeight();
+          HTTPRouteDestination destinationWeight = new HTTPRouteDestination();
           destinationWeight.setWeight(weight);
           destinationWeight.setDestination(destination);
           virtualServiceHttpNested.addToRoute(destinationWeight);

@@ -121,3 +121,8 @@ enforcementClientConfiguration:
 pmsGrpcClientConfig:
   target: localhost:12011
   authority: localhost
+
+managerClientConfig:
+  baseUrl: http://localhost:3457/api/
+  connectTimeOutSeconds: 15
+  readTimeOutSeconds: 15

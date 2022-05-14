@@ -13,6 +13,7 @@ import static io.harness.rule.OwnerRule.SAHIL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -26,6 +27,7 @@ import io.harness.PipelineServiceTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.contracts.plan.FilterCreationBlobResponse;
 import io.harness.pms.contracts.plan.PlanCreationServiceGrpc;
@@ -47,12 +49,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -142,7 +146,8 @@ public class FilterCreatorMergeServiceTest extends PipelineServiceTestBase {
     Map<String, PlanCreatorServiceInfo> sdkInstances = new HashMap<>();
     when(pmsSdkHelper.getServices()).thenReturn(sdkInstances);
 
-    doReturn(FilterCreationBlobResponse.newBuilder().build())
+    doReturn(
+        FilterCreationBlobResponse.newBuilder().addReferredEntities(EntityDetailProtoDTO.newBuilder().build()).build())
         .when(filterCreatorMergeService)
         .obtainFiltersRecursively(any(), any(), any(), any());
     doNothing().when(pipelineSetupUsageHelper).deleteExistingSetupUsages(ACCOUNT_ID, ORG_ID, PROJECT_ID, IDENTIFIER);
@@ -153,14 +158,19 @@ public class FilterCreatorMergeServiceTest extends PipelineServiceTestBase {
                                         .orgIdentifier(ORG_ID)
                                         .identifier(IDENTIFIER)
                                         .build();
+    doReturn(Collections.singletonList(EntityDetailProtoDTO.newBuilder().build()))
+        .when(pmsPipelineTemplateHelper)
+        .getTemplateReferencesForGivenYaml(anyString(), anyString(), anyString(), anyString());
     FilterCreatorMergeServiceResponse filterCreatorMergeServiceResponse =
         filterCreatorMergeService.getPipelineInfo(pipelineEntity);
 
+    ArgumentCaptor<List> listArgumentCaptor = ArgumentCaptor.forClass(List.class);
     verify(pmsSdkHelper).getServices();
-    verify(pipelineSetupUsageHelper).publishSetupUsageEvent(pipelineEntity, new ArrayList<>());
+    verify(pipelineSetupUsageHelper).publishSetupUsageEvent(eq(pipelineEntity), listArgumentCaptor.capture());
     verify(pmsPipelineTemplateHelper)
         .getTemplateReferencesForGivenYaml(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
             pipelineEntity.getProjectIdentifier(), pipelineEntity.getYaml());
+    assertThat(listArgumentCaptor.getValue()).isNotNull().isNotEmpty().hasSize(2);
   }
 
   @Test

@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.harness.category.element.DeprecatedIntegrationTests;
 import io.harness.rule.Owner;
 
+import software.wings.beans.ApmMetricCollectionInfo;
 import software.wings.beans.Application;
 import software.wings.beans.Environment;
 import software.wings.beans.Service;
@@ -38,7 +39,6 @@ import software.wings.service.impl.analysis.TimeSeriesMLTxnSummary;
 import software.wings.service.impl.cloudwatch.CloudWatchMetric;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.sm.StateType;
-import software.wings.sm.states.APMVerificationState;
 import software.wings.verification.CVConfiguration;
 import software.wings.verification.TransactionTimeSeries;
 import software.wings.verification.apm.APMCVServiceConfiguration;
@@ -196,21 +196,20 @@ public class HeatMapApiIntegrationTest extends IntegrationTestBase {
   }
 
   private void createAPMConfig() {
-    List<APMVerificationState.MetricCollectionInfo> timeSeries =
-        Lists.newArrayList(APMVerificationState.MetricCollectionInfo.builder()
-                               .collectionUrl("URL1")
-                               .metricName("METRIC1")
-                               .method(Method.GET)
-                               .responseType(ResponseType.JSON)
-                               .metricType(MetricType.THROUGHPUT)
-                               .build(),
-            APMVerificationState.MetricCollectionInfo.builder()
-                .collectionUrl("URL2")
-                .metricName("METRIC2")
-                .method(Method.GET)
-                .responseType(ResponseType.JSON)
-                .metricType(MetricType.ERROR)
-                .build());
+    List<ApmMetricCollectionInfo> timeSeries = Lists.newArrayList(ApmMetricCollectionInfo.builder()
+                                                                      .collectionUrl("URL1")
+                                                                      .metricName("METRIC1")
+                                                                      .method(Method.GET)
+                                                                      .responseType(ResponseType.JSON)
+                                                                      .metricType(MetricType.THROUGHPUT)
+                                                                      .build(),
+        ApmMetricCollectionInfo.builder()
+            .collectionUrl("URL2")
+            .metricName("METRIC2")
+            .method(Method.GET)
+            .responseType(ResponseType.JSON)
+            .metricType(MetricType.ERROR)
+            .build());
     apmcvServiceConfiguration = APMCVServiceConfiguration.builder().metricCollectionInfos(timeSeries).build();
     apmcvServiceConfiguration.setStateType(StateType.APM_VERIFICATION);
     setCommonConfigDetails(apmcvServiceConfiguration);

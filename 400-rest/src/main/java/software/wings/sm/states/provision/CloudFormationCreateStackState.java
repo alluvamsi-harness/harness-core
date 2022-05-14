@@ -8,6 +8,7 @@
 package software.wings.sm.states.provision;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.FeatureName.CLOUDFORMATION_CHANGE_SET;
 import static io.harness.beans.FeatureName.CLOUDFORMATION_SKIP_WAIT_FOR_RESOURCES;
 import static io.harness.beans.FeatureName.GIT_HOST_CONNECTIVITY;
 import static io.harness.beans.FeatureName.SKIP_BASED_ON_STACK_STATUSES;
@@ -288,7 +289,9 @@ public class CloudFormationCreateStackState extends CloudFormationState {
         .encryptedVariables(renderedEncryptedInfrastructureVariables)
         .awsConfig(awsConfig)
         .skipWaitForResources(
-            featureFlagService.isEnabled(CLOUDFORMATION_SKIP_WAIT_FOR_RESOURCES, executionContext.getAccountId()));
+            featureFlagService.isEnabled(CLOUDFORMATION_SKIP_WAIT_FOR_RESOURCES, executionContext.getAccountId()))
+        .deploy(featureFlagService.isEnabled(CLOUDFORMATION_CHANGE_SET, executionContext.getAccountId()));
+
     CloudFormationCreateStackRequest request = builder.build();
     setTimeOutOnRequest(request);
     DelegateTask delegateTask = getCreateStackDelegateTask(executionContext, awsConfig, activityId, request);

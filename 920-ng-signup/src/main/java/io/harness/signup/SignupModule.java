@@ -62,10 +62,10 @@ public class SignupModule extends AbstractModule {
     String deployMode = System.getenv().get(DEPLOY_MODE);
 
     if (DeployMode.isOnPrem(deployMode)) {
+      bind(SignupNotificationHelper.class).to(OnPremSignupNotificationHelper.class);
+    } else {
       bind(SignupNotificationHelper.class).to(SaasSignupNotificationHelper.class);
       bind(SignupNotificationTemplateLoader.class);
-    } else {
-      bind(SignupNotificationHelper.class).to(OnPremSignupNotificationHelper.class);
     }
   }
 

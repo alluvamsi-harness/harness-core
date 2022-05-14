@@ -33,7 +33,6 @@ public class VariableFunctor implements SdkFunctor {
   public static final String VARIABLE = "variable";
   public static final String VARIABLE_SCOPE_ACCOUNT = "account";
   public static final String VARIABLE_SCOPE_ORG = "org";
-  public static final String VARIABLE_SCOPE_PROJECT = "project";
   @Inject VariableService variableService;
 
   @Override
@@ -122,8 +121,6 @@ public class VariableFunctor implements SdkFunctor {
         return ScopeLevel.ACCOUNT;
       case VARIABLE_SCOPE_ORG:
         return ScopeLevel.ORGANIZATION;
-      case VARIABLE_SCOPE_PROJECT:
-        return ScopeLevel.PROJECT;
       default:
         throw new UnknownEnumTypeException("ScopeLevel", scope);
     }

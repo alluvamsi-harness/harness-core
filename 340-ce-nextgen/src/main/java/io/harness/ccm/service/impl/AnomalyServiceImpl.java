@@ -71,15 +71,16 @@ public class AnomalyServiceImpl implements AnomalyService {
         ? anomalyQueryBuilder.applyAllFilters(anomalyQuery.getFilter())
         : DSL.noCondition();
 
-    List<Anomalies> anomalies = anomalyDao.fetchAnomalies(accountIdentifier, condition,
-        anomalyQueryBuilder.getOrderByFields(
-            anomalyQuery.getOrderBy() != null ? anomalyQuery.getOrderBy() : Collections.emptyList()),
-        anomalyQuery.getOffset() != null ? anomalyQuery.getOffset() : AnomalyUtils.DEFAULT_OFFSET,
-        anomalyQuery.getLimit() != null ? anomalyQuery.getLimit() : AnomalyUtils.DEFAULT_LIMIT);
+    List<CCMSort> sortBy = anomalyQuery.getOrderBy() != null ? anomalyQuery.getOrderBy() : Collections.emptyList();
+    List<Anomalies> anomalies =
+        anomalyDao.fetchAnomalies(accountIdentifier, condition, anomalyQueryBuilder.getOrderByFields(sortBy),
+            anomalyQuery.getOffset() != null ? anomalyQuery.getOffset() : AnomalyUtils.DEFAULT_OFFSET,
+            anomalyQuery.getLimit() != null ? anomalyQuery.getLimit() : AnomalyUtils.DEFAULT_LIMIT);
 
     List<AnomalyData> anomalyData = new ArrayList<>();
     anomalies.forEach(anomaly -> anomalyData.add(AnomalyUtils.buildAnomalyData(anomaly)));
-    return anomalyData;
+
+    return AnomalyUtils.sortDataByNonTableFields(anomalyData, sortBy);
   }
 
   @Override
@@ -122,9 +123,12 @@ public class AnomalyServiceImpl implements AnomalyService {
     if (anomalyQuery.getGroupBy().isEmpty()) {
       List<AnomalySummary> totalCostSummary = anomalyDao.fetchAnomaliesTotalCost(accountIdentifier, condition);
       List<AnomalySummary> updatedTotalCostSummary = new ArrayList<>();
-      totalCostSummary.forEach(entry
-          -> updatedTotalCostSummary.add(buildAnomalySummary(entry.getName(), entry.getCount(), entry.getActualCost(),
-              entry.getActualCost() - entry.getExpectedCost())));
+      totalCostSummary.forEach(entry -> {
+        if (entry.getActualCost() != null) {
+          updatedTotalCostSummary.add(buildAnomalySummary(entry.getName(), entry.getCount(), entry.getActualCost(),
+              entry.getActualCost() - entry.getExpectedCost()));
+        }
+      });
       return updatedTotalCostSummary;
     } else {
       List<AnomalyData> anomalies = listAnomalies(accountIdentifier, anomalyQuery);
@@ -181,6 +185,9 @@ public class AnomalyServiceImpl implements AnomalyService {
   }
 
   private List<AnomalySummary> buildAnomalyByStatusSummary(List<AnomalyData> anomalies) {
+    if (anomalies.isEmpty()) {
+      return Collections.emptyList();
+    }
     Double count = (double) anomalies.size();
     Double cost = anomalies.stream().mapToDouble(AnomalyData::getActualAmount).sum();
     Double anomalousCost = anomalies.stream().mapToDouble(AnomalyData::getAnomalousSpend).sum();

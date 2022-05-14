@@ -40,6 +40,7 @@ import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.rule.Owner;
+import io.harness.telemetry.TelemetryReporter;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -64,6 +65,7 @@ public class PMSPipelineServiceHelperTest extends CategoryTest {
   @Mock private ExpansionRequestsExtractor expansionRequestsExtractor;
   @Mock private JsonExpander jsonExpander;
   @Mock PmsFeatureFlagService pmsFeatureFlagService;
+  @Mock TelemetryReporter telemetryReporter;
 
   String accountIdentifier = "account";
   String orgIdentifier = "org";
@@ -74,7 +76,7 @@ public class PMSPipelineServiceHelperTest extends CategoryTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     pmsPipelineServiceHelper = new PMSPipelineServiceHelper(filterService, filterCreatorMergeService, null, null, null,
-        jsonExpander, expansionRequestsExtractor, pmsFeatureFlagService, gitSyncHelper);
+        jsonExpander, expansionRequestsExtractor, pmsFeatureFlagService, gitSyncHelper, telemetryReporter);
   }
 
   @Test

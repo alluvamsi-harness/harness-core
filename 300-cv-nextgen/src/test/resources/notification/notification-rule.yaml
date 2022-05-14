@@ -3,16 +3,15 @@ name: rule
 identifier: rule
 orgIdentifier: $orgIdentifier
 projectIdentifier: $projectIdentifier
-type: slo
+type: ServiceLevelObjective
 conditions:
-  - type: slo
-    conditionType: errorBudgetRemainingPercentage
+  - type: ErrorBudgetRemainingPercentage
     spec:
       threshold: 10
-  - type: slo
-    conditionType: errorBudgetBurnRate
+  - type: ErrorBudgetBurnRate
     spec:
       threshold: 5
+      lookBackDuration: 10m
 notificationMethod:
   type: Email
   spec:

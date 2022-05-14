@@ -9,6 +9,8 @@ package io.harness.cdng.creator.plan.stage;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.envgroup.yaml.EnvironmentGroupYaml;
+import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
@@ -71,6 +73,16 @@ public class DeploymentStageConfig implements StageInfoConfig, Visitable {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   ServiceDefinitionType deploymentType;
+
+  // TODO: need to remove infraStructure from here after multi-infra feature rollout. Need to keep environment instead
+  // of infraStructure
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  EnvironmentYamlV2 environment;
+
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  EnvironmentGroupYaml environmentGroup;
 
   @NotNull PipelineInfrastructure infrastructure;
   @NotNull @VariableExpression(skipVariableExpression = true) ExecutionElementConfig execution;

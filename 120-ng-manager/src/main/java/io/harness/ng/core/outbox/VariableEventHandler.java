@@ -9,6 +9,8 @@ package io.harness.ng.core.outbox;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.ng.core.events.VariableCreateEvent.VARIABLE_CREATED;
+import static io.harness.ng.core.events.VariableDeleteEvent.VARIABLE_DELETED;
+import static io.harness.ng.core.events.VariableUpdateEvent.VARIABLE_UPDATED;
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
 
 import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
@@ -23,6 +25,8 @@ import io.harness.audit.client.api.AuditClientService;
 import io.harness.context.GlobalContext;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.ng.core.events.VariableCreateEvent;
+import io.harness.ng.core.events.VariableDeleteEvent;
+import io.harness.ng.core.events.VariableUpdateEvent;
 import io.harness.ng.core.variable.dto.VariableRequestDTO;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
@@ -50,6 +54,10 @@ public class VariableEventHandler implements OutboxEventHandler {
       switch (outboxEvent.getEventType()) {
         case VARIABLE_CREATED:
           return handleVariableCreateEvent(outboxEvent);
+        case VARIABLE_UPDATED:
+          return handleVariableUpdateEvent(outboxEvent);
+        case VARIABLE_DELETED:
+          return handleVariableDeleteEvent(outboxEvent);
         default:
           throw new InvalidArgumentsException(String.format("Not supported event type %s", outboxEvent.getEventType()));
       }
@@ -67,6 +75,42 @@ public class VariableEventHandler implements OutboxEventHandler {
             .action(Action.CREATE)
             .module(ModuleType.CORE)
             .newYaml(getYamlString(VariableRequestDTO.builder().variable(variableCreateEvent.getVariableDTO()).build()))
+            .timestamp(outboxEvent.getCreatedAt())
+            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+            .insertId(outboxEvent.getId())
+            .build();
+    return auditClientService.publishAudit(auditEntry, globalContext);
+  }
+
+  private boolean handleVariableUpdateEvent(OutboxEvent outboxEvent) throws IOException {
+    GlobalContext globalContext = outboxEvent.getGlobalContext();
+    VariableUpdateEvent variableUpdateEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), VariableUpdateEvent.class);
+    AuditEntry auditEntry =
+        AuditEntry.builder()
+            .action(Action.UPDATE)
+            .module(ModuleType.CORE)
+            .oldYaml(
+                getYamlString(VariableRequestDTO.builder().variable(variableUpdateEvent.getOldVariableDTO()).build()))
+            .newYaml(
+                getYamlString(VariableRequestDTO.builder().variable(variableUpdateEvent.getNewVariableDTO()).build()))
+            .timestamp(outboxEvent.getCreatedAt())
+            .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+            .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+            .insertId(outboxEvent.getId())
+            .build();
+    return auditClientService.publishAudit(auditEntry, globalContext);
+  }
+  private boolean handleVariableDeleteEvent(OutboxEvent outboxEvent) throws IOException {
+    GlobalContext globalContext = outboxEvent.getGlobalContext();
+    VariableDeleteEvent variableDeleteEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), VariableDeleteEvent.class);
+    AuditEntry auditEntry =
+        AuditEntry.builder()
+            .action(Action.DELETE)
+            .module(ModuleType.CORE)
+            .oldYaml(getYamlString(VariableRequestDTO.builder().variable(variableDeleteEvent.getVariableDTO()).build()))
             .timestamp(outboxEvent.getCreatedAt())
             .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
             .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))

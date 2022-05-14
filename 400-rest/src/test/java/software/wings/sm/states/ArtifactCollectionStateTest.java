@@ -60,6 +60,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.rule.Owner;
 
 import software.wings.api.ArtifactCollectionExecutionData;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.WorkflowElement;
 import software.wings.app.MainConfiguration;
 import software.wings.app.PortalConfig;
@@ -96,6 +97,7 @@ import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
 import software.wings.sm.WorkflowStandardParams.Builder;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.ArtifactCollectionState.ArtifactCollectionStateKeys;
 
 import com.google.common.collect.ImmutableMap;
@@ -196,10 +198,14 @@ public class ArtifactCollectionStateTest extends CategoryTest {
     FieldUtils.writeField(executionContext, "variableProcessor", variableProcessor, true);
     FieldUtils.writeField(executionContext, "evaluator", expressionEvaluator, true);
     FieldUtils.writeField(executionContext, "featureFlagService", featureFlagService, true);
-    FieldUtils.writeField(workflowStandardParams, "appService", appService, true);
-    FieldUtils.writeField(workflowStandardParams, "configuration", configuration, true);
-    FieldUtils.writeField(workflowStandardParams, "accountService", accountService, true);
-    on(workflowStandardParams).set("subdomainUrlHelper", subdomainUrlHelper);
+
+    WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService =
+        new WorkflowStandardParamsExtensionService(appService, accountService, artifactService, null, null, null);
+    ContextElementParamMapperFactory contextElementParamMapperFactory = new ContextElementParamMapperFactory(
+        subdomainUrlHelper, workflowExecutionService, artifactService, artifactStreamService, null, featureFlagService,
+        buildSourceService, workflowStandardParamsExtensionService);
+    on(executionContext).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(executionContext).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
 
     when(configuration.getPortal()).thenReturn(portalConfig);
     when(portalConfig.getUrl()).thenReturn("http://portalUrl");

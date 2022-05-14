@@ -47,7 +47,6 @@ import io.harness.delegate.task.citasks.cik8handler.helper.ProxyVariableHelper;
 import io.harness.delegate.task.citasks.cik8handler.helper.SecretVolumesHelper;
 import io.harness.delegate.task.citasks.cik8handler.k8java.CIK8JavaClientHandler;
 import io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilder;
-import io.harness.k8s.KubernetesHelperService;
 import io.harness.k8s.apiclient.ApiClientFactory;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.AutoLogContext;
@@ -98,7 +97,6 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
   @Inject private PodSpecBuilder podSpecBuilder;
   @Inject private K8sConnectorHelper k8sConnectorHelper;
   @Inject private SecretSpecBuilder secretSpecBuilder;
-  @Inject private KubernetesHelperService kubernetesHelperService;
   @Inject private K8EventHandler k8EventHandler;
   @Inject private ProxyVariableHelper proxyVariableHelper;
   @Inject private SecretVolumesHelper secretVolumesHelper;
@@ -126,6 +124,17 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
     PodParams podParams = cik8InitializeTaskParams.getCik8PodParams();
     String namespace = podParams.getNamespace();
     String podName = podParams.getName();
+    String serviceAccountName = podParams.getServiceAccountName();
+
+    if (namespace != null) {
+      namespace = namespace.replaceAll("\\s+", "");
+      podParams.setNamespace(namespace);
+    }
+
+    if (serviceAccountName != null) {
+      serviceAccountName = serviceAccountName.replaceAll("\\s+", "");
+      podParams.setServiceAccountName(serviceAccountName);
+    }
 
     K8sTaskExecutionResponse result;
     CiK8sTaskResponse k8sTaskResponse = null;
