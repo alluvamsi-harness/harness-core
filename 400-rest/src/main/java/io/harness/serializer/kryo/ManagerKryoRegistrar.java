@@ -293,7 +293,6 @@ import software.wings.beans.utm.UtmInfo;
 import software.wings.beans.yaml.ChangeContext;
 import software.wings.beans.yaml.GitPullResult;
 import software.wings.beans.yaml.YamlType;
-import software.wings.cloudprovider.CodeDeployDeploymentInfo;
 import software.wings.collect.ArtifactCollectionCallback;
 import software.wings.common.RancherK8sClusterProcessor;
 import software.wings.delegatetasks.buildsource.BuildSourceCallback;
@@ -585,7 +584,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(ChangeContext.class, 5199);
     kryo.register(GitPullResult.class, 5209);
     kryo.register(YamlType.class, 5211);
-    kryo.register(CodeDeployDeploymentInfo.class, 5077);
     kryo.register(EcsBGListenerUpdateRequest.class, 5605);
     kryo.register(EcsListenerUpdateRequestConfigData.class, 5610);
     kryo.register(EcsListenerUpdateCommandResponse.class, 5613);

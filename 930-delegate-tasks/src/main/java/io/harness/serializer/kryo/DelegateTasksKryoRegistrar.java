@@ -126,6 +126,7 @@ import software.wings.beans.trigger.TriggerCommand.TriggerCommandType;
 import software.wings.beans.trigger.WebHookTriggerResponseData;
 import software.wings.beans.trigger.WebhookTriggerParameters;
 import software.wings.beans.yaml.GitFetchFilesFromMultipleRepoResult;
+import software.wings.cloudprovider.CodeDeployDeploymentInfo;
 import software.wings.delegatetasks.BambooTask;
 import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.GcbDelegateResponse;
@@ -396,6 +397,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(HostConnectionAttributes.ConnectionType.class, 5071);
     kryo.register(BastionConnectionAttributes.class, 5073);
     kryo.register(AppDynamicsConfig.class, 5074);
+    kryo.register(CodeDeployDeploymentInfo.class, 5077);
     kryo.register(WorkflowElement.class, 5086);
     kryo.register(ArtifactType.class, 5117);
     kryo.register(EncryptedData.class, 5124);
