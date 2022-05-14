@@ -409,15 +409,6 @@ import software.wings.helpers.ext.ecs.request.EcsBGListenerUpdateRequest;
 import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
-import software.wings.helpers.ext.k8s.response.K8sApplyResponse;
-import software.wings.helpers.ext.k8s.response.K8sBlueGreenDeployResponse;
-import software.wings.helpers.ext.k8s.response.K8sCanaryDeployResponse;
-import software.wings.helpers.ext.k8s.response.K8sDeleteResponse;
-import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
-import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
-import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
-import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
-import software.wings.helpers.ext.k8s.response.K8sTrafficSplitResponse;
 import software.wings.infra.AwsAmiInfrastructure;
 import software.wings.infra.AwsEcsInfrastructure;
 import software.wings.infra.AwsInstanceInfrastructure;
@@ -1175,14 +1166,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse", EcsBGRoute53ServiceSetupResponse.class);
     w.put("helpers.ext.ecs.response.EcsListenerUpdateCommandResponse", EcsListenerUpdateCommandResponse.class);
     w.put("helpers.ext.ecs.response.EcsServiceSetupResponse", EcsServiceSetupResponse.class);
-    w.put("helpers.ext.k8s.response.K8sApplyResponse", K8sApplyResponse.class);
-    w.put("helpers.ext.k8s.response.K8sBlueGreenDeployResponse", K8sBlueGreenDeployResponse.class);
-    w.put("helpers.ext.k8s.response.K8sCanaryDeployResponse", K8sCanaryDeployResponse.class);
-    w.put("helpers.ext.k8s.response.K8sDeleteResponse", K8sDeleteResponse.class);
-    w.put("helpers.ext.k8s.response.K8sRollingDeployResponse", K8sRollingDeployResponse.class);
-    w.put("helpers.ext.k8s.response.K8sScaleResponse", K8sScaleResponse.class);
-    w.put("helpers.ext.k8s.response.K8sTaskExecutionResponse", K8sTaskExecutionResponse.class);
-    w.put("helpers.ext.k8s.response.K8sTrafficSplitResponse", K8sTrafficSplitResponse.class);
     w.put("infra.AwsAmiInfrastructure", AwsAmiInfrastructure.class);
     w.put("infra.AzureVMSSInfra", AzureVMSSInfra.class);
     w.put("infra.AzureWebAppInfra", AzureWebAppInfra.class);
@@ -1419,8 +1402,6 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.terraform.TerraformOutputVariables", TerraformOutputVariables.class);
     w.put("api.terragrunt.TerragruntOutputVariables", TerragruntOutputVariables.class);
     w.put("api.arm.ARMOutputVariables", ARMOutputVariables.class);
-    w.put("helpers.ext.k8s.response.K8sRollingDeployRollbackResponse", K8sRollingDeployRollbackResponse.class);
-
     MorphiaRegistrarHelperPut sm = (name, clazz) -> w.put("sm.states.spotinst." + name, clazz);
 
     sm.put("SpotinstDeployExecutionSummary", SpotinstDeployExecutionSummary.class);

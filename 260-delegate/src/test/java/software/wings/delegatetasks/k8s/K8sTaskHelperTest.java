@@ -113,6 +113,7 @@ import software.wings.exception.ShellScriptException;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.helm.HelmHelper;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
+import software.wings.helpers.ext.k8s.K8sManagerHelper;
 import software.wings.helpers.ext.k8s.request.K8sApplyTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
@@ -520,7 +521,7 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void manifestFilesFromGitFetchFilesResult() {
-    List<ManifestFile> manifestFiles = K8sTaskHelper.manifestFilesFromGitFetchFilesResult(
+    List<ManifestFile> manifestFiles = K8sManagerHelper.manifestFilesFromGitFetchFilesResult(
         GitFetchFilesResult.builder()
             .files(asList(GitFile.builder().fileContent("abc").filePath("file-1").build()))
             .build(),
@@ -529,14 +530,15 @@ public class K8sTaskHelperTest extends CategoryTest {
     assertThat(manifestFiles.get(0).getFileContent()).isEqualTo("abc");
     assertThat(manifestFiles.get(0).getFileName()).isEqualTo("file-1");
 
-    assertThat(K8sTaskHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), "")).isEmpty();
+    assertThat(K8sManagerHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), ""))
+        .isEmpty();
   }
 
   @Test
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void manifestFilesFromGitFetchFilesResult_EmptyFiles() {
-    assertThat(K8sTaskHelper.manifestFilesFromGitFetchFilesResult(
+    assertThat(K8sManagerHelper.manifestFilesFromGitFetchFilesResult(
                    GitFetchFilesResult.builder().files(emptyList()).build(), ""))
         .isEmpty();
   }
@@ -545,7 +547,8 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void manifestFilesFromGitFetchFilesResult_NullFiles() {
-    assertThat(K8sTaskHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), "")).isEmpty();
+    assertThat(K8sManagerHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), ""))
+        .isEmpty();
   }
 
   @Test

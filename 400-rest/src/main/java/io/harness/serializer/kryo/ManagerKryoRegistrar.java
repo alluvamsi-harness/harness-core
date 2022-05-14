@@ -311,30 +311,6 @@ import software.wings.helpers.ext.ecs.request.EcsServiceSetupRequest;
 import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
-import software.wings.helpers.ext.k8s.request.K8sApplyTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sBlueGreenDeployTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sCanaryDeployTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sCanaryRollbackTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sDeleteTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sInstanceSyncTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sRollingDeployRollbackTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sRollingDeployTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sScaleTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sTaskParameters;
-import software.wings.helpers.ext.k8s.request.K8sTrafficSplitTaskParameters;
-import software.wings.helpers.ext.k8s.response.CiK8sTaskResponse;
-import software.wings.helpers.ext.k8s.response.K8sApplyResponse;
-import software.wings.helpers.ext.k8s.response.K8sBlueGreenDeployResponse;
-import software.wings.helpers.ext.k8s.response.K8sCanaryDeployResponse;
-import software.wings.helpers.ext.k8s.response.K8sDeleteResponse;
-import software.wings.helpers.ext.k8s.response.K8sInstanceSyncResponse;
-import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
-import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
-import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
-import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
-import software.wings.helpers.ext.k8s.response.K8sTaskResponse;
-import software.wings.helpers.ext.k8s.response.K8sTrafficSplitResponse;
-import software.wings.helpers.ext.k8s.response.PodStatus;
 import software.wings.infra.AwsAmiInfrastructure;
 import software.wings.infra.AwsEcsInfrastructure;
 import software.wings.infra.AwsInstanceInfrastructure;
@@ -644,40 +620,18 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(EcsBGRoute53ServiceSetupRequest.class, 7101);
     kryo.register(EcsBGRoute53ServiceSetupResponse.class, 7102);
     kryo.register(EcsRoute53WeightUpdateStateExecutionData.class, 7105);
-    kryo.register(K8sDeleteTaskParameters.class, 7113);
-    kryo.register(K8sDeleteResponse.class, 7114);
 
     kryo.register(AwsAmiSetupExecutionData.class, 7120);
     kryo.register(EcsServiceSetupRequest.class, 7121);
     kryo.register(EcsServiceSetupResponse.class, 7122);
     kryo.register(EcsBGServiceSetupRequest.class, 7123);
-    kryo.register(K8sTaskParameters.class, 7124);
-    kryo.register(K8sRollingDeployTaskParameters.class, 7126);
-    kryo.register(K8sTaskResponse.class, 7127);
-    kryo.register(K8sRollingDeployRollbackTaskParameters.class, 7129);
-    kryo.register(K8sRollingDeployResponse.class, 7130);
     kryo.register(K8sExecutionSummary.class, 7131);
-    kryo.register(K8sInstanceSyncResponse.class, 7132);
     kryo.register(K8sContextElement.class, 7133);
     kryo.register(K8sStateExecutionData.class, 7134);
-    kryo.register(K8sScaleTaskParameters.class, 7136);
-    kryo.register(K8sScaleResponse.class, 7137);
-    kryo.register(K8sCanaryDeployTaskParameters.class, 7138);
-    kryo.register(K8sCanaryDeployResponse.class, 7139);
-    kryo.register(K8sCanaryRollbackTaskParameters.class, 7140);
-    kryo.register(K8sTaskExecutionResponse.class, 7141);
-    kryo.register(K8sBlueGreenDeployTaskParameters.class, 7142);
-    kryo.register(K8sBlueGreenDeployResponse.class, 7143);
     kryo.register(K8sElement.class, 7144);
-    kryo.register(K8sInstanceSyncTaskParameters.class, 7147);
-
     kryo.register(TerraformProvisionInheritPlanElement.class, 7153);
     kryo.register(TemplateReference.class, 7161);
     kryo.register(MLAnalysisType.class, 7175);
-    kryo.register(K8sTrafficSplitTaskParameters.class, 7181);
-    kryo.register(K8sTrafficSplitResponse.class, 7182);
-    kryo.register(K8sApplyTaskParameters.class, 7186);
-    kryo.register(K8sApplyResponse.class, 7187);
     kryo.register(UserLockoutInfo.class, 7196);
     kryo.register(ManifestCollectionExecutionResponse.class, 71104);
     kryo.register(ManifestCollectionResponse.class, 71105);
@@ -788,15 +742,12 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(AwsAmiInfoVariables.class, 8059);
 
     kryo.register(AzureVMSSDeployExecutionSummary.class, 8060);
-    kryo.register(CiK8sTaskResponse.class, 8062);
     kryo.register(TerraformOutputVariables.class, 8063);
     kryo.register(EcsRunTaskStateExecutionData.class, 8084);
     kryo.register(EcsRunTaskDataBag.class, 8085);
     kryo.register(PipelineStageExecutionAdvisor.class, 8072);
     kryo.register(ContinuePipelineResponseData.class, 8073);
 
-    kryo.register(PodStatus.class, 8090);
-    kryo.register(PodStatus.Status.class, 8091);
     kryo.register(AzureVMSSAllPhaseRollbackData.class, 8092);
     kryo.register(TrialSignupOptions.class, 8093);
     kryo.register(TrialSignupOptions.Products.class, 8094);
@@ -936,6 +887,5 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherKubernetesInfrastructure.class, 50007);
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
-    kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
   }
 }

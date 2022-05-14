@@ -9,7 +9,6 @@ package software.wings.delegatetasks.k8s;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.task.helm.HelmTaskHelperBase.getChartDirectory;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
@@ -46,7 +45,6 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.filesystem.FileIo;
-import io.harness.git.model.GitFile;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.manifest.ManifestHelper;
 import io.harness.k8s.model.K8sDelegateTaskParams;
@@ -59,11 +57,9 @@ import io.harness.manifest.CustomManifestSource;
 
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
-import software.wings.beans.appmanifest.ManifestFile;
 import software.wings.beans.appmanifest.ManifestFileDTO;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.yaml.GitFetchFilesResult;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.delegatetasks.ScmFetchFilesHelper;
@@ -471,22 +467,6 @@ public class K8sTaskHelper {
     }
 
     return helmChartInfo;
-  }
-
-  public static List<ManifestFile> manifestFilesFromGitFetchFilesResult(
-      GitFetchFilesResult gitFetchFilesResult, String prefixPath) {
-    List<ManifestFile> manifestFiles = new ArrayList<>();
-
-    if (isNotEmpty(gitFetchFilesResult.getFiles())) {
-      List<GitFile> files = gitFetchFilesResult.getFiles();
-
-      for (GitFile gitFile : files) {
-        String filePath = K8sTaskHelperBase.getRelativePath(gitFile.getFilePath(), prefixPath);
-        manifestFiles.add(ManifestFile.builder().fileName(filePath).fileContent(gitFile.getFileContent()).build());
-      }
-    }
-
-    return manifestFiles;
   }
 
   public K8sTaskExecutionResponse getK8sTaskExecutionResponse(

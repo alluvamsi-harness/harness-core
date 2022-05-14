@@ -28,7 +28,7 @@ import static software.wings.beans.appmanifest.StoreType.Remote;
 import static software.wings.beans.appmanifest.StoreType.VALUES_YAML_FROM_HELM_REPO;
 import static software.wings.beans.yaml.YamlConstants.MANIFEST_FILE_FOLDER;
 import static software.wings.delegatetasks.GitFetchFilesTask.GIT_FETCH_FILES_TASK_ASYNC_TIMEOUT;
-import static software.wings.delegatetasks.k8s.K8sTaskHelper.manifestFilesFromGitFetchFilesResult;
+import static software.wings.helpers.ext.k8s.K8sManagerHelper.manifestFilesFromGitFetchFilesResult;
 import static software.wings.settings.SettingVariableTypes.OCI_HELM_REPO;
 
 import static java.lang.String.format;
