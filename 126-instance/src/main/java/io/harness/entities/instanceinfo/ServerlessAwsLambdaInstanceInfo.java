@@ -27,6 +27,6 @@ public class ServerlessAwsLambdaInstanceInfo extends InstanceInfo {
   private String handler;
   private String memorySize;
   private String runTime;
-  private String timeout;
+  private Integer timeout;
   // todo: need to check required object
 }

@@ -22,6 +22,7 @@ public class ServerlessAwsLambdaDeploymentInfoMapper {
     return ServerlessAwsLambdaDeploymentInfoDTO.builder()
         .serviceName(serverlessAwsLambdaDeploymentInfo.getServiceName())
         .region(serverlessAwsLambdaDeploymentInfo.getRegion())
+        .functions(serverlessAwsLambdaDeploymentInfo.getFunctions())
         .build();
   }
 
@@ -30,6 +31,7 @@ public class ServerlessAwsLambdaDeploymentInfoMapper {
     return ServerlessAwsLambdaDeploymentInfo.builder()
         .serviceName(serverlessAwsLambdaDeploymentInfoDTO.getServiceName())
         .region(serverlessAwsLambdaDeploymentInfoDTO.getRegion())
+        .functions(serverlessAwsLambdaDeploymentInfoDTO.getFunctions())
         .build();
   }
 }

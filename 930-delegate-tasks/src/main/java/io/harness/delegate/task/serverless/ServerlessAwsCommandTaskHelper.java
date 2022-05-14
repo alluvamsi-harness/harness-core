@@ -269,7 +269,7 @@ public class ServerlessAwsCommandTaskHelper {
       }
       if (functionPropertyMap.containsKey(AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY)) {
         serverlessAwsLambdaFunctionBuilder.timeout(
-            functionPropertyMap.get(AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY).toString());
+            Integer.parseInt(functionPropertyMap.get(AWS_LAMBDA_FUNCTION_TIMEOUT_PROPERTY_KEY).toString()));
       }
       serverlessAwsLambdaFunctions.add(serverlessAwsLambdaFunctionBuilder.build());
     }

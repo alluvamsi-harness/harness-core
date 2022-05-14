@@ -30,9 +30,9 @@ public class ServerlessAwsLambdaFunctionToServerInstanceInfoMapper {
   public ServerInstanceInfo toServerInstanceInfo(
       ServerlessAwsLambdaFunction serverlessAwsLambdaFunction, String region, String stage, String serviceName) {
     return ServerlessAwsLambdaServerInstanceInfo.builder()
-        .serviceName(serviceName)
+        .serverlessServiceName(serviceName)
         .region(region)
-        .stage(stage)
+        .serverlessStage(stage)
         .functionName(serverlessAwsLambdaFunction.getFunctionName())
         .handler(serverlessAwsLambdaFunction.getHandler())
         .memorySize(serverlessAwsLambdaFunction.getMemorySize())

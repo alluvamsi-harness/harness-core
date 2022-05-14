@@ -28,7 +28,7 @@ public class ServerlessAwsLambdaInstanceInfoDTO extends InstanceInfoDTO {
   private String handler;
   private String memorySize;
   private String runTime;
-  private String timeout;
+  private Integer timeout;
 
   @Override
   public String prepareInstanceKey() {

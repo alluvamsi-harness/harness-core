@@ -32,12 +32,15 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.artifactory.ArtifactoryNgService;
+import io.harness.aws.beans.AwsInternalConfig;
 import io.harness.connector.service.git.NGGitService;
 import io.harness.connector.task.git.GitDecryptionHelper;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
+import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
+import io.harness.delegate.beans.instancesync.info.ServerlessAwsLambdaServerInstanceInfo;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.beans.logstreaming.NGDelegateLogCallback;
@@ -45,6 +48,7 @@ import io.harness.delegate.beans.serverless.ServerlessAwsLambdaManifestSchema;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
+import io.harness.delegate.task.aws.AwsNgConfigMapper;
 import io.harness.delegate.task.git.ScmFetchFilesHelperNG;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.Level;
@@ -56,10 +60,12 @@ import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
+import io.harness.serverless.model.AwsLambdaFunctionDetails;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import io.harness.shell.SshSessionConfig;
 
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
+import software.wings.service.intfc.aws.delegate.AwsLambdaHelperServiceDelegateNG;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -70,11 +76,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 
 @Singleton
@@ -88,6 +97,9 @@ public class ServerlessTaskHelperBase {
   @Inject private SecretDecryptionService secretDecryptionService;
   @Inject private ArtifactoryNgService artifactoryNgService;
   @Inject private ArtifactoryRequestMapper artifactoryRequestMapper;
+  @Inject private AwsLambdaHelperServiceDelegateNG awsLambdaHelperServiceDelegateNG;
+  @Inject private AwsNgConfigMapper awsNgConfigMapper;
+  @Inject private ServerlessInfraConfigHelper serverlessInfraConfigHelper;
 
   private static final String ARTIFACTORY_ARTIFACT_PATH = "artifactPath";
   private static final String ARTIFACTORY_ARTIFACT_NAME = "artifactName";
@@ -302,5 +314,32 @@ public class ServerlessTaskHelperBase {
           new ServerlessCommandExecutionException(
               format(DOWNLOAD_FROM_ARTIFACTORY_FAILED, artifactoryArtifactConfig.getIdentifier()), sanitizedException));
     }
+  }
+
+  public List<ServerInstanceInfo> getServerlessAwsLambdaServerInstanceInfos(
+      ServerlessAwsLambdaDeploymentReleaseData deploymentReleaseData) {
+    List<String> functions = deploymentReleaseData.getFunctions();
+    ServerlessAwsLambdaInfraConfig serverlessAwsLambdaInfraConfig =
+        (ServerlessAwsLambdaInfraConfig) deploymentReleaseData.getServerlessInfraConfig();
+    serverlessInfraConfigHelper.decryptServerlessInfraConfig(serverlessAwsLambdaInfraConfig);
+    AwsInternalConfig awsInternalConfig =
+        awsNgConfigMapper.createAwsInternalConfig(serverlessAwsLambdaInfraConfig.getAwsConnectorDTO());
+    List<ServerInstanceInfo> serverInstanceInfoList = new ArrayList<>();
+    if (!CollectionUtils.isEmpty(functions)) {
+      for (String function : functions) {
+        AwsLambdaFunctionDetails awsLambdaFunctionDetails =
+            awsLambdaHelperServiceDelegateNG.getAwsLambdaFunctionDetails(
+                awsInternalConfig, function, deploymentReleaseData.getRegion());
+        if (awsLambdaFunctionDetails != null) {
+          ServerlessAwsLambdaServerInstanceInfo serverlessAwsLambdaServerInstanceInfo =
+              ServerlessAwsLambdaServerInstanceInfo.getServerlessAwsLambdaServerInstanceInfo(
+                  deploymentReleaseData.getServiceName(), deploymentReleaseData.getRegion(),
+                  awsLambdaHelperServiceDelegateNG.getAwsLambdaFunctionDetails(
+                      awsInternalConfig, function, deploymentReleaseData.getRegion()));
+          serverInstanceInfoList.add(serverlessAwsLambdaServerInstanceInfo);
+        }
+      }
+    }
+    return serverInstanceInfoList;
   }
 }

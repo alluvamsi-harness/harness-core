@@ -14,11 +14,11 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.task.serverless.ServerlessArtifactConfig;
 import io.harness.delegate.task.serverless.ServerlessCommandType;
-import io.harness.delegate.task.serverless.ServerlessDeployConfig;
 import io.harness.delegate.task.serverless.ServerlessInfraConfig;
 import io.harness.delegate.task.serverless.ServerlessManifestConfig;
 import io.harness.expression.Expression;
 
+import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -33,6 +33,7 @@ public class ServerlessInstanceSyncRequest implements ServerlessCommandRequest {
   CommandUnitsProgress commandUnitsProgress;
   @NonFinal @Expression(ALLOW_SECRETS) ServerlessInfraConfig serverlessInfraConfig;
   Integer timeoutIntervalInMin;
+  private List<String> functions;
 
   @Override
   public ServerlessManifestConfig getServerlessManifestConfig() {

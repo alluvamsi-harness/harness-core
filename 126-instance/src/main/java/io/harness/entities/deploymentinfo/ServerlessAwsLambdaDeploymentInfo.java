@@ -10,6 +10,7 @@ package io.harness.entities.deploymentinfo;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -22,5 +23,5 @@ import lombok.EqualsAndHashCode;
 public class ServerlessAwsLambdaDeploymentInfo extends DeploymentInfo {
   @NotNull private String serviceName;
   @NotNull private String region;
-  // todo: need to check required object
+  @NotNull private List<String> functions;
 }

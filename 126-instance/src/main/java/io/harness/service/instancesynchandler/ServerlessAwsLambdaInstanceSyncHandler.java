@@ -25,6 +25,7 @@ import io.harness.models.infrastructuredetails.ServerlessAwsLambdaInfrastructure
 import io.harness.perpetualtask.PerpetualTaskType;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class ServerlessAwsLambdaInstanceSyncHandler extends AbstractInstanceSyncHandler {
@@ -41,7 +42,6 @@ public class ServerlessAwsLambdaInstanceSyncHandler extends AbstractInstanceSync
   @Override
   public String getInfrastructureKind() {
     return InfrastructureKind.SERVERLESS_AWS_LAMBDA;
-    // not used anymore
   }
 
   @Override
@@ -76,9 +76,15 @@ public class ServerlessAwsLambdaInstanceSyncHandler extends AbstractInstanceSync
     ServerlessAwsLambdaServerInstanceInfo serverlessAwsLambdaServerInstanceInfo =
         (ServerlessAwsLambdaServerInstanceInfo) serverInstanceInfoList.get(0);
 
+    List<String> functions =
+        serverInstanceInfoList.stream()
+            .map(serverInstanceInfo -> ((ServerlessAwsLambdaServerInstanceInfo) serverInstanceInfo).getFunctionName())
+            .collect(Collectors.toList());
+
     return ServerlessAwsLambdaDeploymentInfoDTO.builder()
-        .serviceName(serverlessAwsLambdaServerInstanceInfo.getServiceName())
+        .serviceName(serverlessAwsLambdaServerInstanceInfo.getServerlessServiceName())
         .region(serverlessAwsLambdaServerInstanceInfo.getRegion())
+        .functions(functions)
         .build();
   }
 
@@ -94,13 +100,13 @@ public class ServerlessAwsLambdaInstanceSyncHandler extends AbstractInstanceSync
 
     return ServerlessAwsLambdaInstanceInfoDTO.builder()
         .functionName(serverlessAwsLambdaServerInstanceInfo.getFunctionName())
-        .serviceName(serverlessAwsLambdaServerInstanceInfo.getServiceName())
+        .serviceName(serverlessAwsLambdaServerInstanceInfo.getServerlessServiceName())
+        .stage(serverlessAwsLambdaServerInstanceInfo.getServerlessStage())
         .handler(serverlessAwsLambdaServerInstanceInfo.getHandler())
         .timeout(serverlessAwsLambdaServerInstanceInfo.getTimeout())
         .runTime(serverlessAwsLambdaServerInstanceInfo.getRunTime())
         .memorySize(serverlessAwsLambdaServerInstanceInfo.getMemorySize())
         .region(serverlessAwsLambdaServerInstanceInfo.getRegion())
-        .stage(serverlessAwsLambdaServerInstanceInfo.getStage())
         .build();
   }
 }

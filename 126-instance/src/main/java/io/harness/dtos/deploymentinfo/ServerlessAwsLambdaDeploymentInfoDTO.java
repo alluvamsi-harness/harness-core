@@ -14,6 +14,7 @@ import io.harness.ng.core.k8s.ServiceSpecType;
 import io.harness.util.InstanceSyncKey;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,7 @@ import lombok.EqualsAndHashCode;
 public class ServerlessAwsLambdaDeploymentInfoDTO extends DeploymentInfoDTO {
   @NotNull private String serviceName;
   @NotNull private String region;
+  @NotNull private List<String> functions;
   @Override
   public String getType() {
     return ServiceSpecType.SERVERLESS_AWS_LAMBDA;

@@ -76,6 +76,7 @@ public class ServerlessAwsLambdaInstanceSyncPerpetualTaskHandler extends Instanc
         .serverlessInfraConfig(serverlessInfraConfig)
         .serviceName(deploymentInfoDTO.getServiceName())
         .region(deploymentInfoDTO.getRegion())
+        .functions(deploymentInfoDTO.getFunctions())
         .build();
   }
 
@@ -119,7 +120,7 @@ public class ServerlessAwsLambdaInstanceSyncPerpetualTaskHandler extends Instanc
     return ServerlessAwsLambdaDeploymentRelease.newBuilder()
         .setServiceName(releaseData.getServiceName())
         .setRegion(releaseData.getRegion())
-        //            .addAllFunctions(releaseData.getFunctions())
+        .addAllFunctions(releaseData.getFunctions())
         .setServerlessInfraConfig(ByteString.copyFrom(kryoSerializer.asBytes(releaseData.getServerlessInfraConfig())))
         .build();
   }
@@ -139,6 +140,7 @@ public class ServerlessAwsLambdaInstanceSyncPerpetualTaskHandler extends Instanc
       ServerlessAwsLambdaDeploymentReleaseData serverlessAwsLambdaDeploymentReleaseData) {
     return ServerlessInstanceSyncRequest.builder()
         .serverlessInfraConfig(serverlessAwsLambdaDeploymentReleaseData.getServerlessInfraConfig())
+        .functions(serverlessAwsLambdaDeploymentReleaseData.getFunctions())
         .build();
   }
 }
