@@ -102,7 +102,9 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     GetFileResponse getFileResponse;
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      setPrincipal(request.getScopeIdentifiers().getAccountIdentifier(), request.getPrincipal());
       getFileResponse = harnessToGitHelperService.getFile(request);
+      log.info("Git Sync Service getFile ops response : {}", getFileResponse);
     } catch (Exception ex) {
       log.error("Faced exception during getFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
@@ -120,7 +122,9 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     CreateFileResponse createFileResponse;
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      setPrincipal(request.getScopeIdentifiers().getAccountIdentifier(), request.getPrincipal());
       createFileResponse = harnessToGitHelperService.createFile(request);
+      log.info("Git Sync Service createFile ops response : {}", createFileResponse);
     } catch (Exception ex) {
       log.error("Faced exception during createFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
@@ -138,7 +142,9 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     UpdateFileResponse updateFileResponse;
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      setPrincipal(request.getScopeIdentifiers().getAccountIdentifier(), request.getPrincipal());
       updateFileResponse = harnessToGitHelperService.updateFile(request);
+      log.info("Git Sync Service updateFile ops response : {}", updateFileResponse);
     } catch (Exception ex) {
       log.error("Faced exception during updateFile GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
@@ -156,7 +162,9 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     CreatePRResponse createPRResponse;
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
+      setPrincipal(request.getScopeIdentifiers().getAccountIdentifier(), request.getPrincipal());
       createPRResponse = harnessToGitHelperService.createPullRequest(request);
+      log.info("Git Sync Service createPullRequest ops response : {}", createPRResponse);
     } catch (Exception ex) {
       log.error("Faced exception during createPullRequest GIT call", ex);
       final String errorMessage = ExceptionUtils.getMessage(ex);
@@ -215,5 +223,13 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
       responseObserver.onError(Status.fromThrowable(ex).withDescription(errorMessage).asRuntimeException());
     }
     responseObserver.onCompleted();
+  }
+
+  private void setPrincipal(String accountIdentifier, Principal requestPrincipal) {
+    final io.harness.security.dto.Principal principal =
+        PrincipalProtoMapper.toPrincipalDTO(accountIdentifier, requestPrincipal);
+    validateThePrincipal(principal);
+    GlobalContextManager.upsertGlobalContextRecord(PrincipalContextData.builder().principal(principal).build());
+    GlobalContextManager.upsertGlobalContextRecord(SourcePrincipalContextData.builder().principal(principal).build());
   }
 }

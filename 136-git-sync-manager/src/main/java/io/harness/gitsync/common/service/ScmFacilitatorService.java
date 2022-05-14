@@ -37,10 +37,13 @@ public interface ScmFacilitatorService {
 
   ScmCreatePRResponseDTO createPR(ScmCreatePRRequestDTO scmCreatePRRequestDTO);
 
-  ScmGetFileResponseDTO getFile(ScmGetFileRequestDTO scmGetFileRequestDTO);
+  ScmGetFileResponseDTO getFileByBranch(ScmGetFileRequestDTO scmGetFileRequestDTO);
 
   void createBranch(ScmCreateBranchRequestDTO scmCreateBranchRequestDTO);
 
   GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String connectorRef, String repoName, PageRequest pageRequest, String searchTerm);
+
+  String getDefaultBranch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName);
 }

@@ -345,10 +345,9 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   @Override
   public GetFileResponse getFile(GetFileRequest getFileRequest) {
     try {
-      ScmGetFileResponseDTO scmGetFileResponseDTO = scmFacilitatorService.getFile(
+      ScmGetFileResponseDTO scmGetFileResponseDTO = scmFacilitatorService.getFileByBranch(
           ScmGetFileRequestDTO.builder()
               .branchName(getFileRequest.getBranchName())
-              .commitId(getFileRequest.getCommitId())
               .connectorRef(getFileRequest.getConnectorRef())
               .filePath(getFileRequest.getFilePath())
               .repoName(getFileRequest.getRepoName())
@@ -358,7 +357,10 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     } catch (WingsException ex) {
       ScmException scmException = ScmExceptionUtils.getScmException(ex);
       if (scmException == null) {
-        throw ex;
+        return GetFileResponse.newBuilder()
+            .setStatusCode(ex.getCode().getStatus().getCode())
+            .setError(prepareDefaultErrorDetails(ex))
+            .build();
       }
       return GetFileResponse.newBuilder()
           .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
@@ -386,7 +388,10 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     } catch (WingsException ex) {
       ScmException scmException = ScmExceptionUtils.getScmException(ex);
       if (scmException == null) {
-        throw ex;
+        return io.harness.gitsync.CreateFileResponse.newBuilder()
+            .setStatusCode(ex.getCode().getStatus().getCode())
+            .setError(prepareDefaultErrorDetails(ex))
+            .build();
       }
       return io.harness.gitsync.CreateFileResponse.newBuilder()
           .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
@@ -416,7 +421,10 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     } catch (WingsException ex) {
       ScmException scmException = ScmExceptionUtils.getScmException(ex);
       if (scmException == null) {
-        throw ex;
+        return io.harness.gitsync.UpdateFileResponse.newBuilder()
+            .setStatusCode(ex.getCode().getStatus().getCode())
+            .setError(prepareDefaultErrorDetails(ex))
+            .build();
       }
       return io.harness.gitsync.UpdateFileResponse.newBuilder()
           .setStatusCode(ScmErrorCodeToHttpStatusCodeMapping.getHttpStatusCode(scmException.getCode()))
@@ -545,5 +553,9 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         .setExplanationMessage(ScmExceptionUtils.getExplanationMessage(ex))
         .setHintMessage(ScmExceptionUtils.getHintMessage(ex))
         .build();
+  }
+
+  private ErrorDetails prepareDefaultErrorDetails(WingsException ex) {
+    return ErrorDetails.newBuilder().setErrorMessage(ExceptionUtils.getMessage(ex)).build();
   }
 }

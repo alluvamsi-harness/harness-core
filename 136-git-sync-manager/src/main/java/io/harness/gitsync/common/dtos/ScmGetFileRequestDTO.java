@@ -26,5 +26,4 @@ public class ScmGetFileRequestDTO {
   String branchName;
   String filePath;
   String connectorRef;
-  String commitId;
 }
