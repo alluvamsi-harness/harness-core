@@ -5,14 +5,21 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.cvng.servicelevelobjective;
+package io.harness.cvng.servicelevelobjective.services.impl;
 
+import static io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState.BAD;
+import static io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState.GOOD;
+import static io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState.NO_DATA;
 import static io.harness.rule.OwnerRule.ABHIJITH;
 import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 import static io.harness.rule.OwnerRule.KAPIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
@@ -23,6 +30,7 @@ import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.beans.cvnglog.ExecutionLogDTO;
 import io.harness.cvng.beans.cvnglog.ExecutionLogDTO.LogLevel;
 import io.harness.cvng.beans.cvnglog.TraceableType;
+import io.harness.cvng.client.FakeNotificationClient;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
@@ -30,6 +38,18 @@ import io.harness.cvng.core.beans.params.logsFilterParams.SLILogsFilter;
 import io.harness.cvng.core.services.api.CVNGLogService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
+import io.harness.cvng.notification.beans.ErrorBudgetRemainingMinutesConditionSpec;
+import io.harness.cvng.notification.beans.NotificationRuleCondition;
+import io.harness.cvng.notification.beans.NotificationRuleConditionType;
+import io.harness.cvng.notification.beans.NotificationRuleDTO;
+import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
+import io.harness.cvng.notification.beans.NotificationRuleResponse;
+import io.harness.cvng.notification.beans.NotificationRuleType;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLOErrorBudgetBurnRateCondition;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLOErrorBudgetRemainingPercentageCondition;
+import io.harness.cvng.notification.entities.SLONotificationRule.SLONotificationRuleCondition;
+import io.harness.cvng.notification.services.api.NotificationRuleService;
+import io.harness.cvng.servicelevelobjective.SLORiskCountResponse;
 import io.harness.cvng.servicelevelobjective.beans.DayOfWeek;
 import io.harness.cvng.servicelevelobjective.beans.ErrorBudgetRisk;
 import io.harness.cvng.servicelevelobjective.beans.SLIMetricType;
@@ -50,10 +70,14 @@ import io.harness.cvng.servicelevelobjective.beans.slimetricspec.ThresholdType;
 import io.harness.cvng.servicelevelobjective.beans.slotargetspec.CalenderSLOTargetSpec;
 import io.harness.cvng.servicelevelobjective.beans.slotargetspec.CalenderSLOTargetSpec.WeeklyCalendarSpec;
 import io.harness.cvng.servicelevelobjective.beans.slotargetspec.RollingSLOTargetSpec;
+import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
+import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
+import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator.SLOHealthIndicatorKeys;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
+import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective.ServiceLevelObjectiveKeys;
 import io.harness.cvng.servicelevelobjective.services.api.SLOErrorBudgetResetService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
@@ -62,14 +86,18 @@ import io.harness.cvng.statemachine.entities.AnalysisOrchestrator;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator.AnalysisOrchestratorKeys;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
+import io.harness.notification.notificationclient.NotificationResultWithoutStatus;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import java.text.ParseException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -78,9 +106,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
   @Inject ServiceLevelObjectiveService serviceLevelObjectiveService;
@@ -91,8 +122,10 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
   @Inject SLOHealthIndicatorService sloHealthIndicatorService;
   @Inject SLOErrorBudgetResetService sloErrorBudgetResetService;
   @Inject CVNGLogService cvngLogService;
-  @Inject Clock clock;
   @Inject HPersistence hPersistence;
+  @Inject NotificationRuleService notificationRuleService;
+  @Mock FakeNotificationClient notificationClient;
+  @Inject private SLIRecordServiceImpl sliRecordService;
   String accountId;
   String orgIdentifier;
   String projectIdentifier;
@@ -109,9 +142,11 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
   ProjectParams projectParams;
   Map<String, String> tags;
   private BuilderFactory builderFactory;
+  Clock clock;
 
   @Before
   public void setup() throws IllegalAccessException, ParseException {
+    MockitoAnnotations.initMocks(this);
     builderFactory = BuilderFactory.getDefault();
     accountId = builderFactory.getContext().getAccountId();
     orgIdentifier = builderFactory.getContext().getOrgIdentifier();
@@ -166,6 +201,12 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
                         .orgIdentifier(orgIdentifier)
                         .projectIdentifier(projectIdentifier)
                         .build();
+    clock = Clock.fixed(Instant.parse("2020-08-21T10:02:06Z"), ZoneOffset.UTC);
+    FieldUtils.writeField(notificationRuleService, "clock", clock, true);
+    FieldUtils.writeField(sliRecordService, "clock", clock, true);
+    FieldUtils.writeField(serviceLevelObjectiveService, "notificationRuleService", notificationRuleService, true);
+    FieldUtils.writeField(serviceLevelObjectiveService, "sliRecordService", sliRecordService, true);
+    FieldUtils.writeField(serviceLevelObjectiveService, "notificationClient", notificationClient, true);
   }
 
   @Test
@@ -883,6 +924,165 @@ public class ServiceLevelObjectiveServiceImplTest extends CvNextGenTestBase {
     assertThat(executionLogDTOS.getType()).isEqualTo(CVNGLogType.EXECUTION_LOG);
     assertThat(executionLogDTOS.getLogLevel()).isEqualTo(LogLevel.INFO);
     assertThat(executionLogDTOS.getLog()).isEqualTo("Data Collection successfully completed.");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetNotificationRules_withCoolOffLogic() throws IllegalAccessException {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    sloDTO.setNotificationRuleRefs(
+        Arrays.asList(NotificationRuleRefDTO.builder()
+                          .notificationRuleRef(notificationRuleResponse.getNotificationRule().getIdentifier())
+                          .enabled(true)
+                          .build()));
+    createMonitoredService();
+    serviceLevelObjectiveService.create(projectParams, sloDTO);
+    ServiceLevelObjective serviceLevelObjective = getServiceLevelObjective(sloDTO.getIdentifier());
+
+    clock = Clock.fixed(clock.instant().plus(10, ChronoUnit.MINUTES), ZoneOffset.UTC);
+    FieldUtils.writeField(serviceLevelObjectiveService, "clock", clock, true);
+    assertThat(((ServiceLevelObjectiveServiceImpl) serviceLevelObjectiveService)
+                   .getNotificationRules(serviceLevelObjective)
+                   .size())
+        .isEqualTo(0);
+
+    clock = Clock.fixed(clock.instant().plus(50, ChronoUnit.MINUTES), ZoneOffset.UTC);
+    FieldUtils.writeField(serviceLevelObjectiveService, "clock", clock, true);
+    assertThat(((ServiceLevelObjectiveServiceImpl) serviceLevelObjectiveService)
+                   .getNotificationRules(serviceLevelObjective)
+                   .size())
+        .isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testSendNotification() throws IllegalAccessException {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
+    NotificationRuleResponse notificationRuleResponseOne =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+    notificationRuleDTO.setName("rule2");
+    notificationRuleDTO.setIdentifier("rule2");
+    notificationRuleDTO.setConditions(
+        Arrays.asList(NotificationRuleCondition.builder()
+                          .type(NotificationRuleConditionType.ERROR_BUDGET_REMAINING_MINUTES)
+                          .spec(ErrorBudgetRemainingMinutesConditionSpec.builder().threshold(9000.0).build())
+                          .build()));
+    NotificationRuleResponse notificationRuleResponseTwo =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    sloDTO.setNotificationRuleRefs(
+        Arrays.asList(NotificationRuleRefDTO.builder()
+                          .notificationRuleRef(notificationRuleResponseOne.getNotificationRule().getIdentifier())
+                          .enabled(true)
+                          .build(),
+            NotificationRuleRefDTO.builder()
+                .notificationRuleRef(notificationRuleResponseTwo.getNotificationRule().getIdentifier())
+                .enabled(true)
+                .build()));
+    createMonitoredService();
+    serviceLevelObjectiveService.create(projectParams, sloDTO);
+    ServiceLevelObjective serviceLevelObjective = getServiceLevelObjective(sloDTO.getIdentifier());
+
+    clock = Clock.fixed(clock.instant().plus(1, ChronoUnit.HOURS), ZoneOffset.UTC);
+    FieldUtils.writeField(serviceLevelObjectiveService, "clock", clock, true);
+    when(notificationClient.sendNotificationAsync(any()))
+        .thenReturn(NotificationResultWithoutStatus.builder().notificationId("notificationId").build());
+
+    serviceLevelObjectiveService.sendNotification(serviceLevelObjective);
+    verify(notificationClient, times(1)).sendNotificationAsync(any());
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testShouldSendNotification_withErrorBudgetRemainingPercentage() {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
+    NotificationRuleResponse notificationRuleResponseOne =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    sloDTO.setNotificationRuleRefs(
+        Arrays.asList(NotificationRuleRefDTO.builder()
+                          .notificationRuleRef(notificationRuleResponseOne.getNotificationRule().getIdentifier())
+                          .enabled(true)
+                          .build()));
+    createMonitoredService();
+    serviceLevelObjectiveService.create(projectParams, sloDTO);
+    ServiceLevelObjective serviceLevelObjective = getServiceLevelObjective(sloDTO.getIdentifier());
+
+    SLONotificationRuleCondition condition =
+        SLOErrorBudgetRemainingPercentageCondition.builder().threshold(10.0).build();
+
+    assertThat(((ServiceLevelObjectiveServiceImpl) serviceLevelObjectiveService)
+                   .shouldSendNotification(serviceLevelObjective, condition))
+        .isFalse();
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testShouldSendNotification_withErrorBudgetBurnRate() {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.SLO).build();
+    NotificationRuleResponse notificationRuleResponseOne =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+    ServiceLevelObjectiveDTO sloDTO = createSLOBuilder();
+    sloDTO.setNotificationRuleRefs(
+        Arrays.asList(NotificationRuleRefDTO.builder()
+                          .notificationRuleRef(notificationRuleResponseOne.getNotificationRule().getIdentifier())
+                          .enabled(true)
+                          .build()));
+    createMonitoredService();
+    serviceLevelObjectiveService.create(projectParams, sloDTO);
+    ServiceLevelObjective serviceLevelObjective = getServiceLevelObjective(sloDTO.getIdentifier());
+    createSLIRecords(serviceLevelObjective.getServiceLevelIndicators().get(0));
+
+    SLOErrorBudgetBurnRateCondition condition = SLOErrorBudgetBurnRateCondition.builder()
+                                                    .threshold(0.04)
+                                                    .lookBackDuration(Duration.ofMinutes(10).toMillis())
+                                                    .build();
+
+    assertThat(((ServiceLevelObjectiveServiceImpl) serviceLevelObjectiveService)
+                   .shouldSendNotification(serviceLevelObjective, condition))
+        .isTrue();
+
+    condition.setThreshold(0.05);
+    assertThat(((ServiceLevelObjectiveServiceImpl) serviceLevelObjectiveService)
+                   .shouldSendNotification(serviceLevelObjective, condition))
+        .isFalse();
+  }
+
+  private void createSLIRecords(String sliId) {
+    Instant startTime = clock.instant().minus(Duration.ofMinutes(10));
+    List<SLIRecord.SLIState> sliStates = Arrays.asList(BAD, GOOD, GOOD, NO_DATA, GOOD, GOOD, BAD, BAD, BAD, BAD);
+    List<SLIRecordParam> sliRecordParams = getSLIRecordParam(startTime, sliStates);
+    sliRecordService.create(sliRecordParams, sliId, "verificationTaskId", 0);
+  }
+
+  private List<SLIRecordParam> getSLIRecordParam(Instant startTime, List<SLIState> sliStates) {
+    List<SLIRecordParam> sliRecordParams = new ArrayList<>();
+    for (int i = 0; i < sliStates.size(); i++) {
+      SLIState sliState = sliStates.get(i);
+      sliRecordParams.add(
+          SLIRecordParam.builder().sliState(sliState).timeStamp(startTime.plus(Duration.ofMinutes(i))).build());
+    }
+    return sliRecordParams;
+  }
+
+  private ServiceLevelObjective getServiceLevelObjective(String identifier) {
+    return hPersistence.createQuery(ServiceLevelObjective.class)
+        .filter(ServiceLevelObjectiveKeys.accountId, accountId)
+        .filter(ServiceLevelObjectiveKeys.orgIdentifier, orgIdentifier)
+        .filter(ServiceLevelObjectiveKeys.projectIdentifier, projectIdentifier)
+        .filter(ServiceLevelObjectiveKeys.identifier, identifier)
+        .get();
   }
 
   private ServiceLevelObjectiveDTO createSLOBuilder() {
