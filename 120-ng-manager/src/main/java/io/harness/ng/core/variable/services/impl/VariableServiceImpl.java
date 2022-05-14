@@ -82,7 +82,8 @@ public class VariableServiceImpl implements VariableService {
       throw new InvalidRequestException("Variable config cannot be null");
     }
     variableDTO.getVariableConfig().validate();
-    assureThatTheProjectAndOrgExists(variableDTO, accountIdentifier);
+    assureThatTheProjectAndOrgExists(
+        accountIdentifier, variableDTO.getOrgIdentifier(), variableDTO.getProjectIdentifier());
     try {
       Variable variable = variableMapper.toVariable(accountIdentifier, variableDTO);
       return Failsafe.with(DEFAULT_TRANSACTION_RETRY_POLICY).get(() -> transactionTemplate.execute(status -> {
@@ -166,7 +167,8 @@ public class VariableServiceImpl implements VariableService {
         variableRepository.findByAccountIdentifierAndOrgIdentifierAndProjectIdentifierAndIdentifier(accountIdentifier,
             variableDTO.getOrgIdentifier(), variableDTO.getProjectIdentifier(), variableDTO.getIdentifier());
     validateTheUpdateRequestIsValid(accountIdentifier, variableDTO, existingVariable);
-    assureThatTheProjectAndOrgExists(variableDTO, accountIdentifier);
+    assureThatTheProjectAndOrgExists(
+        accountIdentifier, variableDTO.getOrgIdentifier(), variableDTO.getProjectIdentifier());
     try {
       Variable newVariable = variableMapper.toVariable(accountIdentifier, variableDTO);
       newVariable.setLastModifiedAt(System.currentTimeMillis());
@@ -210,6 +212,27 @@ public class VariableServiceImpl implements VariableService {
     return false;
   }
 
+  private Criteria getCriteriaForVariableExpressions(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    return Criteria.where(VariableKeys.accountIdentifier)
+        .is(accountIdentifier)
+        .orOperator(Criteria.where(VariableKeys.orgIdentifier).is(null),
+            Criteria.where(VariableKeys.orgIdentifier)
+                .is(orgIdentifier)
+                .orOperator(Criteria.where(VariableKeys.projectIdentifier).is(null),
+                    Criteria.where(VariableKeys.projectIdentifier).is(projectIdentifier)));
+  }
+
+  @Override
+  public List<String> getExpressions(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+    assureThatTheProjectAndOrgExists(accountIdentifier, orgIdentifier, projectIdentifier);
+    Criteria criteria = getCriteriaForVariableExpressions(accountIdentifier, orgIdentifier, projectIdentifier);
+    return variableRepository.findAll(criteria)
+        .stream()
+        .map(entity -> entity.getExpression())
+        .collect(Collectors.toList());
+  }
+
   public void validateTheUpdateRequestIsValid(
       String accountIdentifier, VariableDTO variableDTO, Optional<Variable> existingVariable) {
     if (!existingVariable.isPresent()) {
@@ -229,10 +252,7 @@ public class VariableServiceImpl implements VariableService {
     }
   }
 
-  void assureThatTheProjectAndOrgExists(VariableDTO variableDTO, String accountIdentifier) {
-    String orgIdentifier = variableDTO.getOrgIdentifier();
-    String projectIdentifier = variableDTO.getProjectIdentifier();
-
+  void assureThatTheProjectAndOrgExists(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     if (isNotEmpty(projectIdentifier)) {
       // its a project level variable
       if (isEmpty(orgIdentifier)) {

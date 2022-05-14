@@ -151,6 +151,7 @@ import io.harness.token.TokenClientModule;
 import io.harness.tracing.AbstractPersistenceTracerModule;
 import io.harness.user.UserClientModule;
 import io.harness.usergroups.UserGroupClientModule;
+import io.harness.variable.VariableClientModule;
 import io.harness.version.VersionInfoManager;
 import io.harness.webhook.WebhookEventClientModule;
 import io.harness.yaml.YamlSdkModule;
@@ -307,6 +308,8 @@ public class PipelineServiceModule extends AbstractModule {
         return configuration.getSegmentConfiguration();
       }
     });
+    install(new VariableClientModule(configuration.getNgManagerServiceHttpClientConfig(),
+        configuration.getNgManagerServiceSecret(), PIPELINE_SERVICE.getServiceId()));
     registerOutboxEventHandlers();
     bind(OutboxEventHandler.class).to(PMSOutboxEventHandler.class);
     bind(HPersistence.class).to(MongoPersistence.class);
