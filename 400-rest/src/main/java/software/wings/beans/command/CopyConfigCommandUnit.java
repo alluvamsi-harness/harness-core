@@ -26,7 +26,7 @@ import io.harness.expression.Expression;
 import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 import io.harness.logging.CommandExecutionStatus;
 
-import software.wings.beans.ConfigFile;
+import software.wings.beans.ConfigFileDto;
 import software.wings.beans.Log;
 import software.wings.delegatetasks.DelegateConfigService;
 import software.wings.delegatetasks.DelegateFileManager;
@@ -75,7 +75,7 @@ public class CopyConfigCommandUnit extends SshCommandUnit implements NestedAnnot
 
   @Override
   public CommandExecutionStatus executeInternal(ShellCommandExecutionContext context) {
-    List<ConfigFile> configFiles;
+    List<ConfigFileDto> configFiles;
     String hostName = context.getHost() == null ? null : context.getHost().getPublicDns();
     try {
       configFiles =
@@ -99,7 +99,7 @@ public class CopyConfigCommandUnit extends SshCommandUnit implements NestedAnnot
 
     CommandExecutionStatus result = CommandExecutionStatus.SUCCESS;
     if (isNotEmpty(configFiles)) {
-      for (ConfigFile configFile : configFiles) {
+      for (ConfigFileDto configFile : configFiles) {
         File destFile = new File(configFile.getRelativeFilePath());
         String path = destinationParentPath + "/" + (isNotBlank(destFile.getParent()) ? destFile.getParent() : "");
         try {
@@ -107,7 +107,7 @@ public class CopyConfigCommandUnit extends SshCommandUnit implements NestedAnnot
               configFile.getVersionForEnv(context.getEnvId()), context.getAccountId());
         } catch (IOException e) {
           String message = "Unable to get config file for entityId: " + configFile.getUuid()
-              + ", version: " + configFile.getVersionForEnv(context.getEnvId());
+              + ", version: " + configFile.getEnvVersionMap().get(context.getEnvId());
           log.error(message, e);
           Log.Builder logBuilder = aLog()
                                        .appId(context.getAppId())
