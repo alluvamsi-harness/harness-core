@@ -124,6 +124,7 @@ public class HelmTaskHelperBase {
   public static final String RESOURCE_DIR_BASE = "./repository/helm/resources/";
   public static final String VERSION_KEY = "version:";
   public static final String NAME_KEY = "name:";
+  public static final String REGISTRY_URL = "${REGISTRY_URL}";
 
   @Inject private K8sGlobalConfigService k8sGlobalConfigService;
   @Inject private NGChartMuseumService ngChartMuseumService;
@@ -148,6 +149,39 @@ public class HelmTaskHelperBase {
             "Failed to init helm. Executed command " + helmInitCommand + ". " + processResult.getOutput().getUTF8(),
             USER, HelmCliCommandType.INIT);
       }
+    }
+  }
+
+  public void loginOciRegistry(String repoUrl, String userName, char[] password, HelmVersion helmVersion,
+      long timeoutInMillis, String destinationDirectory) {
+    if (!HelmVersion.isHelmV3(helmVersion)) {
+      throw new HelmClientException(
+          "OCI Registry is supported only for Helm V3", USER, HelmCliCommandType.OCI_REGISTRY_LOGIN);
+    }
+
+    Map<String, String> environment = new HashMap<>();
+    String registryLoginCmd =
+        HelmCommandTemplateFactory.getHelmCommandTemplate(HelmCliCommandType.OCI_REGISTRY_LOGIN, helmVersion)
+            .replace(HELM_PATH_PLACEHOLDER, getHelmPath(helmVersion))
+            .replace(REGISTRY_URL, repoUrl)
+            .replace(USERNAME, getUsername(userName))
+            .replace(PASSWORD, getPassword(password));
+
+    String evaluatedPassword = isEmpty(getPassword(password)) ? StringUtils.EMPTY : "--password *******";
+    String registryLoginCmdForLogging =
+        HelmCommandTemplateFactory.getHelmCommandTemplate(HelmCliCommandType.OCI_REGISTRY_LOGIN, helmVersion)
+            .replace(HELM_PATH_PLACEHOLDER, getHelmPath(helmVersion))
+            .replace(REGISTRY_URL, repoUrl)
+            .replace(USERNAME, getUsername(userName))
+            .replace(PASSWORD, evaluatedPassword);
+
+    ProcessResult processResult = executeCommand(environment, registryLoginCmd, destinationDirectory,
+        "Attempt Login to OCI Registry. Command Executed: " + registryLoginCmdForLogging, timeoutInMillis,
+        HelmCliCommandType.OCI_REGISTRY_LOGIN);
+    if (processResult.getExitValue() != 0) {
+      throw new HelmClientException("Failed to login to the helm OCI Registry repo. Executed command "
+              + registryLoginCmdForLogging + " " + processResult.getOutput().getUTF8(),
+          USER, HelmCliCommandType.OCI_REGISTRY_LOGIN);
     }
   }
 
@@ -263,11 +297,11 @@ public class HelmTaskHelperBase {
     return encloseWithQuotesIfNeeded(k8sGlobalConfigService.getHelmPath(helmVersion));
   }
 
-  private String getUsername(String username) {
+  public String getUsername(String username) {
     return isBlank(username) ? "" : "--username " + username;
   }
 
-  private String getPassword(char[] password) {
+  public String getPassword(char[] password) {
     if (password == null) {
       return "";
     }

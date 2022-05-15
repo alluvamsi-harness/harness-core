@@ -21,16 +21,16 @@ import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
 @OwnedBy(PL)
 public class GithubCreateBranchScmApiErrorHandler implements ScmApiErrorHandler {
-  public static final String CREATE_BRANCH_WITH_INVALID_CREDS =
-      "The requested branch could not be created on Github. " + ScmErrorExplanations.INVALID_CONNECTOR_CREDS;
+  public static final String CREATE_BRANCH_FAILED = "The requested branch could not be created on Github. ";
 
   @Override
   public void handleError(int statusCode, String errorMessage) throws WingsException {
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(
-            INVALID_CREDENTIALS, CREATE_BRANCH_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+        throw NestedExceptionUtils.hintWithExplanationException(INVALID_CREDENTIALS,
+            CREATE_BRANCH_FAILED + ScmErrorExplanations.INVALID_CONNECTOR_CREDS,
+            new ScmUnauthorizedException(errorMessage));
       case 404:
         throw NestedExceptionUtils.hintWithExplanationException(ScmErrorHints.FILE_NOT_FOUND,
             ScmErrorExplanations.FILE_NOT_FOUND,

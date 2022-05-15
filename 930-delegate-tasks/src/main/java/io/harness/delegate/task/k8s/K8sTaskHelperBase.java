@@ -158,6 +158,7 @@ import io.harness.serializer.YamlUtils;
 import io.harness.shell.SshSessionConfig;
 import io.harness.yaml.BooleanPatchedRepresenter;
 
+import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -2884,5 +2885,17 @@ public class K8sTaskHelperBase {
       throw NestedExceptionUtils.hintWithExplanationException(
           INVALID_RESOURCE_SPEC_HINT, INVALID_RESOURCE_SPEC_EXPLANATION, exception);
     }
+  }
+
+  public boolean doStatusCheckAllResourcesForHelm(Kubectl client, List<KubernetesResourceId> resourceIds, String ocPath,
+      String workingDir, String namespace, String kubeconfigPath, ExecutionLogCallback executionLogCallback)
+      throws Exception {
+    return doStatusCheckForAllResources(client, resourceIds,
+        K8sDelegateTaskParams.builder()
+            .ocPath(ocPath)
+            .workingDirectory(workingDir)
+            .kubeconfigPath(kubeconfigPath)
+            .build(),
+        namespace, executionLogCallback, false);
   }
 }

@@ -124,6 +124,7 @@ cloudFormationRollbackConfig {"name": "awsConfigId_1", "background": true} {"aws
 cloudFormationRollbackConfig {"name": "byAppAndEntityAndAwsConfig", "background": true} {"appId": 1, "entityId": 1, "awsConfigId": 1, "createdAt": 1}
 cloudFormationRollbackConfig {"name": "createdAt_1", "background": true} {"createdAt": 1}
 cloudFormationRollbackConfig {"name": "entityId_1", "background": true} {"entityId": 1}
+cloudformationConfig {"name": "accountId_orgId_projectId_provisionerIdentifier_createdAt", "background": true} {"accountId": 1, "orgId": 1, "projectId": 1, "provisionerIdentifier": 1, "createdAt": -1}
 clusterRecords {"name": "accountId_1", "background": true} {"accountId": 1}
 collectorQueue2 {"name": "earliestGet_1", "background": true, "expireAfterSeconds": 86400} {"earliestGet": 1}
 collectorQueue2 {"name": "next4", "background": true} {"topic": 1, "earliestGet": 1}

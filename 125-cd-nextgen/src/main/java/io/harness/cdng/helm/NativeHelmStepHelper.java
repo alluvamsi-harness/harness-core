@@ -487,10 +487,11 @@ public class NativeHelmStepHelper extends CDStepHelper {
     } catch (Exception e) {
       return TaskChainResponse.builder()
           .chainEnd(true)
-          .passThroughData(StepExceptionPassThroughData.builder()
-                               .errorMessage(ExceptionUtils.getMessage(e))
-                               .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, e))
-                               .build())
+          .passThroughData(
+              StepExceptionPassThroughData.builder()
+                  .errorMessage(ExceptionUtils.getMessage(e))
+                  .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, ExceptionUtils.getMessage(e)))
+                  .build())
           .build();
     }
 
@@ -649,8 +650,8 @@ public class NativeHelmStepHelper extends CDStepHelper {
     if (ExceptionUtils.cause(TaskNGDataException.class, e) != null) {
       throw e;
     }
-    UnitProgressData unitProgressData =
-        completeUnitProgressData(executionPassThroughData.getLastActiveUnitProgressData(), ambiance, e);
+    UnitProgressData unitProgressData = completeUnitProgressData(
+        executionPassThroughData.getLastActiveUnitProgressData(), ambiance, ExceptionUtils.getMessage(e));
 
     FailureData failureData = FailureData.newBuilder()
                                   .addFailureTypes(FailureType.APPLICATION_FAILURE)

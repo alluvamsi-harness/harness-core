@@ -365,7 +365,8 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     // type as LOG
     Map<String, List<AnalysisResult>> cvConfigAnalysisResultMap = new ConcurrentHashMap<>();
 
-    List<AnalyzedRadarChartLogDataDTO.LogData> logDataToBeReturned = Collections.synchronizedList(new ArrayList<>());
+    List<AnalyzedRadarChartLogDataDTO.RadarChartLogData> logDataToBeReturned =
+        Collections.synchronizedList(new ArrayList<>());
     List<Callable<Map<String, List<AnalysisResult>>>> callables = new ArrayList<>();
     cvConfigIds.forEach(cvConfigId -> {
       callables.add(() -> {
@@ -379,7 +380,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     allResults.forEach(result -> cvConfigAnalysisResultMap.putAll(result));
 
     // for each cvConfigId, make a call to get the labels/texts
-    List<Callable<List<AnalyzedRadarChartLogDataDTO.LogData>>> logDataCallables = new ArrayList<>();
+    List<Callable<List<AnalyzedRadarChartLogDataDTO.RadarChartLogData>>> logDataCallables = new ArrayList<>();
     cvConfigAnalysisResultMap.keySet().forEach(cvConfigId -> {
       logDataCallables.add(() -> {
         List<AnalysisResult> analysisResults = cvConfigAnalysisResultMap.get(cvConfigId);
@@ -390,7 +391,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
       });
     });
 
-    List<List<AnalyzedRadarChartLogDataDTO.LogData>> logDataResults =
+    List<List<AnalyzedRadarChartLogDataDTO.RadarChartLogData>> logDataResults =
         cvngParallelExecutor.executeParallel(logDataCallables);
     logDataResults.forEach(result -> logDataToBeReturned.addAll(result));
 
@@ -468,7 +469,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
     return filteredLogs;
   }
 
-  private List<AnalyzedRadarChartLogDataDTO.LogData> mergeClusterWithRadarChartResults(
+  private List<AnalyzedRadarChartLogDataDTO.RadarChartLogData> mergeClusterWithRadarChartResults(
       List<AnalysisResult> analysisResults, List<LogAnalysisCluster> analysisClusters, Instant start, Instant end) {
     Map<Long, AnalysisResult> labelTagMap = new HashMap<>();
 
@@ -479,7 +480,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
       }
     });
 
-    List<AnalyzedRadarChartLogDataDTO.LogData> logDataList = new ArrayList<>();
+    List<AnalyzedRadarChartLogDataDTO.RadarChartLogData> logDataList = new ArrayList<>();
 
     analysisClusters.forEach(cluster -> {
       Map<Long, Integer> trendMap =
@@ -506,8 +507,8 @@ public class LogDashboardServiceImpl implements LogDashboardService {
         analysisResult.setRiskScore(1.0);
       }
 
-      AnalyzedRadarChartLogDataDTO.LogData data =
-          AnalyzedRadarChartLogDataDTO.LogData.builder()
+      AnalyzedRadarChartLogDataDTO.RadarChartLogData data =
+          AnalyzedRadarChartLogDataDTO.RadarChartLogData.builder()
               .text(cluster.getText())
               .label(cluster.getLabel())
               .clusterId(UUID.nameUUIDFromBytes(

@@ -72,6 +72,15 @@ import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapab
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.helpers.ext.external.comm.CollaborationProviderResponse;
 import software.wings.helpers.ext.helm.response.HelmCollectChartResponse;
+import software.wings.helpers.ext.k8s.response.K8sApplyResponse;
+import software.wings.helpers.ext.k8s.response.K8sBlueGreenDeployResponse;
+import software.wings.helpers.ext.k8s.response.K8sCanaryDeployResponse;
+import software.wings.helpers.ext.k8s.response.K8sDeleteResponse;
+import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
+import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
+import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
+import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
+import software.wings.helpers.ext.k8s.response.K8sTrafficSplitResponse;
 import software.wings.helpers.ext.mail.EmailData;
 import software.wings.helpers.ext.mail.SmtpConfig;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
@@ -201,5 +210,14 @@ public class DelegateTasksMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.ScriptStateExecutionSummary", ScriptStateExecutionSummary.class);
     w.put("api.shellscript.provision.ShellScriptProvisionExecutionData", ShellScriptProvisionExecutionData.class);
     w.put("api.ServiceNowExecutionData", ServiceNowExecutionData.class);
+    w.put("helpers.ext.k8s.response.K8sApplyResponse", K8sApplyResponse.class);
+    w.put("helpers.ext.k8s.response.K8sBlueGreenDeployResponse", K8sBlueGreenDeployResponse.class);
+    w.put("helpers.ext.k8s.response.K8sCanaryDeployResponse", K8sCanaryDeployResponse.class);
+    w.put("helpers.ext.k8s.response.K8sDeleteResponse", K8sDeleteResponse.class);
+    w.put("helpers.ext.k8s.response.K8sRollingDeployResponse", K8sRollingDeployResponse.class);
+    w.put("helpers.ext.k8s.response.K8sScaleResponse", K8sScaleResponse.class);
+    w.put("helpers.ext.k8s.response.K8sTaskExecutionResponse", K8sTaskExecutionResponse.class);
+    w.put("helpers.ext.k8s.response.K8sTrafficSplitResponse", K8sTrafficSplitResponse.class);
+    w.put("helpers.ext.k8s.response.K8sRollingDeployRollbackResponse", K8sRollingDeployRollbackResponse.class);
   }
 }

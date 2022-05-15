@@ -30,6 +30,7 @@ import io.harness.utils.PageUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class NotificationRuleServiceImpl implements NotificationRuleService {
   private Map<NotificationRuleType, NotificationRuleConditionTransformer>
       notificationRuleTypeNotificationRuleConditionTransformerMap;
   @Inject private Map<NotificationRuleType, NotificationRuleUpdatableEntity> notificationRuleMapBinder;
+  @Inject Clock clock;
 
   @Override
   public NotificationRuleResponse create(ProjectParams projectParams, NotificationRuleDTO notificationRuleDTO) {
@@ -161,6 +163,7 @@ public class NotificationRuleServiceImpl implements NotificationRuleService {
             -> NotificationRuleRef.builder()
                    .notificationRuleRef(notificationRuleRefDTO.getNotificationRuleRef())
                    .enabled(notificationRuleRefDTO.isEnabled())
+                   .lastSuccessFullNotificationSent(clock.instant())
                    .build())
         .collect(Collectors.toList());
   }

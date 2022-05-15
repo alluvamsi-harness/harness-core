@@ -16,6 +16,8 @@ import static io.harness.common.CIExecutionConstants.LITE_ENGINE_PORT;
 import static io.harness.common.CIExecutionConstants.TMP_PATH;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
+import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
 import static io.harness.states.InitializeTaskStep.LE_STATUS_TASK_TYPE;
 import static io.harness.steps.StepUtils.buildAbstractions;
 
@@ -48,9 +50,11 @@ import io.harness.ci.serializer.RunTestsStepProtobufSerializer;
 import io.harness.ci.serializer.vm.VmStepSerializer;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.TaskSelector;
+import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.ci.CIExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.k8s.CIK8ExecuteStepTaskParams;
+import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.CIVmExecuteStepTaskParams;
 import io.harness.delegate.beans.ci.vm.VmTaskExecutionResponse;
 import io.harness.delegate.beans.ci.vm.steps.VmStepInfo;
@@ -62,6 +66,10 @@ import io.harness.delegate.task.stepstatus.StepStatusTaskParameters;
 import io.harness.delegate.task.stepstatus.StepStatusTaskResponseData;
 import io.harness.delegate.task.stepstatus.artifact.ArtifactMetadata;
 import io.harness.encryption.Scope;
+import io.harness.eraro.Level;
+import io.harness.exception.ExceptionUtils;
+import io.harness.exception.exceptionmanager.ExceptionManager;
+import io.harness.exception.ngexception.CILiteEngineException;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logstreaming.LogStreamingHelper;
@@ -69,6 +77,7 @@ import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.AsyncExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.failure.FailureData;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -90,6 +99,7 @@ import io.harness.steps.executable.AsyncExecutableWithRbac;
 import io.harness.tasks.ResponseData;
 import io.harness.util.GithubApiFunctor;
 import io.harness.util.GithubApiTokenEvaluator;
+import io.harness.waiter.WaitNotifyEngine;
 import io.harness.yaml.core.timeout.Timeout;
 
 import com.google.inject.Inject;
@@ -108,18 +118,18 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
   public static final String CI_EXECUTE_STEP = "CI_EXECUTE_STEP";
   public static final long bufferTimeMillis =
       5 * 1000; // These additional 5 seconds are approx time spent on creating delegate ask and receiving response
-
   @Inject private RunStepProtobufSerializer runStepProtobufSerializer;
   @Inject private PluginStepProtobufSerializer pluginStepProtobufSerializer;
   @Inject private RunTestsStepProtobufSerializer runTestsStepProtobufSerializer;
   @Inject private PluginCompatibleStepSerializer pluginCompatibleStepSerializer;
-
+  @Inject private ExceptionManager exceptionManager;
   @Inject private OutcomeService outcomeService;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputResolver;
   @Inject private CIDelegateTaskExecutor ciDelegateTaskExecutor;
   @Inject private CIExecutionServiceConfig ciExecutionServiceConfig;
   @Inject private VmStepSerializer vmStepSerializer;
   @Inject private ConnectorUtils connectorUtils;
+  @Inject private WaitNotifyEngine waitNotifyEngine;
 
   @Override
   public Class<StepElementParameters> getStepParametersClass() {
@@ -129,6 +139,29 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
   @Override
   public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
     // No validation is require, all connectors will be validated in Lite Engine Step
+  }
+
+  @Override
+  public void handleForCallbackId(Ambiance ambiance, StepElementParameters stepParameters, List<String> allCallbackIds,
+      String callbackId, ResponseData responseData) {
+    if (responseData instanceof VmTaskExecutionResponse) {
+      VmTaskExecutionResponse vmTaskExecutionResponse = (VmTaskExecutionResponse) responseData;
+      if (vmTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE
+          || vmTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SKIPPED) {
+        abortTasks(allCallbackIds, callbackId, ambiance);
+      }
+    }
+    if (responseData instanceof K8sTaskExecutionResponse) {
+      K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) responseData;
+      if (k8sTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.FAILURE
+          || k8sTaskExecutionResponse.getCommandExecutionStatus() == CommandExecutionStatus.SKIPPED) {
+        abortTasks(allCallbackIds, callbackId, ambiance);
+      }
+    }
+
+    if (responseData instanceof ErrorNotifyResponseData) {
+      abortTasks(allCallbackIds, callbackId, ambiance);
+    }
   }
 
   @Override
@@ -170,6 +203,17 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
 
   public List<TaskSelector> fetchDelegateSelector(Ambiance ambiance) {
     return connectorUtils.fetchDelegateSelector(ambiance, executionSweepingOutputResolver);
+  }
+
+  private void abortTasks(List<String> allCallbackIds, String callbackId, Ambiance ambiance) {
+    List<String> callBackIds =
+        allCallbackIds.stream().filter(cid -> !cid.equals(callbackId)).collect(Collectors.toList());
+    callBackIds.forEach(callbackId1 -> {
+      waitNotifyEngine.doneWith(callbackId1,
+          ErrorNotifyResponseData.builder()
+              .errorMessage("Delegate is not able to connect to created build farm")
+              .build());
+    });
   }
 
   private AsyncExecutableResponse executeK8AsyncAfterRbac(Ambiance ambiance, String stepIdentifier, String runtimeId,
@@ -283,6 +327,28 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
       Ambiance ambiance, StepElementParameters stepParameters, Map<String, ResponseData> responseDataMap) {
     String stepIdentifier = AmbianceUtils.obtainStepIdentifier(ambiance);
     log.info("Received response for step {}", stepIdentifier);
+
+    for (Map.Entry<String, ResponseData> entry : responseDataMap.entrySet()) {
+      ResponseData responseData = entry.getValue();
+      if (responseData instanceof ErrorNotifyResponseData) {
+        FailureData failureData =
+            FailureData.newBuilder()
+                .addFailureTypes(FailureType.APPLICATION_FAILURE)
+                .setLevel(Level.ERROR.name())
+                .setCode(GENERAL_ERROR.name())
+                .setMessage(emptyIfNull(ExceptionUtils.getMessage(exceptionManager.processException(
+                    new CILiteEngineException(((ErrorNotifyResponseData) responseData).getErrorMessage())))))
+                .build();
+
+        return StepResponse.builder()
+            .status(Status.ERRORED)
+            .failureInfo(FailureInfo.newBuilder()
+                             .setErrorMessage("Delegate is not able to connect to created build farm")
+                             .addFailureData(failureData)
+                             .build())
+            .build();
+      }
+    }
 
     StepStatusTaskResponseData stepStatusTaskResponseData = filterK8StepResponse(responseDataMap);
 

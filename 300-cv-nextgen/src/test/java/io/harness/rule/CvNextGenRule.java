@@ -28,6 +28,7 @@ import io.harness.cvng.EventsFrameworkModule;
 import io.harness.cvng.VerificationConfiguration;
 import io.harness.cvng.client.FakeAccessControlClient;
 import io.harness.cvng.client.FakeNextGenService;
+import io.harness.cvng.client.FakeNotificationClient;
 import io.harness.cvng.client.MockedVerificationManagerService;
 import io.harness.cvng.client.NextGenClientModule;
 import io.harness.cvng.client.NextGenService;
@@ -51,6 +52,7 @@ import io.harness.notification.NotificationClientConfiguration;
 import io.harness.notification.constant.NotificationClientSecrets;
 import io.harness.notification.module.NotificationClientModule;
 import io.harness.notification.module.NotificationClientPersistenceModule;
+import io.harness.notification.notificationclient.NotificationClient;
 import io.harness.persistence.HPersistence;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.serializer.CvNextGenRegistrars;
@@ -153,20 +155,6 @@ public class CvNextGenRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
         MongoBackendConfiguration.builder().uri("mongodb://localhost:27017/notificationChannel").build();
     modules.add(new EventsFrameworkModule(verificationConfiguration.getEventsFrameworkConfiguration()));
     mongoBackendConfiguration.setType("MONGO");
-    modules.add(new NotificationClientModule(
-        NotificationClientConfiguration.builder()
-            .notificationClientBackendConfiguration(mongoBackendConfiguration)
-            .serviceHttpClientConfig(ServiceHttpClientConfig.builder()
-                                         .baseUrl("http://localhost:9005")
-                                         .connectTimeOutSeconds(15)
-                                         .readTimeOutSeconds(15)
-                                         .build())
-            .notificationSecrets(
-                NotificationClientSecrets.builder()
-                    .notificationClientSecret(
-                        "IC04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM")
-                    .build())
-            .build()));
     modules.add(new NotificationClientPersistenceModule());
     modules.add(new NextGenClientModule(
         NGManagerServiceConfig.builder().managerServiceSecret("secret").ngManagerUrl("http://test-ng-host").build()));
@@ -201,6 +189,22 @@ public class CvNextGenRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
                         binder.bind(AccessControlClient.class).to(FakeAccessControlClient.class);
                       }
                     }));
+    NotificationClientConfiguration notificationClientConfiguration =
+        NotificationClientConfiguration.builder()
+            .notificationClientBackendConfiguration(mongoBackendConfiguration)
+            .serviceHttpClientConfig(ServiceHttpClientConfig.builder()
+                                         .baseUrl("http://localhost:9005/api/")
+                                         .connectTimeOutSeconds(15)
+                                         .readTimeOutSeconds(15)
+                                         .build())
+            .notificationSecrets(
+                NotificationClientSecrets.builder()
+                    .notificationClientSecret(
+                        "IC04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM")
+                    .build())
+            .build();
+    modules.add(Modules.override(new NotificationClientModule(notificationClientConfiguration))
+                    .with(binder -> binder.bind(NotificationClient.class).to(FakeNotificationClient.class)));
 
     modules.add(new AbstractCfModule() {
       @Override

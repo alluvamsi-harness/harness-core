@@ -34,6 +34,9 @@ import io.harness.cdng.pipeline.steps.DeploymentStageStep;
 import io.harness.cdng.pipeline.steps.NGSectionStep;
 import io.harness.cdng.pipeline.steps.RollbackOptionalChildChainStep;
 import io.harness.cdng.pipeline.steps.RollbackOptionalChildrenStep;
+import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStep;
+import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStep;
+import io.harness.cdng.provision.cloudformation.CloudformationRollbackStep;
 import io.harness.cdng.provision.terraform.TerraformApplyStep;
 import io.harness.cdng.provision.terraform.TerraformDestroyStep;
 import io.harness.cdng.provision.terraform.TerraformPlanStep;
@@ -99,9 +102,11 @@ public class NgStepRegistrar {
     engineSteps.put(EnvironmentStep.STEP_TYPE, EnvironmentStep.class);
     engineSteps.put(HelmDeployStep.STEP_TYPE, HelmDeployStep.class);
     engineSteps.put(HelmRollbackStep.STEP_TYPE, HelmRollbackStep.class);
+    engineSteps.put(CloudformationDeleteStackStep.STEP_TYPE, CloudformationDeleteStackStep.class);
+    engineSteps.put(CloudformationCreateStackStep.STEP_TYPE, CloudformationCreateStackStep.class);
+    engineSteps.put(CloudformationRollbackStep.STEP_TYPE, CloudformationRollbackStep.class);
     engineSteps.put(ServerlessAwsLambdaDeployStep.STEP_TYPE, ServerlessAwsLambdaDeployStep.class);
     engineSteps.put(ServerlessAwsLambdaRollbackStep.STEP_TYPE, ServerlessAwsLambdaRollbackStep.class);
-
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
     return engineSteps;
   }

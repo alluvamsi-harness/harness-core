@@ -18,6 +18,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlUtils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.IOException;
@@ -57,13 +58,13 @@ public class RuntimeInputValuesValidator {
     String error = "";
     String templateValue = ((JsonNode) templateObject).asText();
     String inputSetValue = ((JsonNode) inputSetObject).asText();
-    ParameterField<?> inputSetField;
+    ParameterField<String> inputSetField;
     inputSetField = getInputSetParameterField(inputSetValue);
     String inputSetFieldValue;
     if (inputSetField == null || inputSetField.getValue() == null) {
       inputSetFieldValue = inputSetValue;
     } else {
-      inputSetFieldValue = inputSetField.getValue().toString();
+      inputSetFieldValue = inputSetField.getValue();
     }
 
     if (NGExpressionUtils.matchesInputSetPattern(templateValue)
@@ -77,7 +78,9 @@ public class RuntimeInputValuesValidator {
         if (inputSetValidator.getValidatorType() == REGEX) {
           boolean matchesPattern =
               NGExpressionUtils.matchesPattern(Pattern.compile(inputSetValidator.getParameters()), inputSetFieldValue);
-          error = matchesPattern ? "" : "The value provided does not match the required regex pattern";
+          error = matchesPattern
+              ? ""
+              : String.format("The value provided %s does not match the required regex pattern", inputSetFieldValue);
         } else if (inputSetValidator.getValidatorType() == ALLOWED_VALUES) {
           String[] allowedValues = inputSetValidator.getParameters().split(", *");
           boolean matches = false;
@@ -90,8 +93,9 @@ public class RuntimeInputValuesValidator {
           }
           String result = String.join(",", allowedValues);
           error = matches ? ""
-                          : "The value provided does not match any of the allowed values "
-                  + "[" + result + "]";
+                          : String.format("The value provided %s does not match any of the allowed values "
+                                  + "[%s]",
+                              inputSetFieldValue, result);
         }
       } catch (IOException e) {
         throw new InvalidRequestException(
@@ -101,13 +105,13 @@ public class RuntimeInputValuesValidator {
     return error;
   }
 
-  private static ParameterField<?> getInputSetParameterField(String inputSetValue) {
+  private static ParameterField<String> getInputSetParameterField(String inputSetValue) {
     if (EmptyPredicate.isEmpty(inputSetValue)) {
       return null;
     }
-    ParameterField<?> inputSetField;
+    ParameterField<String> inputSetField;
     try {
-      inputSetField = YamlUtils.read(inputSetValue, ParameterField.class);
+      inputSetField = YamlUtils.read(inputSetValue, new TypeReference<ParameterField<String>>() {});
     } catch (IOException e) {
       log.error(String.format("Error mapping input set value %s to ParameterField class", inputSetValue), e);
       return null;

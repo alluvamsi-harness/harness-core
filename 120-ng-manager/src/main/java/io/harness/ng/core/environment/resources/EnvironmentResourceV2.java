@@ -61,6 +61,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -374,6 +375,15 @@ public class EnvironmentResourceV2 {
     List<AccessControlDTO> accessControlList =
         accessControlClient.checkForAccess(permissionCheckDTOS).getAccessControlList();
     return ResponseDTO.newResponse(filterEnvironmentResponseByPermissionAndId(accessControlList, environmentList));
+  }
+
+  @GET
+  @Path("/dummy-env-api")
+  @ApiOperation(value = "This is dummy api to expose NGEnvironmentConfig", nickname = "dummyNGEnvironmentConfigApi")
+  @Hidden
+  // do not delete this.
+  public ResponseDTO<NGEnvironmentConfig> getNGEnvironmentConfig() {
+    return ResponseDTO.newResponse(NGEnvironmentConfig.builder().build());
   }
 
   private List<EnvironmentResponse> filterEnvironmentResponseByPermissionAndId(

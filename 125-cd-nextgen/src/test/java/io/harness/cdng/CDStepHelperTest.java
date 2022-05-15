@@ -15,6 +15,7 @@ import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
+import static io.harness.rule.OwnerRule.NGONZALEZ;
 import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.TMACARI;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
@@ -26,8 +27,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
@@ -64,13 +68,19 @@ import io.harness.delegate.beans.connector.scm.github.GithubTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubUsernamePasswordDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubUsernameTokenDTO;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
+import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.helm.HelmFetchFileConfig;
 import io.harness.encryption.SecretRefData;
+import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.logging.UnitProgress;
+import io.harness.logging.UnitStatus;
+import io.harness.logstreaming.ILogStreamingStepClient;
+import io.harness.logstreaming.LogStreamingStepClientFactory;
+import io.harness.logstreaming.NGLogCallback;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -89,6 +99,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -105,13 +116,18 @@ public class CDStepHelperTest extends CategoryTest {
   @Mock private SecretManagerClientService secretManagerClientService;
   @Mock private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Mock private ConnectorInfoDTO connectorInfoDTO;
+  @Mock private LogStreamingStepClientFactory logStreamingStepClientFactory;
   @Spy @InjectMocks private K8sEntityHelper k8sEntityHelper;
   @Spy @InjectMocks private CDStepHelper CDStepHelper;
   private final Ambiance ambiance = Ambiance.newBuilder().putSetupAbstractions("accountId", "test-account").build();
-
   private String id = "identifier";
   private ParameterField folderPath = ParameterField.createValueField("folderPath/");
   private List<String> paths = asList("test/path1.yaml", "test/path2.yaml");
+
+  @Before
+  public void setup() {
+    initMocks(this);
+  }
 
   @Test
   @Owner(developers = TMACARI)
@@ -647,6 +663,84 @@ public class CDStepHelperTest extends CategoryTest {
       assertThat(ex.getParams().get("args"))
           .isEqualTo("Namespace: [ namespace test ] contains leading or trailing whitespaces");
     }
+  }
+
+  @Test(expected = GeneralException.class)
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testValidateGitStoreConfigWithNoArguments() {
+    CDStepHelper.validateGitStoreConfig(null);
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testValidateGitStoreConfigWithEmptyBranch() {
+    GithubStore gitStore = GithubStore.builder().gitFetchType(FetchType.BRANCH).build();
+    CDStepHelper.validateGitStoreConfig(gitStore);
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testValidateGitStoreConfigWithEmptyCommit() {
+    GithubStore gitStore = GithubStore.builder().gitFetchType(FetchType.COMMIT).build();
+    CDStepHelper.validateGitStoreConfig(gitStore);
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testValidateGitStoreConfigWithBrachAndCommit() {
+    ParameterField<String> branch = new ParameterField<>();
+    ParameterField<String> commit = new ParameterField<>();
+
+    branch.setValue("branch");
+    commit.setValue("commit");
+    GithubStore gitStore = GithubStore.builder().gitFetchType(FetchType.BRANCH).branch(branch).build();
+    CDStepHelper.validateGitStoreConfig(gitStore);
+    GithubStore gitStore2 = GithubStore.builder().gitFetchType(FetchType.COMMIT).commitId(commit).build();
+    CDStepHelper.validateGitStoreConfig(gitStore2);
+    assertThat(gitStore.getBranch()).isEqualTo(branch);
+    assertThat(gitStore2.getCommitId()).isEqualTo(commit);
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testCompleteUnitProgressDataEmpty() {
+    Ambiance ambiance = getAmbiance();
+    UnitProgressData response = CDStepHelper.completeUnitProgressData(null, ambiance, "foobar");
+    assertThat(response.getUnitProgresses().size()).isEqualTo(0);
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testCompleteUnitProgressData() {
+    List<UnitProgress> unitProgresses = new ArrayList<>();
+    unitProgresses.add(UnitProgress.newBuilder().setStatus(UnitStatus.SUCCESS).build());
+    UnitProgressData unitProgressData = UnitProgressData.builder().unitProgresses(unitProgresses).build();
+    Ambiance ambiance = getAmbiance();
+    UnitProgressData response = CDStepHelper.completeUnitProgressData(unitProgressData, ambiance, "foobar");
+    assertThat(response.getUnitProgresses().size()).isEqualTo(1);
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testCompleteUnitProgressDataRunning() {
+    List<UnitProgress> unitProgresses = new ArrayList<>();
+    unitProgresses.add(UnitProgress.newBuilder().setStatus(UnitStatus.RUNNING).setUnitName("foobar").build());
+    UnitProgressData unitProgressData = UnitProgressData.builder().unitProgresses(unitProgresses).build();
+    Ambiance ambiance = getAmbiance();
+    NGLogCallback mockCallback = mock(NGLogCallback.class);
+    doReturn(mockCallback).when(CDStepHelper).getLogCallback("foobar", ambiance, true);
+    doNothing().when(mockCallback).saveExecutionLog(any(), any(), any());
+    ILogStreamingStepClient mockLogSgtreamingStepClient = mock(ILogStreamingStepClient.class);
+    doReturn(mockLogSgtreamingStepClient).when(logStreamingStepClientFactory).getLogStreamingStepClient(ambiance);
+    UnitProgressData response = CDStepHelper.completeUnitProgressData(unitProgressData, ambiance, "foobar");
+    assertThat(response.getUnitProgresses().get(0).getStatus()).isEqualTo(UnitStatus.FAILURE);
   }
 
   @Test
