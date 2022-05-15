@@ -20,9 +20,11 @@ import lombok.Value;
 @Value
 @Builder
 @ApiModel(value = "ScopeName")
-@Schema(name = "Scope")
+@Schema(name = "ScopeName")
 public class ScopeNameDTO {
   String accountIdentifier;
+  String orgName;
   String orgIdentifier;
+  String projectName;
   String projectIdentifier;
 }

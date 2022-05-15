@@ -34,10 +34,13 @@ import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
+import io.harness.accesscontrol.principals.PrincipalDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentAggregateResponseDTO;
-import io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
+import io.harness.accesscontrol.roleassignments.api.RoleAssignmentResponseDTO;
 import io.harness.accesscontrol.scopes.ScopeDTO;
+import io.harness.accesscontrol.scopes.ScopeNameDTO;
+import io.harness.accesscontrol.scopes.harness.ScopeNameMapper;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
@@ -108,14 +111,15 @@ public class UserGroupServiceImpl implements UserGroupService {
   private final LastAdminCheckService lastAdminCheckService;
   private final AccessControlAdminClient accessControlAdminClient;
   private final AccessControlClient accessControlClient;
-
+  private final ScopeNameMapper scopeNameMapper;
   private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
 
   @Inject
   public UserGroupServiceImpl(UserGroupRepository userGroupRepository, UserClient userClient,
       OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
       NgUserService ngUserService, AuthSettingsManagerClient managerClient, LastAdminCheckService lastAdminCheckService,
-      AccessControlAdminClient accessControlAdminClient, AccessControlClient accessControlClient) {
+      AccessControlAdminClient accessControlAdminClient, AccessControlClient accessControlClient,
+      ScopeNameMapper scopeNameMapper) {
     this.userGroupRepository = userGroupRepository;
     this.outboxService = outboxService;
     this.transactionTemplate = transactionTemplate;
@@ -124,6 +128,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     this.lastAdminCheckService = lastAdminCheckService;
     this.accessControlAdminClient = accessControlAdminClient;
     this.accessControlClient = accessControlClient;
+    this.scopeNameMapper = scopeNameMapper;
   }
 
   @Override
@@ -216,6 +221,36 @@ public class UserGroupServiceImpl implements UserGroupService {
     return userGroupRepository.findAll(
         createUserGroupFilterCriteria(accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, filterType),
         pageable);
+  }
+
+  @Override
+  public List<ScopeNameDTO> getInheritingChildScopeList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String userGroupIdentifier) {
+    Optional<UserGroup> userGroupOpt = get(accountIdentifier, orgIdentifier, projectIdentifier, userGroupIdentifier);
+    if (!userGroupOpt.isPresent()) {
+      throw new InvalidRequestException(String.format("User Group is not available %s:%s:%s:%s", accountIdentifier,
+          orgIdentifier, projectIdentifier, userGroupIdentifier));
+    }
+    PrincipalDTO principalDTO =
+        PrincipalDTO.builder()
+            .identifier(userGroupIdentifier)
+            .type(USER_GROUP)
+            .scopeLevel(ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase())
+            .build();
+    List<RoleAssignmentResponseDTO> roleAssignmentsResponse =
+        NGRestUtils.getResponse(accessControlAdminClient.getPrincipalFilteredRoleAssignmentsIncludingChildScopes(
+            accountIdentifier, orgIdentifier, projectIdentifier, principalDTO));
+    return roleAssignmentsResponse.stream()
+        .map(RoleAssignmentResponseDTO::getScope)
+        .distinct()
+        .filter(scopeDTO
+            -> !scopeDTO.equals(ScopeDTO.builder()
+                                    .accountIdentifier(accountIdentifier)
+                                    .orgIdentifier(orgIdentifier)
+                                    .projectIdentifier(projectIdentifier)
+                                    .build()))
+        .map(scopeNameMapper::toScopeNameDTO)
+        .collect(Collectors.toList());
   }
 
   @Override

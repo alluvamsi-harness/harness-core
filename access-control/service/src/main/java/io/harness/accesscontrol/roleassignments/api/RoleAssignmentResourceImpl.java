@@ -87,11 +87,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import javax.validation.executable.ValidateOnExecution;
@@ -200,6 +196,31 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
     }
     PageResponse<RoleAssignment> pageResponse = roleAssignmentService.list(pageRequest, filter.get());
     return ResponseDTO.newResponse(pageResponse.map(roleAssignmentDTOMapper::toResponseDTO));
+  }
+
+  @Override
+  public ResponseDTO<List<RoleAssignmentResponseDTO>> getIncludingAllChildScopesForPrincipal(
+      HarnessScopeParams harnessScopeParams, PrincipalDTO principalDTO) {
+    RoleAssignmentFilter roleAssignmentFilter =
+        RoleAssignmentFilter.builder()
+            .scopeFilter(fromParams(harnessScopeParams).toString())
+            .includeChildScopes(true)
+            .principalFilter(Collections.singleton(Principal.builder()
+                                                       .principalIdentifier(principalDTO.getIdentifier())
+                                                       .principalScopeLevel(principalDTO.getScopeLevel())
+                                                       .principalType(principalDTO.getType())
+                                                       .build()))
+            .build();
+
+    PageRequest pageRequest = PageRequest.builder().pageSize(1000).build();
+    List<RoleAssignment> roleAssignments = roleAssignmentService.list(pageRequest, roleAssignmentFilter).getContent();
+    return ResponseDTO.newResponse(roleAssignments.stream()
+                                       .filter(roleAssignment
+                                           -> checkViewPermission(toParams(scopeService.buildScopeFromScopeIdentifier(
+                                                                      roleAssignment.getScopeIdentifier())),
+                                               roleAssignment.getPrincipalType()))
+                                       .map(roleAssignmentDTOMapper::toResponseDTO)
+                                       .collect(Collectors.toList()));
   }
 
   @Override

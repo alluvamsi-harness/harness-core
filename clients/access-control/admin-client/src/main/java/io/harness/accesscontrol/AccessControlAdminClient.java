@@ -9,6 +9,7 @@ package io.harness.accesscontrol;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
+import io.harness.accesscontrol.principals.PrincipalDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentAggregateResponseDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentCreateRequestDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
@@ -45,6 +46,12 @@ public interface AccessControlAdminClient {
       @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Body RoleAssignmentFilterDTO roleAssignmentFilterDTO);
+
+  @POST(ROLE_ASSIGNMENTS_API + "/principal/childscope/internal")
+  Call<ResponseDTO<List<RoleAssignmentResponseDTO>>> getPrincipalFilteredRoleAssignmentsIncludingChildScopes(
+      @Query(value = NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, @Body PrincipalDTO principalDTO);
 
   @POST(ROLE_ASSIGNMENTS_API + "/multi/internal")
   Call<ResponseDTO<List<RoleAssignmentResponseDTO>>> createMultiRoleAssignment(

@@ -23,6 +23,7 @@ import io.harness.accesscontrol.resourcegroups.api.ResourceGroupDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentAggregateResponseDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
 import io.harness.accesscontrol.roles.api.RoleResponseDTO;
+import io.harness.accesscontrol.scopes.ScopeDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ScopeLevel;
 import io.harness.exception.InvalidRequestException;
@@ -184,8 +185,8 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
   }
 
   @Override
-  public UserGroupAggregateDTO getAggregatedUserGroup(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String userGroupIdentifier) {
+  public UserGroupAggregateDTO getAggregatedUserGroup(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, String userGroupIdentifier, ScopeDTO roleAssignmentScope) {
     Optional<UserGroup> userGroupOpt =
         userGroupService.get(accountIdentifier, orgIdentifier, projectIdentifier, userGroupIdentifier);
     if (!userGroupOpt.isPresent()) {
@@ -200,8 +201,9 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
             .build();
     RoleAssignmentFilterDTO roleAssignmentFilterDTO =
         RoleAssignmentFilterDTO.builder().principalFilter(Collections.singleton(principalDTO)).build();
-    Map<String, List<RoleAssignmentMetadataDTO>> userGroupRoleAssignmentsMap =
-        getPrincipalRoleAssignmentMap(accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO);
+    Map<String, List<RoleAssignmentMetadataDTO>> userGroupRoleAssignmentsMap = getPrincipalRoleAssignmentMap(
+        roleAssignmentScope.getAccountIdentifier(), roleAssignmentScope.getOrgIdentifier(),
+        roleAssignmentScope.getProjectIdentifier(), roleAssignmentFilterDTO);
 
     List<UserMetadataDTO> users = isEmpty(userGroupOpt.get().getUsers())
         ? Collections.emptyList()

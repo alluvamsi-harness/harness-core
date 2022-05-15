@@ -9,6 +9,8 @@ package io.harness.ng.core.api;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
+import io.harness.accesscontrol.scopes.ScopeDTO;
+import io.harness.accesscontrol.scopes.harness.HarnessScopeParams;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
@@ -30,5 +32,5 @@ public interface AggregateUserGroupService {
       String projectIdentifier, UserGroupFilterType filterType, @NotNull AggregateACLRequest aggregateACLRequest);
 
   UserGroupAggregateDTO getAggregatedUserGroup(@NotEmpty String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, @NotEmpty String userGroupIdentifier);
+      String projectIdentifier, @NotEmpty String userGroupIdentifier, ScopeDTO roleAssignmentScope);
 }

@@ -11,6 +11,7 @@ import static io.harness.NGCommonEntityConstants.IDENTIFIER_KEY;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.accesscontrol.commons.exceptions.AccessDeniedErrorDTO;
+import io.harness.accesscontrol.principals.PrincipalDTO;
 import io.harness.accesscontrol.scopes.harness.HarnessScopeParams;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.beans.PageRequest;
@@ -102,6 +103,24 @@ public interface RoleAssignmentResource {
   get(@BeanParam PageRequest pageRequest, @BeanParam HarnessScopeParams harnessScopeParams,
       @RequestBody(description = "Filter role assignments based on multiple parameters.",
           required = true) @Body RoleAssignmentFilterDTO roleAssignmentFilter);
+
+  @POST
+  @Path("principal/childscope/internal")
+  @InternalApi
+  @ApiOperation(value = "get role assignments including all child scopes for Principal",
+      nickname = "getIncludingAllChildScopesForPrincipal", hidden = true)
+  @Operation(operationId = "getIncludingAllChildScopesForPrincipal",
+      summary = "Get Role Assignments of a Principal at provided scope and its child scopes",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "Principal filtered role assignments including child scopes")
+      },
+      hidden = true)
+  ResponseDTO<List<RoleAssignmentResponseDTO>>
+  getIncludingAllChildScopesForPrincipal(@BeanParam HarnessScopeParams harnessScopeParams,
+      @RequestBody(description = "Principal for which role assignments are to be fetched.",
+          required = true) @Body PrincipalDTO principalDTO);
 
   @POST
   @Path("aggregate")

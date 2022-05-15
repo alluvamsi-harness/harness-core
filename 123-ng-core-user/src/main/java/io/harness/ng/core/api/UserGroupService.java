@@ -10,6 +10,7 @@ package io.harness.ng.core.api;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.accesscontrol.scopes.ScopeDTO;
+import io.harness.accesscontrol.scopes.ScopeNameDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.ng.beans.PageRequest;
@@ -52,6 +53,9 @@ public interface UserGroupService {
 
   Page<UserGroup> list(String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm,
       UserGroupFilterType filterType, Pageable pageable);
+
+  List<ScopeNameDTO> getInheritingChildScopeList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String userGroupIdentifier);
 
   List<UserGroup> list(Criteria criteria);
 

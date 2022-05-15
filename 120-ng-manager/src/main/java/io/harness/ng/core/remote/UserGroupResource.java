@@ -28,6 +28,7 @@ import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.accesscontrol.commons.exceptions.AccessDeniedErrorDTO;
 import io.harness.accesscontrol.scopes.ScopeDTO;
+import io.harness.accesscontrol.scopes.ScopeNameDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.beans.SortOrder;
@@ -271,6 +272,30 @@ public class UserGroupResource {
                                       getPageRequest(pageRequest))
                                   .map(UserGroupMapper::toDTO);
     return ResponseDTO.newResponse(getNGPageResponse(page));
+  }
+
+  @GET
+  @Path("{identifier}/scopes")
+  @ApiOperation(value = "Get Inheriting Child Scope List", nickname = "getInheritingChildScopeList")
+  @Operation(operationId = "getInheritingChildScopeList", summary = "List the Child Scopes inheriting this User Group",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "Returns the list of the child scopes inheriting this User Group.")
+      })
+  public ResponseDTO<List<ScopeNameDTO>>
+  getInheritingChildScopeList(@Parameter(description = "Identifier of the user group",
+                                  required = true) @NotNull @PathParam("identifier") String userGroupIdentifier,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotNull @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+        Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
+    List<ScopeNameDTO> inheritingScopeNames = userGroupService.getInheritingChildScopeList(
+        accountIdentifier, orgIdentifier, projectIdentifier, userGroupIdentifier);
+    return ResponseDTO.newResponse(inheritingScopeNames);
   }
 
   @POST
