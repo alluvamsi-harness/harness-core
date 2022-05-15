@@ -223,9 +223,9 @@ public class NGAggregateResource {
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Parameter(description = NGCommonEntityConstants.ORG_KEY + " for the scope of role assignments") @QueryParam(
-          NGCommonEntityConstants.ORG_KEY) String roleAssignmentScopeOrgIdentifier,
+          "roleAssignmentScopeOrgIdentifier") String roleAssignmentScopeOrgIdentifier,
       @Parameter(description = NGCommonEntityConstants.PROJECT_KEY + " for the scope of role assignments") @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) String roleAssignmentScopeProjectIdentifier) {
+          "roleAssignmentScopeProjectIdentifier") String roleAssignmentScopeProjectIdentifier) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(USERGROUP, identifier), VIEW_USERGROUP_PERMISSION);
     ScopeDTO roleAssignmentScope = validateAndSetRoleAssignmentScope(accountIdentifier, orgIdentifier,
