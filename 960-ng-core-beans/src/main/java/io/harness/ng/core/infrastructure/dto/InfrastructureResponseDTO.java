@@ -7,6 +7,8 @@
 
 package io.harness.ng.core.infrastructure.dto;
 
+import io.harness.ng.core.infrastructure.InfrastructureType;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
@@ -30,5 +32,6 @@ public class InfrastructureResponseDTO {
   String name;
   String description;
   Map<String, String> tags;
+  InfrastructureType type;
   String yaml;
 }

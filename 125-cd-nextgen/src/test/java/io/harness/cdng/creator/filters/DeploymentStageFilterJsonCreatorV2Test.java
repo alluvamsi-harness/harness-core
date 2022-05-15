@@ -7,7 +7,6 @@
 
 package io.harness.cdng.creator.filters;
 
-import static io.harness.cdng.infra.yaml.InfrastructureType.KUBERNETES_DIRECT;
 import static io.harness.rule.OwnerRule.YOGESH;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,6 +25,7 @@ import io.harness.cdng.service.beans.ServiceUseFromStage;
 import io.harness.cdng.service.beans.ServiceYaml;
 import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.services.EnvironmentService;
+import io.harness.ng.core.infrastructure.InfrastructureType;
 import io.harness.ng.core.service.entity.ServiceEntity;
 import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.pms.contracts.plan.SetupMetadata;
@@ -135,7 +135,8 @@ public class DeploymentStageFilterJsonCreatorV2Test extends CategoryTest {
             .infrastructure(
                 PipelineInfrastructure.builder()
                     .environmentRef(ParameterField.<String>builder().value(envEntity.getIdentifier()).build())
-                    .infrastructureDefinition(InfrastructureDef.builder().type(KUBERNETES_DIRECT).build())
+                    .infrastructureDefinition(
+                        InfrastructureDef.builder().type(InfrastructureType.KUBERNETES_DIRECT).build())
                     .build())
             .build());
 
@@ -153,7 +154,8 @@ public class DeploymentStageFilterJsonCreatorV2Test extends CategoryTest {
                                                  .identifier(envEntity.getIdentifier())
                                                  .name(envEntity.getName())
                                                  .build())
-                                .infrastructureDefinition(InfrastructureDef.builder().type(KUBERNETES_DIRECT).build())
+                                .infrastructureDefinition(
+                                    InfrastructureDef.builder().type(InfrastructureType.KUBERNETES_DIRECT).build())
                                 .build())
             .build());
 
