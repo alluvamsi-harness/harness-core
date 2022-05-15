@@ -49,7 +49,6 @@ import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorServ
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.cvng.servicelevelobjective.transformer.servicelevelindicator.SLOTargetTransformer;
-import io.harness.data.structure.CollectionUtils;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
@@ -334,14 +333,10 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
           projectParams, serviceLevelObjective.getServiceLevelIndicators().get(0));
 
       LocalDateTime currentLocalDate = LocalDateTime.ofInstant(clock.instant(), serviceLevelObjective.getZoneOffset());
-      int totalErrorBudgetMinutes = serviceLevelObjective.getActiveErrorBudgetMinutes(
-          CollectionUtils
-              .emptyIfNull(
-                  sloErrorBudgetResetService.getErrorBudgetResets(projectParams, serviceLevelObjective.getIdentifier()))
-              .stream()
-              .map(SLOErrorBudgetResetDTO::getErrorBudgetIncrementPercentage)
-              .collect(Collectors.toList()),
-          currentLocalDate);
+      List<SLOErrorBudgetResetDTO> errorBudgetResetDTOS =
+          sloErrorBudgetResetService.getErrorBudgetResets(projectParams, serviceLevelObjective.getIdentifier());
+      int totalErrorBudgetMinutes =
+          serviceLevelObjective.getActiveErrorBudgetMinutes(errorBudgetResetDTOS, currentLocalDate);
       ServiceLevelObjective.TimePeriod timePeriod = serviceLevelObjective.getCurrentTimeRange(currentLocalDate);
       Instant currentTimeMinute = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
 

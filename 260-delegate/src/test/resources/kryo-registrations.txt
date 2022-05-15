@@ -750,14 +750,13 @@
 7154:software.wings.beans.servicenow.ServiceNowTaskParameters
 7155:software.wings.beans.ServiceNowConfig
 7156:software.wings.delegatetasks.servicenow.ServiceNowAction
-7157:software.wings.service.impl.servicenow.ServiceNowDelegateServiceImpl
 7158:software.wings.beans.settings.helm.HelmRepoConfigValidationTaskParams
 7159:software.wings.beans.settings.helm.HttpHelmRepoConfig
 7160:software.wings.beans.settings.helm.HelmRepoConfigValidationResponse
 7161:software.wings.beans.template.TemplateReference
 7162:software.wings.beans.settings.helm.AmazonS3HelmRepoConfig
-7163:software.wings.service.impl.servicenow.ServiceNowServiceImpl$ServiceNowTicketType
-7164:software.wings.service.impl.servicenow.ServiceNowServiceImpl$ServiceNowMetaDTO
+7163:software.wings.beans.servicenow.ServiceNowTicketType
+7164:software.wings.beans.servicenow.ServiceNowMetaDTO
 7165:software.wings.helpers.ext.helm.request.HelmValuesFetchTaskParameters
 7166:software.wings.helpers.ext.helm.response.HelmValuesFetchTaskResponse
 7167:software.wings.helpers.ext.helm.request.HelmChartConfigParams
@@ -963,7 +962,7 @@
 7406:software.wings.beans.ApiKeyEntry
 7407:software.wings.security.AppPermissionSummary$ExecutableElementInfo
 7408:software.wings.beans.command.GcbTaskParams
-7409:software.wings.sm.states.GcbState$GcbDelegateResponse
+7409:software.wings.delegatetasks.GcbDelegateResponse
 7410:software.wings.api.GcbExecutionData
 7411:software.wings.helpers.ext.gcb.models.GcbBuildDetails
 7412:software.wings.helpers.ext.gcb.models.GcbBuildStatus
@@ -1003,7 +1002,7 @@
 7447:software.wings.beans.TechStack
 7448:software.wings.sm.states.ParameterEntry
 7449:software.wings.api.k8s.K8sHelmDeploymentElement
-7452:software.wings.service.impl.servicenow.ServiceNowServiceImpl$ServiceNowFieldType
+7452:software.wings.beans.servicenow.ServiceNowFieldType
 7453:io.harness.dashboard.Action
 7457:software.wings.api.TemplatizedSecretManagerStateExecutionData
 7458:io.harness.beans.terraform.TerraformPlanParam
@@ -2170,7 +2169,7 @@
 543502:io.harness.delegate.beans.azure.response.AzureClustersResponse
 543503:io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams
 543504:io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse
-543505:io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig
+543505:io.harness.delegate.task.helm.HelmFetchFileConfig
 543526:io.harness.delegate.beans.WinRmTaskParams
 549966:io.harness.secretmanagerclient.dto.EncryptedDataMigrationDTO
 553286:io.harness.delegate.task.scm.ScmPushTaskParams

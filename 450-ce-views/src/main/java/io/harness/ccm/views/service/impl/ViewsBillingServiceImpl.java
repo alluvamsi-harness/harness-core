@@ -194,7 +194,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
   @Inject BusinessMappingService businessMappingService;
   @Inject AwsAccountFieldHelper awsAccountFieldHelper;
 
-  public static final String nullStringValueConstant = "Others";
+  private static final String OTHERS = "Others";
   private static final String COST_DESCRIPTION = "of %s - %s";
   private static final String OTHER_COST_DESCRIPTION = "%s of total";
   private static final String COST_VALUE = "$%s";
@@ -205,11 +205,9 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
   private static final String UTILIZED_COST_LABEL = "Utilized Cost";
   private static final String SYSTEM_COST_LABEL = "System Cost";
   private static final String EMPTY_VALUE = "-";
-  private static final String NA_VALUE = "NA";
   private static final String DATE_PATTERN_FOR_CHART = "MMM dd";
-  private static final long ONE_DAY_MILLIS = 86400000L;
-  private static final Double defaultDoubleValue = 0D;
   private static final String STANDARD_TIME_ZONE = "GMT";
+  private static final long ONE_DAY_MILLIS = 86400000L;
   private static final long OBSERVATION_PERIOD = 29 * ONE_DAY_MILLIS;
 
   @Override
@@ -1214,8 +1212,8 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     for (FieldValueList row : result.iterateAll()) {
       for (QLCEViewFieldInput field : viewFieldList) {
         final String filterStringValue = fetchStringValue(row, field);
-        if (!filterStringValue.equals(nullStringValueConstant)) {
-          filterValues.add(fetchStringValue(row, field));
+        if (Objects.nonNull(filterStringValue)) {
+          filterValues.add(filterStringValue);
         }
       }
     }
@@ -1225,8 +1223,8 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
   public List<String> costCategoriesPostFetchResponseUpdate(List<String> response, String businessMappingId) {
     if (businessMappingId != null) {
       BusinessMapping businessMapping = businessMappingService.get(businessMappingId);
-      List<String> updatedResponse = new ArrayList<>();
       if (businessMapping.getUnallocatedCost() != null) {
+        List<String> updatedResponse = new ArrayList<>();
         UnallocatedCostStrategy strategy = businessMapping.getUnallocatedCost().getStrategy();
         switch (strategy) {
           case DISPLAY_NAME:
@@ -1286,7 +1284,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     if (value != null) {
       return value.toString();
     }
-    return nullStringValueConstant;
+    return OTHERS;
   }
 
   private String fetchStringValue(FieldValueList row, QLCEViewFieldInput field) {
@@ -1294,7 +1292,7 @@ public class ViewsBillingServiceImpl implements ViewsBillingService {
     if (value != null) {
       return value.toString();
     }
-    return nullStringValueConstant;
+    return null;
   }
 
   public List<QLCEViewTimeSeriesData> convertToQLViewTimeSeriesData(TableResult result, String accountId) {

@@ -19,12 +19,11 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import static io.harness.data.structure.ListUtils.trimStrings;
 import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
-import static io.harness.k8s.manifest.ManifestHelper.getValuesYamlGitFilePath;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeAndExtractValuesYamlGitFilePath;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeFolderPathForValuesYaml;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.UnitStatus.RUNNING;
 import static io.harness.validation.Validator.notEmptyCheck;
+
+import static software.wings.beans.appmanifest.ManifestFile.VALUES_YAML_KEY;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -89,7 +88,7 @@ import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
-import io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig;
+import io.harness.delegate.task.helm.HelmFetchFileConfig;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.encryption.SecretRefData;
 import io.harness.eraro.Level;
@@ -127,6 +126,7 @@ import io.harness.steps.EntityReferenceExtractorUtils;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -335,9 +335,7 @@ public class CDStepHelper {
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
     validateManifest(store.getKind(), connectorDTO, validationMessage);
-    String folderPath = getFolderPathBasedOnManifest(gitStoreConfig, manifestOutcome.getType());
-    List<String> filePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
-    List<String> gitFilePaths = fetchGitFilePathsBasedOnManifest(manifestOutcome.getType(), filePaths, folderPath);
+    List<String> gitFilePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
 
     GitStoreDelegateConfig gitStoreDelegateConfig =
         getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, overridesManifestOutcome, gitFilePaths, ambiance);
@@ -348,13 +346,12 @@ public class CDStepHelper {
         .build();
   }
 
-  public static InheritFromManifestFetchFileConfig getInheritFromManifestFetchFileConfig(
-      ManifestOutcome manifestOutcome) {
+  public static HelmFetchFileConfig getInheritFromManifestFetchFileConfig(ManifestOutcome manifestOutcome) {
     InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
         (InheritFromManifestStoreConfig) manifestOutcome.getStore();
     List<String> filePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
 
-    return InheritFromManifestFetchFileConfig.builder()
+    return HelmFetchFileConfig.builder()
         .identifier(manifestOutcome.getIdentifier())
         .manifestType(manifestOutcome.getType())
         .filePaths(filePaths)
@@ -464,7 +461,7 @@ public class CDStepHelper {
     return aggregateValuesManifests;
   }
 
-  public static List<InheritFromManifestFetchFileConfig> mapValuesManifestsToInheritFromManifestFetchFileConfig(
+  public static List<HelmFetchFileConfig> mapValuesManifestsToHelmFetchFileConfig(
       List<ValuesManifestOutcome> aggregatedValuesManifests) {
     if (isEmpty(aggregatedValuesManifests)) {
       return emptyList();
@@ -724,36 +721,24 @@ public class CDStepHelper {
     pipelineRbacHelper.checkRuntimePermissions(ambiance, entityDetails);
   }
 
-  public String getFolderPathBasedOnManifest(GitStoreConfig gitStoreConfig, String manifestType) {
-    String folderPath;
-    List<String> filePaths;
-    if (ManifestType.K8Manifest.equals(manifestType) || ManifestType.OpenshiftTemplate.equals(manifestType)) {
-      filePaths = getParameterFieldValue(gitStoreConfig.getPaths());
-      folderPath = normalizeFolderPathForValuesYaml(filePaths.get(0));
-    } else if (ManifestType.HelmChart.equals(manifestType) || ManifestType.Kustomize.equals(manifestType)) {
-      folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
-    } else {
-      throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestType));
+  public static List<HelmFetchFileConfig> mapHelmChartManifestsToHelmFetchFileConfig(
+      String identifier, String chartName, List<String> valuesPaths) {
+    List<HelmFetchFileConfig> helmFetchFileConfigList = new ArrayList<>();
+    if (isNotEmpty(valuesPaths)) {
+      helmFetchFileConfigList.add(getHelmFetchFileConfigBuilder(identifier, ManifestType.VALUES, valuesPaths, false));
     }
-    return folderPath;
+    helmFetchFileConfigList.add(getHelmFetchFileConfigBuilder(
+        identifier, ManifestType.VALUES, Arrays.asList(chartName + "/" + VALUES_YAML_KEY), true));
+    return helmFetchFileConfigList;
   }
 
-  public List<String> fetchGitFilePathsBasedOnManifest(String manifestType, List<String> filePaths, String folderPath) {
-    List<String> gitFilePaths = new ArrayList<>();
-    if (isNotEmpty(filePaths)) {
-      if (ManifestType.HelmChart.equals(manifestType)) {
-        for (String filePath : filePaths) {
-          gitFilePaths.add(getValuesYamlGitFilePath(folderPath, filePath));
-        }
-      } else if (ManifestType.K8Manifest.equals(manifestType) || ManifestType.OpenshiftTemplate.equals(manifestType)
-          || ManifestType.Kustomize.equals(manifestType)) {
-        for (String filePath : filePaths) {
-          gitFilePaths.add(normalizeAndExtractValuesYamlGitFilePath(folderPath, filePath));
-        }
-      } else {
-        throw new UnsupportedOperationException(format("Unknown manifest type: [%s]", manifestType));
-      }
-    }
-    return gitFilePaths;
+  public static HelmFetchFileConfig getHelmFetchFileConfigBuilder(
+      String identifier, String manifestType, List<String> valuesPaths, boolean succeedIfFileNotFound) {
+    return HelmFetchFileConfig.builder()
+        .identifier(identifier)
+        .manifestType(manifestType)
+        .filePaths(valuesPaths)
+        .succeedIfFileNotFound(succeedIfFileNotFound)
+        .build();
   }
 }

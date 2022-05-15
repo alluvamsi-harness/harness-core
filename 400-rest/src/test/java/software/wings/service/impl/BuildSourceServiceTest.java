@@ -77,6 +77,7 @@ import software.wings.beans.config.NexusConfig;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;
 import software.wings.beans.template.artifactsource.CustomRepositoryMapping;
 import software.wings.delegatetasks.DelegateProxyFactory;
+import software.wings.delegatetasks.GcbDelegateResponse;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsFeed;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsPackage;
 import software.wings.helpers.ext.azure.devops.AzureDevopsProject;
@@ -100,7 +101,6 @@ import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.SftpBuildService;
 import software.wings.service.intfc.SmbBuildService;
 import software.wings.service.intfc.artifact.CustomBuildSourceService;
-import software.wings.sm.states.GcbState;
 import software.wings.utils.ArtifactType;
 import software.wings.utils.RepositoryFormat;
 import software.wings.utils.RepositoryType;
@@ -1188,8 +1188,8 @@ public class BuildSourceServiceTest extends WingsBaseTest {
   @Owner(developers = AGORODETKI)
   @Category(UnitTests.class)
   public void shouldReturnListOfTriggerNames() throws InterruptedException {
-    GcbState.GcbDelegateResponse delegateResponse =
-        new GcbState.GcbDelegateResponse(ExecutionStatus.NEW, null, GcbTaskParams.builder().build(), null, false);
+    GcbDelegateResponse delegateResponse =
+        new GcbDelegateResponse(ExecutionStatus.NEW, null, GcbTaskParams.builder().build(), null, false);
     delegateResponse.setTriggers(Collections.singletonList(TRIGGER_NAME));
     GcbTrigger gcbTrigger = new GcbTrigger();
     gcbTrigger.setId(TRIGGER_ID);
@@ -1229,8 +1229,8 @@ public class BuildSourceServiceTest extends WingsBaseTest {
   @Owner(developers = ABHINAV_MITTAL)
   @Category(UnitTests.class)
   public void shouldReturnExceptionWhenDelegateResponseGivesError() throws InterruptedException {
-    GcbState.GcbDelegateResponse delegateResponse = new GcbState.GcbDelegateResponse(
-        ExecutionStatus.FAILED, null, GcbTaskParams.builder().build(), "erorMessage", false);
+    GcbDelegateResponse delegateResponse =
+        new GcbDelegateResponse(ExecutionStatus.FAILED, null, GcbTaskParams.builder().build(), "erorMessage", false);
     delegateResponse.setTriggers(Collections.singletonList(TRIGGER_NAME));
     GcbTrigger gcbTrigger = new GcbTrigger();
     gcbTrigger.setId(TRIGGER_ID);

@@ -137,7 +137,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getInheritFromManifestFileMapContent().equals(inheritFromManifestFileMapContent));
+    assertThat(response.getHelmChartValuesFileMapContent().equals(inheritFromManifestFileMapContent));
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
@@ -183,7 +183,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getInheritFromManifestFileMapContent().equals(inheritFromManifestFileMapContent));
+    assertThat(response.getHelmChartValuesFileMapContent().equals(inheritFromManifestFileMapContent));
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
@@ -232,7 +232,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getInheritFromManifestFileMapContent().equals(inheritFromManifestFileMapContent));
+    assertThat(response.getHelmChartValuesFileMapContent().equals(inheritFromManifestFileMapContent));
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 

@@ -53,7 +53,6 @@ public class NGEnvironmentInfoConfig {
   Map<String, String> tags;
   @NotNull @EntityName @Pattern(regexp = NGRegexValidatorConstants.NAME_PATTERN) String name;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) String description;
-  String color;
   @ApiModelProperty(required = true) EnvironmentType type;
   List<NGVariable> variables;
   List<NGServiceOverrides> serviceOverrides;

@@ -16,7 +16,6 @@ import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
 import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.k8s.manifest.ManifestHelper.getValuesYamlGitFilePath;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeAndExtractValuesYamlGitFilePath;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.steps.StepUtils.prepareCDTaskRequest;
 
@@ -66,9 +65,9 @@ import io.harness.delegate.task.git.GitFetchRequest;
 import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.helm.HelmCommandFlag;
+import io.harness.delegate.task.helm.HelmFetchFileConfig;
 import io.harness.delegate.task.helm.HelmValuesFetchRequest;
 import io.harness.delegate.task.helm.HelmValuesFetchResponse;
-import io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig;
 import io.harness.delegate.task.k8s.HelmChartManifestDelegateConfig;
 import io.harness.delegate.task.k8s.K8sDeployRequest;
 import io.harness.delegate.task.k8s.K8sDeployResponse;
@@ -212,72 +211,21 @@ public class K8sStepHelper extends CDStepHelper {
     }
   }
 
-  private List<String> getValuesPathsBasedOnManifest(GitStoreConfig gitstoreConfig, String manifestType) {
-    List<String> paths = new ArrayList<>();
+  private String getOverrideManifestType(String manifestType) {
     switch (manifestType) {
       case ManifestType.HelmChart:
-        String folderPath = getParameterFieldValue(gitstoreConfig.getFolderPath());
-        paths.add(getValuesYamlGitFilePath(folderPath, VALUES_YAML_KEY));
-        break;
+
       case ManifestType.K8Manifest:
-        List<String> filePaths = getParameterFieldValue(gitstoreConfig.getPaths());
-        for (String filePath : filePaths) {
-          paths.add(getValuesYamlGitFilePath(filePath, VALUES_YAML_KEY));
-        }
-        break;
+        return ManifestType.VALUES;
+
+      case ManifestType.OpenshiftTemplate:
+        return ManifestType.OpenshiftParam;
+
+      case ManifestType.Kustomize:
+        return ManifestType.KustomizePatches;
       default:
         throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestType));
     }
-
-    return paths;
-  }
-
-  private List<String> getOverridePathsBasedOnManifest(GitStoreConfig gitstoreConfig, ManifestOutcome manifestOutcome) {
-    List<String> paths = new ArrayList<>();
-    String folderPath = getParameterFieldValue(gitstoreConfig.getFolderPath());
-    List<String> filePaths = getParameterFieldValue(gitstoreConfig.getPaths());
-    switch (manifestOutcome.getType()) {
-      case ManifestType.HelmChart:
-        HelmChartManifestOutcome helmChartManifestOutcome = (HelmChartManifestOutcome) manifestOutcome;
-        List<String> helmValuesPaths = getParameterFieldValue(helmChartManifestOutcome.getValuesPaths());
-        if (isNotEmpty(helmValuesPaths)) {
-          for (String path : helmValuesPaths) {
-            paths.add(getValuesYamlGitFilePath(folderPath, path));
-          }
-        }
-        break;
-      case ManifestType.K8Manifest:
-        K8sManifestOutcome k8sManifestOutcome = (K8sManifestOutcome) manifestOutcome;
-        List<String> k8sValuesPaths = getParameterFieldValue(k8sManifestOutcome.getValuesPaths());
-        if (isNotEmpty(k8sValuesPaths)) {
-          for (String path : k8sValuesPaths) {
-            paths.add(normalizeAndExtractValuesYamlGitFilePath(filePaths.get(0), path));
-          }
-        }
-        break;
-      case ManifestType.OpenshiftTemplate:
-        OpenshiftManifestOutcome openshiftManifestOutcome = (OpenshiftManifestOutcome) manifestOutcome;
-        List<String> openshiftParamPaths = getParameterFieldValue(openshiftManifestOutcome.getParamsPaths());
-        if (isNotEmpty(openshiftParamPaths)) {
-          for (String path : openshiftParamPaths) {
-            paths.add(normalizeAndExtractValuesYamlGitFilePath(filePaths.get(0), path));
-          }
-        }
-        break;
-      case ManifestType.Kustomize:
-        KustomizeManifestOutcome kustomizeManifestOutcome = (KustomizeManifestOutcome) manifestOutcome;
-        List<String> kustomizePatchesPaths = getParameterFieldValue(kustomizeManifestOutcome.getPatchesPaths());
-        if (isNotEmpty(kustomizePatchesPaths)) {
-          for (String path : kustomizePatchesPaths) {
-            paths.add(normalizeAndExtractValuesYamlGitFilePath(folderPath, path));
-          }
-        }
-        break;
-      default:
-        throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestOutcome.getType()));
-    }
-
-    return paths;
   }
 
   public TaskChainResponse queueK8sTask(StepElementParameters stepElementParameters, K8sDeployRequest k8sDeployRequest,
@@ -412,7 +360,7 @@ public class K8sStepHelper extends CDStepHelper {
         gitFetchFilesConfigs.add(gitFetchFilesConfig);
       }
     }
-    return mapTheAggregateManifestOutcomeToItsRespectiveManifestType(orderedAggregateManifestOutcome, manifestType);
+    return orderedAggregateManifestOutcome;
   }
 
   public TaskChainResponse prepareKustomizePatchesFetchTask(K8sStepExecutor k8sStepExecutor, Ambiance ambiance,
@@ -431,7 +379,7 @@ public class K8sStepHelper extends CDStepHelper {
   public TaskChainResponse prepareValuesFetchTask(K8sStepExecutor k8sStepExecutor, Ambiance ambiance,
       StepElementParameters stepElementParameters, InfrastructureOutcome infrastructure,
       ManifestOutcome k8sManifestOutcome, List<ValuesManifestOutcome> aggregatedValuesManifests) {
-    StoreConfig storeConfig = extractStoreConfigFromK8sOrHelmChartManifestOutcome(k8sManifestOutcome);
+    StoreConfig storeConfig = extractStoreConfigFromManifestOutcome(k8sManifestOutcome);
     if (ManifestStoreType.isInGitSubset(storeConfig.getKind())) {
       ValuesManifestOutcome valuesManifestOutcome =
           ValuesManifestOutcome.builder().identifier(k8sManifestOutcome.getIdentifier()).store(storeConfig).build();
@@ -502,14 +450,16 @@ public class K8sStepHelper extends CDStepHelper {
   private List<GitFetchFilesConfig> mapOpenshiftParamOrKustomizePatchesManifestToGitFetchFileConfig(
       Ambiance ambiance, ManifestOutcome manifestOutcome) {
     List<GitFetchFilesConfig> gitFetchFilesConfigList = new ArrayList<>();
-    String manifestOutcomeType;
     String validationMessage;
+    List<String> overridePaths;
     if (ManifestType.OpenshiftTemplate.equals(manifestOutcome.getType())) {
-      validationMessage = format("Openshift Param file with [%s]", manifestOutcome.getIdentifier());
-      manifestOutcomeType = ManifestType.OpenshiftParam;
+      validationMessage = format(PARAM_YAML_ID, manifestOutcome.getIdentifier());
+      OpenshiftManifestOutcome openshiftManifestOutcome = (OpenshiftManifestOutcome) manifestOutcome;
+      overridePaths = getParameterFieldValue(openshiftManifestOutcome.getParamsPaths());
     } else if (ManifestType.Kustomize.equals(manifestOutcome.getType())) {
       validationMessage = format(PATCH_YAML_ID, manifestOutcome.getIdentifier());
-      manifestOutcomeType = ManifestType.KustomizePatches;
+      KustomizeManifestOutcome kustomizeManifestOutcome = (KustomizeManifestOutcome) manifestOutcome;
+      overridePaths = getParameterFieldValue(kustomizeManifestOutcome.getPatchesPaths());
     } else {
       throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestOutcome.getType()));
     }
@@ -518,8 +468,8 @@ public class K8sStepHelper extends CDStepHelper {
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
     validateManifest(store.getKind(), connectorDTO, validationMessage);
-    populateGitFetchFilesConfigListWithOverridePaths(gitFetchFilesConfigList, gitStoreConfig, manifestOutcome,
-        connectorDTO, ambiance, manifestOutcome.getIdentifier(), manifestOutcomeType);
+    populateGitFetchFilesConfigListWithValuesPaths(gitFetchFilesConfigList, gitStoreConfig, manifestOutcome,
+        connectorDTO, ambiance, manifestOutcome.getIdentifier(), false, overridePaths);
     return gitFetchFilesConfigList;
   }
 
@@ -545,27 +495,6 @@ public class K8sStepHelper extends CDStepHelper {
         .collect(Collectors.toList());
   }
 
-  private List<? extends ManifestOutcome> mapTheAggregateManifestOutcomeToItsRespectiveManifestType(
-      List<? extends ManifestOutcome> aggregatedManifestOutcomes, String manifestType) {
-    if (isEmpty(aggregatedManifestOutcomes)) {
-      return emptyList();
-    }
-    switch (manifestType) {
-      case ManifestType.OpenshiftTemplate:
-        return aggregatedManifestOutcomes.stream()
-            .map(manifestOutcome -> (OpenshiftParamManifestOutcome) manifestOutcome)
-            .collect(Collectors.toList());
-
-      case ManifestType.Kustomize:
-        return aggregatedManifestOutcomes.stream()
-            .map(manifestOutcome -> (KustomizePatchesManifestOutcome) manifestOutcome)
-            .collect(Collectors.toList());
-
-      default:
-        throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestType));
-    }
-  }
-
   private List<GitFetchFilesConfig> mapValuesManifestToGitFetchFileConfig(
       List<ValuesManifestOutcome> aggregatedValuesManifests, Ambiance ambiance) {
     return aggregatedValuesManifests.stream()
@@ -582,21 +511,15 @@ public class K8sStepHelper extends CDStepHelper {
     String accountId = AmbianceUtils.getAccountId(ambiance);
     HelmChartManifestDelegateConfig helmManifest =
         (HelmChartManifestDelegateConfig) getManifestDelegateConfig(k8sManifestOutcome, ambiance);
-    List<InheritFromManifestFetchFileConfig> inheritFromManifestFetchFileConfigList =
-        new ArrayList<>(Arrays.asList(InheritFromManifestFetchFileConfig.builder()
-                                          .identifier(k8sManifestOutcome.getIdentifier())
-                                          .manifestType(k8sManifestOutcome.getType())
-                                          .filePaths(helmManifest.getValuesPaths())
-                                          .build()));
-    inheritFromManifestFetchFileConfigList.addAll(
-        mapValuesManifestsToInheritFromManifestFetchFileConfig(aggregatedValuesManifests));
-    HelmValuesFetchRequest helmValuesFetchRequest =
-        HelmValuesFetchRequest.builder()
-            .accountId(accountId)
-            .helmChartManifestDelegateConfig(helmManifest)
-            .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-            .inheritFromManifestFetchFileConfigList(inheritFromManifestFetchFileConfigList)
-            .build();
+    List<HelmFetchFileConfig> helmFetchFileConfigList = mapHelmChartManifestsToHelmFetchFileConfig(
+        k8sManifestOutcome.getIdentifier(), helmManifest.getChartName(), helmManifest.getValuesPaths());
+    helmFetchFileConfigList.addAll(mapValuesManifestsToHelmFetchFileConfig(aggregatedValuesManifests));
+    HelmValuesFetchRequest helmValuesFetchRequest = HelmValuesFetchRequest.builder()
+                                                        .accountId(accountId)
+                                                        .helmChartManifestDelegateConfig(helmManifest)
+                                                        .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
+                                                        .HelmFetchFileConfigList(helmFetchFileConfigList)
+                                                        .build();
 
     final TaskData taskData = TaskData.builder()
                                   .async(true)
@@ -662,19 +585,6 @@ public class K8sStepHelper extends CDStepHelper {
     return isNotEmpty(paths) && paths.size() == 1;
   }
 
-  private StoreConfig extractStoreConfigFromK8sOrHelmChartManifestOutcome(ManifestOutcome manifestOutcome) {
-    switch (manifestOutcome.getType()) {
-      case ManifestType.K8Manifest:
-        K8sManifestOutcome k8sManifestOutcome = (K8sManifestOutcome) manifestOutcome;
-        return k8sManifestOutcome.getStore();
-      case ManifestType.HelmChart:
-        HelmChartManifestOutcome helmChartManifestOutcome = (HelmChartManifestOutcome) manifestOutcome;
-        return helmChartManifestOutcome.getStore();
-      default:
-        throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestOutcome.getType()));
-    }
-  }
-
   private List<GitFetchFilesConfig> getValuesGitFetchFilesConfig(Ambiance ambiance, String identifier,
       StoreConfig store, String validationMessage, ManifestOutcome k8sManifestOutcome) {
     GitStoreConfig gitStoreConfig = (GitStoreConfig) store;
@@ -682,26 +592,24 @@ public class K8sStepHelper extends CDStepHelper {
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
     validateManifest(store.getKind(), connectorDTO, validationMessage);
 
+    K8sManifestOutcome helmChartManifestOutcome = (K8sManifestOutcome) k8sManifestOutcome;
     List<GitFetchFilesConfig> gitFetchFilesConfigList = new ArrayList<>();
-    List<String> gitFilePaths = getValuesPathsBasedOnManifest(gitStoreConfig, k8sManifestOutcome.getType());
-    GitStoreDelegateConfig gitStoreDelegateConfig =
-        getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, k8sManifestOutcome, gitFilePaths, ambiance);
-    gitFetchFilesConfigList.add(
-        getGitFetchFilesConfigFromBuilder(identifier, ManifestType.VALUES, true, gitStoreDelegateConfig));
-    populateGitFetchFilesConfigListWithOverridePaths(gitFetchFilesConfigList, gitStoreConfig, k8sManifestOutcome,
-        connectorDTO, ambiance, identifier, ManifestType.VALUES);
+    String folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
+    populateGitFetchFilesConfigListWithValuesPaths(gitFetchFilesConfigList, gitStoreConfig, k8sManifestOutcome,
+        connectorDTO, ambiance, identifier, true, Arrays.asList(getValuesYamlGitFilePath(folderPath, VALUES_YAML_KEY)));
+    populateGitFetchFilesConfigListWithValuesPaths(gitFetchFilesConfigList, gitStoreConfig, k8sManifestOutcome,
+        connectorDTO, ambiance, identifier, false, getParameterFieldValue(helmChartManifestOutcome.getValuesPaths()));
     return gitFetchFilesConfigList;
   }
 
-  private void populateGitFetchFilesConfigListWithOverridePaths(List<GitFetchFilesConfig> gitFetchFilesConfigList,
+  private void populateGitFetchFilesConfigListWithValuesPaths(List<GitFetchFilesConfig> gitFetchFilesConfigList,
       GitStoreConfig gitStoreConfig, ManifestOutcome manifestOutcome, ConnectorInfoDTO connectorDTO, Ambiance ambiance,
-      String identifier, String manifestType) {
-    List<String> gitFileValuesPaths = getOverridePathsBasedOnManifest(gitStoreConfig, manifestOutcome);
+      String identifier, boolean succeedIfFileNotFound, List<String> gitFileValuesPaths) {
     if (isNotEmpty(gitFileValuesPaths)) {
       GitStoreDelegateConfig gitStoreDelegateConfig =
           getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, manifestOutcome, gitFileValuesPaths, ambiance);
-      gitFetchFilesConfigList.add(
-          getGitFetchFilesConfigFromBuilder(identifier, manifestType, false, gitStoreDelegateConfig));
+      gitFetchFilesConfigList.add(getGitFetchFilesConfigFromBuilder(identifier,
+          getOverrideManifestType(manifestOutcome.getType()), succeedIfFileNotFound, gitStoreDelegateConfig));
     }
   }
 
@@ -966,10 +874,10 @@ public class K8sStepHelper extends CDStepHelper {
     if (isNotEmpty(aggregatedValuesManifest)) {
       return executeValuesFetchTask(ambiance, stepElementParameters, k8sStepPassThroughData.getInfrastructure(),
           k8sStepPassThroughData.getK8sManifestOutcome(), aggregatedValuesManifest,
-          helmValuesFetchResponse.getInheritFromManifestFileMapContent());
+          helmValuesFetchResponse.getHelmChartValuesFileMapContent());
     } else {
       Map<String, List<String>> helmValuesFetchFilesResultMap =
-          helmValuesFetchResponse.getInheritFromManifestFileMapContent();
+          helmValuesFetchResponse.getHelmChartValuesFileMapContent();
       addValuesFileFromHelmChartManifest(helmValuesFetchFilesResultMap, valuesFileContents, k8sStepPassThroughData);
       return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, valuesFileContents,
           K8sExecutionPassThroughData.builder()
@@ -1027,7 +935,6 @@ public class K8sStepHelper extends CDStepHelper {
     List<String> valuesFileContents = new ArrayList<>();
 
     for (ManifestOutcome valuesManifest : valuesManifests) {
-      StoreConfig store = extractStoreConfigFromManifestOutcome(valuesManifest);
       if (isNotEmpty(gitFetchFilesResultMap)) {
         FetchFilesResult gitFetchFilesResult = gitFetchFilesResultMap.get(valuesManifest.getIdentifier());
         if (gitFetchFilesResult != null) {
@@ -1042,6 +949,14 @@ public class K8sStepHelper extends CDStepHelper {
 
   private StoreConfig extractStoreConfigFromManifestOutcome(ManifestOutcome manifestOutcome) {
     switch (manifestOutcome.getType()) {
+      case ManifestType.K8Manifest:
+        K8sManifestOutcome k8sManifestOutcome = (K8sManifestOutcome) manifestOutcome;
+        return k8sManifestOutcome.getStore();
+
+      case ManifestType.HelmChart:
+        HelmChartManifestOutcome helmChartManifestOutcome = (HelmChartManifestOutcome) manifestOutcome;
+        return helmChartManifestOutcome.getStore();
+
       case ManifestType.VALUES:
         ValuesManifestOutcome valuesManifestOutcome = (ValuesManifestOutcome) manifestOutcome;
         return valuesManifestOutcome.getStore();

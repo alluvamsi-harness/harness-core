@@ -9,13 +9,9 @@ package io.harness.k8s.manifest;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.exception.WingsException.ReportTarget.LOG_SYSTEM;
-import static io.harness.k8s.manifest.ManifestHelper.MAX_DIRECTORY_HEIGHT;
 import static io.harness.k8s.manifest.ManifestHelper.MAX_VALUES_EXPRESSION_RECURSION_DEPTH;
 import static io.harness.k8s.manifest.ManifestHelper.getMapFromValuesFileContent;
 import static io.harness.k8s.manifest.ManifestHelper.getValuesExpressionKeysFromMap;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeAndExtractValuesYamlGitFilePath;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeFilePath;
-import static io.harness.k8s.manifest.ManifestHelper.normalizeFolderPathForValuesYaml;
 import static io.harness.k8s.manifest.ManifestHelper.processYaml;
 import static io.harness.k8s.manifest.ManifestHelper.validateValuesFileContents;
 import static io.harness.k8s.manifest.ObjectYamlUtils.toYaml;
@@ -23,13 +19,10 @@ import static io.harness.logging.LoggingInitializer.initializeLogging;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ANSHUL;
-import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.PUNEET;
 
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 import io.harness.CategoryTest;
@@ -38,7 +31,6 @@ import io.harness.category.element.UnitTests;
 import io.harness.eraro.ResponseMessage;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.KubernetesYamlException;
-import io.harness.exception.UnsupportedOperationException;
 import io.harness.exception.WingsException;
 import io.harness.k8s.model.Kind;
 import io.harness.k8s.model.KubernetesResource;
@@ -763,54 +755,5 @@ public class ManifestHelperTest extends CategoryTest {
         + "    kind: ResourceDef\n");
 
     assertThat(kubernetesResources).isNotEmpty();
-  }
-
-  @Test
-  @Owner(developers = PRATYUSH)
-  @Category(UnitTests.class)
-  public void testNormalizeFolderPathForValuesYaml() {
-    assertThat(normalizeFolderPathForValuesYaml("dummy/folder/path")).isEqualTo("dummy/folder/path/");
-    assertThat(normalizeFolderPathForValuesYaml("dummy/folder/path.yaml")).isEqualTo("dummy/folder/");
-    assertThat(normalizeFolderPathForValuesYaml("dummy/folder/path/")).isEqualTo("dummy/folder/path/");
-    assertThat(normalizeFolderPathForValuesYaml("dummy.json")).isEqualTo("");
-    assertThat(normalizeFolderPathForValuesYaml("")).isEqualTo("");
-  }
-
-  @Test
-  @Owner(developers = PRATYUSH)
-  @Category(UnitTests.class)
-  public void testNormalizeFilePath() {
-    assertThatThrownBy(() -> normalizeFilePath("dummy/folder/path"))
-        .isInstanceOf(UnsupportedOperationException.class)
-        .hasMessageContaining("File extension not supported dummy/folder/path");
-    assertThat(normalizeFilePath("dummy/folder/path.yaml")).isEqualTo("dummy/folder/path.yaml");
-    assertThat(normalizeFilePath("/dummy/folder/path.json")).isEqualTo("dummy/folder/path.json");
-    assertThat(normalizeFilePath("")).isEqualTo("");
-  }
-
-  @Test
-  @Owner(developers = PRATYUSH)
-  @Category(UnitTests.class)
-  public void testNormalizeAndExtractValuesYamlGitFilePath() {
-    String errorMessage = format(
-        "We do not support moving more than %s levels up from the present working directory. Kindly move the required files or configure another values manifest to fetch the files",
-        MAX_DIRECTORY_HEIGHT);
-    assertThat(normalizeAndExtractValuesYamlGitFilePath("folderPath", "filePath.yaml"))
-        .isEqualTo("folderPath/filePath.yaml");
-    assertThat(normalizeAndExtractValuesYamlGitFilePath("folderPath/", "/filePath.yaml"))
-        .isEqualTo("folderPath/filePath.yaml");
-    assertThat(normalizeAndExtractValuesYamlGitFilePath("folder/path/", "../filePath.yaml"))
-        .isEqualTo("folder/filePath.yaml");
-    assertThat(normalizeAndExtractValuesYamlGitFilePath("folder/path/", "../../filePath.yaml"))
-        .isEqualTo("filePath.yaml");
-    assertThatThrownBy(() -> normalizeAndExtractValuesYamlGitFilePath("folder/path/", "../../../filePath.yaml"))
-        .isInstanceOf(UnsupportedOperationException.class)
-        .hasMessageContaining(errorMessage);
-    assertThatThrownBy(() -> normalizeAndExtractValuesYamlGitFilePath("folder/", "../../filePath.json"))
-        .isInstanceOf(UnsupportedOperationException.class)
-        .hasMessageContaining("Invalid files path");
-    assertThatThrownBy(() -> normalizeAndExtractValuesYamlGitFilePath("folder//path", "../../filePath.json"))
-        .isInstanceOf(UnsupportedOperationException.class)
-        .hasMessageContaining("Invalid files path");
   }
 }

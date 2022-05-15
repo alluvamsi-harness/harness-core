@@ -258,6 +258,8 @@ public class FileStoreServiceImpl implements FileStoreService {
 
     return aggregate.getMappedResults()
         .stream()
+        .filter(Objects::nonNull)
+        .filter(EmbeddedUser::existNameAndEmail)
         .map(EmbeddedUserDTOMapper::fromEmbeddedUser)
         .collect(Collectors.toSet());
   }

@@ -166,11 +166,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       boolean isFirstPod, String podName, String accountId) {
     List<PodSetupInfo> pods = new ArrayList<>();
 
-    if (((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
-      throw new CIStageExecutionException("Input infrastructure can not be empty");
-    }
-    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
-    OSType os = resolveOSType(k8sDirectInfraYaml.getSpec().getOs());
+    OSType os = getOS(infrastructure);
 
     Set<Integer> usedPorts = new HashSet<>();
     PortFinder portFinder = PortFinder.builder().startingPort(PORT_STARTING_RANGE).usedPorts(usedPorts).build();
@@ -190,7 +186,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     List<Integer> serviceGrpcPortList = CIServiceBuilder.getServiceGrpcPortList(stageElementConfig);
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    List<PodVolume> volumes = convertVolumes(k8sDirectInfraYaml.getSpec().getVolumes().getValue());
+    List<PodVolume> volumes = convertVolumes(infrastructure);
 
     if (integrationStageConfig.getSharedPaths().isExpression()) {
       ExceptionUtility.throwUnresolvedExpressionException(integrationStageConfig.getSharedPaths().getExpressionValue(),
@@ -212,6 +208,19 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                  .volumes(volumes)
                  .build());
     return K8BuildJobEnvInfo.PodsSetupInfo.builder().podSetupInfoList(pods).build();
+  }
+
+  private OSType getOS(Infrastructure infrastructure) {
+    if (infrastructure.getType() != Infrastructure.Type.KUBERNETES_DIRECT) {
+      return OSType.LINUX;
+    }
+
+    if (((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
+      throw new CIStageExecutionException("Input infrastructure can not be empty");
+    }
+
+    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
+    return resolveOSType(k8sDirectInfraYaml.getSpec().getOs());
   }
 
   private List<PVCParams> createPVCParams(boolean isFirstPod, String podName, Map<String, String> volumeToMountPath) {
@@ -788,8 +797,17 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     }
   }
 
-  private List<PodVolume> convertVolumes(List<CIVolume> volumes) {
+  private List<PodVolume> convertVolumes(Infrastructure infrastructure) {
     List<PodVolume> podVolumes = new ArrayList<>();
+    if (infrastructure.getType() != Infrastructure.Type.KUBERNETES_DIRECT) {
+      return podVolumes;
+    }
+
+    if (((K8sDirectInfraYaml) infrastructure).getSpec() == null) {
+      throw new CIStageExecutionException("Input infrastructure can not be empty");
+    }
+    K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
+    List<CIVolume> volumes = k8sDirectInfraYaml.getSpec().getVolumes().getValue();
     if (isEmpty(volumes)) {
       return podVolumes;
     }

@@ -65,7 +65,6 @@ public class ManifestHelper {
 
   private static final String VALUES_EXPRESSION = ".Values";
   public static final int MAX_VALUES_EXPRESSION_RECURSION_DEPTH = 10;
-  public static final Integer MAX_DIRECTORY_HEIGHT = 2;
 
   public static KubernetesResource getKubernetesResourceFromSpec(String spec) {
     Map map = readKubernetesSpecAsMap(spec);
@@ -446,80 +445,5 @@ public class ManifestHelper {
     }
 
     return folderPath.endsWith("/") ? folderPath : folderPath + "/";
-  }
-
-  public static String normalizeAndExtractValuesYamlGitFilePath(String folderPath, String filePath) {
-    if (isBlank(folderPath)) {
-      return filePath;
-    }
-    String completeFilePath = normalizeFolderPathForValuesYaml(folderPath) + normalizeFilePath(filePath);
-    return simplifyPath(completeFilePath);
-  }
-
-  public static String normalizeFolderPathForValuesYaml(String folderPath) {
-    if (isBlank(folderPath) || folderPath.endsWith("/")) {
-      return folderPath;
-    } else if (folderPath.endsWith(yaml_file_extension) || folderPath.endsWith(yml_file_extension)
-        || folderPath.endsWith(json_file_extension)) {
-      return folderPath.substring(0, findLastIndex(folderPath, '/'));
-    } else {
-      return folderPath + "/";
-    }
-  }
-
-  public static String normalizeFilePath(String filePath) {
-    if (isBlank(filePath)) {
-      return filePath;
-    } else if (filePath.endsWith(yaml_file_extension) || filePath.endsWith(yml_file_extension)
-        || filePath.endsWith(json_file_extension)) {
-      return filePath.charAt(0) == '/' ? filePath.substring(1) : filePath;
-    } else {
-      throw new UnsupportedOperationException(format("File extension not supported %s", filePath));
-    }
-  }
-
-  public static String simplifyPath(String filePath) {
-    if (isBlank(filePath)) {
-      return filePath;
-    }
-    if (filePath.charAt(0) == '/') {
-      filePath = filePath.substring(1);
-    }
-    Stack<String> stack = new Stack<>();
-    List<String> fileDirectories = Arrays.asList(filePath.split("/"));
-    Integer level = 0;
-    int index = 0;
-    while (index < fileDirectories.size()) {
-      if (isBlank(fileDirectories.get(index))) {
-        throw new UnsupportedOperationException("Invalid files path");
-      }
-      while (fileDirectories.get(index).equals("..")) {
-        if (level.equals(MAX_DIRECTORY_HEIGHT)) {
-          String errorMessage = format(
-              "We do not support moving more than %s levels up from the present working directory. Kindly move the required files or configure another values manifest to fetch the files",
-              MAX_DIRECTORY_HEIGHT);
-          throw new UnsupportedOperationException(errorMessage);
-        } else if (isEmpty(stack)) {
-          throw new UnsupportedOperationException("Invalid files path");
-        } else {
-          level++;
-          stack.pop();
-          index++;
-        }
-      }
-      level = 0;
-      stack.push(fileDirectories.get(index));
-      index++;
-    }
-    return String.join("/", stack);
-  }
-
-  public static int findLastIndex(String filePath, Character delimiter) {
-    for (int i = filePath.length() - 1; i >= 0; i--) {
-      if (delimiter.equals(filePath.charAt(i))) {
-        return i + 1;
-      }
-    }
-    return 0;
   }
 }

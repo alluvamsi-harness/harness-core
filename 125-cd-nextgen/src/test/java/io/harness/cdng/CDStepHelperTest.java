@@ -66,7 +66,7 @@ import io.harness.delegate.beans.connector.scm.github.GithubUsernameTokenDTO;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
-import io.harness.delegate.task.helm.InheritFromManifestFetchFileConfig;
+import io.harness.delegate.task.helm.HelmFetchFileConfig;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
@@ -711,54 +711,10 @@ public class CDStepHelperTest extends CategoryTest {
         InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(paths)).build();
     List<ValuesManifestOutcome> valuesManifestOutcome = new ArrayList<>(
         asList(ValuesManifestOutcome.builder().identifier(id).store(inheritFromManifestStoreConfig).build()));
-    List<InheritFromManifestFetchFileConfig> inheritFromManifestFetchFileConfigList =
-        CDStepHelper.mapValuesManifestsToInheritFromManifestFetchFileConfig(valuesManifestOutcome);
-    assertThat(inheritFromManifestFetchFileConfigList.get(0).getIdentifier().equals(id));
-    assertThat(inheritFromManifestFetchFileConfigList.get(0).getManifestType().equals(ManifestType.VALUES));
-    assertThat(inheritFromManifestFetchFileConfigList.get(0).getFilePaths().equals(paths));
-  }
-
-  @Test
-  @Owner(developers = PRATYUSH)
-  @Category(UnitTests.class)
-  public void testGetFolderPathBasedOnManifest() {
-    GitStoreConfig githubStore =
-        GithubStore.builder()
-            .folderPath(folderPath)
-            .paths(ParameterField.createValueField(asList(folderPath.getValue() + "path1.yaml")))
-            .build();
-    String folderPathValue = (String) folderPath.getValue();
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.K8Manifest))
-        .isEqualTo(folderPathValue);
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.HelmChart))
-        .isEqualTo(folderPathValue);
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.OpenshiftTemplate))
-        .isEqualTo(folderPathValue);
-    assertThat(CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.Kustomize))
-        .isEqualTo(folderPathValue);
-    assertThatThrownBy(() -> CDStepHelper.getFolderPathBasedOnManifest(githubStore, ManifestType.VALUES))
-        .isInstanceOf(UnsupportedOperationException.class);
-  }
-
-  @Test
-  @Owner(developers = PRATYUSH)
-  @Category(UnitTests.class)
-  public void testFetchGitFilePathsBasedOnManifest() {
-    String folderPathValue = (String) folderPath.getValue();
-    List<String> filePathValues = new ArrayList<>();
-    for (String path : paths) {
-      filePathValues.add(folderPathValue + path);
-    }
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.K8Manifest, paths, folderPathValue))
-        .isEqualTo(filePathValues);
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.HelmChart, paths, folderPathValue))
-        .isEqualTo(filePathValues);
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftTemplate, paths, folderPathValue))
-        .isEqualTo(filePathValues);
-    assertThat(CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.Kustomize, paths, folderPathValue))
-        .isEqualTo(filePathValues);
-    assertThatThrownBy(
-        () -> CDStepHelper.fetchGitFilePathsBasedOnManifest(ManifestType.OpenshiftParam, paths, folderPathValue))
-        .isInstanceOf(UnsupportedOperationException.class);
+    List<HelmFetchFileConfig> helmFetchFileConfigList =
+        CDStepHelper.mapValuesManifestsToHelmFetchFileConfig(valuesManifestOutcome);
+    assertThat(helmFetchFileConfigList.get(0).getIdentifier().equals(id));
+    assertThat(helmFetchFileConfigList.get(0).getManifestType().equals(ManifestType.VALUES));
+    assertThat(helmFetchFileConfigList.get(0).getFilePaths().equals(paths));
   }
 }

@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
+import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.cdng.service.beans.ServiceYaml;
 import io.harness.filters.GenericStageFilterJsonCreatorV2;
@@ -60,14 +61,22 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
 
   @Override
   public PipelineFilter getFilter(FilterCreationContext filterCreationContext, DeploymentStageNode yamlField) {
-    CdFilterBuilder cdFilter = CdFilter.builder();
-    DeploymentStageConfig deploymentStageConfig = (DeploymentStageConfig) yamlField.getDeploymentStageConfig();
+    CdFilterBuilder filterBuilder = CdFilter.builder();
 
-    ServiceYaml service = deploymentStageConfig.getServiceConfig().getService();
+    final DeploymentStageConfig deploymentStageConfig = yamlField.getDeploymentStageConfig();
+
+    addFiltersFromServiceConfig(filterCreationContext, filterBuilder, deploymentStageConfig.getServiceConfig());
+    addFiltersfromPipelineInfra(filterCreationContext, filterBuilder, deploymentStageConfig.getInfrastructure());
+
+    return filterBuilder.build();
+  }
+
+  private void addFiltersFromServiceConfig(
+      FilterCreationContext filterCreationContext, CdFilterBuilder cdFilter, ServiceConfig serviceConfig) {
+    ServiceYaml service = serviceConfig.getService();
     if (service == null
-        && (deploymentStageConfig.getServiceConfig().getServiceRef() == null
-            || deploymentStageConfig.getServiceConfig().getServiceRef().fetchFinalValue() == null)
-        && deploymentStageConfig.getServiceConfig().getUseFromStage() == null) {
+        && (serviceConfig.getServiceRef() == null || serviceConfig.getServiceRef().fetchFinalValue() == null)
+        && serviceConfig.getUseFromStage() == null) {
       throw new InvalidYamlRuntimeException(format(
           "One of service, serviceRef and useFromStage should be present in stage [%s]. Please add it and try again",
           YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
@@ -76,7 +85,7 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
       cdFilter.serviceName(service.getName());
     }
 
-    ParameterField<String> serviceRef = deploymentStageConfig.getServiceConfig().getServiceRef();
+    ParameterField<String> serviceRef = serviceConfig.getServiceRef();
     if (serviceRef != null && !serviceRef.isExpression()) {
       Optional<ServiceEntity> serviceEntityOptional = serviceEntityService.get(
           filterCreationContext.getSetupMetadata().getAccountId(), filterCreationContext.getSetupMetadata().getOrgId(),
@@ -84,12 +93,14 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
       serviceEntityOptional.ifPresent(serviceEntity -> cdFilter.serviceName(serviceEntity.getName()));
     }
 
-    ServiceDefinition serviceDefinition = deploymentStageConfig.getServiceConfig().getServiceDefinition();
+    ServiceDefinition serviceDefinition = serviceConfig.getServiceDefinition();
     if (serviceDefinition != null && serviceDefinition.getType() != null) {
       cdFilter.deploymentType(serviceDefinition.getType().getYamlName());
     }
+  }
 
-    PipelineInfrastructure infrastructure = deploymentStageConfig.getInfrastructure();
+  private void addFiltersfromPipelineInfra(
+      FilterCreationContext filterCreationContext, CdFilterBuilder cdFilter, PipelineInfrastructure infrastructure) {
     if (infrastructure == null) {
       throw new InvalidYamlRuntimeException(
           format("Infrastructure cannot be null in stage [%s]. Please add it and try again",
@@ -107,7 +118,7 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
       cdFilter.environmentName(infrastructure.getEnvironment().getName());
     }
 
-    ParameterField<String> environmentRef = deploymentStageConfig.getInfrastructure().getEnvironmentRef();
+    ParameterField<String> environmentRef = infrastructure.getEnvironmentRef();
     if (environmentRef != null && !environmentRef.isExpression()) {
       Optional<Environment> environmentEntityOptional = environmentService.get(
           filterCreationContext.getSetupMetadata().getAccountId(), filterCreationContext.getSetupMetadata().getOrgId(),
@@ -119,7 +130,6 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
         && isNotEmpty(infrastructure.getInfrastructureDefinition().getType().getDisplayName())) {
       cdFilter.infrastructureType(infrastructure.getInfrastructureDefinition().getType().getDisplayName());
     }
-    return cdFilter.build();
   }
 
   @Override

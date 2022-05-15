@@ -883,6 +883,9 @@ public class BuilderFactory {
     return SLOErrorBudgetResetDTO.builder()
         .serviceLevelObjectiveIdentifier("slo")
         .errorBudgetIncrementPercentage(10.0)
+        .errorBudgetIncrementMinutes(10)
+        .remainingErrorBudgetAtReset(100)
+        .errorBudgetAtReset(100)
         .reason("reason");
   }
 
