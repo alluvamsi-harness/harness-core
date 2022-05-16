@@ -42,13 +42,11 @@ import io.harness.gitsync.RepoDetails;
 import io.harness.gitsync.UpdateFileRequest;
 import io.harness.gitsync.common.dtos.GitSyncEntityDTO;
 import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
-import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
 import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.service.GitEntityService;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
-import io.harness.gitsync.scm.beans.ScmCreateFileResponse;
 import io.harness.ng.core.EntityDetail;
 import io.harness.rule.Owner;
 
