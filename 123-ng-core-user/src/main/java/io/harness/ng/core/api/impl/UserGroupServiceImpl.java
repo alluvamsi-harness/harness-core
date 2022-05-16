@@ -39,8 +39,6 @@ import io.harness.accesscontrol.roleassignments.api.RoleAssignmentAggregateRespo
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentResponseDTO;
 import io.harness.accesscontrol.scopes.ScopeDTO;
-import io.harness.accesscontrol.scopes.ScopeNameDTO;
-import io.harness.accesscontrol.scopes.harness.ScopeNameMapper;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
@@ -50,6 +48,8 @@ import io.harness.eraro.ErrorCode;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.accesscontrol.scopes.ScopeNameDTO;
+import io.harness.ng.accesscontrol.scopes.ScopeNameMapper;
 import io.harness.ng.authenticationsettings.remote.AuthSettingsManagerClient;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
@@ -237,9 +237,11 @@ public class UserGroupServiceImpl implements UserGroupService {
             .type(USER_GROUP)
             .scopeLevel(ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase())
             .build();
+    RoleAssignmentFilterDTO roleAssignmentFilterDTO =
+        RoleAssignmentFilterDTO.builder().principalFilter(Collections.singleton(principalDTO)).build();
     List<RoleAssignmentResponseDTO> roleAssignmentsResponse =
-        NGRestUtils.getResponse(accessControlAdminClient.getPrincipalFilteredRoleAssignmentsIncludingChildScopes(
-            accountIdentifier, orgIdentifier, projectIdentifier, principalDTO));
+        NGRestUtils.getResponse(accessControlAdminClient.getFilteredRoleAssignmentsIncludingChildScopes(
+            accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
     return roleAssignmentsResponse.stream()
         .map(RoleAssignmentResponseDTO::getScope)
         .distinct()
@@ -537,25 +539,23 @@ public class UserGroupServiceImpl implements UserGroupService {
 
   private Criteria createUserGroupFilterCriteria(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String searchTerm, UserGroupFilterType filterType) {
-    Criteria criteria = new Criteria();
-    Criteria scopeCriteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
-    if (isNotBlank(searchTerm)) {
-      scopeCriteria.orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
-          Criteria.where(UserGroupKeys.tags).regex(searchTerm, "i"));
-    }
-    // call access control and get inherited user group ids
+    Criteria criteria;
     if (filterType == INCLUDE_INHERITED_GROUPS) {
-      criteria.orOperator(
-          scopeCriteria, createInheritedUserGroupFilterCriteria(accountIdentifier, orgIdentifier, projectIdentifier));
+      criteria = createScopeCriteriaIncludingInheritedUserGroups(accountIdentifier, orgIdentifier, projectIdentifier);
     } else {
-      criteria.andOperator(scopeCriteria);
+      criteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
+    }
+    if (isNotBlank(searchTerm)) {
+      criteria.orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
+          Criteria.where(UserGroupKeys.tags).regex(searchTerm, "i"));
     }
     return criteria;
   }
 
-  private Criteria createInheritedUserGroupFilterCriteria(
+  private Criteria createScopeCriteriaIncludingInheritedUserGroups(
       String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     Criteria criteria = new Criteria();
+    Criteria scopeCriteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
     Set<String> principalScopeLevelFilters = new HashSet<>();
 
     if ((isNotEmpty(projectIdentifier) || isNotEmpty(orgIdentifier))
@@ -570,6 +570,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     if (isNotEmpty(principalScopeLevelFilters)) {
+      // call access control and get inherited user group ids
       RoleAssignmentFilterDTO roleAssignmentFilterDTO = RoleAssignmentFilterDTO.builder()
                                                             .principalTypeFilter(Collections.singleton(USER_GROUP))
                                                             .principalScopeLevelFilter(principalScopeLevelFilters)
@@ -577,6 +578,9 @@ public class UserGroupServiceImpl implements UserGroupService {
       RoleAssignmentAggregateResponseDTO roleAssignmentAggregateResponseDTO =
           NGRestUtils.getResponse(accessControlAdminClient.getAggregatedFilteredRoleAssignments(
               accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO));
+      if (isEmpty(roleAssignmentAggregateResponseDTO.getRoleAssignments())) {
+        return scopeCriteria;
+      }
       criteria.orOperator(
           roleAssignmentAggregateResponseDTO.getRoleAssignments()
               .stream()
@@ -588,8 +592,9 @@ public class UserGroupServiceImpl implements UserGroupService {
               .toArray(Criteria[] ::new)
 
       );
+      return new Criteria().orOperator(criteria, scopeCriteria);
     }
-    return criteria;
+    return scopeCriteria;
   }
 
   private Criteria createScopeCriteriaFromScopeLevel(

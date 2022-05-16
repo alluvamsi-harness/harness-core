@@ -47,11 +47,12 @@ public interface AccessControlAdminClient {
       @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Body RoleAssignmentFilterDTO roleAssignmentFilterDTO);
 
-  @POST(ROLE_ASSIGNMENTS_API + "/principal/childscope/internal")
-  Call<ResponseDTO<List<RoleAssignmentResponseDTO>>> getPrincipalFilteredRoleAssignmentsIncludingChildScopes(
+  @POST(ROLE_ASSIGNMENTS_API + "/filter/internal/childscopes")
+  Call<ResponseDTO<List<RoleAssignmentResponseDTO>>> getFilteredRoleAssignmentsIncludingChildScopes(
       @Query(value = NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, @Body PrincipalDTO principalDTO);
+      @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @Body RoleAssignmentFilterDTO roleAssignmentFilterDTO);
 
   @POST(ROLE_ASSIGNMENTS_API + "/multi/internal")
   Call<ResponseDTO<List<RoleAssignmentResponseDTO>>> createMultiRoleAssignment(

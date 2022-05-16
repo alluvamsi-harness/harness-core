@@ -105,22 +105,23 @@ public interface RoleAssignmentResource {
           required = true) @Body RoleAssignmentFilterDTO roleAssignmentFilter);
 
   @POST
-  @Path("principal/childscope/internal")
+  @Path("filter/internal/childscopes")
   @InternalApi
-  @ApiOperation(value = "get role assignments including all child scopes for Principal",
-      nickname = "getIncludingAllChildScopesForPrincipal", hidden = true)
-  @Operation(operationId = "getIncludingAllChildScopesForPrincipal",
-      summary = "Get Role Assignments of a Principal at provided scope and its child scopes",
+  @ApiOperation(value = "Get Filtered Role Assignments including child scopes",
+      nickname = "getFilteredRoleAssignmentListIncludingChildScopes", hidden = true)
+  @Operation(operationId = "getFilteredRoleAssignmentListIncludingChildScopes",
+      summary = "List role assignments at provided scope and its child scopes according to the given filter",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(description = "Principal filtered role assignments including child scopes")
+        ApiResponse(description =
+                        "List of role assignments at provided scope and its child scopes according to the given filter")
       },
       hidden = true)
   ResponseDTO<List<RoleAssignmentResponseDTO>>
-  getIncludingAllChildScopesForPrincipal(@BeanParam HarnessScopeParams harnessScopeParams,
-      @RequestBody(description = "Principal for which role assignments are to be fetched.",
-          required = true) @Body PrincipalDTO principalDTO);
+  getAllIncludingChildScopes(@BeanParam HarnessScopeParams harnessScopeParams,
+      @RequestBody(description = "Filter role assignments based on multiple parameters.",
+          required = true) @Body RoleAssignmentFilterDTO roleAssignmentFilterDTO);
 
   @POST
   @Path("aggregate")

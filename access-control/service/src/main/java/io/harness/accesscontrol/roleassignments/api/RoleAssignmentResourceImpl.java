@@ -19,6 +19,7 @@ import static io.harness.accesscontrol.resources.resourcegroups.HarnessResourceG
 import static io.harness.accesscontrol.resources.resourcegroups.HarnessResourceGroupConstants.DEFAULT_PROJECT_LEVEL_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTO.MODEL_NAME;
 import static io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTOMapper.fromDTO;
+import static io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTOMapper.fromDTOIncludingChildScopes;
 import static io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTOMapper.toDTO;
 import static io.harness.accesscontrol.scopes.harness.ScopeMapper.fromParams;
 import static io.harness.accesscontrol.scopes.harness.ScopeMapper.toParams;
@@ -88,11 +89,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Collections;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import javax.validation.executable.ValidateOnExecution;
@@ -204,18 +205,10 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
   }
 
   @Override
-  public ResponseDTO<List<RoleAssignmentResponseDTO>> getIncludingAllChildScopesForPrincipal(
-      HarnessScopeParams harnessScopeParams, PrincipalDTO principalDTO) {
-    RoleAssignmentFilter roleAssignmentFilter =
-        RoleAssignmentFilter.builder()
-            .scopeFilter(fromParams(harnessScopeParams).toString())
-            .includeChildScopes(true)
-            .principalFilter(Collections.singleton(Principal.builder()
-                                                       .principalIdentifier(principalDTO.getIdentifier())
-                                                       .principalScopeLevel(principalDTO.getScopeLevel())
-                                                       .principalType(principalDTO.getType())
-                                                       .build()))
-            .build();
+  public ResponseDTO<List<RoleAssignmentResponseDTO>> getAllIncludingChildScopes(
+      HarnessScopeParams harnessScopeParams, RoleAssignmentFilterDTO roleAssignmentFilterDTO) {
+    Scope scope = fromParams(harnessScopeParams);
+    RoleAssignmentFilter roleAssignmentFilter = fromDTOIncludingChildScopes(scope.toString(), roleAssignmentFilterDTO);
 
     PageRequest pageRequest = PageRequest.builder().pageSize(1000).build();
     List<RoleAssignment> roleAssignments = roleAssignmentService.list(pageRequest, roleAssignmentFilter).getContent();

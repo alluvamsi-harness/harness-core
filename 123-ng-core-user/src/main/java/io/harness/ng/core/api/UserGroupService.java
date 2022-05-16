@@ -10,9 +10,9 @@ package io.harness.ng.core.api;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.accesscontrol.scopes.ScopeDTO;
-import io.harness.accesscontrol.scopes.ScopeNameDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
+import io.harness.ng.accesscontrol.scopes.ScopeNameDTO;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.UserGroupDTO;
