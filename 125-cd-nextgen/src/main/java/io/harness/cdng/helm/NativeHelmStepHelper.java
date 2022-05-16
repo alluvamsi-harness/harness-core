@@ -297,7 +297,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
                                                         .helmChartManifestDelegateConfig(helmManifest)
                                                         .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
                                                         .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
-                                                        .HelmFetchFileConfigList(helmFetchFileConfigList)
+                                                        .helmFetchFileConfigList(helmFetchFileConfigList)
                                                         .build();
 
     final TaskData taskData = TaskData.builder()

@@ -552,7 +552,7 @@ public class K8sStepHelper extends CDStepHelper {
                                                         .accountId(accountId)
                                                         .helmChartManifestDelegateConfig(helmManifest)
                                                         .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-                                                        .HelmFetchFileConfigList(helmFetchFileConfigList)
+                                                        .helmFetchFileConfigList(helmFetchFileConfigList)
                                                         .build();
 
     final TaskData taskData = TaskData.builder()
