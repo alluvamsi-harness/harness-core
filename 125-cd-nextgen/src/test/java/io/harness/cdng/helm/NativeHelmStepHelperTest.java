@@ -945,7 +945,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     TaskChainResponse taskChainResponse = TaskChainResponse.builder().chainEnd(false).taskRequest(taskRequest).build();
     doReturn(taskChainResponse)
         .when(nativeHelmStepHelper)
-        .executeValuesFetchTask(any(), any(), any(), any(), any(), any());
+        .executeValuesFetchTask(any(), any(), any(), any(), any(), any(), any());
     nativeHelmStepHelper.executeNextLink(
         nativeHelmStepExecutor, ambiance, stepElementParams, passThroughData, responseDataSuplier);
 
@@ -953,7 +953,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     verify(nativeHelmStepHelper, times(1))
         .executeValuesFetchTask(eq(ambiance), eq(stepElementParams), eq(passThroughData.getInfrastructure()),
             eq(passThroughData.getHelmChartManifestOutcome()), eq(passThroughData.getValuesManifestOutcomes()),
-            valuesFilesContentCaptor.capture());
+            valuesFilesContentCaptor.capture(), any());
 
     Map<String, List<String>> duplicateInheritFromManifestFileMapContent = valuesFilesContentCaptor.getValue();
     assertThat(duplicateInheritFromManifestFileMapContent).isNotEmpty();
@@ -1387,9 +1387,11 @@ public class NativeHelmStepHelperTest extends CategoryTest {
 
     Map<String, List<String>> helmChartFetchFilesResultMap = new HashMap<>();
 
+    String helmValuesFileMapContent = null;
+
     assertThatCode(
         ()
             -> nativeHelmStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
-                manifestOutcome, aggregatedValuesManifests, helmChartFetchFilesResultMap));
+                manifestOutcome, aggregatedValuesManifests, helmChartFetchFilesResultMap, helmValuesFileMapContent));
   }
 }

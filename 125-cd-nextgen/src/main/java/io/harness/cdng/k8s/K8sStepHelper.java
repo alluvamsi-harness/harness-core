@@ -284,14 +284,16 @@ public class K8sStepHelper extends CDStepHelper {
 
   public TaskChainResponse executeValuesFetchTask(Ambiance ambiance, StepElementParameters stepElementParameters,
       InfrastructureOutcome infrastructure, ManifestOutcome k8sManifestOutcome,
-      List<ValuesManifestOutcome> aggregatedValuesManifests, Map<String, List<String>> inheritFromManifestFileContent) {
+      List<ValuesManifestOutcome> aggregatedValuesManifests, Map<String, List<String>> helmChartValuesFileContentMap,
+      String valuesFileContent) {
     List<GitFetchFilesConfig> gitFetchFilesConfigs =
         mapValuesManifestToGitFetchFileConfig(aggregatedValuesManifests, ambiance);
     K8sStepPassThroughData k8sStepPassThroughData = K8sStepPassThroughData.builder()
                                                         .k8sManifestOutcome(k8sManifestOutcome)
                                                         .manifestOutcomeList(new ArrayList<>(aggregatedValuesManifests))
                                                         .infrastructure(infrastructure)
-                                                        .helmValuesFileMapContents(inheritFromManifestFileContent)
+                                                        .helmValuesFileMapContents(helmChartValuesFileContentMap)
+                                                        .helmValuesFileContent(valuesFileContent)
                                                         .build();
 
     return getGitFetchFileTaskChainResponse(
@@ -875,25 +877,17 @@ public class K8sStepHelper extends CDStepHelper {
       return TaskChainResponse.builder().chainEnd(true).passThroughData(gitFetchResponsePassThroughData).build();
     }
     List<String> valuesFileContents = new ArrayList<>();
-
-    Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
-    Map<String, List<String>> inheritFromManifestFetchFilesResultMap =
-        k8sStepPassThroughData.getHelmValuesFileMapContents();
-    addValuesFileFromHelmChartManifest(
-        inheritFromManifestFetchFilesResultMap, valuesFileContents, k8sStepPassThroughData);
-
-    if (isNotEmpty(k8sStepPassThroughData.getHelmValuesFileMapContents())) {
-      // TODO: extract these files and add to values content
-    } else {
-      String helmValuesYamlContent = k8sStepPassThroughData.getHelmValuesFileContent();
-      if (isNotEmpty(helmValuesYamlContent)) {
-        valuesFileContents.add(helmValuesYamlContent);
-      }
+    String helmValuesYamlContent = k8sStepPassThroughData.getHelmValuesFileContent();
+    if (isNotEmpty(helmValuesYamlContent)) {
+      valuesFileContents.add(helmValuesYamlContent);
     }
+    Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
+    Map<String, List<String>> helmChartValuesFilesResultMap = k8sStepPassThroughData.getHelmValuesFileMapContents();
+    addValuesFileFromHelmChartManifest(helmChartValuesFilesResultMap, valuesFileContents, k8sStepPassThroughData);
 
-    if (isNotEmpty(gitFetchFilesResultMap) || isNotEmpty(inheritFromManifestFetchFilesResultMap)) {
-      valuesFileContents.addAll(getManifestFilesContents(gitFetchFilesResultMap,
-          k8sStepPassThroughData.getManifestOutcomeList(), inheritFromManifestFetchFilesResultMap));
+    if (isNotEmpty(gitFetchFilesResultMap) || isNotEmpty(helmChartValuesFilesResultMap)) {
+      valuesFileContents.addAll(getManifestFilesContents(
+          gitFetchFilesResultMap, k8sStepPassThroughData.getManifestOutcomeList(), helmChartValuesFilesResultMap));
     }
     return k8sStepExecutor.executeK8sTask(k8sManifest, ambiance, stepElementParameters, valuesFileContents,
         K8sExecutionPassThroughData.builder()
@@ -924,7 +918,7 @@ public class K8sStepHelper extends CDStepHelper {
     if (isNotEmpty(aggregatedValuesManifest)) {
       return executeValuesFetchTask(ambiance, stepElementParameters, k8sStepPassThroughData.getInfrastructure(),
           k8sStepPassThroughData.getK8sManifestOutcome(), aggregatedValuesManifest,
-          helmValuesFetchResponse.getHelmChartValuesFileMapContent());
+          helmValuesFetchResponse.getHelmChartValuesFileMapContent(), valuesFileContent);
     } else {
       Map<String, List<String>> helmValuesFetchFilesResultMap =
           helmValuesFetchResponse.getHelmChartValuesFileMapContent();
