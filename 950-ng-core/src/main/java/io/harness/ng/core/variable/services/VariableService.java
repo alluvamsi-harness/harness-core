@@ -24,4 +24,6 @@ public interface VariableService {
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
   Variable update(String accountIdentifier, VariableDTO variableDTO);
   boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String variableIdentifier);
+
+  List<String> getExpressions(String accountIdentifier, String orgIdentifier, String projectIdentifier);
 }

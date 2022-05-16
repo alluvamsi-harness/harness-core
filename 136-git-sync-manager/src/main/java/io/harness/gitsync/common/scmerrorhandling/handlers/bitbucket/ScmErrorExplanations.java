@@ -16,10 +16,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(PL)
 public class ScmErrorExplanations {
-  public static final String LIST_REPO_WITH_INVALID_CRED =
-      "Couldn't list repositories. Credentials provided in connector are invalid or have expired.";
-  public static final String LIST_BRANCH_WITH_INVALID_CRED =
-      "Couldn't list branches. Credentials provided in connector are invalid or have expired.";
-  public static final String LIST_BRANCH_WHEN_REPO_NOT_EXIST =
-      "Couldn't list branches. Provided repo does not exist or has been deleted.";
+  public static final String INVALID_CONNECTOR_CREDS =
+      "The credentials provided in the connector are invalid or have expired.";
+  public static final String REPO_NOT_FOUND = "Provided Bitbucket repository does not exist or has been deleted.";
 }

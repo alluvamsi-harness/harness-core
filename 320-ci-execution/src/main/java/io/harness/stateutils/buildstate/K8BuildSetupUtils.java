@@ -44,11 +44,11 @@ import static io.harness.common.CIExecutionConstants.TI_SERVICE_TOKEN_VARIABLE;
 import static io.harness.common.STOExecutionConstants.STO_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.STOExecutionConstants.STO_SERVICE_TOKEN_VARIABLE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 
 import io.harness.EntityType;
@@ -233,8 +233,6 @@ public class K8BuildSetupUtils {
     Integer stageRunAsUser = null;
     String resolveStringParameter = null;
     String serviceAccountName = null;
-    String namespace = "default"; // The name here will actually be taken from the db. The namesapce is going to be
-                                  // "accountid-namespace". Each account is going to have its own namespace.
 
     if (resolveStringParameter != null && !resolveStringParameter.equals(UNRESOLVED_PARAMETER)) {
       serviceAccountName = resolveStringParameter;
@@ -243,16 +241,18 @@ public class K8BuildSetupUtils {
     List<PodToleration> podTolerations = null;
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
 
+    String namespace = "account-" + getAccountIdentifier(ngAccess.getAccountIdentifier());
+
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
 
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         logPrefix, ambiance, annotations, labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations,
-        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null, OSType.LINUX);
+        podSetupInfo.getVolumes(), RUNTIME_CLASS_NAME, namespace, null, null, null, OSType.Linux);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
 
-    final String clusterName = "hosted-cluster";
-    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, clusterName);
+    final String k8sIdetntifier = "account.Harness_Kubernetes_Cluster";
+    ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, k8sIdetntifier);
 
     return CIK8InitializeTaskParams.builder()
         .k8sConnector(k8sConnector)
@@ -388,7 +388,7 @@ public class K8BuildSetupUtils {
     Map<String, String> stoEnvVars = getSTOServiceEnvVariables(accountId);
     Map<String, String> commonEnvVars = getCommonStepEnvVariables(
         k8PodDetails, gitEnvVars, runtimeCodebaseVars, podSetupInfo.getWorkDirPath(), logPrefix, ambiance);
-    Map<String, ConnectorConversionInfo> stepConnectors =
+    Map<String, List<ConnectorConversionInfo>> stepConnectors =
         ((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo()).getStepConnectorRefs();
 
     LiteEngineSecretEvaluator liteEngineSecretEvaluator =
@@ -477,21 +477,26 @@ public class K8BuildSetupUtils {
   private CIK8ContainerParams createCIK8ContainerParams(NGAccess ngAccess,
       ContainerDefinitionInfo containerDefinitionInfo, ConnectorDetails harnessInternalImageConnector,
       Map<String, String> commonEnvVars, Map<String, String> stoEnvVars,
-      Map<String, ConnectorConversionInfo> connectorRefs, Map<String, String> volumeToMountPath, String workDirPath,
-      SecurityContext securityContext, String logPrefix, List<SecretVariableDetails> secretVariableDetails,
+      Map<String, List<ConnectorConversionInfo>> connectorRefs, Map<String, String> volumeToMountPath,
+      String workDirPath, SecurityContext securityContext, String logPrefix,
+      List<SecretVariableDetails> secretVariableDetails,
       Map<String, ConnectorDetails> githubApiTokenFunctorConnectors) {
     Map<String, String> envVars = new HashMap<>();
     if (isNotEmpty(containerDefinitionInfo.getEnvVars())) {
       envVars.putAll(containerDefinitionInfo.getEnvVars()); // Put customer input env variables
     }
-
-    Map<String, ConnectorDetails> stepConnectorDetails = emptyMap();
+    Map<String, ConnectorDetails> stepConnectorDetails = new HashMap<>();
     if (isNotEmpty(containerDefinitionInfo.getStepIdentifier()) && isNotEmpty(connectorRefs)) {
-      ConnectorConversionInfo connectorConversionInfo = connectorRefs.get(containerDefinitionInfo.getStepIdentifier());
-      if (connectorConversionInfo != null) {
-        ConnectorDetails connectorDetails =
-            connectorUtils.getConnectorDetailsWithConversionInfo(ngAccess, connectorConversionInfo);
-        stepConnectorDetails = singletonMap(connectorDetails.getIdentifier(), connectorDetails);
+      List<ConnectorConversionInfo> connectorConversionInfos =
+          connectorRefs.get(containerDefinitionInfo.getStepIdentifier());
+      if (connectorConversionInfos != null && connectorConversionInfos.size() > 0) {
+        for (ConnectorConversionInfo connectorConversionInfo : connectorConversionInfos) {
+          ConnectorDetails connectorDetails =
+              connectorUtils.getConnectorDetailsWithConversionInfo(ngAccess, connectorConversionInfo);
+          IdentifierRef identifierRef = IdentifierRefHelper.getIdentifierRef(connectorConversionInfo.getConnectorRef(),
+              ngAccess.getAccountIdentifier(), ngAccess.getOrgIdentifier(), ngAccess.getProjectIdentifier());
+          stepConnectorDetails.put(identifierRef.getFullyQualifiedName(), connectorDetails);
+        }
       }
     }
 

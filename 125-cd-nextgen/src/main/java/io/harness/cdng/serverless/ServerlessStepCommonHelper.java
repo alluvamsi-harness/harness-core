@@ -132,7 +132,7 @@ public class ServerlessStepCommonHelper extends ServerlessStepUtils {
           .chainEnd(true)
           .passThroughData(ServerlessStepExceptionPassThroughData.builder()
                                .errorMessage(ExceptionUtils.getMessage(e))
-                               .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, e))
+                               .unitProgressData(completeUnitProgressData(unitProgressData, ambiance, e.getMessage()))
                                .build())
           .build();
     }
@@ -292,7 +292,7 @@ public class ServerlessStepCommonHelper extends ServerlessStepUtils {
     }
 
     UnitProgressData unitProgressData =
-        completeUnitProgressData(executionPassThroughData.getLastActiveUnitProgressData(), ambiance, e);
+        completeUnitProgressData(executionPassThroughData.getLastActiveUnitProgressData(), ambiance, e.getMessage());
     FailureData failureData = FailureData.newBuilder()
                                   .addFailureTypes(FailureType.APPLICATION_FAILURE)
                                   .setLevel(io.harness.eraro.Level.ERROR.name())

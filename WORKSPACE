@@ -1022,8 +1022,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:ru1zBNVb04X0k576xgwkkETOrVVES+J1nEESHbxzGsc=",
-    version = "v1.20.1-0.20220404090931-cc4578ad43c3",
+    sum = "h1:FfAszrJKLZoiU3gA6L8+6ZTw3wNV1avQ7NU4nIqkYKU=",
+    version = "v1.22.0",
 )
 
 go_repository(
@@ -4963,7 +4963,7 @@ plain_artifacts = [
     "org.ow2.asm:asm-util:5.0.4",
     "org.ow2.asm:asm:5.0.4",
     "org.passay:passay:1.3.1",
-    "org.postgresql:postgresql:42.2.14",
+    "org.postgresql:postgresql:42.2.25",
     "org.projectlombok:lombok:1.18.6",
     "org.quartz-scheduler:quartz:2.3.2",
     "org.reactivestreams:reactive-streams:1.0.2",

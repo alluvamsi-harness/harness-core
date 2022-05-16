@@ -42,4 +42,5 @@ public class EnvironmentRequestDTO {
   String description;
   String color;
   @ApiModelProperty(required = true) EnvironmentType type;
+  String yaml;
 }

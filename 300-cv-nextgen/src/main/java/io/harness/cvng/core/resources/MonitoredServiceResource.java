@@ -29,6 +29,7 @@ import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthScoreDTO;
 import io.harness.cvng.core.beans.monitoredService.HistoricalTrend;
 import io.harness.cvng.core.beans.monitoredService.MetricDTO;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceChangeDetailSLO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
@@ -453,5 +454,20 @@ public class MonitoredServiceResource {
                                                 .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                 .build(),
             liveMonitoringLogsFilter, pageParams));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{monitoredServiceIdentifier}/change-details")
+  @ApiOperation(value = "get monitored service change details", nickname = "getMonitoredServiceChangeDetails")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
+  public RestResponse<List<MonitoredServiceChangeDetailSLO>> getMonitoredServiceChangeDetails(
+      @NotNull @Valid @BeanParam ProjectParams projectParams,
+      @ApiParam(required = true) @NotNull @PathParam("monitoredServiceIdentifier")
+      @ResourceIdentifier String monitoredServiceIdentifier, @QueryParam("sloIdentifiers") List<String> sloIdentifiers,
+      @QueryParam("startTime") Long startTime, @QueryParam("endTime") Long endTime) {
+    return new RestResponse<>(monitoredServiceService.getMonitoredServiceChangeDetails(
+        projectParams, monitoredServiceIdentifier, startTime, endTime));
   }
 }

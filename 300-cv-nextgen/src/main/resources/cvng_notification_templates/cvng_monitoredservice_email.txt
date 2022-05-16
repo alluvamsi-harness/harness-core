@@ -1,0 +1,2 @@
+subject: Monitored Service ${monitoredServiceName} breached Monitored Service Health
+body: This is a Monitored Service notification from Harness. You have breached your Monitored Service Health with name ${monitoredServiceName} inside project ${projectIdentifier}, organisation ${orgIdentifier} and account ${accountIdentifier}.

@@ -351,7 +351,7 @@ public class BuilderFactory {
         .metricInfos(
             Arrays.asList(AppDynamicsCVConfig.MetricInfo.builder().identifier("identifier").metricName("name").build()))
         .applicationName(generateUuid())
-        .tierName(generateUuid())
+        .tierName("tier-name")
         .connectorIdentifier("AppDynamics Connector")
         .category(CVMonitoringCategory.PERFORMANCE)
         .enabled(true)
@@ -883,6 +883,9 @@ public class BuilderFactory {
     return SLOErrorBudgetResetDTO.builder()
         .serviceLevelObjectiveIdentifier("slo")
         .errorBudgetIncrementPercentage(10.0)
+        .errorBudgetIncrementMinutes(10)
+        .remainingErrorBudgetAtReset(100)
+        .errorBudgetAtReset(100)
         .reason("reason");
   }
 

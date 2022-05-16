@@ -31,11 +31,11 @@ import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.task.artifacts.mappers.AcrRequestResponseMapper;
-import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.AzureAKSException;
 import io.harness.exception.AzureAuthenticationException;
 import io.harness.exception.AzureContainerRegistryException;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.WingsException;
 import io.harness.expression.RegexFunctor;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.CommandExecutionStatus;
@@ -65,7 +65,6 @@ public class AzureAsyncTaskHelper {
   @Inject private AzureComputeClient azureComputeClient;
   @Inject private AzureContainerRegistryClient azureContainerRegistryClient;
   @Inject private AzureKubernetesClient azureKubernetesClient;
-  @Inject private NGErrorHelper ngErrorHelper;
 
   private final String TAG_LABEL = "Tag#";
 
@@ -296,7 +295,7 @@ public class AzureAsyncTaskHelper {
     try {
       AzureKubeConfig azureKubeConfig =
           new ObjectMapper(new YAMLFactory())
-              .readValue(new String(k8sCluster.adminKubeConfigContent()), AzureKubeConfig.class);
+              .readValue(new String(k8sCluster.userKubeConfigContent()), AzureKubeConfig.class);
       return KubernetesConfig.builder()
           .namespace(namespace)
           .masterUrl(azureKubeConfig.getClusters().get(0).getCluster().getServer())
@@ -306,8 +305,9 @@ public class AzureAsyncTaskHelper {
           .clientKey(azureKubeConfig.getUsers().get(0).getUser().getClientKeyData().toCharArray())
           .build();
     } catch (Exception e) {
-      throw new AzureAKSException(
-          String.format("Admin Kube Config could not be read from cluster %s ", k8sCluster.name()));
+      throw NestedExceptionUtils.hintWithExplanationException(
+          format("Kube Config could not be read from cluster %s ", k8sCluster.name()),
+          "Please check your Azure permissions", new AzureAKSException(e.getMessage(), WingsException.USER, e));
     }
   }
 

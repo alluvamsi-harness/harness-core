@@ -763,6 +763,24 @@ public class ScmServiceClientImpl implements ScmServiceClient {
         scmBlockingStub::getUserRepo, GetUserRepoRequest.newBuilder().setSlug(slug).setProvider(gitProvider).build());
   }
 
+  @Override
+  public CreateBranchResponse createNewBranchV2(
+      ScmConnector scmConnector, String newBranchName, String baseBranchName, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+    String slug = scmGitProviderHelper.getSlug(scmConnector);
+    Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
+    GetLatestCommitResponse latestCommitResponse = ScmGrpcClientUtils.retryAndProcessException(
+        scmBlockingStub::getLatestCommit,
+        GetLatestCommitRequest.newBuilder().setBranch(baseBranchName).setSlug(slug).setProvider(gitProvider).build());
+    if (isFailureResponse(latestCommitResponse.getStatus())) {
+      return CreateBranchResponse.newBuilder()
+          .setStatus(latestCommitResponse.getStatus())
+          .setError(latestCommitResponse.getError())
+          .build();
+    }
+    return createNewBranchFromDefault(
+        slug, gitProvider, newBranchName, latestCommitResponse.getCommit().getSha(), scmBlockingStub);
+  }
+
   private FileContentBatchResponse processListFilesByFilePaths(ScmConnector connector, List<String> filePaths,
       String branch, String commitId, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(connector);
@@ -844,5 +862,9 @@ public class ScmServiceClientImpl implements ScmServiceClient {
       }
     }
     return Optional.empty();
+  }
+
+  private boolean isFailureResponse(int statusCode) {
+    return statusCode >= 300;
   }
 }

@@ -79,6 +79,7 @@ import software.wings.beans.Variable;
 import software.wings.beans.VariableType;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.artifact.Artifact;
+import software.wings.beans.artifact.ArtifactFile;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
@@ -781,6 +782,27 @@ public class CommandState extends State {
 
     commandParametersBuilder.artifactFiles(artifact.getArtifactFiles());
     executionDataBuilder.withArtifactName(artifact.getDisplayName()).withActivityId(artifact.getUuid());
+    populateArtifactFileNameToContext(commandParametersBuilder, artifact);
+  }
+
+  private void populateArtifactFileNameToContext(CommandParametersBuilder commandParametersBuilder, Artifact artifact) {
+    String artifactFileName = null;
+    if (artifact == null) {
+      return;
+    }
+    List<ArtifactFile> artifactFileList = artifact.getArtifactFiles();
+    if (artifactFileList == null || artifactFileList.size() == 0) {
+      return;
+    }
+    ArtifactFile artifactFile = artifact.getArtifactFiles().get(0);
+    if (artifactFile.getName() == null) {
+      if (artifact.getMetadata() != null) {
+        artifactFileName = artifact.getMetadata().get(ArtifactMetadataKeys.artifactFileName);
+      }
+    } else {
+      artifactFileName = artifactFile.getName();
+    }
+    commandParametersBuilder.artifactFileName(artifactFileName);
   }
 
   private void getMultiArtifactDetails(ExecutionContext context, CommandStateExecutionData.Builder executionDataBuilder,

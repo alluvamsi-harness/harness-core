@@ -389,7 +389,10 @@ public class FileStoreResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of supported entity types")
       })
   public ResponseDTO<List<EntityType>>
-  getSupportedEntityTypes() {
+  getSupportedEntityTypes(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier) {
+    accessControlClient.checkForAccessOrThrow(
+        ResourceScope.of(accountIdentifier, null, null), Resource.of(FILE, null), FILE_VIEW_PERMISSION);
     return ResponseDTO.newResponse(fileStoreService.getSupportedEntityTypes());
   }
 

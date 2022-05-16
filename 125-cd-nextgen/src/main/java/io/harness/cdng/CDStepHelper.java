@@ -8,9 +8,6 @@
 package io.harness.cdng;
 
 import static io.harness.beans.FeatureName.OPTIMIZED_GIT_FETCH_FILES;
-import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_AZURE;
-import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_DIRECT;
-import static io.harness.cdng.infra.yaml.InfrastructureKind.KUBERNETES_GCP;
 import static io.harness.common.ParameterFieldHelper.getBooleanParameterFieldValue;
 import static io.harness.common.ParameterFieldHelper.getParameterFieldValue;
 import static io.harness.connector.ConnectorModule.DEFAULT_CONNECTOR_SERVICE;
@@ -21,6 +18,9 @@ import static io.harness.data.structure.ListUtils.trimStrings;
 import static io.harness.eraro.ErrorCode.GENERAL_ERROR;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.UnitStatus.RUNNING;
+import static io.harness.ng.core.infrastructure.InfrastructureKind.KUBERNETES_AZURE;
+import static io.harness.ng.core.infrastructure.InfrastructureKind.KUBERNETES_DIRECT;
+import static io.harness.ng.core.infrastructure.InfrastructureKind.KUBERNETES_GCP;
 import static io.harness.validation.Validator.notEmptyCheck;
 
 import static java.lang.String.format;
@@ -50,6 +50,7 @@ import io.harness.cdng.manifest.yaml.S3StoreConfig;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.common.NGTimeConversionHelper;
+import io.harness.common.ParameterFieldHelper;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.helper.GitApiAccessDecryptionHelper;
 import io.harness.connector.services.ConnectorService;
@@ -78,6 +79,7 @@ import io.harness.delegate.beans.connector.scm.gitlab.GitlabHttpCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabUsernameTokenDTO;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
+import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
@@ -88,7 +90,6 @@ import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.encryption.SecretRefData;
 import io.harness.eraro.Level;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
-import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.StepConstants;
@@ -117,6 +118,7 @@ import io.harness.pms.yaml.validation.ExpressionUtils;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.steps.EntityReferenceExtractorUtils;
+import io.harness.validation.Validator;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -475,6 +477,8 @@ public class CDStepHelper {
         }
         break;
 
+      case ManifestStoreType.INLINE:
+        break;
       default:
         throw new UnsupportedOperationException(format("Unknown manifest store type: [%s]", manifestStoreType));
     }
@@ -594,7 +598,7 @@ public class CDStepHelper {
   }
 
   public UnitProgressData completeUnitProgressData(
-      UnitProgressData currentProgressData, Ambiance ambiance, Exception exception) {
+      UnitProgressData currentProgressData, Ambiance ambiance, String exceptionMessage) {
     if (currentProgressData == null) {
       return UnitProgressData.builder().unitProgresses(new ArrayList<>()).build();
     }
@@ -605,7 +609,7 @@ public class CDStepHelper {
             .map(unitProgress -> {
               if (unitProgress.getStatus() == RUNNING) {
                 LogCallback logCallback = getLogCallback(unitProgress.getUnitName(), ambiance, false);
-                logCallback.saveExecutionLog(ExceptionUtils.getMessage(exception), LogLevel.ERROR, FAILURE);
+                logCallback.saveExecutionLog(exceptionMessage, LogLevel.ERROR, FAILURE);
                 return UnitProgress.newBuilder(unitProgress)
                     .setStatus(UnitStatus.FAILURE)
                     .setEndTime(System.currentTimeMillis())
@@ -663,5 +667,22 @@ public class CDStepHelper {
     });
 
     pipelineRbacHelper.checkRuntimePermissions(ambiance, entityDetails);
+  }
+
+  public void validateGitStoreConfig(GitStoreConfig gitStoreConfig) {
+    Validator.notNullCheck("Git Store Config is null", gitStoreConfig);
+    FetchType gitFetchType = gitStoreConfig.getGitFetchType();
+    switch (gitFetchType) {
+      case BRANCH:
+        Validator.notEmptyCheck("Branch is Empty in Git Store config",
+            ParameterFieldHelper.getParameterFieldValue(gitStoreConfig.getBranch()));
+        break;
+      case COMMIT:
+        Validator.notEmptyCheck("Commit Id is Empty in Git Store config",
+            ParameterFieldHelper.getParameterFieldValue(gitStoreConfig.getCommitId()));
+        break;
+      default:
+        throw new InvalidRequestException(format("Unrecognized git fetch type: [%s]", gitFetchType.name()));
+    }
   }
 }
