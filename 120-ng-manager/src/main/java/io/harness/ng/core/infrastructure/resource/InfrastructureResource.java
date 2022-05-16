@@ -25,6 +25,9 @@ import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.infra.mapper.InfrastructureEntityConfigMapper;
+import io.harness.cdng.infra.mapper.InfrastructureMapper;
+import io.harness.cdng.infra.yaml.InfrastructureConfig;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.EnvironmentValidationHelper;
@@ -37,7 +40,6 @@ import io.harness.ng.core.infrastructure.dto.InfrastructureResponse;
 import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 import io.harness.ng.core.infrastructure.entity.InfrastructureEntity.InfrastructureEntityKeys;
 import io.harness.ng.core.infrastructure.mappers.InfrastructureFilterHelper;
-import io.harness.ng.core.infrastructure.mappers.InfrastructureMapper;
 import io.harness.ng.core.infrastructure.services.InfrastructureEntityService;
 import io.harness.pms.rbac.NGResourceType;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -48,6 +50,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -141,7 +144,14 @@ public class InfrastructureResource {
     Optional<InfrastructureEntity> infraEntity =
         infrastructureEntityService.get(accountId, orgIdentifier, projectIdentifier, envIdentifier, infraIdentifier);
 
-    if (!infraEntity.isPresent()) {
+    if (infraEntity.isPresent()) {
+      // todo: why do we need this?
+      if (isEmpty(infraEntity.get().getYaml())) {
+        InfrastructureConfig infrastructureConfig =
+            InfrastructureEntityConfigMapper.toInfrastructureConfig(infraEntity.get());
+        infraEntity.get().setYaml(InfrastructureEntityConfigMapper.toYaml(infrastructureConfig));
+      }
+    } else {
       throw new NotFoundException(
           String.format("Infrastructure with identifier [%s] in project [%s], org [%s], environment [%s] not found",
               infraIdentifier, projectIdentifier, orgIdentifier, envIdentifier));
@@ -335,6 +345,15 @@ public class InfrastructureResource {
     Page<InfrastructureEntity> infraEntities = infrastructureEntityService.list(criteria, pageRequest);
 
     return ResponseDTO.newResponse(getNGPageResponse(infraEntities.map(InfrastructureMapper::toResponseWrapper)));
+  }
+
+  @GET
+  @Path("/dummy-infraConfig-api")
+  @ApiOperation(value = "This is dummy api to expose infraConfig", nickname = "dummyInfraConfigApi")
+  @Hidden
+  // do not delete this.
+  public ResponseDTO<InfrastructureConfig> getInfraConfig() {
+    return ResponseDTO.newResponse(InfrastructureConfig.builder().build());
   }
 
   private void throwExceptionForNoRequestDTO(InfrastructureRequestDTO dto) {

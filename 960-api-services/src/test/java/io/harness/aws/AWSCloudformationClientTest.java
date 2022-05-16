@@ -9,14 +9,18 @@ package io.harness.aws;
 
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.NGONZALEZ;
+import static io.harness.rule.OwnerRule.VLICA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.aws.beans.AwsInternalConfig;
@@ -28,6 +32,10 @@ import io.harness.concurent.HTimeLimiterMocker;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 
+import software.wings.service.impl.AwsApiHelperService;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClient;
 import com.amazonaws.services.cloudformation.model.CreateChangeSetRequest;
 import com.amazonaws.services.cloudformation.model.CreateChangeSetResult;
@@ -37,19 +45,29 @@ import com.amazonaws.services.cloudformation.model.DescribeChangeSetRequest;
 import com.amazonaws.services.cloudformation.model.DescribeChangeSetResult;
 import com.amazonaws.services.cloudformation.model.DescribeStackEventsRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStackEventsResult;
+import com.amazonaws.services.cloudformation.model.DescribeStackResourcesRequest;
+import com.amazonaws.services.cloudformation.model.DescribeStackResourcesResult;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
 import com.amazonaws.services.cloudformation.model.ExecuteChangeSetRequest;
+import com.amazonaws.services.cloudformation.model.GetTemplateSummaryResult;
 import com.amazonaws.services.cloudformation.model.Parameter;
+import com.amazonaws.services.cloudformation.model.ParameterDeclaration;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackEvent;
+import com.amazonaws.services.cloudformation.model.StackResource;
 import com.amazonaws.services.cloudformation.model.Tag;
 import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
+import com.amazonaws.services.cloudformation.waiters.AmazonCloudFormationWaiters;
+import com.amazonaws.waiters.Waiter;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.inject.Inject;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -63,6 +81,8 @@ public class AWSCloudformationClientTest extends CategoryTest {
   private AmazonCloudFormationClient mockClient;
   private LogCallback logCallback;
   @InjectMocks @Inject @Spy private AWSCloudformationClientImpl service;
+  @Mock private AwsApiHelperService awsApiHelperService;
+  @Mock private AwsCloudformationPrintHelper awsCloudformationPrintHelper;
   @Mock private AwsCallTracker mockTracker;
   @Mock private TimeLimiter mockTimeLimiter;
 
@@ -125,16 +145,101 @@ public class AWSCloudformationClientTest extends CategoryTest {
     String stackName = "Stack Name";
     String region = "us-west-1";
     DescribeStackEventsRequest request = new DescribeStackEventsRequest().withStackName(stackName);
-    DescribeStackEventsResult result =
-        new DescribeStackEventsResult().withStackEvents(new StackEvent().withStackName(stackName).withEventId("id"));
+    DescribeStackEventsResult result = new DescribeStackEventsResult().withStackEvents(
+        new StackEvent().withStackName(stackName).withTimestamp(new Date()).withEventId("id"));
     doReturn(result).when(mockClient).describeStackEvents(request);
     doNothing().when(mockTracker).trackCFCall(anyString());
     List<StackEvent> events = service.getAllStackEvents(
-        region, request, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+        region, request, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), 0L);
     assertThat(events).isNotNull();
     assertThat(events.size()).isEqualTo(1);
     assertThat(events.get(0).getStackName()).isEqualTo(stackName);
     assertThat(events.get(0).getEventId()).isEqualTo("id");
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void shouldGetEventsAndDescribeStackEventsOnlyOnce() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+
+    long lastStackEventsTs = System.currentTimeMillis();
+
+    StackEvent beforeLastStackTimestamp = new StackEvent().withStackName(stackName).withEventId("id").withTimestamp(
+        new Date(lastStackEventsTs - 3600 * 1000));
+    StackEvent afterLastStackTimestamp = new StackEvent().withStackName(stackName).withEventId("id-2").withTimestamp(
+        new Date(lastStackEventsTs + 3600 * 1000));
+
+    DescribeStackEventsRequest request = new DescribeStackEventsRequest().withStackName(stackName);
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    DescribeStackEventsResult result = new DescribeStackEventsResult()
+                                           .withStackEvents(beforeLastStackTimestamp, afterLastStackTimestamp)
+                                           .withNextToken("dummy-next-token");
+
+    DescribeStackEventsResult result2 = new DescribeStackEventsResult().withStackEvents(
+        new StackEvent().withStackName(stackName).withEventId("id-3").withTimestamp(new Date()));
+
+    when(mockClient.describeStackEvents(request)).thenReturn(result, result2);
+
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    List<StackEvent> events = service.getAllStackEvents(region, request,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), lastStackEventsTs);
+    assertThat(events).isNotNull();
+    assertThat(events.size()).isEqualTo(2);
+    assertThat(events.get(0).getStackName()).isEqualTo(stackName);
+    assertThat(events.get(0).getEventId()).isEqualTo("id");
+    assertThat(events.get(1).getStackName()).isEqualTo(stackName);
+    assertThat(events.get(1).getEventId()).isEqualTo("id-2");
+    verify(mockClient, times(1)).describeStackEvents(any());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void shouldGetEventsAndDescribeAllExistingStackEvents() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+
+    long lastStackEventsTs = System.currentTimeMillis();
+
+    StackEvent beforeLastStackTimestamp = new StackEvent().withStackName(stackName).withEventId("id").withTimestamp(
+        new Date(lastStackEventsTs + 3600 * 1000));
+    StackEvent afterLastStackTimestamp = new StackEvent().withStackName(stackName).withEventId("id-2").withTimestamp(
+        new Date(lastStackEventsTs + 3700 * 1000));
+
+    DescribeStackEventsRequest request = new DescribeStackEventsRequest().withStackName(stackName);
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    DescribeStackEventsResult result = new DescribeStackEventsResult()
+                                           .withStackEvents(beforeLastStackTimestamp, afterLastStackTimestamp)
+                                           .withNextToken("dummy-next-token");
+
+    DescribeStackEventsResult result2 =
+        new DescribeStackEventsResult()
+            .withStackEvents(new StackEvent().withStackName(stackName).withEventId("id-3").withTimestamp(new Date()))
+            .withNextToken(null);
+
+    when(mockClient.describeStackEvents(request)).thenReturn(result, result2);
+
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    List<StackEvent> events = service.getAllStackEvents(region, request,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), lastStackEventsTs);
+    assertThat(events).isNotNull();
+    assertThat(events.size()).isEqualTo(3);
+    assertThat(events.get(0).getStackName()).isEqualTo(stackName);
+    assertThat(events.get(0).getEventId()).isEqualTo("id");
+    assertThat(events.get(1).getStackName()).isEqualTo(stackName);
+    assertThat(events.get(1).getEventId()).isEqualTo("id-2");
+    assertThat(events.get(2).getStackName()).isEqualTo(stackName);
+    assertThat(events.get(2).getEventId()).isEqualTo("id-3");
+
+    verify(mockClient, times(2)).describeStackEvents(any());
   }
 
   @Test
@@ -306,5 +411,228 @@ public class AWSCloudformationClientTest extends CategoryTest {
     assertThat(deployStackResult.getStatus()).isEqualTo(Status.SUCCESS);
     assertThat(deployStackResult.isNoUpdatesToPerform()).isEqualTo(true);
     assertThat(deployStackResult.getStatusReason()).isEqualTo("No updates are to be performed.");
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void getAllStackResources() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+    DescribeStackResourcesRequest request = new DescribeStackResourcesRequest().withStackName(stackName);
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    DescribeStackResourcesResult result =
+        new DescribeStackResourcesResult().withStackResources(new StackResource().withStackName(stackName));
+    doReturn(result).when(mockClient).describeStackResources(request);
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    List<StackResource> stacks = service.getAllStackResources(
+        region, request, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    assertThat(stacks).isNotNull();
+    assertThat(stacks.size()).isEqualTo(1);
+    assertThat(stacks.get(0).getStackName()).isEqualTo(stackName);
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void shouldWaitForDeleteStackCompletion() {
+    char[] accessKey = "abcd".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+    DescribeStacksRequest request = new DescribeStacksRequest().withStackName(stackName);
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    AmazonCloudFormationWaiters mockWaiter = mock(AmazonCloudFormationWaiters.class);
+    Future future = mock(Future.class);
+
+    Waiter<DescribeStacksRequest> mockWaiterStack = mock(Waiter.class);
+
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    doReturn(mockWaiter).when(service).getAmazonCloudFormationWaiter(any());
+    DescribeStackEventsResult result = new DescribeStackEventsResult().withStackEvents(
+        new StackEvent().withStackName(stackName).withTimestamp(new Date()).withEventId("id"));
+    doReturn(result).when(mockClient).describeStackEvents(any());
+    doReturn(new ArrayList<>()).when(service).getAllStackResources(any(), any(), any());
+    doReturn(mockWaiterStack).when(mockWaiter).stackDeleteComplete();
+    when(future.isDone()).thenReturn(false).thenReturn(true);
+    doReturn(future).when(mockWaiterStack).runAsync(any(), any());
+    doNothing().when(awsCloudformationPrintHelper).printStackResources(any(), any());
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    service.waitForStackDeletionCompleted(request,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region, logCallback, 1000L);
+    verify(mockWaiterStack).runAsync(any(), any());
+    verify(mockWaiter).stackDeleteComplete();
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkServiceException() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackName);
+    DeleteStackRequest deleteStackRequest = new DeleteStackRequest().withStackName(stackName);
+    DescribeStackEventsRequest describeStackEventsRequest = new DescribeStackEventsRequest().withStackName(stackName);
+    CreateStackRequest createStackRequest = new CreateStackRequest().withStackName(stackName);
+    UpdateStackRequest updateStackRequest = new UpdateStackRequest().withStackName(stackName);
+    DescribeStackResourcesRequest describeStackResourcesRequest =
+        new DescribeStackResourcesRequest().withStackName(stackName);
+    doThrow(AmazonServiceException.class).when(service).getAmazonCloudFormationClient(any(), any());
+    service.getAllStacks(
+        region, describeStacksRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.deleteStack(
+        region, deleteStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.getAllStackEvents(region, describeStackEventsRequest,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), 0L);
+    service.createStack(
+        region, createStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.updateStack(
+        region, updateStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.describeStacks(
+        region, describeStacksRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.getAllStackResources(region, describeStackResourcesRequest,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.waitForStackDeletionCompleted(describeStacksRequest,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region, null, 1000L);
+    verify(awsApiHelperService, times(8)).handleAmazonServiceException(any());
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkClientException() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackName);
+    DeleteStackRequest deleteStackRequest = new DeleteStackRequest().withStackName(stackName);
+    DescribeStackEventsRequest describeStackEventsRequest = new DescribeStackEventsRequest().withStackName(stackName);
+    CreateStackRequest createStackRequest = new CreateStackRequest().withStackName(stackName);
+    UpdateStackRequest updateStackRequest = new UpdateStackRequest().withStackName(stackName);
+    DescribeStackResourcesRequest describeStackResourcesRequest =
+        new DescribeStackResourcesRequest().withStackName(stackName);
+
+    doThrow(AmazonClientException.class).when(service).getAmazonCloudFormationClient(any(), any());
+    service.getAllStacks(
+        region, describeStacksRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.deleteStack(
+        region, deleteStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.getAllStackEvents(region, describeStackEventsRequest,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), 0L);
+    service.createStack(
+        region, createStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.updateStack(
+        region, updateStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.describeStacks(
+        region, describeStacksRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    service.getAllStackResources(region, describeStackResourcesRequest,
+        AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+    verify(awsApiHelperService, times(7)).handleAmazonClientException(any());
+  }
+
+  @Test(expected = Exception.class)
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkGeneralExceptionGetAllStacks() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+    DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackName);
+    doThrow(Exception.class).when(service).getAmazonCloudFormationClient(any(), any());
+    service.getAllStacks(
+        region, describeStacksRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+  }
+
+  @Test(expected = Exception.class)
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkGeneralExceptionDeleteStacks() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String stackName = "Stack Name";
+    String region = "us-west-1";
+    DeleteStackRequest deleteStackRequest = new DeleteStackRequest().withStackName(stackName);
+    doThrow(Exception.class).when(service).getAmazonCloudFormationClient(any(), any());
+    service.deleteStack(
+        region, deleteStackRequest, AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build());
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkGetParamsDataForS3Template() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String data = "s3://bucket/template.yaml";
+    String region = "us-west-1";
+
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    GetTemplateSummaryResult result = new GetTemplateSummaryResult();
+    List<ParameterDeclaration> parameters = new ArrayList<>();
+    parameters.add(new ParameterDeclaration().withParameterKey("key1").withParameterType("String"));
+    parameters.add(new ParameterDeclaration().withParameterKey("key2").withParameterType("String"));
+    result.setParameters(parameters);
+    doReturn(result).when(mockClient).getTemplateSummary(any());
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    List<ParameterDeclaration> response =
+        service.getParamsData(AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region,
+            data, AwsCFTemplatesType.S3);
+    assertThat(response).size().isEqualTo(2);
+    assertThat(response.get(0).getParameterKey()).isEqualTo("key1");
+    assertThat(response.get(1).getParameterKey()).isEqualTo("key2");
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkGetParamsDataForS3TemplateThrowsServiceException() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String data = "s3://bucket/template.yaml";
+    String region = "us-west-1";
+
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    GetTemplateSummaryResult result = new GetTemplateSummaryResult();
+    List<ParameterDeclaration> parameters = new ArrayList<>();
+    parameters.add(new ParameterDeclaration().withParameterKey("key1").withParameterType("String"));
+    parameters.add(new ParameterDeclaration().withParameterKey("key2").withParameterType("String"));
+    result.setParameters(parameters);
+    doThrow(AmazonServiceException.class).when(mockClient).getTemplateSummary(any());
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    service.getParamsData(AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region, data,
+        AwsCFTemplatesType.S3);
+    verify(awsApiHelperService, times(1));
+  }
+
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void checkGetParamsDataForS3TemplateThrowsClientException() {
+    char[] accessKey = "qwer".toCharArray();
+    char[] secretKey = "pqrs".toCharArray();
+    String data = "s3://bucket/template.yaml";
+    String region = "us-west-1";
+
+    AmazonCloudFormationClient mockClient = mock(AmazonCloudFormationClient.class);
+    doReturn(mockClient).when(service).getAmazonCloudFormationClient(any(), any());
+    GetTemplateSummaryResult result = new GetTemplateSummaryResult();
+    List<ParameterDeclaration> parameters = new ArrayList<>();
+    parameters.add(new ParameterDeclaration().withParameterKey("key1").withParameterType("String"));
+    parameters.add(new ParameterDeclaration().withParameterKey("key2").withParameterType("String"));
+    result.setParameters(parameters);
+    doThrow(AmazonClientException.class).when(mockClient).getTemplateSummary(any());
+    doNothing().when(mockTracker).trackCFCall(anyString());
+    service.getParamsData(AwsInternalConfig.builder().accessKey(accessKey).secretKey(secretKey).build(), region, data,
+        AwsCFTemplatesType.S3);
+    verify(awsApiHelperService, times(1));
   }
 }

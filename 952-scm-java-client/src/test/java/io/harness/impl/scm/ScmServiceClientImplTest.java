@@ -265,6 +265,38 @@ public class ScmServiceClientImplTest extends CategoryTest {
     assertThat(getUserRepoResponse.getRepo().getBranch()).isEqualTo(branch);
   }
 
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreateNewBranchV2_WhenGetLatestCommitFails() {
+    when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
+    when(scmGitProviderMapper.mapToSCMGitProvider(any())).thenReturn(getGitProviderDefault());
+    when(scmBlockingStub.getLatestCommit(any()))
+        .thenReturn(GetLatestCommitResponse.newBuilder().setStatus(404).setError(error).build());
+    CreateBranchResponse createBranchResponse =
+        scmServiceClient.createNewBranchV2(scmConnector, branch, baseBranchName, scmBlockingStub);
+    assertThat(createBranchResponse.getError()).isEqualTo(error);
+    assertThat(createBranchResponse.getStatus()).isEqualTo(404);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreateNewBranchV2() {
+    when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
+    when(scmGitProviderMapper.mapToSCMGitProvider(any())).thenReturn(getGitProviderDefault());
+    when(scmBlockingStub.getLatestCommit(any()))
+        .thenReturn(GetLatestCommitResponse.newBuilder()
+                        .setStatus(200)
+                        .setCommit(Commit.newBuilder().setSha(sha).build())
+                        .build());
+    when(scmBlockingStub.createBranch(any())).thenReturn(CreateBranchResponse.newBuilder().setStatus(200).build());
+    CreateBranchResponse createBranchResponse =
+        scmServiceClient.createNewBranchV2(scmConnector, branch, baseBranchName, scmBlockingStub);
+
+    assertThat(createBranchResponse.getStatus()).isEqualTo(200);
+  }
+
   private GitFileDetails getGitFileDetailsDefault() {
     return GitFileDetails.builder()
         .filePath(filepath)

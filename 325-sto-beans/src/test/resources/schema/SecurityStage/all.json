@@ -1050,6 +1050,9 @@
             "tags"
           ],
           "properties": {
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "buildArgs": {
               "oneOf": [
                 {
@@ -1153,6 +1156,19 @@
           "properties": {
             "account": {
               "type": "string"
+            },
+            "baseImageConnectorRefs": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "buildArgs": {
               "oneOf": [
@@ -1474,6 +1490,9 @@
             "tags"
           ],
           "properties": {
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "buildArgs": {
               "oneOf": [
                 {
@@ -2153,7 +2172,10 @@
             "stepConnectorRefs": {
               "type": "object",
               "additionalProperties": {
-                "$ref": "#/definitions/ConnectorConversionInfo"
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/ConnectorConversionInfo"
+                }
               }
             },
             "workDir": {
@@ -3514,6 +3536,9 @@
                 }
               ]
             },
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "bucket": {
               "type": "string"
             },
@@ -3580,6 +3605,9 @@
                   "minLength": 1
                 }
               ]
+            },
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
             },
             "bucket": {
               "type": "string"
@@ -4029,6 +4057,9 @@
                 }
               ]
             },
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "bucket": {
               "type": "string"
             },
@@ -4109,6 +4140,9 @@
                   "minLength": 1
                 }
               ]
+            },
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
             },
             "bucket": {
               "type": "string"
@@ -4458,6 +4492,9 @@
             "connectorRef"
           ],
           "properties": {
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "connectorRef": {
               "type": "string"
             },
@@ -5822,6 +5859,9 @@
             "target"
           ],
           "properties": {
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "connectorRef": {
               "type": "string"
             },
@@ -5863,6 +5903,9 @@
             "sourcePath"
           ],
           "properties": {
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "bucket": {
               "type": "string"
             },
@@ -5908,6 +5951,9 @@
             "sourcePath"
           ],
           "properties": {
+            "baseImageConnectorRefs": {
+              "$ref": "#/definitions/ParameterFieldListString"
+            },
             "bucket": {
               "type": "string"
             },

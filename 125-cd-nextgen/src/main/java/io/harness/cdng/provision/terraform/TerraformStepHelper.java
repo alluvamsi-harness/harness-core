@@ -121,6 +121,7 @@ public class TerraformStepHelper {
   @Named("PRIVILEGED") @Inject private SecretManagerClientService secretManagerClientService;
   @Inject private EngineExpressionService engineExpressionService;
   @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
+  @Inject private CDStepHelper cdStepHelper;
   @Inject public TerraformConfigDAL terraformConfigDAL;
 
   public static List<EntityDetail> prepareEntityDetailsForVarFiles(
@@ -157,29 +158,12 @@ public class TerraformStepHelper {
     }
   }
 
-  private void validateGitStoreConfig(GitStoreConfig gitStoreConfig) {
-    Validator.notNullCheck("Git Store Config is null", gitStoreConfig);
-    FetchType gitFetchType = gitStoreConfig.getGitFetchType();
-    switch (gitFetchType) {
-      case BRANCH:
-        Validator.notEmptyCheck("Branch is Empty in Git Store config",
-            ParameterFieldHelper.getParameterFieldValue(gitStoreConfig.getBranch()));
-        break;
-      case COMMIT:
-        Validator.notEmptyCheck("Commit Id is Empty in Git Store config",
-            ParameterFieldHelper.getParameterFieldValue(gitStoreConfig.getCommitId()));
-        break;
-      default:
-        throw new InvalidRequestException(format("Unrecognized git fetch type: [%s]", gitFetchType.name()));
-    }
-  }
-
   public GitFetchFilesConfig getGitFetchFilesConfig(StoreConfig store, Ambiance ambiance, String identifier) {
     if (store == null || !ManifestStoreType.isInGitSubset(store.getKind())) {
       return null;
     }
     GitStoreConfig gitStoreConfig = (GitStoreConfig) store;
-    validateGitStoreConfig(gitStoreConfig);
+    cdStepHelper.validateGitStoreConfig(gitStoreConfig);
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = k8sStepHelper.getConnector(connectorId, ambiance);
     String validationMessage = "";

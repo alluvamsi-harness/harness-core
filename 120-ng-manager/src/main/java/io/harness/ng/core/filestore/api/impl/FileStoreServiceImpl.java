@@ -236,8 +236,14 @@ public class FileStoreServiceImpl implements FileStoreService {
       filterProperties = (FilesFilterPropertiesDTO) filterDTO.getFilterProperties();
     }
 
+    List<String> fileIdentifiers = null;
+    if (filterProperties != null && filterProperties.getReferencedBy() != null) {
+      fileIdentifiers = fileReferenceService.listAllReferredFileUsageIdentifiers(
+          accountIdentifier, getReferredByEntityFQN(filterProperties));
+    }
+
     Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
-    Criteria criteria = createFilesFilterCriteria(scope, filterProperties, searchTerm);
+    Criteria criteria = createFilesFilterCriteria(scope, filterProperties, searchTerm, fileIdentifiers);
 
     Page<NGFile> ngFiles = fileStoreRepository.findAllAndSort(criteria, createSortByLastModifiedAtDesc(), pageable);
     List<FileDTO> fileDTOS = ngFiles.stream().map(FileDTOMapper::getFileDTOFromNGFile).collect(Collectors.toList());
@@ -384,5 +390,12 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
 
     return fileFailsafeService.deleteAndPublish(file);
+  }
+
+  private String getReferredByEntityFQN(FilesFilterPropertiesDTO filterProperties) {
+    if (filterProperties.getReferencedBy() == null || filterProperties.getReferencedBy().getEntityRef() == null) {
+      return null;
+    }
+    return filterProperties.getReferencedBy().getEntityRef().getFullyQualifiedName();
   }
 }

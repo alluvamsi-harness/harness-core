@@ -15,15 +15,21 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
+import io.harness.cdng.envgroup.yaml.EnvironmentGroupYaml;
+import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
+import io.harness.cdng.infra.yaml.InfraStructureDefinition;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceDefinition;
 import io.harness.cdng.service.beans.ServiceYaml;
+import io.harness.cdng.service.beans.ServiceYamlV2;
 import io.harness.filters.GenericStageFilterJsonCreatorV2;
 import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.service.entity.ServiceEntity;
+import io.harness.ng.core.service.mappers.NGServiceEntityMapper;
 import io.harness.ng.core.service.services.ServiceEntityService;
+import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
 import io.harness.pms.cdng.sample.cd.creator.filters.CdFilter;
 import io.harness.pms.cdng.sample.cd.creator.filters.CdFilter.CdFilterBuilder;
 import io.harness.pms.exception.runtime.InvalidYamlRuntimeException;
@@ -65,10 +71,99 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
 
     final DeploymentStageConfig deploymentStageConfig = yamlField.getDeploymentStageConfig();
 
-    addFiltersFromServiceConfig(filterCreationContext, filterBuilder, deploymentStageConfig.getServiceConfig());
-    addFiltersfromPipelineInfra(filterCreationContext, filterBuilder, deploymentStageConfig.getInfrastructure());
+    addServiceFilters(filterCreationContext, filterBuilder, deploymentStageConfig);
+    addInfraFilters(filterCreationContext, filterBuilder, deploymentStageConfig);
 
     return filterBuilder.build();
+  }
+
+  private void addServiceFilters(FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder,
+      DeploymentStageConfig deploymentStageConfig) {
+    if (deploymentStageConfig.getServiceConfig() != null) {
+      addFiltersFromServiceConfig(filterCreationContext, filterBuilder, deploymentStageConfig.getServiceConfig());
+    } else if (deploymentStageConfig.getService() != null) {
+      addFiltersFromServiceV2(filterCreationContext, filterBuilder, deploymentStageConfig.getService());
+    } else {
+      throw new InvalidYamlRuntimeException(
+          format("serviceConfig or Service should be present in stage [%s]. Please add it and try again",
+              YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
+    }
+  }
+
+  private void addInfraFilters(FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder,
+      DeploymentStageConfig deploymentStageConfig) {
+    if (deploymentStageConfig.getInfrastructure() != null) {
+      addFiltersFromPipelineInfra(filterCreationContext, filterBuilder, deploymentStageConfig.getInfrastructure());
+    } else if (deploymentStageConfig.getEnvironment() != null) {
+      addFiltersFromEnvironment(filterCreationContext, filterBuilder, deploymentStageConfig.getEnvironment());
+    } else if (deploymentStageConfig.getEnvironmentGroup() != null) {
+      addFiltersFromEnvironmentGroup(filterCreationContext, filterBuilder, deploymentStageConfig.getEnvironmentGroup());
+    } else {
+      throw new InvalidYamlRuntimeException(format(
+          "Infrastructure or Environment or EnvironmentGroup should be present in stage [%s]. Please add it and try again",
+          YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
+    }
+  }
+
+  private void addFiltersFromEnvironment(
+      FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder, EnvironmentYamlV2 env) {
+    final ParameterField<String> environmentRef = env.getEnvironmentRef();
+    if (environmentRef == null || environmentRef.fetchFinalValue() == null) {
+      throw new InvalidYamlRuntimeException(
+          format("environmentRef should be present in stage [%s]. Please add it and try again",
+              YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
+    }
+
+    if (!environmentRef.isExpression()) {
+      Optional<Environment> environmentEntityOptional = environmentService.get(
+          filterCreationContext.getSetupMetadata().getAccountId(), filterCreationContext.getSetupMetadata().getOrgId(),
+          filterCreationContext.getSetupMetadata().getProjectId(), environmentRef.getValue(), false);
+      if (environmentEntityOptional.isPresent()) {
+        final Environment entity = environmentEntityOptional.get();
+        filterBuilder.environmentName(entity.getName());
+
+        List<InfraStructureDefinition> infraList = env.getInfrastructureDefinitions();
+        if (isNotEmpty(infraList)) {
+          if (infraList.size() > 1) {
+            throw new InvalidYamlRuntimeException(format(
+                "multiple infra deployments are not supported yet in stage [%s]. Please select 1 infrastructure and try again",
+                YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
+          }
+          // Todo: Add InfraType filter
+        }
+      }
+    }
+  }
+
+  private void addFiltersFromEnvironmentGroup(
+      FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder, EnvironmentGroupYaml envGroupYaml) {
+    final ParameterField<String> envGroupRef = envGroupYaml.getEnvGroupRef();
+    if (envGroupRef == null || envGroupRef.fetchFinalValue() == null) {
+      throw new InvalidYamlRuntimeException(
+          format("envGroupRef should be present in stage [%s]. Please add it and try again",
+              YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
+    }
+  }
+
+  private void addFiltersFromServiceV2(
+      FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder, ServiceYamlV2 service) {
+    final ParameterField<String> serviceEntityRef = service.getServiceConfigRef();
+    if (serviceEntityRef == null || serviceEntityRef.fetchFinalValue() == null) {
+      throw new InvalidYamlRuntimeException(format(
+          "serviceConfigRef should be present in stage [%s] when referring to a service entity. Please add it and try again",
+          YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode())));
+    }
+
+    if (!serviceEntityRef.isExpression()) {
+      Optional<ServiceEntity> serviceEntityOptional = serviceEntityService.get(
+          filterCreationContext.getSetupMetadata().getAccountId(), filterCreationContext.getSetupMetadata().getOrgId(),
+          filterCreationContext.getSetupMetadata().getProjectId(), serviceEntityRef.getValue(), false);
+      serviceEntityOptional.ifPresent(se -> {
+        NGServiceV2InfoConfig cfg = NGServiceEntityMapper.toNGServiceConfig(se).getNgServiceV2InfoConfig();
+        filterBuilder.serviceName(cfg.getName());
+        filterBuilder.deploymentType(cfg.getServiceDefinition().getType().getYamlName());
+      });
+    }
   }
 
   private void addFiltersFromServiceConfig(
@@ -99,7 +194,7 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
     }
   }
 
-  private void addFiltersfromPipelineInfra(
+  private void addFiltersFromPipelineInfra(
       FilterCreationContext filterCreationContext, CdFilterBuilder cdFilter, PipelineInfrastructure infrastructure) {
     if (infrastructure == null) {
       throw new InvalidYamlRuntimeException(

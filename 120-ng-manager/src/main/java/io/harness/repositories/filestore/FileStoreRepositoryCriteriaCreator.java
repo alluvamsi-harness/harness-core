@@ -22,6 +22,7 @@ import io.harness.ng.core.filestore.dto.FileFilterDTO;
 import io.harness.ng.core.mapper.TagMapper;
 import io.harness.ng.core.utils.URLDecoderUtility;
 
+import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -43,7 +44,7 @@ public class FileStoreRepositoryCriteriaCreator {
   }
 
   public static Criteria createFilesFilterCriteria(
-      Scope scope, FilesFilterPropertiesDTO filterProperties, String searchTerm) {
+      Scope scope, FilesFilterPropertiesDTO filterProperties, String searchTerm, List<String> fileIdentifiers) {
     Criteria criteria = createScopeCriteria(scope);
     criteria.and(NGFiles.type).is(NGFileType.FILE);
 
@@ -58,11 +59,16 @@ public class FileStoreRepositoryCriteriaCreator {
     }
 
     if (filterProperties != null && filterProperties.getCreatedBy() != null) {
-      criteria.and(NGFiles.createdBy).is(filterProperties.getCreatedBy());
+      criteria.orOperator(Criteria.where(NGFiles.CREATED_BY_NAME).is(filterProperties.getCreatedBy().getName()),
+          Criteria.where(NGFiles.CREATED_BY_EMAIL).is(filterProperties.getCreatedBy().getEmail()));
     }
 
     if (filterProperties != null && !isEmpty(filterProperties.getTags())) {
       criteria.and(NGFiles.tags).in(TagMapper.convertToList(filterProperties.getTags()));
+    }
+
+    if (!isEmpty(fileIdentifiers)) {
+      criteria.and(NGFiles.identifier).in(fileIdentifiers);
     }
 
     return criteria;

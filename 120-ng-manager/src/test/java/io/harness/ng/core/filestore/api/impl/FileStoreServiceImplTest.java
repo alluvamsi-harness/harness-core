@@ -636,7 +636,7 @@ public class FileStoreServiceImplTest extends CategoryTest {
 
   private Criteria createTestCriteriaForListFiles(FilesFilterPropertiesDTO filterProperties, String searchTerm) {
     Scope scope = Scope.of(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER);
-    return createFilesFilterCriteria(scope, filterProperties, searchTerm);
+    return createFilesFilterCriteria(scope, filterProperties, searchTerm, Collections.emptyList());
   }
 
   @Test

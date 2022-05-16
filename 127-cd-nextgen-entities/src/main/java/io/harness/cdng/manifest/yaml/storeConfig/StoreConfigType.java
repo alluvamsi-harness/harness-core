@@ -25,7 +25,9 @@ public enum StoreConfigType {
   @JsonProperty(ManifestStoreType.HTTP) HTTP(ManifestStoreType.HTTP),
   @JsonProperty(ManifestStoreType.S3) S3(ManifestStoreType.S3),
   @JsonProperty(ManifestStoreType.GCS) GCS(ManifestStoreType.GCS),
-  @JsonProperty(ManifestStoreType.ARTIFACTORY) ARTIFACTORY(ManifestStoreType.ARTIFACTORY);
+  @JsonProperty(ManifestStoreType.INLINE) INLINE(ManifestStoreType.INLINE),
+  @JsonProperty(ManifestStoreType.ARTIFACTORY) ARTIFACTORY(ManifestStoreType.ARTIFACTORY),
+  @JsonProperty(ManifestStoreType.S3URL) S3URL(ManifestStoreType.S3URL);
   private final String displayName;
 
   StoreConfigType(String displayName) {
