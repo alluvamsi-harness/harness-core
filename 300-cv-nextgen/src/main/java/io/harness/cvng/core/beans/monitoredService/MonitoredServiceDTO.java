@@ -30,11 +30,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.FieldNameConstants;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
+@FieldNameConstants(innerTypeName = "MonitoredServiceDTOKeys")
 public class MonitoredServiceDTO {
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String orgIdentifier;
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String projectIdentifier;
@@ -49,6 +51,8 @@ public class MonitoredServiceDTO {
   @Valid Sources sources;
   @Valid Set<ServiceDependencyDTO> dependencies;
   List<NotificationRuleRefDTO> notificationRuleRefs;
+  String templateIdentifier;
+  String templateVersionLabel;
 
   public List<String> getEnvironmentRefList() {
     // For migration. Remove once envRefList is populated from UI.

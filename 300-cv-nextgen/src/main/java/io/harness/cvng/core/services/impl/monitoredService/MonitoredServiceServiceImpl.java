@@ -219,19 +219,19 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
 
   @Override
   public MonitoredServiceResponse createFromYaml(ProjectParams projectParams, String yaml) {
-    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceYaml(projectParams, yaml);
+    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceFromYaml(projectParams, yaml);
     return create(projectParams.getAccountIdentifier(), monitoredServiceDTO);
   }
 
   @Override
   public MonitoredServiceResponse updateFromYaml(ProjectParams projectParams, String identifier, String yaml) {
-    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceYaml(projectParams, yaml);
+    MonitoredServiceDTO monitoredServiceDTO = getExpandedMonitoredServiceFromYaml(projectParams, yaml);
     monitoredServiceDTO.setIdentifier(identifier);
     return update(projectParams.getAccountIdentifier(), monitoredServiceDTO);
   }
 
   @SneakyThrows
-  private MonitoredServiceDTO getExpandedMonitoredServiceYaml(ProjectParams projectParams, String yaml) {
+  private MonitoredServiceDTO getExpandedMonitoredServiceFromYaml(ProjectParams projectParams, String yaml) {
     String templateResolvedYaml = templateFacade.resolveYaml(projectParams, yaml);
     MonitoredServiceYamlExpressionEvaluator yamlExpressionEvaluator =
         new MonitoredServiceYamlExpressionEvaluator(templateResolvedYaml);
@@ -344,6 +344,12 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
                                                         .map(changeSource -> changeSource.getIdentifier())
                                                         .collect(Collectors.toList());
       updateOperations.set(MonitoredServiceKeys.changeSourceIdentifiers, updatedChangeSourceIdentifiers);
+    }
+    if (StringUtils.isNotEmpty(monitoredServiceDTO.getTemplateIdentifier())) {
+      updateOperations.set(MonitoredServiceKeys.templateIdentifier, monitoredServiceDTO.getTemplateIdentifier());
+    }
+    if (StringUtils.isNotEmpty(monitoredServiceDTO.getTemplateVersionLabel())) {
+      updateOperations.set(MonitoredServiceKeys.templateVersionLabel, monitoredServiceDTO.getTemplateVersionLabel());
     }
     ProjectParams projectParams = ProjectParams.builder()
                                       .accountIdentifier(monitoredService.getAccountId())
@@ -479,6 +485,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .type(monitoredServiceEntity.getType())
             .description(monitoredServiceEntity.getDesc())
             .tags(TagMapper.convertToMap(monitoredServiceEntity.getTags()))
+            .templateIdentifier(monitoredServiceEntity.getTemplateIdentifier())
+            .templateVersionLabel(monitoredServiceEntity.getTemplateVersionLabel())
             .sources(
                 Sources.builder()
                     .healthSources(healthSourceService.get(monitoredServiceEntity.getAccountId(),
@@ -783,6 +791,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .tags(TagMapper.convertToList(monitoredServiceDTO.getTags()))
             .notificationRuleRefs(
                 notificationRuleService.getNotificationRuleRefs(monitoredServiceDTO.getNotificationRuleRefs()))
+            .templateIdentifier(monitoredServiceDTO.getTemplateIdentifier())
+            .templateVersionLabel(monitoredServiceDTO.getTemplateVersionLabel())
             .build();
     if (monitoredServiceDTO.getSources() != null) {
       monitoredServiceEntity.setHealthSourceIdentifiers(monitoredServiceDTO.getSources()
