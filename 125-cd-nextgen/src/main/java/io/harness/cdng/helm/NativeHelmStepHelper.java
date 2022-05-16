@@ -288,7 +288,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
     HelmChartManifestDelegateConfig helmManifest =
         (HelmChartManifestDelegateConfig) getManifestDelegateConfig(helmChartManifestOutcome, ambiance);
     List<HelmFetchFileConfig> helmFetchFileConfigList = mapHelmChartManifestsToHelmFetchFileConfig(
-        helmChartManifestOutcome.getIdentifier(), helmManifest.getChartName(), helmManifest.getValuesPaths());
+        helmChartManifestOutcome.getIdentifier(), helmManifest.getValuesPaths());
     helmFetchFileConfigList.addAll(mapValuesManifestsToHelmFetchFileConfig(aggregatedValuesManifests));
     HelmValuesFetchRequest helmValuesFetchRequest = HelmValuesFetchRequest.builder()
                                                         .accountId(accountId)

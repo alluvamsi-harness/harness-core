@@ -8,7 +8,6 @@
 package io.harness.k8s.manifest;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.k8s.manifest.ObjectYamlUtils.YAML_DOCUMENT_DELIMITER;
 import static io.harness.k8s.manifest.ObjectYamlUtils.newLineRegex;
@@ -23,7 +22,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.KubernetesValuesException;
 import io.harness.exception.KubernetesYamlException;
-import io.harness.exception.UnsupportedOperationException;
 import io.harness.exception.WingsException;
 import io.harness.k8s.model.HarnessAnnotations;
 import io.harness.k8s.model.Kind;
@@ -39,13 +37,11 @@ import com.esotericsoftware.yamlbeans.tokenizer.Tokenizer.TokenizerException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
@@ -59,7 +55,6 @@ public class ManifestHelper {
   public static final String values_filename = "values.yaml";
   public static final String yaml_file_extension = ".yaml";
   public static final String yml_file_extension = ".yml";
-  public static final String json_file_extension = ".json";
   public static final String currentReleaseWorkloadExpression = "${k8s.currentReleaseWorkload}";
   public static final String previousReleaseWorkloadExpression = "${k8s.previousReleaseWorkload}";
 

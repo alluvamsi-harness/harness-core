@@ -741,13 +741,13 @@ public class CDStepHelper {
   }
 
   public static List<HelmFetchFileConfig> mapHelmChartManifestsToHelmFetchFileConfig(
-      String identifier, String chartName, List<String> valuesPaths) {
+      String identifier, List<String> valuesPaths) {
     List<HelmFetchFileConfig> helmFetchFileConfigList = new ArrayList<>();
     if (isNotEmpty(valuesPaths)) {
       helmFetchFileConfigList.add(getHelmFetchFileConfigBuilder(identifier, ManifestType.VALUES, valuesPaths, false));
     }
-    helmFetchFileConfigList.add(getHelmFetchFileConfigBuilder(
-        identifier, ManifestType.VALUES, Arrays.asList(chartName + "/" + VALUES_YAML_KEY), true));
+    helmFetchFileConfigList.add(
+        getHelmFetchFileConfigBuilder(identifier, ManifestType.VALUES, Arrays.asList(VALUES_YAML_KEY), true));
     return helmFetchFileConfigList;
   }
 

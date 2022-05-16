@@ -511,8 +511,8 @@ public class K8sStepHelper extends CDStepHelper {
     String accountId = AmbianceUtils.getAccountId(ambiance);
     HelmChartManifestDelegateConfig helmManifest =
         (HelmChartManifestDelegateConfig) getManifestDelegateConfig(k8sManifestOutcome, ambiance);
-    List<HelmFetchFileConfig> helmFetchFileConfigList = mapHelmChartManifestsToHelmFetchFileConfig(
-        k8sManifestOutcome.getIdentifier(), helmManifest.getChartName(), helmManifest.getValuesPaths());
+    List<HelmFetchFileConfig> helmFetchFileConfigList =
+        mapHelmChartManifestsToHelmFetchFileConfig(k8sManifestOutcome.getIdentifier(), helmManifest.getValuesPaths());
     helmFetchFileConfigList.addAll(mapValuesManifestsToHelmFetchFileConfig(aggregatedValuesManifests));
     HelmValuesFetchRequest helmValuesFetchRequest = HelmValuesFetchRequest.builder()
                                                         .accountId(accountId)
@@ -591,14 +591,22 @@ public class K8sStepHelper extends CDStepHelper {
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
     validateManifest(store.getKind(), connectorDTO, validationMessage);
-
-    K8sManifestOutcome helmChartManifestOutcome = (K8sManifestOutcome) k8sManifestOutcome;
+    List<String> valuesPaths;
+    String folderPath;
+    if (ManifestType.K8Manifest.equals(k8sManifestOutcome.getType())) {
+      K8sManifestOutcome manifestOutcome = (K8sManifestOutcome) k8sManifestOutcome;
+      valuesPaths = getParameterFieldValue(manifestOutcome.getValuesPaths());
+      folderPath = getParameterFieldValue(gitStoreConfig.getPaths()).get(0);
+    } else {
+      HelmChartManifestOutcome manifestOutcome = (HelmChartManifestOutcome) k8sManifestOutcome;
+      valuesPaths = getParameterFieldValue(manifestOutcome.getValuesPaths());
+      folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
+    }
     List<GitFetchFilesConfig> gitFetchFilesConfigList = new ArrayList<>();
-    String folderPath = getParameterFieldValue(gitStoreConfig.getFolderPath());
     populateGitFetchFilesConfigListWithValuesPaths(gitFetchFilesConfigList, gitStoreConfig, k8sManifestOutcome,
         connectorDTO, ambiance, identifier, true, Arrays.asList(getValuesYamlGitFilePath(folderPath, VALUES_YAML_KEY)));
     populateGitFetchFilesConfigListWithValuesPaths(gitFetchFilesConfigList, gitStoreConfig, k8sManifestOutcome,
-        connectorDTO, ambiance, identifier, false, getParameterFieldValue(helmChartManifestOutcome.getValuesPaths()));
+        connectorDTO, ambiance, identifier, false, valuesPaths);
     return gitFetchFilesConfigList;
   }
 

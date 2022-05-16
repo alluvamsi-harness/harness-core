@@ -33,11 +33,9 @@ import static io.harness.helm.HelmConstants.V3Commands.HELM_CACHE_HOME;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_CACHE_HOME_PATH;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_ADD_FORCE_UPDATE;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_FLAGS;
-import static io.harness.helm.HelmConstants.VALUES_YAML;
 import static io.harness.helm.HelmConstants.WORKING_DIR_BASE;
 import static io.harness.k8s.kubectl.Utils.encloseWithQuotesIfNeeded;
 import static io.harness.logging.LogLevel.ERROR;
-import static io.harness.logging.LogLevel.INFO;
 import static io.harness.logging.LogLevel.WARN;
 
 import static software.wings.beans.LogColor.White;
@@ -794,14 +792,14 @@ public class HelmTaskHelperBase {
       downloadHelmChartFiles(helmChartManifestDelegateConfig, workingDirectory, timeoutInMillis);
       printHelmChartInfoWithVersionInExecutionLogs(workingDirectory, helmChartManifestDelegateConfig, logCallback);
       logCallback.saveExecutionLog(color("\nFollowing were fetched successfully :", White, Bold));
-      // TODO: Test automation for the case if we have some/path/ChartName then will it pass or fail? Else Change get
-      // chart directory method
+
+      String chartDirectory = getChartDirectory(workingDirectory, helmChartManifestDelegateConfig.getChartName());
       Map<String, List<String>> helmValueFetchFilesResultMap = new HashMap<>();
       if (isNotEmpty(helmFetchFileConfigList)) {
         for (HelmFetchFileConfig helmFetchFileConfig : helmFetchFileConfigList) {
           try {
             List<String> valuesFileContentList =
-                readValuesYamlFromChartFiles(workingDirectory, helmFetchFileConfig, logCallback);
+                readValuesYamlFromChartFiles(chartDirectory, helmFetchFileConfig, logCallback);
             String identifier = helmFetchFileConfig.getIdentifier();
             if (helmValueFetchFilesResultMap.containsKey(identifier)) {
               helmValueFetchFilesResultMap.get(identifier).addAll(valuesFileContentList);

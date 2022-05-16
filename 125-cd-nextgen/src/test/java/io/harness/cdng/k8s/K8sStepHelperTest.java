@@ -738,18 +738,21 @@ public class K8sStepHelperTest extends CategoryTest {
                             .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/")))
                             .connectorRef(ParameterField.createValueField("git-connector"))
                             .build();
-    K8sManifestOutcome k8sManifestOutcome = K8sManifestOutcome.builder()
-                                                .identifier("k8s")
-                                                .store(gitStore)
-                                                .valuesPaths(ParameterField.createValueField(asList("values2.yaml")))
-                                                .build();
+    K8sManifestOutcome k8sManifestOutcome =
+        K8sManifestOutcome.builder()
+            .identifier("k8s")
+            .store(gitStore)
+            .valuesPaths(ParameterField.createValueField(asList("path/to/k8s/manifest/values2.yaml")))
+            .build();
     GitStore gitStore2 = GitStore.builder()
                              .branch(ParameterField.createValueField("master"))
                              .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/values3.yaml")))
                              .connectorRef(ParameterField.createValueField("git-connector"))
                              .build();
     InheritFromManifestStoreConfig inheritFromManifestStore =
-        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("values4.yaml"))).build();
+        InheritFromManifestStoreConfig.builder()
+            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/values4.yaml")))
+            .build();
     ValuesManifestOutcome valuesManifestOutcome1 =
         ValuesManifestOutcome.builder().identifier("override1").store(gitStore2).build();
     ValuesManifestOutcome valuesManifestOutcome2 =
@@ -844,7 +847,7 @@ public class K8sStepHelperTest extends CategoryTest {
         HelmChartManifestOutcome.builder()
             .identifier("helm")
             .store(gitStore)
-            .valuesPaths(ParameterField.createValueField(asList("values2.yaml")))
+            .valuesPaths(ParameterField.createValueField(asList("path/to/helm/chart/values2.yaml")))
             .build();
     GitStore gitStore2 = GitStore.builder()
                              .branch(ParameterField.createValueField("master"))
@@ -852,13 +855,15 @@ public class K8sStepHelperTest extends CategoryTest {
                              .connectorRef(ParameterField.createValueField("git-connector"))
                              .build();
     InheritFromManifestStoreConfig inheritFromManifestStore =
-        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("values4.yaml"))).build();
+        InheritFromManifestStoreConfig.builder()
+            .paths(ParameterField.createValueField(asList("path/to/helm/chart/values4.yaml")))
+            .build();
     ValuesManifestOutcome valuesManifestOutcome1 =
         ValuesManifestOutcome.builder().identifier("override1").store(gitStore2).build();
     ValuesManifestOutcome valuesManifestOutcome2 =
         ValuesManifestOutcome.builder().identifier("override2").store(inheritFromManifestStore).build();
     Map<String, ManifestOutcome> manifestOutcomeMap = ImmutableMap.of(
-        "k8s", helmChartManifestOutcome, "override1", valuesManifestOutcome1, "override2", valuesManifestOutcome2);
+        "helm", helmChartManifestOutcome, "override1", valuesManifestOutcome1, "override2", valuesManifestOutcome2);
     RefObject manifests = RefObject.newBuilder()
                               .setName(OutcomeExpressionConstants.MANIFESTS)
                               .setKey(OutcomeExpressionConstants.MANIFESTS)
@@ -1023,14 +1028,17 @@ public class K8sStepHelperTest extends CategoryTest {
     assertThat(s3StoreConfig.getRepoName()).isEqualTo("helm-s3-repo");
     assertThat(s3StoreConfig.getRepoDisplayName()).isEqualTo("helm-s3-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
-    assertThat(helmFetchFileConfigs.size()).isEqualTo(2);
+    assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
     assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo(helmChartManifestOutcome.getType());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("Values");
     assertThat(helmFetchFileConfigs.get(0).getFilePaths())
         .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
-    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values4.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("Values");
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
+    assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
   }
 
   @Test
@@ -1123,14 +1131,17 @@ public class K8sStepHelperTest extends CategoryTest {
     assertThat(gcsStoreConfig.getRepoName()).isEqualTo("helm-gcs-repo");
     assertThat(gcsStoreConfig.getRepoDisplayName()).isEqualTo("helm-gcs-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
-    assertThat(helmFetchFileConfigs.size()).isEqualTo(2);
+    assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
     assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo(helmChartManifestOutcome.getType());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("Values");
     assertThat(helmFetchFileConfigs.get(0).getFilePaths())
         .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
-    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values4.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("Values");
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
+    assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
   }
 
   @Test
@@ -1218,14 +1229,17 @@ public class K8sStepHelperTest extends CategoryTest {
     assertThat(httpStoreConfig.getRepoName()).isEqualTo("helm-http-repo");
     assertThat(httpStoreConfig.getRepoDisplayName()).isEqualTo("helm-http-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
-    assertThat(helmFetchFileConfigs.size()).isEqualTo(2);
+    assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
     assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo(helmChartManifestOutcome.getType());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("Values");
     assertThat(helmFetchFileConfigs.get(0).getFilePaths())
         .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
-    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values4.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("Values");
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
+    assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
   }
 
   @Test
@@ -2132,12 +2146,14 @@ public class K8sStepHelperTest extends CategoryTest {
                             .connectorRef(ParameterField.createValueField("git-connector"))
                             .build();
     InheritFromManifestStoreConfig inheritFromManifestStore =
-        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("param3.yaml"))).build();
+        InheritFromManifestStoreConfig.builder()
+            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/param3.yaml")))
+            .build();
     OpenshiftManifestOutcome openshiftManifestOutcome =
         OpenshiftManifestOutcome.builder()
             .identifier("OpenShift")
             .store(gitStore)
-            .paramsPaths(ParameterField.createValueField(asList("param2.yaml")))
+            .paramsPaths(ParameterField.createValueField(asList("path/to/k8s/manifest/param2.yaml")))
             .build();
     OpenshiftParamManifestOutcome openshiftParamManifestOutcome1 =
         OpenshiftParamManifestOutcome.builder().identifier("OpenShiftParam1").store(gitStore).build();
@@ -2251,12 +2267,14 @@ public class K8sStepHelperTest extends CategoryTest {
                                    .connectorRef(ParameterField.createValueField("git-connector"))
                                    .build();
     InheritFromManifestStoreConfig inheritFromManifestStore =
-        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("patch2.yaml"))).build();
+        InheritFromManifestStoreConfig.builder()
+            .paths(ParameterField.createValueField(asList("path/to/k8s/manifest/patch2.yaml")))
+            .build();
     KustomizeManifestOutcome kustomizeManifestOutcome =
         KustomizeManifestOutcome.builder()
             .identifier("Kustomize")
             .store(gitStore)
-            .patchesPaths(ParameterField.createValueField(asList("patch3.yaml")))
+            .patchesPaths(ParameterField.createValueField(asList("path/to/k8s/manifest/patch3.yaml")))
             .build();
     KustomizePatchesManifestOutcome kustomizePatchesManifestOutcome1 =
         KustomizePatchesManifestOutcome.builder().identifier("KustomizePatches1").store(gitStorePatches).build();

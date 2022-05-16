@@ -395,7 +395,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         HelmChartManifestOutcome.builder()
             .identifier("helm")
             .store(gitStore)
-            .valuesPaths(ParameterField.createValueField(asList("valuesOverride.yaml")))
+            .valuesPaths(ParameterField.createValueField(asList("path/to/helm/chart/valuesOverride.yaml")))
             .build();
     List<String> overridePaths = new ArrayList<>(asList("folderPath/values2.yaml", "folderPath/values3.yaml"));
     GitStore gitStore2 = GitStore.builder()
@@ -406,7 +406,9 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     ValuesManifestOutcome valuesManifestOutcome1 =
         ValuesManifestOutcome.builder().identifier("helmOverride").store(gitStore2).build();
     InheritFromManifestStoreConfig inheritFromManifestStore =
-        InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("values4.yaml"))).build();
+        InheritFromManifestStoreConfig.builder()
+            .paths(ParameterField.createValueField(asList("path/to/helm/chart/values4.yaml")))
+            .build();
     ValuesManifestOutcome valuesManifestOutcome2 =
         ValuesManifestOutcome.builder().identifier("helmOverride2").store(inheritFromManifestStore).build();
     Map<String, ManifestOutcome> manifestOutcomeMap = ImmutableMap.of(
@@ -575,14 +577,17 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     assertThat(s3StoreConfig.getRepoName()).isEqualTo("helm-s3-repo");
     assertThat(s3StoreConfig.getRepoDisplayName()).isEqualTo("helm-s3-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
-    assertThat(helmFetchFileConfigs.size()).isEqualTo(2);
+    assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
     assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo(helmChartManifestOutcome.getType());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("Values");
     assertThat(helmFetchFileConfigs.get(0).getFilePaths())
         .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
-    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values4.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("Values");
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
+    assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
   }
 
   @Test
@@ -675,14 +680,17 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     assertThat(gcsStoreConfig.getRepoName()).isEqualTo("helm-gcs-repo");
     assertThat(gcsStoreConfig.getRepoDisplayName()).isEqualTo("helm-gcs-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
-    assertThat(helmFetchFileConfigs.size()).isEqualTo(2);
+    assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
     assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo(helmChartManifestOutcome.getType());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("Values");
     assertThat(helmFetchFileConfigs.get(0).getFilePaths())
         .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
-    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values4.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("Values");
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
+    assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
   }
 
   @Test
@@ -770,14 +778,17 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     assertThat(httpStoreConfig.getRepoName()).isEqualTo("helm-http-repo");
     assertThat(httpStoreConfig.getRepoDisplayName()).isEqualTo("helm-http-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
-    assertThat(helmFetchFileConfigs.size()).isEqualTo(2);
+    assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
     assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo(helmChartManifestOutcome.getType());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("Values");
     assertThat(helmFetchFileConfigs.get(0).getFilePaths())
         .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
-    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values4.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("Values");
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
+    assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
   }
 
   @Test
