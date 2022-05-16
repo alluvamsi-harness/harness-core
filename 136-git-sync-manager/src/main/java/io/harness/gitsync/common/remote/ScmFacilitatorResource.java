@@ -263,7 +263,6 @@ public class ScmFacilitatorResource {
                                               .setRepoName(repoName)
                                               .setBranchName(branch)
                                               .setFilePath(filePath)
-                                              .setCommitId(commitId)
                                               .setConnectorRef(connectorRef)
                                               .build()));
   }

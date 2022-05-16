@@ -86,7 +86,6 @@ public class SCMGitSyncHelper {
         GetFileRequest.newBuilder()
             .setRepoName(repoName)
             .setConnectorRef(connectorRef)
-            .setCommitId(Strings.nullToEmpty(commitId))
             .setBranchName(Strings.nullToEmpty(branchName))
             .setFilePath(filePath)
             .putAllContextMap(contextMap)
