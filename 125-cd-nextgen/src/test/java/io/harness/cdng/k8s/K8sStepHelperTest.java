@@ -1640,8 +1640,8 @@ public class K8sStepHelperTest extends CategoryTest {
         InheritFromManifestStoreConfig.builder().paths(ParameterField.createValueField(asList("values4.yaml"))).build();
     ValuesManifestOutcome valuesManifestOutcome2 =
         ValuesManifestOutcome.builder().identifier("helmOverride2").store(inheritFromManifestStore).build();
-    Map<String, ManifestOutcome> manifestOutcomeMap = ImmutableMap.of(
-        "k8s", helmChartManifestOutcome, "k8sOverride", valuesManifestOutcome1, "k8sOverride2", valuesManifestOutcome2);
+    Map<String, ManifestOutcome> manifestOutcomeMap = ImmutableMap.of(manifestIdentifier, helmChartManifestOutcome,
+        "helmOverride", valuesManifestOutcome1, "helmOverride2", valuesManifestOutcome2);
     ManifestsOutcome manifestOutcomes = (ManifestsOutcome) OptionalOutcome.builder()
                                             .found(true)
                                             .outcome(new ManifestsOutcome(manifestOutcomeMap))
@@ -1661,7 +1661,7 @@ public class K8sStepHelperTest extends CategoryTest {
         K8sStepPassThroughData.builder()
             .k8sManifestOutcome(K8sManifestOutcome.builder().identifier(manifestIdentifier).build())
             .infrastructure(K8sDirectInfrastructureOutcome.builder().build())
-            .manifestOutcomeList(new ArrayList<>(aggregatedValuesManifests))
+            .manifestOutcomeList(new ArrayList<>(orderedValuesManifests))
             .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
