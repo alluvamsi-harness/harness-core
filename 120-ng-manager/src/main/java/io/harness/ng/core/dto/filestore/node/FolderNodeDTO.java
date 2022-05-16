@@ -32,8 +32,9 @@ public final class FolderNodeDTO extends FileStoreNodeDTO {
   @Schema(description = "Node children") private final List<FileStoreNodeDTO> children = new ArrayList<>();
 
   @Builder
-  public FolderNodeDTO(String identifier, String name, Long lastModifiedAt, EmbeddedUserDetailsDTO lastModifiedBy) {
-    super(NGFileType.FOLDER, identifier, name, lastModifiedAt, lastModifiedBy);
+  public FolderNodeDTO(String identifier, String parentIdentifier, String name, Long lastModifiedAt,
+      EmbeddedUserDetailsDTO lastModifiedBy) {
+    super(NGFileType.FOLDER, identifier, parentIdentifier, name, lastModifiedAt, lastModifiedBy);
   }
 
   public FileStoreNodeDTO addChild(FileStoreNodeDTO child) {

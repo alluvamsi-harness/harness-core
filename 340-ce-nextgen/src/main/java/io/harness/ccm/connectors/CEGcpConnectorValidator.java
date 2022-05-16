@@ -225,7 +225,7 @@ public class CEGcpConnectorValidator extends io.harness.ccm.connectors.AbstractC
             + " exists. For more information, refer to the documentation.";
       } else if (!be.getMessage().isEmpty() && be.getMessage().contains("Access Denied")) {
         message = "Provide 'BigQuery Data Viewer' role to service account " + impersonatedServiceAccount
-            + "on the dataset. For more information, refer to the documentation." + datasetId;
+            + "on the dataset. For more information, refer to the documentation.";
       }
       return ConnectorValidationResult.builder()
           .status(ConnectivityStatus.FAILURE)

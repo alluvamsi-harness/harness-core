@@ -149,3 +149,5 @@ basePathPrefix: ${BASE_PATH_PREFIX:-""}
 secretsConfiguration:
   secretResolutionEnabled: false
   gcpSecretManagerProject: ccm-play
+
+awsConnectorCreatedInstantForPolicyCheck: "2022-05-05T00:00:00.00Z"

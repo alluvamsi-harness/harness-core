@@ -202,4 +202,10 @@ public class SCMServiceGitClientImpl implements ScmClient {
   public GetUserReposResponse getAllUserRepos(ScmConnector scmConnector) {
     return scmServiceClient.getAllUserRepos(scmConnector, scmBlockingStub);
   }
+
+  @Override
+  public CreateBranchResponse createNewBranchV2(
+      ScmConnector scmConnector, String newBranchName, String baseBranchName) {
+    return scmServiceClient.createNewBranchV2(scmConnector, newBranchName, baseBranchName, scmBlockingStub);
+  }
 }
