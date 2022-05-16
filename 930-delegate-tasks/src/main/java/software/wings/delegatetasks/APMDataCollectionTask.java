@@ -754,7 +754,7 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
         }
         // Heartbeat
         int heartbeatCounter = 0;
-        records.put(HARNESS_HEARTBEAT_METRIC_NAME + group, (long) heartbeatCounter++,
+        NewRelicMetricDataRecord heartbeat =
             NewRelicMetricDataRecord.builder()
                 .stateType(getStateType())
                 .name(HARNESS_HEARTBEAT_METRIC_NAME)
@@ -768,7 +768,9 @@ public class APMDataCollectionTask extends AbstractDelegateDataCollectionTask {
                 .timeStamp(collectionStartTime)
                 .level(ClusterLevel.H0)
                 .groupName(group)
-                .build());
+                .build();
+        log.info("adding heartbeat: {}", heartbeat);
+        records.put(HARNESS_HEARTBEAT_METRIC_NAME + group, (long) heartbeatCounter++, heartbeat);
       }
     }
   }
