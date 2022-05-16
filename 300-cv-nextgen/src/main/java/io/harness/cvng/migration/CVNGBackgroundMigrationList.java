@@ -20,6 +20,7 @@ import io.harness.cvng.migration.list.AddMonitoredServiceToHeatMapMigration;
 import io.harness.cvng.migration.list.AddMonitoredServiceToWebhookMigration;
 import io.harness.cvng.migration.list.AddMonitoringSourcesToVerificationJobMigration;
 import io.harness.cvng.migration.list.AddTaskInfoToVerificationTask;
+import io.harness.cvng.migration.list.AppDCVConfigCompleteMetricPathMigration;
 import io.harness.cvng.migration.list.AppDCustomMetricForExistingProjects;
 import io.harness.cvng.migration.list.CVNGBaseMigration;
 import io.harness.cvng.migration.list.CleanUpMonitoringSourcePerpetualTask;
@@ -107,6 +108,7 @@ public class CVNGBackgroundMigrationList {
         .add(Pair.of(44, DeleteOldAnalysisOrchestratorMigration.class))
         .add(Pair.of(45, AddMetricIdentifierInCVConfigsAndMetricPacks.class))
         .add(Pair.of(46, AddMetricIdentifierToTimeSeriesThreshold.class))
+        .add(Pair.of(47, AppDCVConfigCompleteMetricPathMigration.class))
         .build();
   }
 }

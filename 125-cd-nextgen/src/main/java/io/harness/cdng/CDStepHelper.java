@@ -533,6 +533,8 @@ public class CDStepHelper {
         }
         break;
 
+      case ManifestStoreType.INLINE:
+        break;
       default:
         throw new UnsupportedOperationException(format("Unknown manifest store type: [%s]", manifestStoreType));
     }

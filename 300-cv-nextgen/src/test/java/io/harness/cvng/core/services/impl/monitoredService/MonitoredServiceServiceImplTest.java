@@ -25,7 +25,6 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -102,7 +101,6 @@ import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceServic
 import io.harness.cvng.core.services.api.monitoredService.ServiceDependencyService;
 import io.harness.cvng.core.services.impl.ChangeSourceUpdateHandler;
 import io.harness.cvng.core.services.impl.PagerdutyChangeSourceUpdateHandler;
-import io.harness.cvng.core.utils.template.TemplateFacade;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
@@ -175,7 +173,6 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Inject CVNGLogService cvngLogService;
   @Inject VerificationTaskService verificationTaskService;
   @Inject NotificationRuleService notificationRuleService;
-  @Inject TemplateFacade templateFacade;
   @Inject private ActivityService activityService;
   @Mock SetupUsageEventService setupUsageEventService;
   @Mock ChangeSourceService changeSourceServiceMock;
@@ -305,6 +302,9 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testCreateFromYaml() {
     String yaml = "monitoredService:\n"
+        + "  template:\n"
+        + "   templateRef: templateRef123\n"
+        + "   versionLabel: versionLabel123\n"
         + "  type: Application\n"
         + "  description: description\n"
         + "  identifier: <+monitoredService.serviceRef>\n"
@@ -319,7 +319,6 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
         + "    -   name: environmentIdentifier\n"
         + "        type: String\n"
         + "        value: env3";
-    when(templateFacade.resolveYaml(any(), eq(yaml))).thenReturn(yaml);
     MonitoredServiceResponse monitoredServiceResponse =
         monitoredServiceService.createFromYaml(builderFactory.getProjectParams(), yaml);
     MonitoredServiceResponse monitoredServiceResponseFromDb =
@@ -327,6 +326,10 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO()).isNotNull();
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getName()).isEqualTo("service1");
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getEnvironmentRef()).isEqualTo("env3");
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getTemplate().getTemplateRef())
+        .isEqualTo("templateRef123");
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getTemplate().getVersionLabel())
+        .isEqualTo("versionLabel123");
   }
 
   @Test
@@ -345,7 +348,6 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
         + "  sources:\n"
         + "    healthSources:\n"
         + "    changeSources: \n";
-    when(templateFacade.resolveYaml(any(), eq(yaml))).thenReturn(yaml);
     assertThatThrownBy(() -> monitoredServiceService.createFromYaml(builderFactory.getProjectParams(), yaml))
         .hasMessage("Infinite loop in variable interpretation");
   }
@@ -575,10 +577,11 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
                                                                        .category(CVMonitoringCategory.ERRORS)
                                                                        .metricType(TimeSeriesMetricType.INFRA)
                                                                        .build())
-                                                      .deploymentVerification(DeploymentVerificationDTO.builder()
-                                                                                  .enabled(true)
-                                                                                  .serviceInstanceMetricPath("path")
-                                                                                  .build())
+                                                      .deploymentVerification(
+                                                          DeploymentVerificationDTO.builder()
+                                                              .enabled(true)
+                                                              .serviceInstanceMetricPath("Individual Nodes|*|path")
+                                                              .build())
                                                       .liveMonitoring(LiveMonitoringDTO.builder().enabled(true).build())
                                                       .build())
                                               .build()))
@@ -633,10 +636,11 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
                                                                        .category(CVMonitoringCategory.ERRORS)
                                                                        .metricType(TimeSeriesMetricType.INFRA)
                                                                        .build())
-                                                      .deploymentVerification(DeploymentVerificationDTO.builder()
-                                                                                  .enabled(true)
-                                                                                  .serviceInstanceMetricPath("path")
-                                                                                  .build())
+                                                      .deploymentVerification(
+                                                          DeploymentVerificationDTO.builder()
+                                                              .enabled(true)
+                                                              .serviceInstanceMetricPath("|Individual Nodes|*|path")
+                                                              .build())
                                                       .liveMonitoring(LiveMonitoringDTO.builder().enabled(true).build())
                                                       .build())
                                               .build()))

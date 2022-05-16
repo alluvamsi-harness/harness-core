@@ -37,7 +37,6 @@ import io.harness.cvng.client.VerificationManagerService;
 import io.harness.cvng.core.NGManagerServiceConfig;
 import io.harness.cvng.core.services.api.FeatureFlagService;
 import io.harness.cvng.core.services.impl.AlwaysFalseFeatureFlagServiceImpl;
-import io.harness.cvng.core.utils.template.TemplateFacade;
 import io.harness.factory.ClosingFactory;
 import io.harness.factory.ClosingFactoryModule;
 import io.harness.ff.FeatureFlagConfig;
@@ -47,6 +46,10 @@ import io.harness.lock.PersistentLockModule;
 import io.harness.metrics.modules.MetricsModule;
 import io.harness.mongo.MongoPersistence;
 import io.harness.morphia.MorphiaRegistrar;
+import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.template.TemplateApplyRequestDTO;
+import io.harness.ng.core.template.TemplateMergeResponseDTO;
+import io.harness.ng.core.template.TemplateReferenceSummary;
 import io.harness.notification.MongoBackendConfiguration;
 import io.harness.notification.NotificationClientConfiguration;
 import io.harness.notification.constant.NotificationClientSecrets;
@@ -58,6 +61,7 @@ import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.serializer.CvNextGenRegistrars;
 import io.harness.serializer.KryoModule;
 import io.harness.serializer.KryoRegistrar;
+import io.harness.template.remote.TemplateResourceClient;
 import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.testlib.module.TestMongoModule;
 import io.harness.threading.CurrentThreadExecutor;
@@ -79,8 +83,10 @@ import java.io.File;
 import java.lang.annotation.Annotation;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +94,11 @@ import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.mongodb.morphia.converters.TypeConverter;
+import org.yaml.snakeyaml.Yaml;
+import retrofit2.Call;
+import retrofit2.Response;
 
 @Slf4j
 public class CvNextGenRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin {
@@ -148,7 +158,7 @@ public class CvNextGenRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
       binder.bind(FeatureFlagService.class).to(AlwaysFalseFeatureFlagServiceImpl.class);
       binder.bind(VerificationManagerService.class).to(MockedVerificationManagerService.class);
       binder.bind(Clock.class).toInstance(CVNGTestConstants.FIXED_TIME_FOR_TESTS);
-      binder.bind(TemplateFacade.class).toInstance(Mockito.mock(TemplateFacade.class));
+      binder.bind(TemplateResourceClient.class).toInstance(getMockedTemplateResourceClient());
       binder.bind(NextGenService.class).to(FakeNextGenService.class);
     }));
     MongoBackendConfiguration mongoBackendConfiguration =
@@ -251,5 +261,42 @@ public class CvNextGenRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
   @Override
   public Statement apply(Statement statement, FrameworkMethod frameworkMethod, Object target) {
     return applyInjector(log, statement, frameworkMethod, target);
+  }
+
+  private TemplateResourceClient getMockedTemplateResourceClient() {
+    TemplateResourceClient templateResourceClient = Mockito.mock(TemplateResourceClient.class);
+    Mockito
+        .when(templateResourceClient.applyTemplatesOnGivenYaml(
+            Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenAnswer((Answer<Call<ResponseDTO<TemplateMergeResponseDTO>>>) invocation -> {
+          TemplateApplyRequestDTO templateApplyRequestDTO = (TemplateApplyRequestDTO) invocation.getArguments()[6];
+          String yaml = templateApplyRequestDTO.getOriginalEntityYaml();
+          Yaml yamlObject = new Yaml();
+          Map<String, Object> data = yamlObject.load(yaml);
+          TemplateReferenceSummary templateReferenceSummary =
+              TemplateReferenceSummary.builder()
+                  .templateIdentifier(getFromYamlMap(data, "monitoredService", "template", "templateRef"))
+                  .versionLabel(getFromYamlMap(data, "monitoredService", "template", "versionLabel"))
+                  .build();
+          Call<ResponseDTO<TemplateMergeResponseDTO>> call = Mockito.mock(Call.class);
+          Mockito.when(call.execute())
+              .thenReturn(Response.success(ResponseDTO.newResponse(
+                  TemplateMergeResponseDTO.builder()
+                      .mergedPipelineYaml(yaml)
+                      .templateReferenceSummaries(Collections.singletonList(templateReferenceSummary))
+                      .build())));
+          return call;
+        });
+    return templateResourceClient;
+  }
+
+  private String getFromYamlMap(Map<String, Object> data, String... paths) {
+    for (int i = 0; i < paths.length - 1; i++) {
+      if (!data.containsKey(paths[i])) {
+        return null;
+      }
+      data = (Map<String, Object>) data.get(paths[i]);
+    }
+    return (String) data.get(paths[paths.length - 1]);
   }
 }

@@ -77,7 +77,7 @@ public class ManifestStep implements SyncExecutable<ManifestStepParameters> {
         .status(Status.SUCCEEDED)
         .stepOutcome(StepOutcome.builder()
                          .name("output")
-                         .outcome(ManifestOutcomeMapper.toManifestOutcome(finalManifest, stepParameters))
+                         .outcome(ManifestOutcomeMapper.toManifestOutcome(finalManifest, stepParameters.getOrder()))
                          .build())
         .build();
   }
