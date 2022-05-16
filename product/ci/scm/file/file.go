@@ -55,9 +55,31 @@ func FindFile(ctx context.Context, fileRequest *pb.GetFileRequest, log *zap.Suga
 	}
 	log.Infow("Findfile success", "slug", fileRequest.GetSlug(), "path", fileRequest.GetPath(), "ref", ref, "commit id",
 		content.Sha, "blob id", content.BlobID, "elapsed_time_ms", utils.TimeSince(start))
+
+    commitId := content.Sha
+	if commitId == ""{
+	    // If the sha is not returned then we fetch the latest sha of the file
+        request := &pb.GetLatestCommitOnFileRequest{
+            Slug:     fileRequest.Slug,
+            Branch:   fileRequest.GetBranch(),
+            Provider: fileRequest.GetProvider(),
+            FilePath: fileRequest.GetPath(),
+        }
+        response, err := git.GetLatestCommitOnFile(ctx, request, log)
+        if err != nil {
+            out = &pb.FileContent{
+                Error:  err.Error(),
+                Path:   fileRequest.GetPath(),
+            }
+            return out, nil
+        }else {
+            commitId = response.GetCommitId()
+        }
+	}
+
 	out = &pb.FileContent{
 		Content:  string(content.Data),
-		CommitId: content.Sha,
+		CommitId: commitId,
 		BlobId:   content.BlobID,
 		Status:   int32(response.Status),
 		Path:     fileRequest.Path,
