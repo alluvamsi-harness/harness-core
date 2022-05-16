@@ -23,6 +23,7 @@ public class ServerlessAwsLambdaDeploymentInfoMapper {
         .serviceName(serverlessAwsLambdaDeploymentInfo.getServiceName())
         .region(serverlessAwsLambdaDeploymentInfo.getRegion())
         .functions(serverlessAwsLambdaDeploymentInfo.getFunctions())
+        .infraStructureKey(serverlessAwsLambdaDeploymentInfo.getInfraStructureKey())
         .build();
   }
 
@@ -32,6 +33,7 @@ public class ServerlessAwsLambdaDeploymentInfoMapper {
         .serviceName(serverlessAwsLambdaDeploymentInfoDTO.getServiceName())
         .region(serverlessAwsLambdaDeploymentInfoDTO.getRegion())
         .functions(serverlessAwsLambdaDeploymentInfoDTO.getFunctions())
+        .infraStructureKey(serverlessAwsLambdaDeploymentInfoDTO.getInfraStructureKey())
         .build();
   }
 }

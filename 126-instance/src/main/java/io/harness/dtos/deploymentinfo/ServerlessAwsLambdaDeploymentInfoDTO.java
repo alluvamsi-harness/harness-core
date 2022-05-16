@@ -29,6 +29,8 @@ public class ServerlessAwsLambdaDeploymentInfoDTO extends DeploymentInfoDTO {
   @NotNull private String serviceName;
   @NotNull private String region;
   @NotNull private List<String> functions;
+  @NotNull private String infraStructureKey;
+
   @Override
   public String getType() {
     return ServiceSpecType.SERVERLESS_AWS_LAMBDA;
@@ -36,7 +38,6 @@ public class ServerlessAwsLambdaDeploymentInfoDTO extends DeploymentInfoDTO {
 
   @Override
   public String prepareInstanceSyncHandlerKey() {
-    return InstanceSyncKey.builder().part(serviceName).build().toString();
-    // todo: need to check and change if required
+    return InstanceSyncKey.builder().part(infraStructureKey).build().toString();
   }
 }

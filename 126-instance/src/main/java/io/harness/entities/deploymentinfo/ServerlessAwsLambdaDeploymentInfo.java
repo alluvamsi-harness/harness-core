@@ -24,4 +24,5 @@ public class ServerlessAwsLambdaDeploymentInfo extends DeploymentInfo {
   @NotNull private String serviceName;
   @NotNull private String region;
   @NotNull private List<String> functions;
+  @NotNull private String infraStructureKey;
 }

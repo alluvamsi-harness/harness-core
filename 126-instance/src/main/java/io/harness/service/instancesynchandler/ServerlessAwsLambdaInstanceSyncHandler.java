@@ -85,6 +85,7 @@ public class ServerlessAwsLambdaInstanceSyncHandler extends AbstractInstanceSync
         .serviceName(serverlessAwsLambdaServerInstanceInfo.getServerlessServiceName())
         .region(serverlessAwsLambdaServerInstanceInfo.getRegion())
         .functions(functions)
+        .infraStructureKey(serverlessAwsLambdaServerInstanceInfo.getInfraStructureKey())
         .build();
   }
 
