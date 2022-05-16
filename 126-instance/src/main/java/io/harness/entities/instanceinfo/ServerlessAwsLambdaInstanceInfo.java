@@ -20,13 +20,18 @@ import lombok.EqualsAndHashCode;
 @Builder
 @EqualsAndHashCode(callSuper = true)
 public class ServerlessAwsLambdaInstanceInfo extends InstanceInfo {
+  // serverless details
   @NotNull private String serviceName;
+  @NotNull private String stage;
+
+  // lambda function details
   @NotNull private String functionName;
   @NotNull private String region;
-  private String stage;
   private String handler;
   private String memorySize;
   private String runTime;
   private Integer timeout;
-  // todo: need to check required object
+
+  // harness
+  private String infraStructureKey;
 }

@@ -333,9 +333,11 @@ public class ServerlessTaskHelperBase {
         if (awsLambdaFunctionDetails != null) {
           ServerlessAwsLambdaServerInstanceInfo serverlessAwsLambdaServerInstanceInfo =
               ServerlessAwsLambdaServerInstanceInfo.getServerlessAwsLambdaServerInstanceInfo(
-                  deploymentReleaseData.getServiceName(), deploymentReleaseData.getRegion(),
+                  deploymentReleaseData.getServiceName(), serverlessAwsLambdaInfraConfig.getStage(),
+                  deploymentReleaseData.getRegion(),
                   awsLambdaHelperServiceDelegateNG.getAwsLambdaFunctionDetails(
-                      awsInternalConfig, function, deploymentReleaseData.getRegion()));
+                      awsInternalConfig, function, deploymentReleaseData.getRegion()),
+                  serverlessAwsLambdaInfraConfig.getInfraStructureKey());
           serverInstanceInfoList.add(serverlessAwsLambdaServerInstanceInfo);
         }
       }

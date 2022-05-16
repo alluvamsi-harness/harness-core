@@ -27,6 +27,7 @@ public class ServerlessAwsLambdaInstanceInfoMapper {
         .serviceName(serverlessAwsLambdaInstanceInfo.getServiceName())
         .stage(serverlessAwsLambdaInstanceInfo.getStage())
         .timeout(serverlessAwsLambdaInstanceInfo.getTimeout())
+        .infraStructureKey(serverlessAwsLambdaInstanceInfo.getInfraStructureKey())
         .build();
   }
 
@@ -41,6 +42,7 @@ public class ServerlessAwsLambdaInstanceInfoMapper {
         .runTime(serverlessAwsLambdaInstanceInfoDTO.getRunTime())
         .stage(serverlessAwsLambdaInstanceInfoDTO.getStage())
         .timeout(serverlessAwsLambdaInstanceInfoDTO.getTimeout())
+        .infraStructureKey(serverlessAwsLambdaInstanceInfoDTO.getInfraStructureKey())
         .build();
   }
 }

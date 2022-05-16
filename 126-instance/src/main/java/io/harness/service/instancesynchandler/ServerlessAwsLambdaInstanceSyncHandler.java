@@ -107,6 +107,7 @@ public class ServerlessAwsLambdaInstanceSyncHandler extends AbstractInstanceSync
         .runTime(serverlessAwsLambdaServerInstanceInfo.getRunTime())
         .memorySize(serverlessAwsLambdaServerInstanceInfo.getMemorySize())
         .region(serverlessAwsLambdaServerInstanceInfo.getRegion())
+        .infraStructureKey(serverlessAwsLambdaServerInstanceInfo.getInfraStructureKey())
         .build();
   }
 }

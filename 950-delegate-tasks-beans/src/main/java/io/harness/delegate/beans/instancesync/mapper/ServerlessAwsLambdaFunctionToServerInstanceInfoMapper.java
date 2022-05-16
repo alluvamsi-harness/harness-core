@@ -21,14 +21,15 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(HarnessTeam.CDP)
 public class ServerlessAwsLambdaFunctionToServerInstanceInfoMapper {
   public List<ServerInstanceInfo> toServerInstanceInfoList(
-      List<ServerlessAwsLambdaFunction> serverlessAwsLambdaFunctions, String region, String stage, String serviceName) {
+      List<ServerlessAwsLambdaFunction> serverlessAwsLambdaFunctions, String region, String stage, String serviceName,
+      String infraStructureKey) {
     return serverlessAwsLambdaFunctions.stream()
-        .map(func -> toServerInstanceInfo(func, region, stage, serviceName))
+        .map(func -> toServerInstanceInfo(func, region, stage, serviceName, infraStructureKey))
         .collect(Collectors.toList());
   }
 
-  public ServerInstanceInfo toServerInstanceInfo(
-      ServerlessAwsLambdaFunction serverlessAwsLambdaFunction, String region, String stage, String serviceName) {
+  public ServerInstanceInfo toServerInstanceInfo(ServerlessAwsLambdaFunction serverlessAwsLambdaFunction, String region,
+      String stage, String serviceName, String infraStructureKey) {
     return ServerlessAwsLambdaServerInstanceInfo.builder()
         .serverlessServiceName(serviceName)
         .region(region)
@@ -38,6 +39,7 @@ public class ServerlessAwsLambdaFunctionToServerInstanceInfoMapper {
         .memorySize(serverlessAwsLambdaFunction.getMemorySize())
         .runTime(serverlessAwsLambdaFunction.getRunTime())
         .timeout(serverlessAwsLambdaFunction.getTimeout())
+        .infraStructureKey(infraStructureKey)
         .build();
   }
 }

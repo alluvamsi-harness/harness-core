@@ -21,30 +21,34 @@ import lombok.EqualsAndHashCode;
 @Builder
 @EqualsAndHashCode(callSuper = true)
 public class ServerlessAwsLambdaInstanceInfoDTO extends InstanceInfoDTO {
+  // serverless details
   @NotNull private String serviceName;
+  @NotNull private String stage;
+
+  // lambda function details
   @NotNull private String functionName;
   @NotNull private String region;
-  private String stage;
   private String handler;
   private String memorySize;
   private String runTime;
   private Integer timeout;
 
+  // harness
+  private String infraStructureKey;
+
   @Override
   public String prepareInstanceKey() {
     return InstanceSyncKey.builder()
         .clazz(ServerlessAwsLambdaInstanceInfoDTO.class)
-        .part(serviceName)
+        .part(infraStructureKey)
         .part(functionName)
         .build()
         .toString();
-    // todo: need to confirm this
   }
 
   @Override
   public String prepareInstanceSyncHandlerKey() {
-    return InstanceSyncKey.builder().part(serviceName).build().toString();
-    // todo: need to check and change if required
+    return InstanceSyncKey.builder().part(infraStructureKey).build().toString();
   }
 
   @Override

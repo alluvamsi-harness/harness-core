@@ -40,15 +40,22 @@ public class ServerlessAwsLambdaServerInstanceInfo extends ServerInstanceInfo {
   private int invocationsCount;
   private int errorsCount;
 
+  // harness
+  private String infraStructureKey;
+
   public static ServerlessAwsLambdaServerInstanceInfo getServerlessAwsLambdaServerInstanceInfo(
-      String serverlessServiceName, String region, AwsLambdaFunctionDetails awsLambdaFunctionDetails) {
+      String serverlessServiceName, String serverlessStage, String region,
+      AwsLambdaFunctionDetails awsLambdaFunctionDetails, String infraStructureKey) {
     return ServerlessAwsLambdaServerInstanceInfo.builder()
+        .serverlessServiceName(serverlessServiceName)
+        .serverlessStage(serverlessStage)
         .region(region)
         .functionName(awsLambdaFunctionDetails.getFunctionName())
         .handler(awsLambdaFunctionDetails.getHandler())
         .memorySize(awsLambdaFunctionDetails.getMemorySize())
         .runTime(awsLambdaFunctionDetails.getRunTime())
         .timeout(awsLambdaFunctionDetails.getTimeout())
+        .infraStructureKey(infraStructureKey)
         .build();
   }
 }
