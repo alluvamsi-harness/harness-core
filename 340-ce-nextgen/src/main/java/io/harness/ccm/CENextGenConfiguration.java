@@ -100,6 +100,8 @@ public class CENextGenConfiguration extends Configuration {
 
   @JsonProperty(value = "hostname") private String hostname = "localhost";
   @JsonProperty(value = "basePathPrefix") private String basePathPrefix = "";
+  @JsonProperty(value = "awsConnectorCreatedInstantForPolicyCheck")
+  private String awsConnectorCreatedInstantForPolicyCheck;
 
   @JsonProperty("secretsConfiguration") private SecretsConfiguration secretsConfiguration;
 

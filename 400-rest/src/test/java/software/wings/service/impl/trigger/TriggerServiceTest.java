@@ -527,6 +527,7 @@ public class TriggerServiceTest extends WingsBaseTest {
 
     verify(pipelineService, times(2)).readPipeline(APP_ID, PIPELINE_ID, true);
   }
+
   @Test
   @Owner(developers = ATHARVA)
   @Category(UnitTests.class)
@@ -536,17 +537,19 @@ public class TriggerServiceTest extends WingsBaseTest {
     workflowVariables.put("var2", "val2");
     Variable var1 = new Variable();
     var1.setName("var1");
+    var1.setAllowedList(asList("val1", "val3"));
     Variable var2 = new Variable();
     var2.setName("var2");
-    var1.setAllowedValues("val1,val3");
-    var2.setAllowedValues("val4,val5");
+    var2.setAllowedList(asList("val4", "val5"));
     List<Variable> allowedValues = new ArrayList<>();
     allowedValues.add(var1);
     allowedValues.add(var2);
-    assertThatThrownBy(() -> TriggerServiceImpl.validateWorkflowVariable(workflowVariables, allowedValues))
-        .isInstanceOf(WingsException.class)
-        .hasMessageContaining("Trigger rejected because a passed workflow variable was not present in allowed values");
+    assertThatThrownBy(() -> triggerService.validateWorkflowVariable(workflowVariables, allowedValues))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "Trigger rejected because passed workflow variable value val2 was not present in allowed values list [val4,val5]");
   }
+
   @Test(expected = InvalidRequestException.class)
   @Owner(developers = MILOS)
   @Category(UnitTests.class)

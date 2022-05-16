@@ -10,7 +10,10 @@ package io.harness.template.beans.refresh;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import io.swagger.annotations.ApiModel;
+
 @OwnedBy(HarnessTeam.CDC)
+@ApiModel(subTypes = {TemplateRefreshRequestDTO.class, PipelineRefreshRequestDTO.class})
 public interface RefreshRequestDTO {
   RefreshRequestType getType();
 }

@@ -8,7 +8,6 @@
 package io.harness.gitsync.common.scmerrorhandling.handlers.github;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.gitsync.common.scmerrorhandling.handlers.github.ScmErrorHints.INVALID_CREDENTIALS;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.NestedExceptionUtils;
@@ -22,8 +21,7 @@ import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
 @OwnedBy(PL)
 public class GithubUpdateFileScmApiErrorHandler implements ScmApiErrorHandler {
-  public static final String UPDATE_FILE_WITH_INVALID_CREDS =
-      "The requested file couldn't be updated. " + ScmErrorExplanations.INVALID_CONNECTOR_CREDS;
+  public static final String UPDATE_FILE_FAILED = "The requested file couldn't be updated. ";
   public static final String UPDATE_FILE_NOT_FOUND_ERROR_HINT = "Please check the following:\n"
       + "1. If requested Github repository exists or not.\n"
       + "2. If requested branch exists or not.";
@@ -45,8 +43,9 @@ public class GithubUpdateFileScmApiErrorHandler implements ScmApiErrorHandler {
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(
-            INVALID_CREDENTIALS, UPDATE_FILE_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+        throw NestedExceptionUtils.hintWithExplanationException(ScmErrorHints.INVALID_CREDENTIALS,
+            UPDATE_FILE_FAILED + ScmErrorExplanations.INVALID_CONNECTOR_CREDS,
+            new ScmUnauthorizedException(errorMessage));
       case 404:
         throw NestedExceptionUtils.hintWithExplanationException(UPDATE_FILE_NOT_FOUND_ERROR_HINT,
             UPDATE_FILE_NOT_FOUND_ERROR_EXPLANATION, new ScmResourceNotFoundException(errorMessage));

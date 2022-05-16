@@ -73,7 +73,6 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
   @Autowired private FeatureFlagService featureFlagService;
 
   private static final int BATCH_SIZE = 20;
-  private static final int AVG_UTILIZATION_WEIGHT = 2;
   private static final int MAX_UTILIZATION_WEIGHT = 1;
   private static final int RECOMMENDATION_FOR_DAYS = 7;
   private static final Set<Integer> requiredPercentiles = ImmutableSet.of(50, 80, 90, 95, 99);
@@ -118,6 +117,11 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
           continue;
         }
         Resource resource = serviceArnToResourceMapping.get(clusterIdAndServiceArn.getServiceArn());
+        if (resource.getCpuUnits().equals(0.0) || resource.getMemoryMb().equals(0.0)) {
+          log.debug("Skipping ECS recommendation as resource value is zero for accountId : {}, service arn: {}",
+              accountId, serviceArn);
+          continue;
+        }
         long cpuMilliUnits = BigDecimal.valueOf(resource.getCpuUnits()).scaleByPowerOfTen(3).longValue();
         long memoryBytes = BigDecimal.valueOf(resource.getMemoryMb()).scaleByPowerOfTen(6).longValue();
         List<ECSUtilizationData> utilData = utilMap.get(clusterIdAndServiceArn);
@@ -319,16 +323,12 @@ public class AwsECSServiceRecommendationTasklet implements Tasklet {
     // utilization data is in percentage
     if (resourceType.equals(CPU)) {
       for (ECSUtilizationData utilizationForHour : utilizationForDay) {
-        histogram.addSample(utilizationForHour.getAvgCpuUtilization() * maxUnits, AVG_UTILIZATION_WEIGHT,
-            utilizationForHour.getStartTime());
         histogram.addSample(utilizationForHour.getMaxCpuUtilization() * maxUnits, MAX_UTILIZATION_WEIGHT,
             utilizationForHour.getStartTime());
       }
     } else if (resourceType.equals(MEMORY)) {
       for (ECSUtilizationData utilizationForHour : utilizationForDay) {
-        histogram.addSample(utilizationForHour.getAvgMemoryUtilization() * maxUnits, AVG_UTILIZATION_WEIGHT,
-            utilizationForHour.getStartTime());
-        histogram.addSample(utilizationForHour.getAvgMemoryUtilization() * maxUnits, MAX_UTILIZATION_WEIGHT,
+        histogram.addSample(utilizationForHour.getMaxMemoryUtilization() * maxUnits, MAX_UTILIZATION_WEIGHT,
             utilizationForHour.getStartTime());
       }
     }

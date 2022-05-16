@@ -10,6 +10,7 @@ Abhinav Singh abhinav.singh2@harness.io
 Achyuth Prakash achyuth.prakash@harness.io
 Adam Hancock adam.hancock@harness.io
 Adarsh Agarwal adarsh.agarwal@harness.io
+Adithya Viswanathan adithya.viswanathan@harness.io
 Adwait Bhandare adwait.bhandare@harness.io
 Akash Nagarajan akash.nagarajan@harness.io
 akriti-harness akriti.garg@harness.io
@@ -260,6 +261,7 @@ Naman Goenka naman.goenka@harness.io
 Aleksa Buha aleksa.buha@harness.io
 alebuh aleksa.buha@harness.io
 Satyam Goel satyam.goel@harness.io
+Vasile Lica vasile.lica@harness.io
 Hen Amar hen.amar@harness.io
 Utkarsh Choubey utkarsh.choubey@harness.io
 Sahildeep Singh sahildeep.singh@harness.io

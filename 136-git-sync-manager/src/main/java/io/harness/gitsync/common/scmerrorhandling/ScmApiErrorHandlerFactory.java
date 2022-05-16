@@ -17,6 +17,7 @@ import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketCreateBranchScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketCreateFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketCreatePullRequestScmApiErrorHandler;
+import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketGetDefaultBranchScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketGetFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketListBranchesScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketListRepoScmApiErrorHandler;
@@ -24,13 +25,13 @@ import io.harness.gitsync.common.scmerrorhandling.handlers.bitbucket.BitbucketUp
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubCreateBranchScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubCreateFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubCreatePullRequestScmApiErrorHandler;
+import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubGetDefaultBranchScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubGetFileScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubListBranchesScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubListRepoScmApiErrorHandler;
 import io.harness.gitsync.common.scmerrorhandling.handlers.github.GithubUpdateFileScmApiErrorHandler;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
 import java.util.Map;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,6 @@ import org.apache.commons.lang3.tuple.Pair;
 @Slf4j
 @OwnedBy(PL)
 class ScmApiErrorHandlerFactory {
-  @Inject DefaultScmApiErrorHandler defaultScmApiErrorHandler;
   private final Map<Pair<ScmApis, RepoProviders>, Class<? extends ScmApiErrorHandler>> scmApiErrorHandlerMap =
       ImmutableMap.<Pair<ScmApis, RepoProviders>, Class<? extends ScmApiErrorHandler>>builder()
           .put(Pair.of(ScmApis.LIST_REPOSITORIES, RepoProviders.BITBUCKET), BitbucketListRepoScmApiErrorHandler.class)
@@ -59,6 +59,10 @@ class ScmApiErrorHandlerFactory {
           .put(Pair.of(ScmApis.UPDATE_FILE, RepoProviders.GITHUB), GithubUpdateFileScmApiErrorHandler.class)
           .put(Pair.of(ScmApis.CREATE_BRANCH, RepoProviders.BITBUCKET), BitbucketCreateBranchScmApiErrorHandler.class)
           .put(Pair.of(ScmApis.CREATE_BRANCH, RepoProviders.GITHUB), GithubCreateBranchScmApiErrorHandler.class)
+          .put(Pair.of(ScmApis.GET_DEFAULT_BRANCH, RepoProviders.BITBUCKET),
+              BitbucketGetDefaultBranchScmApiErrorHandler.class)
+          .put(
+              Pair.of(ScmApis.GET_DEFAULT_BRANCH, RepoProviders.GITHUB), GithubGetDefaultBranchScmApiErrorHandler.class)
           .build();
 
   public ScmApiErrorHandler getHandler(ScmApis scmApi, RepoProviders repoProvider) {
@@ -68,6 +72,6 @@ class ScmApiErrorHandlerFactory {
       log.error(
           String.format("Error while getting handler for scmApi [%s] and repoProvider [%s]", scmApi, repoProvider), ex);
     }
-    return defaultScmApiErrorHandler;
+    return new DefaultScmApiErrorHandler();
   }
 }

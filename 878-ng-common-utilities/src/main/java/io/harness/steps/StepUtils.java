@@ -436,26 +436,27 @@ public class StepUtils {
         WithDelegateSelector withDelegateSelector = (WithDelegateSelector) stepSpecType;
         // Delegate Selector Precedence: 1)Step -> 2)stepGroup -> 3)Stage ->  4)Pipeline
 
-        ParameterField<List<TaskSelectorYaml>> delegateSelectors = withDelegateSelector.getDelegateSelectors();
-        if (!ParameterField.isNull(withDelegateSelector.getDelegateSelectors())) {
+        ParameterField<List<TaskSelectorYaml>> delegateSelectors = withDelegateSelector.fetchDelegateSelectors();
+        if (!ParameterField.isNull(withDelegateSelector.fetchDelegateSelectors())
+            && !isEmpty(delegateSelectors.getValue())) {
           setOriginAndDelegateSelectors(delegateSelectors, withDelegateSelector, STEP);
           return;
         }
 
         delegateSelectors = delegateSelectorsFromFqn(ctx, STEP_GROUP);
-        if (!ParameterField.isNull(delegateSelectors)) {
+        if (!ParameterField.isNull(delegateSelectors) && !isEmpty(delegateSelectors.getValue())) {
           setOriginAndDelegateSelectors(delegateSelectors, withDelegateSelector, STEP_GROUP);
           return;
         }
 
         delegateSelectors = delegateSelectorsFromFqn(ctx, STAGE);
-        if (!ParameterField.isNull(delegateSelectors)) {
+        if (!ParameterField.isNull(delegateSelectors) && !isEmpty(delegateSelectors.getValue())) {
           setOriginAndDelegateSelectors(delegateSelectors, withDelegateSelector, STAGE);
           return;
         }
 
         delegateSelectors = delegateSelectorsFromFqn(ctx, YAMLFieldNameConstants.PIPELINE);
-        if (!ParameterField.isNull(delegateSelectors)) {
+        if (!ParameterField.isNull(delegateSelectors) && !isEmpty(delegateSelectors.getValue())) {
           setOriginAndDelegateSelectors(delegateSelectors, withDelegateSelector, YAMLFieldNameConstants.PIPELINE);
         }
       }

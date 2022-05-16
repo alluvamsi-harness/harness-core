@@ -53,6 +53,9 @@ import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
 import io.harness.cdng.pipeline.beans.RollbackNode;
 import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
+import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepInfo;
+import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo;
+import io.harness.cdng.provision.cloudformation.CloudformationRollbackStepInfo;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
 import io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepInfo;
@@ -135,6 +138,8 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(CDAccountExecutionMetadata.class, 12550);
 
     kryo.register(InfraSectionStepParameters.class, 12552);
+    kryo.register(CloudformationCreateStackStepInfo.class, 12566);
+    kryo.register(CloudformationDeleteStackStepInfo.class, 12567);
 
     kryo.register(ServerlessAwsLambdaDeployStepInfo.class, 12571);
     kryo.register(ServerlessAwsLambdaDeployStepParameters.class, 12572);
@@ -147,5 +152,6 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(ServerlessGitFetchFailurePassThroughData.class, 12581);
     kryo.register(ServerlessGitFetchOutcome.class, 12582);
     kryo.register(ServerlessAwsLambdaRollbackDataOutcome.class, 12583);
+    kryo.register(CloudformationRollbackStepInfo.class, 12584);
   }
 }

@@ -114,12 +114,14 @@ public class AzureAuthorizationClientImpl extends AzureClient implements AzureAu
       throw NestedExceptionUtils.hintWithExplanationException(
           "Timeout occurred. Failed to validate connection for Azure connector.",
           "Please check your Azure connector configuration.",
-          new AzureAuthenticationException("Failed to validate connection for Azure connector"));
+          new AzureAuthenticationException(
+              "Failed to validate connection for Azure connector", WingsException.USER, e));
     } catch (WingsException we) {
       throw we;
     } catch (Exception e) {
       throw NestedExceptionUtils.hintWithExplanationException("Failed to validate connection for Azure connector.",
-          "Please check your Azure connector configuration.", new AzureAuthenticationException(e.getMessage()));
+          "Please check your Azure connector configuration.",
+          new AzureAuthenticationException(e.getMessage(), WingsException.USER, e));
     }
   }
 

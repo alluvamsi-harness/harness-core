@@ -247,9 +247,10 @@ public class FileStoreResourceTest extends CategoryTest {
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
   public void testGetReferencedByTypes() {
+    doNothing().when(accessControlClient).checkForAccessOrThrow(any(), any(), eq(FILE_VIEW_PERMISSION));
     when(fileStoreService.getSupportedEntityTypes())
         .thenReturn(Lists.newArrayList(PIPELINES, PIPELINE_STEPS, SERVICE, SECRETS, TEMPLATE));
-    ResponseDTO<List<EntityType>> response = fileStoreResource.getSupportedEntityTypes();
+    ResponseDTO<List<EntityType>> response = fileStoreResource.getSupportedEntityTypes(ACCOUNT);
     List<EntityType> pageResponse = response.getData();
 
     assertThat(pageResponse).isNotNull();

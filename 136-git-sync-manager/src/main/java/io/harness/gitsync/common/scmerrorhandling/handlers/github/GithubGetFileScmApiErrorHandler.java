@@ -8,7 +8,6 @@
 package io.harness.gitsync.common.scmerrorhandling.handlers.github;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.gitsync.common.scmerrorhandling.handlers.github.ScmErrorHints.INVALID_CREDENTIALS;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.NestedExceptionUtils;
@@ -21,16 +20,15 @@ import io.harness.gitsync.common.scmerrorhandling.handlers.ScmApiErrorHandler;
 
 @OwnedBy(PL)
 public class GithubGetFileScmApiErrorHandler implements ScmApiErrorHandler {
-  public static final String GET_FILE_WITH_INVALID_CREDS =
-      "The requested file could not be fetched from Github. " + ScmErrorExplanations.INVALID_CONNECTOR_CREDS;
+  public static final String GET_FILE_FAILED = "The requested file could not be fetched from Github. ";
 
   @Override
   public void handleError(int statusCode, String errorMessage) throws WingsException {
     switch (statusCode) {
       case 401:
       case 403:
-        throw NestedExceptionUtils.hintWithExplanationException(
-            INVALID_CREDENTIALS, GET_FILE_WITH_INVALID_CREDS, new ScmUnauthorizedException(errorMessage));
+        throw NestedExceptionUtils.hintWithExplanationException(ScmErrorHints.INVALID_CREDENTIALS,
+            GET_FILE_FAILED + ScmErrorExplanations.INVALID_CONNECTOR_CREDS, new ScmUnauthorizedException(errorMessage));
       case 404:
         throw NestedExceptionUtils.hintWithExplanationException(ScmErrorHints.FILE_NOT_FOUND,
             ScmErrorExplanations.FILE_NOT_FOUND,

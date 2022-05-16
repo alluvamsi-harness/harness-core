@@ -11,8 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.bean.yaml.ArtifactListConfig;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
+import io.harness.cdng.creator.plan.environment.EnvironmentPlanCreatorHelper;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
-import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.licenserestriction.EnforcementValidator;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
@@ -323,25 +323,9 @@ public class ServicePlanCreator extends ChildrenPlanCreator<ServiceConfig> {
   private String addEnvironmentStepNode(InfraSectionStepParameters infraSectionStepParameters,
       LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap, KryoSerializer kryoSerializer,
       String serviceSpecNodeUuid) {
-    PlanNode node =
-        PlanNode.builder()
-            .uuid(UUIDGenerator.generateUuid())
-            .stepType(EnvironmentStep.STEP_TYPE)
-            .name(PlanCreatorConstants.ENVIRONMENT_NODE_NAME)
-            .identifier(YamlTypes.ENVIRONMENT_YAML)
-            .stepParameters(infraSectionStepParameters)
-            .facilitatorObtainment(
-                FacilitatorObtainment.newBuilder()
-                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
-                    .build())
-            .adviserObtainment(
-                AdviserObtainment.newBuilder()
-                    .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.ON_SUCCESS.name()).build())
-                    .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
-                        OnSuccessAdviserParameters.builder().nextNodeId(serviceSpecNodeUuid).build())))
-                    .build())
-            .skipExpressionChain(false)
-            .build();
+    ByteString advisorParameters = ByteString.copyFrom(
+        kryoSerializer.asBytes(OnSuccessAdviserParameters.builder().nextNodeId(serviceSpecNodeUuid).build()));
+    PlanNode node = EnvironmentPlanCreatorHelper.getPlanNode(infraSectionStepParameters, advisorParameters);
     planCreationResponseMap.put(node.getUuid(), PlanCreationResponse.builder().node(node.getUuid(), node).build());
     return node.getUuid();
   }

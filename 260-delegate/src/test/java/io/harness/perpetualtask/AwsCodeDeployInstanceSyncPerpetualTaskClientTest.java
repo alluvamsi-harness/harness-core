@@ -50,7 +50,7 @@ import software.wings.annotation.EncryptableSetting;
 import software.wings.api.DeploymentType;
 import software.wings.beans.Application;
 import software.wings.beans.AwsConfig;
-import software.wings.beans.AwsInfrastructureMapping;
+import software.wings.beans.AwsInstanceFilter;
 import software.wings.beans.CodeDeployInfrastructureMapping;
 import software.wings.beans.Environment;
 import software.wings.beans.Service;
@@ -127,9 +127,7 @@ public class AwsCodeDeployInstanceSyncPerpetualTaskClientTest extends CategoryTe
   @Category(UnitTests.class)
   public void testGetValidationTask() {
     List<Filter> ec2Filters = singletonList(new Filter("instance-state", singletonList("running")));
-    doReturn(ec2Filters)
-        .when(awsUtils)
-        .getAwsFilters(any(AwsInfrastructureMapping.class), eq(DeploymentType.AWS_CODEDEPLOY));
+    doReturn(ec2Filters).when(awsUtils).getFilters(eq(DeploymentType.AWS_CODEDEPLOY), any(AwsInstanceFilter.class));
     DelegateTask validationTask = client.getValidationTask(getClientContext(), ACCOUNT_ID);
 
     verify(infraMappingService, times(1)).get(APP_ID, INFRA_MAPPING_ID);
@@ -153,9 +151,7 @@ public class AwsCodeDeployInstanceSyncPerpetualTaskClientTest extends CategoryTe
   @Category(UnitTests.class)
   public void testGetTaskParams() {
     List<Filter> ec2Filters = singletonList(new Filter("instance-state", singletonList("running")));
-    doReturn(ec2Filters)
-        .when(awsUtils)
-        .getAwsFilters(any(AwsInfrastructureMapping.class), eq(DeploymentType.AWS_CODEDEPLOY));
+    doReturn(ec2Filters).when(awsUtils).getFilters(eq(DeploymentType.AWS_CODEDEPLOY), any(AwsInstanceFilter.class));
     AwsCodeDeployInstanceSyncPerpetualTaskParams taskParams =
         (AwsCodeDeployInstanceSyncPerpetualTaskParams) client.getTaskParams(getClientContext());
 

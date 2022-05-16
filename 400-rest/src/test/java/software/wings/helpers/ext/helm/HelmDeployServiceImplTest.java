@@ -97,8 +97,8 @@ import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.command.HelmDummyCommandUnit;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.command.HelmDummyCommandUnitConstants;
+import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.beans.yaml.GitFetchFilesResult;
 import software.wings.delegatetasks.ScmFetchFilesHelper;
 import software.wings.delegatetasks.helm.HarnessHelmDeployConfig;
@@ -253,7 +253,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     when(containerDeploymentDelegateHelper.useK8sSteadyStateCheck(anyBoolean(), any(), any())).thenReturn(true);
     when(k8sTaskHelperBase.readManifests(any(), any())).thenReturn(resources);
     when(k8sTaskHelperBase.getContainerInfos(any(), any(), anyString(), anyLong())).thenReturn(containerInfos);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
              anyString(), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(true);
 
@@ -267,13 +267,13 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
 
     verify(helmClient).install(argumentCaptor.capture(), eq(false));
 
-    verify(k8sTaskHelper, times(1))
+    verify(k8sTaskHelperBase, times(1))
         .doStatusCheckAllResourcesForHelm(any(Kubectl.class),
             eq(asList(
                 KubernetesResourceId.builder().name("helm-deploy").namespace("default").kind("Deployment").build(),
                 KubernetesResourceId.builder().name("helm-deploy-2").namespace("default").kind("StatefulSet").build())),
             anyString(), anyString(), eq("default"), anyString(), any(ExecutionLogCallback.class));
-    verify(k8sTaskHelper, times(1))
+    verify(k8sTaskHelperBase, times(1))
         .doStatusCheckAllResourcesForHelm(any(Kubectl.class),
             eq(asList(KubernetesResourceId.builder()
                           .name("helm-deploy-1")
@@ -304,7 +304,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     when(containerDeploymentDelegateHelper.useK8sSteadyStateCheck(anyBoolean(), any(), any())).thenReturn(true);
     when(k8sTaskHelperBase.readManifests(any(), any())).thenReturn(resources);
     when(k8sTaskHelperBase.getContainerInfos(any(), any(), anyString(), anyLong())).thenReturn(containerInfos);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
              eq("default"), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(true);
 
@@ -359,7 +359,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     HelmCommandResponse response = spyHelmDeployService.deploy(helmInstallCommandRequest);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(FAILURE);
     verify(spyHelmDeployService, never())
-        .getExecutionLogCallback(helmInstallCommandRequest, HelmDummyCommandUnit.WaitForSteadyState);
+        .getExecutionLogCallback(helmInstallCommandRequest, HelmDummyCommandUnitConstants.WaitForSteadyState);
   }
 
   @Test
@@ -485,7 +485,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         HelmInstallCommandRequest.builder()
             .releaseName(HelmTestConstants.HELM_RELEASE_NAME_KEY)
             .kubeConfigLocation(HelmTestConstants.HELM_KUBE_CONFIG_LOCATION_KEY)
-            .chartSpecification(HelmChartSpecification.builder().chartName(HelmTestConstants.CHART_NAME_KEY).build())
+            .chartSpecification(HelmChartSpecificationDTO.builder().chartName(HelmTestConstants.CHART_NAME_KEY).build())
             .containerServiceParams(ContainerServiceParams.builder().namespace("default").build())
             .executionLogCallback(logCallback)
             .sourceRepoConfig(K8sDelegateManifestConfig.builder()
@@ -503,7 +503,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         .releaseName(HelmTestConstants.HELM_RELEASE_NAME_KEY)
         .kubeConfigLocation(HelmTestConstants.HELM_KUBE_CONFIG_LOCATION_KEY)
         .containerServiceParams(ContainerServiceParams.builder().namespace("default").build())
-        .chartSpecification(HelmChartSpecification.builder()
+        .chartSpecification(HelmChartSpecificationDTO.builder()
                                 .chartName(HelmTestConstants.CHART_NAME_KEY)
                                 .chartUrl("http://127.0.0.1")
                                 .build())
@@ -749,7 +749,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         HelmInstallCommandRequest.builder()
             .executionLogCallback(executionLogCallback)
             .chartSpecification(
-                HelmChartSpecification.builder().chartUrl("https://harness.jfrog.io/harness/helm").build())
+                HelmChartSpecificationDTO.builder().chartUrl("https://harness.jfrog.io/harness/helm").build())
             .build();
 
     when(helmClient.getHelmRepoList(HelmCommandDataMapper.getHelmCommandData(request)))
@@ -767,7 +767,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     HelmCommandRequest request =
         HelmInstallCommandRequest.builder()
             .executionLogCallback(executionLogCallback)
-            .chartSpecification(HelmChartSpecification.builder().chartUrl("https://charts.bitnami.com/bitnami").build())
+            .chartSpecification(
+                HelmChartSpecificationDTO.builder().chartUrl("https://charts.bitnami.com/bitnami").build())
             .build();
 
     when(helmClient.getHelmRepoList(HelmCommandDataMapper.getHelmCommandData(request)))
@@ -783,10 +784,11 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void testAddNewRepo() throws Exception {
-    HelmCommandRequest request = HelmInstallCommandRequest.builder()
-                                     .executionLogCallback(executionLogCallback)
-                                     .chartSpecification(HelmChartSpecification.builder().chartUrl("abc.com").build())
-                                     .build();
+    HelmCommandRequest request =
+        HelmInstallCommandRequest.builder()
+            .executionLogCallback(executionLogCallback)
+            .chartSpecification(HelmChartSpecificationDTO.builder().chartUrl("abc.com").build())
+            .build();
 
     when(helmClient.getHelmRepoList(HelmCommandDataMapper.getHelmCommandData(request)))
         .thenReturn(
@@ -805,10 +807,11 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void testAddNewRepoIfNotReachable() throws Exception {
-    HelmCommandRequest request = HelmInstallCommandRequest.builder()
-                                     .executionLogCallback(executionLogCallback)
-                                     .chartSpecification(HelmChartSpecification.builder().chartUrl("abc.com").build())
-                                     .build();
+    HelmCommandRequest request =
+        HelmInstallCommandRequest.builder()
+            .executionLogCallback(executionLogCallback)
+            .chartSpecification(HelmChartSpecificationDTO.builder().chartUrl("abc.com").build())
+            .build();
 
     when(helmClient.getHelmRepoList(HelmCommandDataMapper.getHelmCommandData(request)))
         .thenReturn(
@@ -823,10 +826,11 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void testAddNewRepoIfRepoListFails() throws Exception {
-    HelmCommandRequest request = HelmInstallCommandRequest.builder()
-                                     .executionLogCallback(executionLogCallback)
-                                     .chartSpecification(HelmChartSpecification.builder().chartUrl("abc.com").build())
-                                     .build();
+    HelmCommandRequest request =
+        HelmInstallCommandRequest.builder()
+            .executionLogCallback(executionLogCallback)
+            .chartSpecification(HelmChartSpecificationDTO.builder().chartUrl("abc.com").build())
+            .build();
 
     when(helmClient.getHelmRepoList(HelmCommandDataMapper.getHelmCommandData(request)))
         .thenReturn(HelmCliResponse.builder().commandExecutionStatus(FAILURE).output("command not found").build());
@@ -956,7 +960,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     setFakeTimeLimiter();
     HelmRollbackCommandRequest request = HelmRollbackCommandRequest.builder()
                                              .containerServiceParams(ContainerServiceParams.builder().build())
-                                             .chartSpecification(HelmChartSpecification.builder()
+                                             .chartSpecification(HelmChartSpecificationDTO.builder()
                                                                      .chartName(HelmTestConstants.CHART_NAME_KEY)
                                                                      .chartUrl("http://127.0.0.1")
                                                                      .build())
@@ -1059,7 +1063,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
                                              .releaseName("release")
                                              .prevReleaseVersion(version)
                                              .containerServiceParams(ContainerServiceParams.builder().build())
-                                             .chartSpecification(HelmChartSpecification.builder()
+                                             .chartSpecification(HelmChartSpecificationDTO.builder()
                                                                      .chartName(HelmTestConstants.CHART_NAME_KEY)
                                                                      .chartUrl("http://127.0.0.1")
                                                                      .build())
@@ -1083,7 +1087,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         .thenReturn(containerInfosDefault2);
     when(k8sTaskHelperBase.getContainerInfos(any(), eq("release"), eq("default-3"), eq(LONG_TIMEOUT_INTERVAL)))
         .thenReturn(containerInfosDefault3);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyListOf(KubernetesResourceId.class),
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyListOf(KubernetesResourceId.class),
              anyString(), anyString(), anyString(), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(true);
 
@@ -1302,8 +1306,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         resources.stream().map(KubernetesResource::getResourceId).collect(Collectors.toList());
 
     when(containerDeploymentDelegateHelper.useK8sSteadyStateCheck(anyBoolean(), any(), any())).thenReturn(true);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), eq(resourceIds), anyString(), anyString(),
-             anyString(), anyString(), any(ExecutionLogCallback.class)))
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), eq(resourceIds), anyString(),
+             anyString(), anyString(), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(false);
 
     assertThatExceptionOfType(InvalidRequestException.class)
@@ -1312,7 +1316,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
                             helmInstallCommandRequest, resourceIds, executionLogCallback, LONG_TIMEOUT_INTERVAL))
         .withMessage("Steady state check failed");
 
-    verify(k8sTaskHelper, times(1))
+    verify(k8sTaskHelperBase, times(1))
         .doStatusCheckAllResourcesForHelm(
             any(), any(), any(), anyString(), anyString(), anyString(), any(ExecutionLogCallback.class));
   }
@@ -1324,7 +1328,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     ExecutionLogCallback executionLogCallback = spy(new ExecutionLogCallback());
     HelmInstallCommandRequest helmInstallCommandRequest =
         HelmInstallCommandRequest.builder()
-            .chartSpecification(HelmChartSpecification.builder().chartName("repo/chartName").build())
+            .chartSpecification(HelmChartSpecificationDTO.builder().chartName("repo/chartName").build())
             .executionLogCallback(executionLogCallback)
             .activityId("test")
             .build();
@@ -1343,7 +1347,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     HelmInstallCommandRequest helmInstallCommandRequest =
         HelmInstallCommandRequest.builder()
             .chartSpecification(
-                HelmChartSpecification.builder().chartName("repo/chartName").chartUrl("http://helm-repo").build())
+                HelmChartSpecificationDTO.builder().chartName("repo/chartName").chartUrl("http://helm-repo").build())
             .executionLogCallback(executionLogCallback)
             .activityId("test")
             .build();
@@ -1362,7 +1366,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     ExecutionLogCallback executionLogCallback = spy(new ExecutionLogCallback());
     HelmInstallCommandRequest helmInstallCommandRequest =
         HelmInstallCommandRequest.builder()
-            .chartSpecification(HelmChartSpecification.builder().chartName("repo/repo/chartName").build())
+            .chartSpecification(HelmChartSpecificationDTO.builder().chartName("repo/repo/chartName").build())
             .executionLogCallback(executionLogCallback)
             .activityId("test")
             .build();
@@ -1475,7 +1479,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
 
     helmDeployService.deploy(helmInstallCommandRequest);
 
-    HelmChartSpecification deployedSpec = helmInstallCommandRequest.getChartSpecification();
+    HelmChartSpecificationDTO deployedSpec = helmInstallCommandRequest.getChartSpecification();
     assertThat(deployedSpec).isNotNull();
     assertThat(deployedSpec.getChartName()).isEqualTo("fileChart");
     assertThat(deployedSpec.getChartUrl()).isEqualTo("fileChartUrl");
@@ -1512,7 +1516,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
 
     helmDeployService.deploy(helmInstallCommandRequest);
 
-    HelmChartSpecification deployedSpec = helmInstallCommandRequest.getChartSpecification();
+    HelmChartSpecificationDTO deployedSpec = helmInstallCommandRequest.getChartSpecification();
     assertThat(deployedSpec).isNotNull();
     assertThat(deployedSpec.getChartName()).isEqualTo(HelmTestConstants.CHART_NAME_KEY);
     assertThat(deployedSpec.getChartVersion()).isEqualTo("fileVersion");

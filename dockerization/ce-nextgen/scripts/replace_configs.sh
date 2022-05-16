@@ -106,6 +106,7 @@ replace_key_value grpcClient.authority "$MANAGER_AUTHORITY"
 
 replace_key_value secretsConfiguration.gcpSecretManagerProject "$GCP_SECRET_MANAGER_PROJECT"
 replace_key_value secretsConfiguration.secretResolutionEnabled  "$RESOLVE_SECRETS"
+replace_key_value awsConnectorCreatedInstantForPolicyCheck $AWS_CONNECTOR_CREATED_INSTANT_FOR_POLICY_CHECK
 
 if [[ "" != "$EVENTS_FRAMEWORK_REDIS_SENTINELS" ]]; then
   IFS=',' read -ra SENTINEL_URLS <<< "$EVENTS_FRAMEWORK_REDIS_SENTINELS"

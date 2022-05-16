@@ -179,7 +179,7 @@ public class ClusterServiceImpl implements ClusterService {
   public Criteria createCriteriaForGetList(
       String accountId, String orgIdentifier, String projectIdentifier, String envRef, String searchTerm) {
     Criteria criteria = CoreCriteriaUtils.createCriteriaForGetList(accountId, orgIdentifier, projectIdentifier);
-    criteria.andOperator(Criteria.where(ClusterKeys.envRef).is(envRef));
+    criteria.and(ClusterKeys.envRef).is(envRef);
     if (isNotEmpty(searchTerm)) {
       Criteria searchCriteria = new Criteria().orOperator(
           where(ClusterKeys.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS),
