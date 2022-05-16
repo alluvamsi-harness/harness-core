@@ -103,7 +103,7 @@ public class HarnessToGitPushInfoGrpcService extends HarnessToGitPushInfoService
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getContextMapMap())) {
       setPrincipal(request.getScopeIdentifiers().getAccountIdentifier(), request.getPrincipal());
-      getFileResponse = harnessToGitHelperService.getFile(request);
+      getFileResponse = harnessToGitHelperService.getFileByBranch(request);
       log.info("Git Sync Service getFile ops response : {}", getFileResponse);
     } catch (Exception ex) {
       log.error("Faced exception during getFile GIT call", ex);

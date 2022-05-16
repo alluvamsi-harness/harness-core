@@ -254,17 +254,17 @@ public class ScmFacilitatorResource {
       @Parameter(description = "Commit Id") @QueryParam(YamlConstants.COMMIT_ID) String commitId,
       @Parameter(description = "Connector Ref") @QueryParam("ConnectorRef") String connectorRef) {
     return ResponseDTO.newResponse(
-        harnessToGitHelperService.getFile(GetFileRequest.newBuilder()
-                                              .setScopeIdentifiers(ScopeIdentifiers.newBuilder()
-                                                                       .setAccountIdentifier(accountIdentifier)
-                                                                       .setOrgIdentifier(orgIdentifier)
-                                                                       .setProjectIdentifier(projectIdentifier)
-                                                                       .build())
-                                              .setRepoName(repoName)
-                                              .setBranchName(branch)
-                                              .setFilePath(filePath)
-                                              .setConnectorRef(connectorRef)
-                                              .build()));
+        harnessToGitHelperService.getFileByBranch(GetFileRequest.newBuilder()
+                                                      .setScopeIdentifiers(ScopeIdentifiers.newBuilder()
+                                                                               .setAccountIdentifier(accountIdentifier)
+                                                                               .setOrgIdentifier(orgIdentifier)
+                                                                               .setProjectIdentifier(projectIdentifier)
+                                                                               .build())
+                                                      .setRepoName(repoName)
+                                                      .setBranchName(branch)
+                                                      .setFilePath(filePath)
+                                                      .setConnectorRef(connectorRef)
+                                                      .build()));
   }
 
   @GET

@@ -38,7 +38,7 @@ public interface HarnessToGitHelperService {
 
   UserPrincipal getFullSyncUser(FileInfo request);
 
-  GetFileResponse getFile(GetFileRequest getFileRequest);
+  GetFileResponse getFileByBranch(GetFileRequest getFileRequest);
 
   CreateFileResponse createFile(CreateFileRequest createFileRequest);
 
