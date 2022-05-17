@@ -42,9 +42,6 @@ public class ParameterFieldProcessor {
       if (field.isTypeString()) {
         newValue =
             engineExpressionEvaluator.renderExpression(field.getExpressionValue(), skipUnresolvedExpressionsCheck);
-        //        if(newValue == null || newValue.equals("null")){
-        //          newValue = field.getValueDoc().get("value");
-        //        }
       } else {
         newValue = engineExpressionEvaluator.evaluateExpression(field.getExpressionValue());
       }

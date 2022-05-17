@@ -12,6 +12,7 @@ import io.harness.common.NGExpressionUtils;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.validation.InputSetValidator;
+import io.harness.serializer.JsonUtils;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -24,8 +25,10 @@ import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?>> implements ContextualDeserializer {
@@ -86,9 +89,10 @@ public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?
     InputSetValidator inputSetValidator = getInputSetValidator(text);
 
     if (NGExpressionUtils.matchesInputSetPattern(text)) {
+      String defaultValue = extractDefaultValue(text);
+
       return ParameterField.createExpressionField(true, NGExpressionUtils.DEFAULT_INPUT_SET_EXPRESSION,
-          text.substring(text.indexOf("default(") + 8, text.indexOf(')', text.indexOf("default(")))
-              .replaceAll("^\"|\"$", ""),
+          defaultValue == null ? null : JsonUtils.asObject(defaultValue, this.referenceType.getRawClass()),
           inputSetValidator, isTypeString);
     }
     if (inputSetValidator != null) {
@@ -162,5 +166,27 @@ public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?
       this.validatorType = validatorType;
       this.validatorPattern = validatorPattern;
     }
+  }
+
+  private String extractDefaultValue(String text) {
+    String defaultValueString = null;
+    Matcher matcher = Pattern.compile("\\.default\\((.*?)\\)$").matcher(text);
+
+    if (matcher.find()) {
+      defaultValueString = matcher.group(1);
+      List<Pattern> patterns = new ArrayList<>();
+      patterns.add(Pattern.compile("\\.default\\((.*?)\\).allowedValues\\(.*?\\)$"));
+      patterns.add(Pattern.compile("\\.default\\((.*?)\\).executionInput\\(.*?\\)$"));
+      for (Pattern pattern : patterns) {
+        Matcher m = pattern.matcher(text);
+        if (m.find()) {
+          String defaultValue = m.group(1);
+          if (defaultValueString == null || defaultValueString.length() < defaultValue.length()) {
+            defaultValueString = defaultValue;
+          }
+        }
+      }
+    }
+    return defaultValueString;
   }
 }
