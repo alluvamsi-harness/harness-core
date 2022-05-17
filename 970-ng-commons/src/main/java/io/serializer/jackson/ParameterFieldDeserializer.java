@@ -86,8 +86,10 @@ public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?
     InputSetValidator inputSetValidator = getInputSetValidator(text);
 
     if (NGExpressionUtils.matchesInputSetPattern(text)) {
-      return ParameterField.createExpressionField(
-          true, NGExpressionUtils.DEFAULT_INPUT_SET_EXPRESSION, inputSetValidator, isTypeString);
+      return ParameterField.createExpressionField(true, NGExpressionUtils.DEFAULT_INPUT_SET_EXPRESSION,
+          text.substring(text.indexOf("default(") + 8, text.indexOf(')', text.indexOf("default(")))
+              .replaceAll("^\"|\"$", ""),
+          inputSetValidator, isTypeString);
     }
     if (inputSetValidator != null) {
       String value = getLeftSideOfExpression(text);

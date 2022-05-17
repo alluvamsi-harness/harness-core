@@ -34,6 +34,7 @@ public class ParameterField<T> {
   @NotExpression private String expressionValue;
   private boolean expression;
   private T value;
+  private T defaultValue;
   private boolean typeString;
 
   // This field is set when runtime input with validation is given.
@@ -43,11 +44,23 @@ public class ParameterField<T> {
   private boolean jsonResponseField;
   private String responseField;
 
-  private static final ParameterField<?> EMPTY = new ParameterField<>(null, false, null, false, null, false, null);
+  public T getValue() {
+    return value != null ? value : defaultValue;
+  }
+  private static final ParameterField<?> EMPTY =
+      new ParameterField<>(null, false, null, null, false, null, false, null);
 
   public static <T> ParameterField<T> createExpressionField(
       boolean isExpression, String expressionValue, InputSetValidator inputSetValidator, boolean isTypeString) {
     return new ParameterField<>(null, isExpression, expressionValue, inputSetValidator, isTypeString);
+  }
+
+  public static <T> ParameterField<T> createExpressionField(boolean isExpression, String expressionValue,
+      T defaultValue, InputSetValidator inputSetValidator, boolean isTypeString) {
+    if (expressionValue.equals("<+input>")) {
+      return new ParameterField<>(null, defaultValue, false, null, inputSetValidator, isTypeString);
+    }
+    return new ParameterField<>(null, defaultValue, isExpression, expressionValue, inputSetValidator, isTypeString);
   }
 
   public static <T> ParameterField<T> createValueField(T value) {
@@ -68,11 +81,12 @@ public class ParameterField<T> {
   }
 
   @Builder
-  public ParameterField(String expressionValue, boolean expression, T value, boolean typeString,
+  public ParameterField(String expressionValue, boolean expression, T value, T defaultValue, boolean typeString,
       InputSetValidator inputSetValidator, boolean jsonResponseField, String responseField) {
     this.expressionValue = expressionValue;
     this.expression = expression;
     this.value = value;
+    this.defaultValue = defaultValue;
     this.typeString = typeString;
     this.inputSetValidator = inputSetValidator;
     this.jsonResponseField = jsonResponseField;
@@ -81,11 +95,16 @@ public class ParameterField<T> {
 
   public ParameterField(
       T value, boolean expression, String expressionValue, InputSetValidator inputSetValidator, boolean typeString) {
-    this(expressionValue, expression, value, typeString, inputSetValidator, false, null);
+    this(expressionValue, expression, value, null, typeString, inputSetValidator, false, null);
+  }
+
+  public ParameterField(T value, T defaultValue, boolean expression, String expressionValue,
+      InputSetValidator inputSetValidator, boolean typeString) {
+    this(expressionValue, expression, value, defaultValue, typeString, inputSetValidator, false, null);
   }
 
   private ParameterField(boolean jsonResponseField, String responseField) {
-    this(null, false, null, false, null, jsonResponseField, responseField);
+    this(null, false, null, null, false, null, jsonResponseField, responseField);
   }
 
   public Object get(String key) {
@@ -122,7 +141,7 @@ public class ParameterField<T> {
   }
 
   public Object fetchFinalValue() {
-    return expression ? expressionValue : value;
+    return expression ? expressionValue : (value != null ? value : defaultValue);
   }
 
   public static boolean isNull(ParameterField<?> actualField) {
@@ -135,7 +154,8 @@ public class ParameterField<T> {
     }
 
     if (actualField.getExpressionValue() != null || actualField.getInputSetValidator() != null
-        || actualField.getResponseField() != null || actualField.getValue() != null) {
+        || actualField.getResponseField() != null || actualField.getValue() != null
+        || actualField.getDefaultValue() != null) {
       return false;
     }
     // Every flag should be false.
