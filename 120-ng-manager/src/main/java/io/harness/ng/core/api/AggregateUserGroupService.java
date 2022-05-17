@@ -13,11 +13,9 @@ import io.harness.accesscontrol.scopes.ScopeDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
-import io.harness.ng.core.dto.AggregateACLRequest;
 import io.harness.ng.core.dto.UserGroupAggregateDTO;
 import io.harness.ng.core.usergroups.filter.UserGroupFilterType;
 
-import java.util.List;
 import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 

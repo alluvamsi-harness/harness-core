@@ -44,7 +44,6 @@ import io.harness.ng.core.api.AggregateOrganizationService;
 import io.harness.ng.core.api.AggregateProjectService;
 import io.harness.ng.core.api.AggregateUserGroupService;
 import io.harness.ng.core.dto.AccountResourcesDTO;
-import io.harness.ng.core.dto.AggregateACLRequest;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.OrganizationAggregateDTO;
@@ -66,7 +65,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
@@ -74,7 +72,6 @@ import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -82,7 +79,6 @@ import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import retrofit2.http.Body;
 
 @OwnedBy(PL)
 @Api("aggregate")
