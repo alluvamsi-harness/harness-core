@@ -20,7 +20,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-public class ScmGetFileRequestDTO {
+public class ScmGetFileByBranchRequestDTO {
   Scope scope;
   String repoName;
   String branchName;

@@ -51,7 +51,7 @@ import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
-import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileByBranchRequestDTO;
 import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
@@ -346,7 +346,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
   public GetFileResponse getFileByBranch(GetFileRequest getFileRequest) {
     try {
       ScmGetFileResponseDTO scmGetFileResponseDTO = scmFacilitatorService.getFileByBranch(
-          ScmGetFileRequestDTO.builder()
+          ScmGetFileByBranchRequestDTO.builder()
               .branchName(getFileRequest.getBranchName())
               .connectorRef(getFileRequest.getConnectorRef())
               .filePath(getFileRequest.getFilePath())

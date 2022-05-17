@@ -34,7 +34,7 @@ import io.harness.gitsync.common.dtos.ScmCommitFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRRequestDTO;
 import io.harness.gitsync.common.dtos.ScmCreatePRResponseDTO;
-import io.harness.gitsync.common.dtos.ScmGetFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmGetFileByBranchRequestDTO;
 import io.harness.gitsync.common.dtos.ScmGetFileResponseDTO;
 import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
@@ -243,7 +243,7 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
         FileContent.newBuilder().setContent(content).setBlobId(blobId).setCommitId(commitId).setPath(filePath).build();
     when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any())).thenReturn(fileContent);
     ScmGetFileResponseDTO scmGetFileResponseDTO = scmFacilitatorService.getFileByBranch(
-        ScmGetFileRequestDTO.builder().scope(getDefaultScope()).branchName(branch).build());
+        ScmGetFileByBranchRequestDTO.builder().scope(getDefaultScope()).branchName(branch).build());
     assertThat(scmGetFileResponseDTO.getBlobId()).isEqualTo(blobId);
     assertThat(scmGetFileResponseDTO.getCommitId()).isEqualTo(commitId);
     assertThat(scmGetFileResponseDTO.getFileContent()).isEqualTo(content);
@@ -255,9 +255,10 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
   public void testGetFileByBranchWhenSCMAPIfails() {
     FileContent fileContent = FileContent.newBuilder().setStatus(400).build();
     when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any())).thenReturn(fileContent);
-    assertThatThrownBy(()
-                           -> scmFacilitatorService.getFileByBranch(
-                               ScmGetFileRequestDTO.builder().scope(getDefaultScope()).branchName(branch).build()))
+    assertThatThrownBy(
+        ()
+            -> scmFacilitatorService.getFileByBranch(
+                ScmGetFileByBranchRequestDTO.builder().scope(getDefaultScope()).branchName(branch).build()))
         .isInstanceOf(WingsException.class);
   }
 
