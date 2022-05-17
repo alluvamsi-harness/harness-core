@@ -27,9 +27,6 @@ public interface AggregateUserGroupService {
       @NotEmpty String accountIdentifier, String orgIdentifier, String projectIdentifier, String searchTerm,
       int userSize, UserGroupFilterType filterType);
 
-  List<UserGroupAggregateDTO> listAggregateUserGroups(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, UserGroupFilterType filterType, @NotNull AggregateACLRequest aggregateACLRequest);
-
   UserGroupAggregateDTO getAggregatedUserGroup(@NotEmpty String accountIdentifier, String orgIdentifier,
       String projectIdentifier, @NotEmpty String userGroupIdentifier, ScopeDTO roleAssignmentScope);
 }

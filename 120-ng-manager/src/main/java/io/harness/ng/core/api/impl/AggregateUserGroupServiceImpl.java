@@ -128,63 +128,6 @@ public class AggregateUserGroupServiceImpl implements AggregateUserGroupService 
   }
 
   @Override
-  public List<UserGroupAggregateDTO> listAggregateUserGroups(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, UserGroupFilterType filterType, AggregateACLRequest aggregateACLRequest) {
-    RoleAssignmentFilterDTO roleAssignmentFilterDTO =
-        RoleAssignmentFilterDTO.builder()
-            .roleFilter(aggregateACLRequest.getRoleFilter())
-            .resourceGroupFilter(aggregateACLRequest.getResourceGroupFilter())
-            .principalTypeFilter(Collections.singleton(USER_GROUP))
-            .principalScopeLevelFilter(INCLUDE_INHERITED_GROUPS.equals(filterType)
-                    ? Collections.singleton(
-                        ScopeLevel.of(accountIdentifier, orgIdentifier, projectIdentifier).toString().toLowerCase())
-                    : null)
-            .build();
-
-    Map<String, List<RoleAssignmentMetadataDTO>> userGroupRoleAssignmentsMap =
-        getPrincipalRoleAssignmentMap(accountIdentifier, orgIdentifier, projectIdentifier, roleAssignmentFilterDTO);
-
-    if (userGroupRoleAssignmentsMap.keySet().isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    // multiple filters
-
-    UserGroupFilterDTO userGroupFilterDTO = UserGroupFilterDTO.builder()
-                                                .accountIdentifier(accountIdentifier)
-                                                .orgIdentifier(orgIdentifier)
-                                                .projectIdentifier(projectIdentifier)
-                                                .identifierFilter(userGroupRoleAssignmentsMap.keySet())
-                                                .build();
-    List<UserGroup> userGroups = userGroupService.list(userGroupFilterDTO);
-
-    List<String> userIdentifiers = userGroups.stream()
-                                       .map(UserGroup::getUsers)
-                                       .flatMap(List::stream)
-                                       .filter(Objects::nonNull)
-                                       .distinct()
-                                       .collect(toList());
-
-    Map<String, UserMetadataDTO> userMetadataMap =
-        ngUserService.getUserMetadata(userIdentifiers)
-            .stream()
-            .collect(Collectors.toMap(UserMetadataDTO::getUuid, Function.identity()));
-
-    return userGroups.stream()
-        .map(userGroup -> {
-          List<UserMetadataDTO> users =
-              userGroup.getUsers().stream().map(userMetadataMap::get).filter(Objects::nonNull).collect(toList());
-          return UserGroupAggregateDTO.builder()
-              .userGroupDTO(UserGroupMapper.toDTO(userGroup))
-              .roleAssignmentsMetadataDTO(userGroupRoleAssignmentsMap.get(userGroup.getIdentifier()))
-              .users(users)
-              .lastModifiedAt(userGroup.getLastModifiedAt())
-              .build();
-        })
-        .collect(toList());
-  }
-
-  @Override
   public UserGroupAggregateDTO getAggregatedUserGroup(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String userGroupIdentifier, ScopeDTO roleAssignmentScope) {
     Optional<UserGroup> userGroupOpt =

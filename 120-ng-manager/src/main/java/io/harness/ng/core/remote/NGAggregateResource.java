@@ -199,21 +199,6 @@ public class NGAggregateResource {
         pageRequest, accountIdentifier, orgIdentifier, projectIdentifier, searchTerm, userSize, filterType));
   }
 
-  @POST
-  @Path("acl/usergroups/filter")
-  @ApiOperation(value = "Get Aggregated User Group list with filter", nickname = "getUserGroupAggregateListsWithFilter")
-  public ResponseDTO<List<UserGroupAggregateDTO>> list(
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
-      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @QueryParam("filterType") @DefaultValue("EXCLUDE_INHERITED_GROUPS") UserGroupFilterType filterType,
-      @Body AggregateACLRequest aggregateACLRequest) {
-    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
-        Resource.of(USERGROUP, null), VIEW_USERGROUP_PERMISSION);
-    return ResponseDTO.newResponse(aggregateUserGroupService.listAggregateUserGroups(
-        accountIdentifier, orgIdentifier, projectIdentifier, filterType, aggregateACLRequest));
-  }
-
   @GET
   @Path("acl/usergroups/{identifier}")
   @ApiOperation(value = "Get Aggregated User Group", nickname = "getUserGroupAggregate")
