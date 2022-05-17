@@ -508,7 +508,7 @@ func GetUserRepos(ctx context.Context, request *pb.GetUserReposRequest, log *zap
 		log.Errorw("GetUserRepos failure", "bad provider", gitclient.GetProvider(*request.GetProvider()), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-    paginatedCall := !request.GetFetchAllRepos()
+	paginatedCall := !request.GetFetchAllRepos()
 
 	if paginatedCall {
 		repoList, response, err := client.Repositories.List(ctx, scm.ListOptions{Page: int(request.GetPagination().GetPage())})
@@ -664,9 +664,9 @@ func Repos(ctx context.Context, client *scm.Client, log *zap.SugaredLogger) ([]*
 		if err != nil {
 			return nil, err
 		}
-        if result != nil {
-            list = append(list, result...)
-        }
+		if result != nil {
+			list = append(list, result...)
+		}
 		opts.Page = meta.Page.Next
 		opts.URL = meta.Page.NextURL
 
