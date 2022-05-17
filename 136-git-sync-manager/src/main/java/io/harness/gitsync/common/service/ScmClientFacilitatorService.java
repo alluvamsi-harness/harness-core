@@ -97,4 +97,7 @@ public interface ScmClientFacilitatorService {
 
   GetUserRepoResponse getRepoDetails(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, ScmConnector scmConnector);
+
+  CreateBranchResponse createNewBranch(
+      Scope scope, ScmConnector scmConnector, String newBranchName, String baseBranchName);
 }

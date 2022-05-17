@@ -5,16 +5,14 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package software.wings.delegatetasks;
+package io.harness.exception.sanitizer;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
-import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.WingsException;
@@ -31,7 +29,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @OwnedBy(CDP)
-@TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public class ExceptionMessageSanitizerTest extends CategoryTest {
   @Test
   @Owner(developers = OwnerRule.NAMAN_TALAYCHA)

@@ -5,16 +5,18 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.beans.container;
+package io.harness.batch.processing.shard;
 
-import javax.validation.constraints.NotNull;
+import io.harness.licensing.Edition;
+import io.harness.licensing.LicenseType;
+
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
-public class HelmChartSpecificationDTO {
-  @NotNull private String chartUrl;
-  @NotNull private String chartName;
-  @NotNull private String chartVersion;
+public class AccountLicenseDTO {
+  String accountIdentifier;
+  Edition edition;
+  LicenseType licenseType;
 }

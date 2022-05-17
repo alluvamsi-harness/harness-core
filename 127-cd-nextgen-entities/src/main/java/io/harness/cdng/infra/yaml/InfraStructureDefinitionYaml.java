@@ -15,12 +15,15 @@ import io.harness.beans.SwaggerConstants;
 import io.harness.cdng.infra.helper.InfraStructureDefinitionVisitorHelper;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
 import io.harness.walktree.visitor.Visitable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -32,11 +35,17 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("infraStructureDefinition")
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.cdng.infra.yaml.InfraStructureDefinition")
-public class InfraStructureDefinition implements Visitable {
+public class InfraStructureDefinitionYaml implements Visitable {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   private String uuid;
 
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) private ParameterField<String> ref;
+  @Pattern(regexp = NGRegexValidatorConstants.RUNTIME_OR_FIXED_IDENTIFIER_PATTERN)
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
+  private ParameterField<String> ref;
+
+  // inputs
+  Map<String, Object> inputs;
 }

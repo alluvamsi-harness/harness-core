@@ -772,6 +772,8 @@ public class ScmServiceClientImpl implements ScmServiceClient {
         scmBlockingStub::getLatestCommit,
         GetLatestCommitRequest.newBuilder().setBranch(baseBranchName).setSlug(slug).setProvider(gitProvider).build());
     if (isFailureResponse(latestCommitResponse.getStatus())) {
+      log.error(String.format("Error while getting latest commit of branch [%s], %s: %s", baseBranchName,
+          latestCommitResponse.getStatus(), latestCommitResponse.getError()));
       return CreateBranchResponse.newBuilder()
           .setStatus(latestCommitResponse.getStatus())
           .setError(latestCommitResponse.getError())

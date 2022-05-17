@@ -24,6 +24,8 @@ import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
+import io.harness.exception.ExceptionUtils;
+import io.harness.exception.ScmResourceNotFoundException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.GitSyncTestBase;
 import io.harness.gitsync.common.dtos.GitBranchesResponseDTO;
@@ -38,6 +40,7 @@ import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
+import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.FileContent;
@@ -141,6 +144,24 @@ public class ScmFacilitatorServiceImplTest extends GitSyncTestBase {
     String branchName = scmFacilitatorService.getDefaultBranch(
         accountIdentifier, orgIdentifier, projectIdentifier, connectorRef, repoName);
     assertThat(branchName).isEqualTo(defaultBranch);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreateNewBranch() {
+    String errorMessage = "Repo not exist";
+    CreateBranchResponse createBranchResponse =
+        CreateBranchResponse.newBuilder().setStatus(404).setError(errorMessage).build();
+    when(scmOrchestratorService.processScmRequestUsingConnectorSettings(any(), any())).thenReturn(createBranchResponse);
+    try {
+      scmFacilitatorService.createNewBranch(accountIdentifier, orgIdentifier, projectIdentifier,
+          (ScmConnector) connectorInfo.getConnectorConfig(), branch, defaultBranch);
+    } catch (Exception ex) {
+      WingsException exception = ExceptionUtils.cause(ScmResourceNotFoundException.class, ex);
+      assertThat(exception).isNotNull();
+      assertThat(exception.getMessage()).isEqualTo(errorMessage);
+    }
   }
 
   @Test

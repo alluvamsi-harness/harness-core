@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.delegatetasks;
+package io.harness.exception.sanitizer;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.expression.SecretString.SECRET_MASK;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.CDP)
 @Slf4j
 public class ExceptionMessageSanitizer {
-  public static Exception sanitizeException(Exception ex, Set<String> secrets) {
+  public static <T extends Exception> T sanitizeException(T ex, Set<String> secrets) {
     if (isEmpty(secrets)) {
       return ex;
     }
@@ -44,9 +44,9 @@ public class ExceptionMessageSanitizer {
     return ex;
   }
 
-  public static Exception sanitizeException(Exception ex) {
+  public static <T extends Exception> T sanitizeException(T exception) {
     Set<String> secrets = SecretSanitizerThreadLocal.get();
-    return sanitizeException(ex, secrets);
+    return sanitizeException(exception, secrets);
   }
 
   @SneakyThrows
@@ -103,7 +103,7 @@ public class ExceptionMessageSanitizer {
       Object errorMessage = entry.getValue();
       if (errorMessage instanceof String) {
         String updatedErrorMessage = sanitizeMessage((String) errorMessage, secrets);
-        ((WingsException) exception).getParams().put(entry.getKey(), updatedErrorMessage);
+        exception.getParams().put(entry.getKey(), updatedErrorMessage);
       }
     }
   }

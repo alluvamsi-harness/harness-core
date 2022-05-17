@@ -394,7 +394,7 @@
 5266:software.wings.helpers.ext.helm.response.HelmReleaseHistoryCommandResponse
 5267:software.wings.api.HelmSetupExecutionSummary
 5268:software.wings.helpers.ext.helm.request.HelmRollbackCommandRequest
-5269:software.wings.beans.container.HelmChartSpecificationDTO
+5269:software.wings.beans.dto.HelmChartSpecification
 5270:io.harness.git.model.GitRepositoryType
 5271:io.harness.waiter.StringNotifyResponseData
 5272:software.wings.beans.command.InitPowerShellCommandUnit
@@ -585,7 +585,7 @@
 5492:software.wings.service.impl.analysis.CustomLogDataCollectionInfo
 5493:software.wings.delegatetasks.cv.beans.CustomLogResponseMapper
 5494:software.wings.service.impl.cloudwatch.CloudWatchSetupTestNodeData
-5495:software.wings.beans.sso.LdapSettingsDTO
+5495:software.wings.beans.dto.LdapSettings
 5496:software.wings.beans.sso.LdapConnectionSettings
 5497:software.wings.beans.sso.LdapUserSettings
 5498:software.wings.beans.sso.LdapGroupSettings
@@ -621,7 +621,7 @@
 5531:software.wings.service.impl.appdynamics.AppdynamicsSetupTestNodeData
 5537:software.wings.beans.GcpKubernetesCluster
 5538:software.wings.beans.AzureKubernetesCluster
-5539:software.wings.beans.appmanifest.ManifestFileDTO
+5539:software.wings.beans.dto.ManifestFile
 5540:software.wings.beans.appmanifest.StoreType
 5541:software.wings.service.impl.aws.model.AwsElbListElbsRequest
 5542:software.wings.service.impl.aws.model.AwsElbListNetworkElbsRequest

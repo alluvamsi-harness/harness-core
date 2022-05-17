@@ -5,16 +5,13 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package software.wings.beans.appmanifest;
+package software.wings.beans.dto;
 
-import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
-public class ManifestFileDTO {
-  private String fileName;
-  private String fileContent;
-  private String applicationManifestId;
-  private String accountId;
+@SuperBuilder
+public class Base {
+  private String uuid;
 }

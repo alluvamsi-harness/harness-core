@@ -307,6 +307,14 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     return scmClient.getRepoDetails(decryptedConnector);
   }
 
+  @Override
+  public CreateBranchResponse createNewBranch(
+      Scope scope, ScmConnector scmConnector, String newBranchName, String baseBranchName) {
+    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmConnector);
+    return scmClient.createNewBranchV2(decryptedConnector, newBranchName, baseBranchName);
+  }
+
   private CreateBranchResponse createBranch(String branch, String baseBranch, ScmConnector scmConnector) {
     return scmClient.createNewBranch(scmConnector, branch, baseBranch);
   }
