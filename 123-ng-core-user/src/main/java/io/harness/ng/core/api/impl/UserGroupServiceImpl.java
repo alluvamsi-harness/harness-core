@@ -85,7 +85,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.serializer.HObjectMapper;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -546,8 +551,9 @@ public class UserGroupServiceImpl implements UserGroupService {
       criteria = createScopeCriteria(accountIdentifier, orgIdentifier, projectIdentifier);
     }
     if (isNotBlank(searchTerm)) {
-      criteria.orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
+      Criteria searchCriteria = new Criteria().orOperator(Criteria.where(UserGroupKeys.name).regex(searchTerm, "i"),
           Criteria.where(UserGroupKeys.tags).regex(searchTerm, "i"));
+      criteria.andOperator(searchCriteria);
     }
     return criteria;
   }
