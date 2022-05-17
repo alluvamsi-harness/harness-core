@@ -90,9 +90,11 @@ public class AnomalyQueryBuilder {
   }
 
   @NotNull
-  public Condition applyAllFilters(@NotNull CCMFilter filter, @NotNull List<CCMFilter> ruleFilters) {
+  public Condition applyAllFilters(
+      @NotNull CCMFilter filter, @NotNull List<CCMFilter> ruleFilters, @NotNull List<CCMFilter> costCategoryFilters) {
     Condition condition = DSL.noCondition();
     condition = applyPerspectiveRuleFilters(ruleFilters);
+    condition = condition.and(applyCostCategoryFilters(costCategoryFilters));
 
     if (filter.getNumericFilters() != null) {
       condition = applyNumericFilters(filter.getNumericFilters(), condition);
@@ -159,6 +161,19 @@ public class AnomalyQueryBuilder {
         ruleCondition = applyStringFilters(filter.getStringFilters(), ruleCondition);
       }
       overallCondition = overallCondition.or(ruleCondition);
+    }
+    return overallCondition;
+  }
+
+  @NotNull
+  private Condition applyCostCategoryFilters(@NotNull List<CCMFilter> filters) {
+    Condition overallCondition = DSL.noCondition();
+    for (CCMFilter filter : filters) {
+      Condition ruleCondition = DSL.noCondition();
+      if (filter.getStringFilters() != null) {
+        ruleCondition = applyStringFilters(filter.getStringFilters(), ruleCondition);
+      }
+      overallCondition = overallCondition.and(ruleCondition);
     }
     return overallCondition;
   }
