@@ -166,36 +166,45 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testGetFileByBranchWhenSCMOpsIsSuccess() {
-    GetFileRequest getFileRequest =
-        GetFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    GetFileRequest getFileRequest = getGetFileRequestDefault();
     when(scmFacilitatorService.getFileByBranch(any()))
         .thenReturn(ScmGetFileResponseDTO.builder().fileContent(fileContent).commitId(commitId).blobId(blobId).build());
     GetFileResponse getFileResponse = harnessToGitHelperService.getFileByBranch(getFileRequest);
 
     assertThat(getFileResponse.getFileContent()).isEqualTo(fileContent);
     assertThat(getFileResponse.getStatusCode()).isEqualTo(HTTP_200);
-    assertGitMetaData(getFileResponse.getGitMetaData(), branch, filePath, commitId, blobId, repoName);
+    assertGitMetaData(getFileResponse.getGitMetaData(),
+        GitMetaData.newBuilder()
+            .setBlobId(blobId)
+            .setFilePath(filePath)
+            .setCommitId(commitId)
+            .setRepoName(repoName)
+            .setBranchName(branch)
+            .build());
   }
 
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testGetFileByBranchWhenSCMExceptionOccurs() {
-    GetFileRequest getFileRequest =
-        GetFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    GetFileRequest getFileRequest = getGetFileRequestDefault();
     when(scmFacilitatorService.getFileByBranch(any())).thenThrow(getInvalidCredsDefaultException());
     GetFileResponse getFileResponse = harnessToGitHelperService.getFileByBranch(getFileRequest);
 
     assertThat(getFileResponse.getStatusCode()).isEqualTo(401);
-    assertGitErrorDetails(getFileResponse.getError());
+    assertGitErrorDetails(getFileResponse.getError(),
+        ErrorDetails.newBuilder()
+            .setErrorMessage(errorMessage)
+            .setHintMessage(hintMessage)
+            .setExplanationMessage(explanationMessage)
+            .build());
   }
 
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testGetFileByBranchWhenWingsExceptionOccurs() {
-    GetFileRequest getFileRequest =
-        GetFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    GetFileRequest getFileRequest = getGetFileRequestDefault();
     when(scmFacilitatorService.getFileByBranch(any())).thenThrow(getDefaultWingsException());
     GetFileResponse getFileResponse = harnessToGitHelperService.getFileByBranch(getFileRequest);
 
@@ -208,35 +217,44 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testCreateFileWhenSCMOpsIsSuccess() {
-    CreateFileRequest createFileRequest =
-        CreateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    CreateFileRequest createFileRequest = getCreateFileRequestDefault();
     when(scmFacilitatorService.createFile(any()))
         .thenReturn(ScmCommitFileResponseDTO.builder().commitId(commitId).blobId(blobId).build());
     io.harness.gitsync.CreateFileResponse createFileResponse = harnessToGitHelperService.createFile(createFileRequest);
 
     assertThat(createFileResponse.getStatusCode()).isEqualTo(HTTP_200);
-    assertGitMetaData(createFileResponse.getGitMetaData(), branch, filePath, commitId, blobId, repoName);
+    assertGitMetaData(createFileResponse.getGitMetaData(),
+        GitMetaData.newBuilder()
+            .setBlobId(blobId)
+            .setFilePath(filePath)
+            .setCommitId(commitId)
+            .setRepoName(repoName)
+            .setBranchName(branch)
+            .build());
   }
 
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testCreateFileWhenSCMExceptionOccurs() {
-    CreateFileRequest createFileRequest =
-        CreateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    CreateFileRequest createFileRequest = getCreateFileRequestDefault();
     when(scmFacilitatorService.createFile(any())).thenThrow(getInvalidCredsDefaultException());
     io.harness.gitsync.CreateFileResponse createFileResponse = harnessToGitHelperService.createFile(createFileRequest);
 
     assertThat(createFileResponse.getStatusCode()).isEqualTo(401);
-    assertGitErrorDetails(createFileResponse.getError());
+    assertGitErrorDetails(createFileResponse.getError(),
+        ErrorDetails.newBuilder()
+            .setErrorMessage(errorMessage)
+            .setHintMessage(hintMessage)
+            .setExplanationMessage(explanationMessage)
+            .build());
   }
 
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testCreateFileWhenWingsExceptionOccurs() {
-    CreateFileRequest createFileRequest =
-        CreateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    CreateFileRequest createFileRequest = getCreateFileRequestDefault();
     when(scmFacilitatorService.createFile(any())).thenThrow(getDefaultWingsException());
     io.harness.gitsync.CreateFileResponse createFileResponse = harnessToGitHelperService.createFile(createFileRequest);
 
@@ -249,35 +267,44 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testUpdateFileWhenSCMOpsIsSuccess() {
-    UpdateFileRequest updateFileRequest =
-        UpdateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    UpdateFileRequest updateFileRequest = getUpdateFileRequestDefault();
     when(scmFacilitatorService.updateFile(any()))
         .thenReturn(ScmCommitFileResponseDTO.builder().commitId(commitId).blobId(blobId).build());
     io.harness.gitsync.UpdateFileResponse updateFileResponse = harnessToGitHelperService.updateFile(updateFileRequest);
 
     assertThat(updateFileResponse.getStatusCode()).isEqualTo(HTTP_200);
-    assertGitMetaData(updateFileResponse.getGitMetaData(), branch, filePath, commitId, blobId, repoName);
+    assertGitMetaData(updateFileResponse.getGitMetaData(),
+        GitMetaData.newBuilder()
+            .setBlobId(blobId)
+            .setFilePath(filePath)
+            .setCommitId(commitId)
+            .setRepoName(repoName)
+            .setBranchName(branch)
+            .build());
   }
 
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testUpdateFileWhenSCMExceptionOccurs() {
-    UpdateFileRequest updateFileRequest =
-        UpdateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    UpdateFileRequest updateFileRequest = getUpdateFileRequestDefault();
     when(scmFacilitatorService.updateFile(any())).thenThrow(getInvalidCredsDefaultException());
     io.harness.gitsync.UpdateFileResponse updateFileResponse = harnessToGitHelperService.updateFile(updateFileRequest);
 
     assertThat(updateFileResponse.getStatusCode()).isEqualTo(401);
-    assertGitErrorDetails(updateFileResponse.getError());
+    assertGitErrorDetails(updateFileResponse.getError(),
+        ErrorDetails.newBuilder()
+            .setErrorMessage(errorMessage)
+            .setHintMessage(hintMessage)
+            .setExplanationMessage(explanationMessage)
+            .build());
   }
 
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testUpdateFileWhenWingsExceptionOccurs() {
-    UpdateFileRequest updateFileRequest =
-        UpdateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+    UpdateFileRequest updateFileRequest = getUpdateFileRequestDefault();
     when(scmFacilitatorService.updateFile(any())).thenThrow(getDefaultWingsException());
     io.harness.gitsync.UpdateFileResponse updateFileResponse = harnessToGitHelperService.updateFile(updateFileRequest);
 
@@ -290,8 +317,7 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testCreatePullRequestWhenSCMOpsIsSuccess() {
-    CreatePRRequest createPRRequest =
-        CreatePRRequest.newBuilder().setSourceBranch(baseBranch).setTargetBranch(branch).setRepoName(repoName).build();
+    CreatePRRequest createPRRequest = getCreatePRRequestDefault();
     when(scmFacilitatorService.createPR(any())).thenReturn(ScmCreatePRResponseDTO.builder().prNumber(prNumber).build());
     CreatePRResponse createPRResponse = harnessToGitHelperService.createPullRequest(createPRRequest);
 
@@ -312,21 +338,20 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
     return new InvalidRequestException(errorMessage);
   }
 
-  private void assertGitMetaData(
-      GitMetaData gitMetaData, String branch, String filePath, String commitId, String blobId, String repoName) {
-    assertThat(gitMetaData).isNotNull();
-    assertThat(gitMetaData.getBranchName()).isEqualTo(branch);
-    assertThat(gitMetaData.getFilePath()).isEqualTo(filePath);
-    assertThat(gitMetaData.getCommitId()).isEqualTo(commitId);
-    assertThat(gitMetaData.getBlobId()).isEqualTo(blobId);
-    assertThat(gitMetaData.getRepoName()).isEqualTo(repoName);
+  private void assertGitMetaData(GitMetaData gitMetaDataActual, GitMetaData expectedGitMetadata) {
+    assertThat(gitMetaDataActual).isNotNull();
+    assertThat(gitMetaDataActual.getBranchName()).isEqualTo(expectedGitMetadata.getBranchName());
+    assertThat(gitMetaDataActual.getFilePath()).isEqualTo(expectedGitMetadata.getFilePath());
+    assertThat(gitMetaDataActual.getCommitId()).isEqualTo(expectedGitMetadata.getCommitId());
+    assertThat(gitMetaDataActual.getBlobId()).isEqualTo(expectedGitMetadata.getBlobId());
+    assertThat(gitMetaDataActual.getRepoName()).isEqualTo(expectedGitMetadata.getRepoName());
   }
 
-  private void assertGitErrorDetails(ErrorDetails errorDetails) {
-    assertThat(errorDetails).isNotNull();
-    assertThat(errorDetails.getErrorMessage()).isEqualTo(errorMessage);
-    assertThat(errorDetails.getExplanationMessage()).isEqualTo(explanationMessage);
-    assertThat(errorDetails.getHintMessage()).isEqualTo(hintMessage);
+  private void assertGitErrorDetails(ErrorDetails errorDetailsActual, ErrorDetails errorDetailsExpected) {
+    assertThat(errorDetailsActual).isNotNull();
+    assertThat(errorDetailsActual.getErrorMessage()).isEqualTo(errorDetailsExpected.getErrorMessage());
+    assertThat(errorDetailsActual.getExplanationMessage()).isEqualTo(errorDetailsExpected.getExplanationMessage());
+    assertThat(errorDetailsActual.getHintMessage()).isEqualTo(errorDetailsExpected.getHintMessage());
   }
 
   private FileInfo getFileInfoDefault(String commitId, ChangeType changeType, boolean isNewBranch) {
@@ -337,6 +362,26 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
         .setChangeType(changeType)
         .setIsNewBranch(isNewBranch)
         .build();
+  }
+
+  private CreatePRRequest getCreatePRRequestDefault() {
+    return CreatePRRequest.newBuilder()
+        .setSourceBranch(baseBranch)
+        .setTargetBranch(branch)
+        .setRepoName(repoName)
+        .build();
+  }
+
+  private UpdateFileRequest getUpdateFileRequestDefault() {
+    return UpdateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+  }
+
+  private CreateFileRequest getCreateFileRequestDefault() {
+    return CreateFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
+  }
+
+  private GetFileRequest getGetFileRequestDefault() {
+    return GetFileRequest.newBuilder().setBranchName(branch).setFilePath(filePath).setRepoName(repoName).build();
   }
 
   private GitSyncEntityDTO getGitSyncEntityDTODefault() {
