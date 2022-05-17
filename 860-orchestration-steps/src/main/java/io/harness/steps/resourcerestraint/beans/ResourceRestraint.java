@@ -54,6 +54,8 @@ public class ResourceRestraint {
   @Version Long version;
 
   @NotEmpty private String accountId;
+  @Trimmed String orgIdentifier;
+  @Trimmed String projectIdentifier;
   @NotEmpty @Trimmed private String name;
   @Min(value = 1) @Max(value = 1000) private int capacity;
   private Constraint.Strategy strategy;
@@ -66,6 +68,12 @@ public class ResourceRestraint {
                  .unique(true)
                  .field(ResourceRestraintKeys.accountId)
                  .field(ResourceRestraintKeys.name)
+                 .build())
+        .add(CompoundMongoIndex.builder()
+                 .name("accountId_projectId_orgId_Index")
+                 .field(ResourceRestraintKeys.accountId)
+                 .field(ResourceRestraintKeys.projectIdentifier)
+                 .field(ResourceRestraintKeys.orgIdentifier)
                  .build())
         .build();
   }
