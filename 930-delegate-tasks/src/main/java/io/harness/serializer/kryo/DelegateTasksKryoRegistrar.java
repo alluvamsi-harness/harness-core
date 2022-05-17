@@ -82,10 +82,10 @@ import software.wings.beans.SplunkConfig;
 import software.wings.beans.SumoConfig;
 import software.wings.beans.TerraformInputVariablesTaskResponse;
 import software.wings.beans.VaultConfig;
+import software.wings.beans.WinRmCommandParameter;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.apm.Method;
 import software.wings.beans.appmanifest.AppManifestKind;
-import software.wings.beans.appmanifest.ManifestFileDTO;
 import software.wings.beans.approval.ConditionalOperator;
 import software.wings.beans.approval.Criteria;
 import software.wings.beans.approval.ServiceNowApprovalParams;
@@ -100,12 +100,14 @@ import software.wings.beans.config.NexusConfig;
 import software.wings.beans.container.AwsAutoScalarConfig;
 import software.wings.beans.container.EcsSteadyStateCheckParams;
 import software.wings.beans.container.EcsSteadyStateCheckResponse;
-import software.wings.beans.container.HelmChartSpecificationDTO;
 import software.wings.beans.container.KubernetesSteadyStateCheckParams;
 import software.wings.beans.container.KubernetesSwapServiceSelectorsParams;
 import software.wings.beans.delegation.ShellScriptParameters;
 import software.wings.beans.delegation.TerraformProvisionParameters;
 import software.wings.beans.delegation.TerragruntProvisionParameters;
+import software.wings.beans.dto.HelmChartSpecification;
+import software.wings.beans.dto.LdapSettings;
+import software.wings.beans.dto.ManifestFile;
 import software.wings.beans.jira.JiraTaskParameters;
 import software.wings.beans.servicenow.ServiceNowFieldType;
 import software.wings.beans.servicenow.ServiceNowMetaDTO;
@@ -119,7 +121,6 @@ import software.wings.beans.settings.helm.HelmRepoConfigValidationTaskParams;
 import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.beans.sso.LdapConnectionSettings;
 import software.wings.beans.sso.LdapGroupResponse;
-import software.wings.beans.sso.LdapSettingsDTO;
 import software.wings.beans.sso.LdapUserResponse;
 import software.wings.beans.sso.LdapUserSettings;
 import software.wings.beans.trigger.TriggerCommand.TriggerCommandType;
@@ -705,6 +706,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(VaultConfig.class, 5214);
     kryo.register(WinrmHostValidationCapability.class, 7327);
     kryo.register(WinRmConnectionAttributes.class, 5255);
+    kryo.register(WinRmCommandParameter.class, 5256);
     kryo.register(SecretEngineSummary.class, 7239);
     kryo.register(VaultAppRoleLoginResult.class, 7240);
     kryo.register(SSHVaultAuthResult.class, 15013);
@@ -769,7 +771,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(LdapGroupResponse.class, 5501);
     kryo.register(LdapUserResponse.class, 5502);
     kryo.register(LdapUserSettings.class, 5497);
-    kryo.register(LdapSettingsDTO.class, 5495);
+    kryo.register(LdapSettings.class, 5495);
 
     kryo.register(ResizeCommandUnitExecutionData.class, 5053);
     kryo.register(EcsServiceDeployRequest.class, 7148);
@@ -778,7 +780,7 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(EcsResizeParams.class, 5181);
     kryo.register(AwsAutoScalarConfig.class, 5559);
     kryo.register(EcsDeployRollbackDataFetchRequest.class, 8086);
-    kryo.register(HelmChartSpecificationDTO.class, 5269);
-    kryo.register(ManifestFileDTO.class, 5539);
+    kryo.register(HelmChartSpecification.class, 5269);
+    kryo.register(ManifestFile.class, 5539);
   }
 }

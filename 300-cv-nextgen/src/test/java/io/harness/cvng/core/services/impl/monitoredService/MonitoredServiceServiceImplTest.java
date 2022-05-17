@@ -326,8 +326,9 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO()).isNotNull();
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getName()).isEqualTo("service1");
     assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getEnvironmentRef()).isEqualTo("env3");
-    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getTemplateIdentifier()).isEqualTo("templateRef123");
-    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getTemplateVersionLabel())
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getTemplate().getTemplateRef())
+        .isEqualTo("templateRef123");
+    assertThat(monitoredServiceResponse.getMonitoredServiceDTO().getTemplate().getVersionLabel())
         .isEqualTo("versionLabel123");
   }
 
@@ -2316,6 +2317,33 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     assertThat(
         ((MonitoredServiceServiceImpl) monitoredServiceService).shouldSendNotification(monitoredService, condition))
         .isFalse();
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetNotificationRules() {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.MONITORED_SERVICE).build();
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+
+    MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTOWithCustomDependencies(
+        "service_1_local", environmentParams.getServiceIdentifier(), Sets.newHashSet());
+    monitoredServiceDTO.setNotificationRuleRefs(
+        Arrays.asList(NotificationRuleRefDTO.builder()
+                          .notificationRuleRef(notificationRuleResponse.getNotificationRule().getIdentifier())
+                          .enabled(true)
+                          .build()));
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+    PageResponse<NotificationRuleResponse> notificationRuleResponsePageResponse =
+        monitoredServiceService.getNotificationRules(
+            projectParams, monitoredServiceDTO.getIdentifier(), PageParams.builder().page(0).size(10).build());
+    assertThat(notificationRuleResponsePageResponse.getTotalPages()).isEqualTo(1);
+    assertThat(notificationRuleResponsePageResponse.getTotalItems()).isEqualTo(1);
+    assertThat(notificationRuleResponsePageResponse.getContent().get(0).isEnabled()).isTrue();
+    assertThat(notificationRuleResponsePageResponse.getContent().get(0).getNotificationRule().getIdentifier())
+        .isEqualTo(notificationRuleDTO.getIdentifier());
   }
 
   private void createActivity(MonitoredServiceDTO monitoredServiceDTO) {

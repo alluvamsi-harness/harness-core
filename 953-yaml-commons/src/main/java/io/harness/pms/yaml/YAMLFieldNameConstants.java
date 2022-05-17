@@ -67,4 +67,5 @@ public class YAMLFieldNameConstants {
   public final String BASE_IMAGE_CONNECTOR_REFS = "baseImageConnectorRefs";
   public final String HARNESS_IMAGE_CONNECTOR_REF = "harnessImageConnectorRef";
 
+  public final String CHILD_NODE_OF_SPEC = "childNodeOfSpec";
 }

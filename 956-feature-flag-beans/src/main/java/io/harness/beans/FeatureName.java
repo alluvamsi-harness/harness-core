@@ -341,7 +341,8 @@ public enum FeatureName {
   NG_SVC_ENV_REDESIGN,
   NEW_PIPELINE_STUDIO,
   AZURE_REPO_CONNECTOR,
-  HELM_OCI_SUPPORT;
+  HELM_OCI_SUPPORT,
+  HELP_PANEL;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;

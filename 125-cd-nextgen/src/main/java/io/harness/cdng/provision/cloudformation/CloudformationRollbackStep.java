@@ -62,8 +62,10 @@ import software.wings.beans.TaskType;
 import com.amazonaws.services.cloudformation.model.StackStatus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -194,13 +196,22 @@ public class CloudformationRollbackStep extends TaskExecutableWithRollbackAndRba
         (AwsConnectorDTO) cloudformationStepHelper.getConnectorDTO(cloudformationConfig.getConnectorRef(), ambiance)
             .getConnectorConfig();
     Map<String, String> parameters = new HashMap<>();
-    cloudformationConfig.getParametersFiles().forEach(
-        (s, strings)
-            -> strings.forEach(fileContent
-                -> parameters.putAll(cloudformationStepHelper.getParametersFromJson(ambiance, fileContent))));
+    if (cloudformationConfig.getParametersFiles() != null) {
+      cloudformationConfig.getParametersFiles().forEach(
+          (s, strings)
+              -> strings.forEach(fileContent
+                  -> parameters.putAll(cloudformationStepHelper.getParametersFromJson(ambiance, fileContent))));
+    }
 
     if (cloudformationConfig.getParameterOverrides() != null) {
       parameters.putAll(cloudformationConfig.getParameterOverrides());
+    }
+    List<StackStatus> statusesToMarkAsSuccess = new ArrayList<>();
+    if (cloudformationConfig.getStackStatusesToMarkAsSuccess() != null) {
+      statusesToMarkAsSuccess = cloudformationConfig.getStackStatusesToMarkAsSuccess()
+                                    .stream()
+                                    .map(StackStatus::fromValue)
+                                    .collect(Collectors.toList());
     }
 
     CloudformationTaskNGParameters cloudformationTaskNGParameters =
@@ -218,10 +229,7 @@ public class CloudformationRollbackStep extends TaskExecutableWithRollbackAndRba
             .parameters(parameters)
             .capabilities(cloudformationConfig.getCapabilities())
             .tags(cloudformationConfig.getTags())
-            .stackStatusesToMarkAsSuccess(cloudformationConfig.getStackStatusesToMarkAsSuccess()
-                                              .stream()
-                                              .map(StackStatus::fromValue)
-                                              .collect(Collectors.toList()))
+            .stackStatusesToMarkAsSuccess(statusesToMarkAsSuccess)
             .timeoutInMs(StepUtils.getTimeoutMillis(stepParameters.getTimeout(), DEFAULT_TIMEOUT))
             .build();
     ExpressionEvaluatorUtils.updateExpressions(
