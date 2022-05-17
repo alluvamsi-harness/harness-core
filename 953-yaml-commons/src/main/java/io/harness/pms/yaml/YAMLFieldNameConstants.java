@@ -65,4 +65,6 @@ public class YAMLFieldNameConstants {
   public final String TEMPLATE_INPUTS = "templateInputs";
 
   public final String BASE_IMAGE_CONNECTOR_REFS = "baseImageConnectorRefs";
+  public final String HARNESS_IMAGE_CONNECTOR_REF = "harnessImageConnectorRef";
+
 }

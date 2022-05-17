@@ -14,6 +14,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
+import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
 import io.harness.beans.yaml.extended.reports.JUnitTestReport;
 import io.harness.beans.yaml.extended.reports.UnitTestReportType;
 import io.harness.ci.config.CIExecutionServiceConfig;
@@ -28,6 +29,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.stateutils.buildstate.ConnectorUtils;
+import io.harness.util.HarnessImageEvaluator;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
@@ -37,15 +39,17 @@ import com.google.inject.Singleton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 @Singleton
 public class VmPluginStepSerializer {
   @Inject CIExecutionServiceConfig ciExecutionServiceConfig;
   @Inject ConnectorUtils connectorUtils;
+  @Inject HarnessImageEvaluator harnessImageEvaluator;
 
-  public VmPluginStep serialize(PluginStepInfo pluginStepInfo, String identifier,
-      ParameterField<Timeout> parameterFieldTimeout, String stepName, Ambiance ambiance) {
+  public VmPluginStep serialize(PluginStepInfo pluginStepInfo, VmStageInfraDetails vmStageInfraDetails,
+      String identifier, ParameterField<Timeout> parameterFieldTimeout, String stepName, Ambiance ambiance) {
     Map<String, JsonNode> settings =
         resolveJsonNodeMapParameter("settings", "Plugin", identifier, pluginStepInfo.getSettings(), false);
     Map<String, String> envVars = new HashMap<>();
@@ -75,10 +79,15 @@ public class VmPluginStepSerializer {
     if (identifier.equals(GIT_CLONE_STEP_ID) && pluginStepInfo.isHarnessManagedImage()) {
       String gitImage = ciExecutionServiceConfig.getStepConfig().getVmImageConfig().getGitClone();
       NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
-      ConnectorDetails connectorDetails = connectorUtils.getDefaultInternalConnector(ngAccess);
-      image = IntegrationStageUtils.getFullyQualifiedImageName(gitImage, connectorDetails);
+      Optional<ConnectorDetails> optionalHarnessInternalImageConnector =
+          harnessImageEvaluator.evaluate(ngAccess, vmStageInfraDetails);
+      ConnectorDetails harnessInternalImageConnector = null;
+      if (optionalHarnessInternalImageConnector.isPresent()) {
+        harnessInternalImageConnector = optionalHarnessInternalImageConnector.get();
+      }
+      image = IntegrationStageUtils.getFullyQualifiedImageName(gitImage, harnessInternalImageConnector);
       pluginStepBuilder.image(image);
-      pluginStepBuilder.imageConnector(connectorDetails);
+      pluginStepBuilder.imageConnector(harnessInternalImageConnector);
     } else if (!StringUtils.isEmpty(image) && !StringUtils.isEmpty(connectorIdentifier)) {
       NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
       ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(ngAccess, connectorIdentifier);

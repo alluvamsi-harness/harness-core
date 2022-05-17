@@ -10,6 +10,7 @@ package io.harness.beans.yaml.extended.infrastrucutre;
 import static io.harness.annotations.dev.HarnessTeam.CI;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,4 +38,8 @@ public class VmInfraYaml implements Infrastructure {
   String uuid;
   @Builder.Default @NotNull private Type type = Type.VM;
   @NotNull private VmInfraSpec spec;
+
+  public ParameterField<String> getHarnessImageConnectorRef() {
+    return this.spec.getHarnessImageConnectorRef();
+  }
 }

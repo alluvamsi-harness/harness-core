@@ -261,8 +261,8 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
     }
     VmStageInfraDetails vmStageInfraDetails = (VmStageInfraDetails) optionalInfraSweepingOutput.getOutput();
 
-    VmStepInfo vmStepInfo = vmStepSerializer.serialize(
-        ambiance, ciStepInfo, stepIdentifier, ParameterField.createValueField(Timeout.fromString(stringTimeout)));
+    VmStepInfo vmStepInfo = vmStepSerializer.serialize(ambiance, ciStepInfo, vmStageInfraDetails, stepIdentifier,
+        ParameterField.createValueField(Timeout.fromString(stringTimeout)));
     Set<String> secrets = vmStepSerializer.getStepSecrets(vmStepInfo, ambiance);
     CIVmExecuteStepTaskParams params = CIVmExecuteStepTaskParams.builder()
                                            .ipAddress(vmDetailsOutcome.getIpAddress())

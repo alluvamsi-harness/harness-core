@@ -110,6 +110,7 @@ import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 import io.harness.util.GithubApiFunctor;
 import io.harness.util.GithubApiTokenEvaluator;
+import io.harness.util.HarnessImageEvaluator;
 import io.harness.util.LiteEngineSecretEvaluator;
 import io.harness.utils.IdentifierRefHelper;
 import io.harness.yaml.core.timeout.Timeout;
@@ -146,6 +147,7 @@ public class K8BuildSetupUtils {
   @Inject CodebaseUtils codebaseUtils;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
+  @Inject private HarnessImageEvaluator harnessImageEvaluator;
   private final Duration RETRY_SLEEP_DURATION = Duration.ofSeconds(2);
   private final int MAX_ATTEMPTS = 3;
   private static String RUNTIME_CLASS_NAME = "gvisor";
@@ -288,9 +290,15 @@ public class K8BuildSetupUtils {
       String namespace, SecurityContext securityContext, Boolean automountServiceAccountToken, String priorityClassName,
       OSType os) {
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
+    Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
+    if (infrastructure == null) {
+      throw new CIStageExecutionException("Input infrastructure can not be empty");
+    }
+    Optional<ConnectorDetails> optionalHarnessInternalImageConnector =
+        harnessImageEvaluator.evaluate(ngAccess, infrastructure);
     ConnectorDetails harnessInternalImageConnector = null;
-    if (isNotEmpty(ciExecutionServiceConfig.getDefaultInternalImageConnector())) {
-      harnessInternalImageConnector = connectorUtils.getDefaultInternalConnector(ngAccess);
+    if (optionalHarnessInternalImageConnector.isPresent()) {
+      harnessInternalImageConnector = optionalHarnessInternalImageConnector.get();
     }
     CodeBase ciCodebase = initializeStepInfo.getCiCodebase();
     ConnectorDetails gitConnector =
@@ -318,12 +326,6 @@ public class K8BuildSetupUtils {
     List<PVCParams> pvcParamsList = new ArrayList<>();
     if (usePVC) {
       pvcParamsList = podSetupInfo.getPvcParamsList();
-    }
-
-    Infrastructure infrastructure = initializeStepInfo.getInfrastructure();
-
-    if (infrastructure == null) {
-      throw new CIStageExecutionException("Input infrastructure can not be empty");
     }
 
     List<String> containerNames = containerParamsList.stream().map(CIK8ContainerParams::getName).collect(toList());

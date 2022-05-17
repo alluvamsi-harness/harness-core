@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.validation.Update;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -32,6 +33,7 @@ public class VmStageInfraDetails implements StageInfraDetails {
   String poolId;
   String workDir;
   Map<String, String> volToMountPathMap; // host volume name to mount path mapping
+  ParameterField<String> harnessImageConnectorRef;
   @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
 
   @Builder.Default @NotNull private Type type = Type.VM;
