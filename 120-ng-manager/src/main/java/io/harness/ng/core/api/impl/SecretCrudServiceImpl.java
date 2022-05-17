@@ -266,8 +266,6 @@ public class SecretCrudServiceImpl implements SecretCrudService {
 
     Page<Secret> secrets = ngSecretService.list(criteria, page, size);
     return secrets.map(this::getResponseWrapper);
-//        return PageUtils.getNGPageResponse(
-    //        secrets, secrets.getContent().stream().map(this::getResponseWrapper).collect(Collectors.toList()));
   }
 
   @Override
@@ -305,6 +303,26 @@ public class SecretCrudServiceImpl implements SecretCrudService {
       throw new InvalidRequestException("Unable to delete secret remotely.", USER);
     } else {
       throw new InvalidRequestException("Unable to delete secret locally, data might be inconsistent", USER);
+    }
+  }
+
+  public void deleteBatch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, List<String> secretIdentifiersList) {
+    for (String identifier : secretIdentifiersList) {
+      Optional<SecretResponseWrapper> optionalSecret =
+          get(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+      if (optionalSecret.isPresent()) {
+        boolean deletionSuccess =
+            ngSecretService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+        if (deletionSuccess) {
+          secretEntityReferenceHelper.deleteSecretEntityReferenceWhenSecretGetsDeleted(accountIdentifier, orgIdentifier,
+              projectIdentifier, identifier, getSecretManagerIdentifier(optionalSecret.get().getSecret()));
+          publishEvent(accountIdentifier, orgIdentifier, projectIdentifier, identifier,
+              EventsFrameworkMetadataConstants.DELETE_ACTION);
+        } else {
+          log.error("Unable to delete secret {} locally, data might be inconsistent", identifier);
+        }
+      }
     }
   }
 

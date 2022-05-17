@@ -40,6 +40,9 @@ public interface SecretCrudService {
 
   boolean delete(String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier);
 
+  void deleteBatch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, List<String> secretIdentifiersList);
+
   SecretResponseWrapper createFile(String accountIdentifier, SecretDTOV2 dto, InputStream inputStream);
 
   SecretResponseWrapper updateFile(String accountIdentifier, String orgIdentifier, String projectIdentifier,
