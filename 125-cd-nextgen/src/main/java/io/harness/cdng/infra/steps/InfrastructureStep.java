@@ -26,6 +26,7 @@ import io.harness.cdng.infra.yaml.K8sAzureInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
+import io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
@@ -197,6 +198,13 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
           connectorInfo.getConnectorType().name(), infrastructure.getConnectorReference().getValue(),
           ConnectorType.AZURE.name()));
     }
+
+    if (InfrastructureKind.SSH_WINRM_AZURE.equals(infrastructure.getKind())
+        && !(connectorInfo.getConnectorConfig() instanceof AzureConnectorDTO)) {
+      throw new InvalidRequestException(String.format("Invalid connector type [%s] for identifier: [%s], expected [%s]",
+          connectorInfo.getConnectorType().name(), infrastructure.getConnectorReference().getValue(),
+          ConnectorType.AZURE.name()));
+    }
   }
 
   private ConnectorInfoDTO validateAndGetConnector(ParameterField<String> connectorRef, Ambiance ambiance) {
@@ -246,6 +254,13 @@ public class InfrastructureStep implements SyncExecutableWithRbac<Infrastructure
         validateExpression(k8sAzureInfrastructure.getConnectorRef(), k8sAzureInfrastructure.getNamespace(),
             k8sAzureInfrastructure.getCluster(), k8sAzureInfrastructure.getSubscriptionId(),
             k8sAzureInfrastructure.getResourceGroup());
+        break;
+
+      case InfrastructureKind.SSH_WINRM_AZURE:
+        SshWinRmAzureInfrastructure sshWinRmAzureInfrastructure = (SshWinRmAzureInfrastructure) infrastructure;
+        validateExpression(sshWinRmAzureInfrastructure.getConnectorRef(),
+            sshWinRmAzureInfrastructure.getSubscriptionId(), sshWinRmAzureInfrastructure.getResourceGroup(),
+            sshWinRmAzureInfrastructure.getCredentialsRef());
         break;
 
       case InfrastructureKind.PDC:
