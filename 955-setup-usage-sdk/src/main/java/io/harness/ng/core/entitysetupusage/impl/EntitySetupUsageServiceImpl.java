@@ -99,6 +99,18 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
   }
 
   @Override
+  public List<EntitySetupUsageDTO> listAllReferredUsages(
+      String accountIdentifier, String referredByEntityFQN, EntityType referredEntityType) {
+    Criteria criteria = entitySetupUsageFilterHelper.createCriteriaForListAllReferredUsages(
+        accountIdentifier, referredByEntityFQN, referredEntityType, null);
+    return entityReferenceRepository.findAll(criteria, Pageable.unpaged())
+        .getContent()
+        .stream()
+        .map(entityReference -> setupUsageEntityToDTO.createEntityReferenceDTO(entityReference))
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public Boolean isEntityReferenced(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType) {
     Criteria criteria = entitySetupUsageFilterHelper.createCriteriaToCheckWhetherThisEntityIsReferred(
         accountIdentifier, referredEntityFQN, referredEntityType);

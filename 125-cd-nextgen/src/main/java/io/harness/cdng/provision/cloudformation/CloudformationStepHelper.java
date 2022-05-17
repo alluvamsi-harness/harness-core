@@ -383,7 +383,8 @@ public class CloudformationStepHelper {
       stepConfiguration.getParametersFilesSpecs().forEach(cloudformationParametersFileSpec -> {
         String specKind = cloudformationParametersFileSpec.getStore().getSpec().getKind();
         if (ManifestStoreType.isInGitSubset(specKind) || specKind.equals(ManifestStoreType.S3URL)) {
-          passThroughData.getParametersFilesContent().put(cloudformationParametersFileSpec.getIdentifier(), null);
+          passThroughData.getParametersFilesContent().put(
+              cloudformationParametersFileSpec.getIdentifier(), new ArrayList<>());
         }
       });
     }

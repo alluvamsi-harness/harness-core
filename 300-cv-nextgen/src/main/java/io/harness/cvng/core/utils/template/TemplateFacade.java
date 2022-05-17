@@ -7,23 +7,22 @@
 
 package io.harness.cvng.core.utils.template;
 
-import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO.MonitoredServiceDTOKeys;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.ng.core.template.TemplateApplyRequestDTO;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
-import io.harness.ng.core.template.TemplateReferenceSummary;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.template.remote.TemplateResourceClient;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Map;
-import org.apache.commons.collections4.CollectionUtils;
 import org.yaml.snakeyaml.Yaml;
 
 @Singleton
 public class TemplateFacade {
+  private static final String TEMPLATE_KEY = "template";
+
   @Inject private TemplateResourceClient templateResourceClient;
 
   public String resolveYaml(ProjectParams projectParams, String yaml) {
@@ -31,18 +30,20 @@ public class TemplateFacade {
         NGRestUtils.getResponse(templateResourceClient.applyTemplatesOnGivenYaml(projectParams.getAccountIdentifier(),
             projectParams.getOrgIdentifier(), projectParams.getProjectIdentifier(), null, null, null,
             TemplateApplyRequestDTO.builder().originalEntityYaml(yaml).checkForAccess(false).build()));
-    String monitoredServiceYaml = templateMergeResponseDTO.getMergedPipelineYaml();
+    String resolvedYaml = templateMergeResponseDTO.getMergedPipelineYaml();
+    return getResolvedYamlWithInputTemplateMerged(resolvedYaml, yaml);
+  }
+
+  private String getResolvedYamlWithInputTemplateMerged(String resolvedYaml, String inputYaml) {
     Yaml yamlObject = new Yaml();
-    Map<String, Object> data = yamlObject.load(monitoredServiceYaml);
+    Map<String, Object> data = yamlObject.load(resolvedYaml);
     Map<String, Object> monitoredServiceData =
         (Map<String, Object>) data.get(CVNextGenConstants.MONITORED_SERVICE_YAML_ROOT);
-    if (CollectionUtils.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries())) {
-      TemplateReferenceSummary templateReferenceSummary =
-          templateMergeResponseDTO.getTemplateReferenceSummaries().get(0);
-      monitoredServiceData.put(
-          MonitoredServiceDTOKeys.templateIdentifier, templateReferenceSummary.getTemplateIdentifier());
-      monitoredServiceData.put(
-          MonitoredServiceDTOKeys.templateVersionLabel, templateReferenceSummary.getVersionLabel());
+    Map<String, Object> inputData = yamlObject.load(inputYaml);
+    Map<String, Object> inputMonitoredServiceData =
+        (Map<String, Object>) inputData.get(CVNextGenConstants.MONITORED_SERVICE_YAML_ROOT);
+    if (inputMonitoredServiceData.containsKey(TEMPLATE_KEY)) {
+      monitoredServiceData.put(TEMPLATE_KEY, inputMonitoredServiceData.get(TEMPLATE_KEY));
     }
     return yamlObject.dump(data);
   }

@@ -7,6 +7,8 @@
 
 package io.harness.ng.core.entities;
 
+import static io.harness.beans.EmbeddedUser.EmbeddedUserKeys;
+
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -39,6 +41,7 @@ import lombok.Data;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
+import lombok.experimental.UtilityClass;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
@@ -123,5 +126,11 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   @JsonIgnore
   public boolean isDraft() {
     return draft != null && draft;
+  }
+
+  @UtilityClass
+  public static final class NGFiles {
+    public static final String CREATED_BY_NAME = NGFiles.createdBy + "." + EmbeddedUserKeys.name;
+    public static final String CREATED_BY_EMAIL = NGFiles.createdBy + "." + EmbeddedUserKeys.email;
   }
 }

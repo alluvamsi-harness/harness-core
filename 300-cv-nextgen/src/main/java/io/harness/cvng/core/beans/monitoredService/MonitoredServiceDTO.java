@@ -11,6 +11,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.cvng.beans.MonitoredServiceType;
 import io.harness.cvng.core.beans.dependency.ServiceDependencyMetadata;
+import io.harness.cvng.core.beans.template.TemplateDTO;
 import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.NGEntityName;
@@ -30,13 +31,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.FieldNameConstants;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-@FieldNameConstants(innerTypeName = "MonitoredServiceDTOKeys")
 public class MonitoredServiceDTO {
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String orgIdentifier;
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String projectIdentifier;
@@ -51,8 +50,7 @@ public class MonitoredServiceDTO {
   @Valid Sources sources;
   @Valid Set<ServiceDependencyDTO> dependencies;
   List<NotificationRuleRefDTO> notificationRuleRefs;
-  String templateIdentifier;
-  String templateVersionLabel;
+  @Valid TemplateDTO template;
 
   public List<String> getEnvironmentRefList() {
     // For migration. Remove once envRefList is populated from UI.
