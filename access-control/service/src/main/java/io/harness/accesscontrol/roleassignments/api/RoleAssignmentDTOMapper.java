@@ -45,37 +45,37 @@ public class RoleAssignmentDTOMapper {
   public RoleAssignmentResponseDTO toResponseDTO(RoleAssignment object) {
     Scope scope = scopeService.buildScopeFromScopeIdentifier(object.getScopeIdentifier());
     return RoleAssignmentResponseDTO.builder()
-            .roleAssignment(RoleAssignmentDTO.builder()
-                    .identifier(object.getIdentifier())
-                    .principal(PrincipalDTO.builder()
-                            .scopeLevel(object.getPrincipalScopeLevel())
-                            .identifier(object.getPrincipalIdentifier())
-                            .type(object.getPrincipalType())
+        .roleAssignment(RoleAssignmentDTO.builder()
+                            .identifier(object.getIdentifier())
+                            .principal(PrincipalDTO.builder()
+                                           .scopeLevel(object.getPrincipalScopeLevel())
+                                           .identifier(object.getPrincipalIdentifier())
+                                           .type(object.getPrincipalType())
+                                           .build())
+                            .resourceGroupIdentifier(object.getResourceGroupIdentifier())
+                            .roleIdentifier(object.getRoleIdentifier())
+                            .disabled(object.isDisabled())
                             .build())
-                    .resourceGroupIdentifier(object.getResourceGroupIdentifier())
-                    .roleIdentifier(object.getRoleIdentifier())
-                    .disabled(object.isDisabled())
-                    .build())
-            .scope(ScopeMapper.toDTO(scope))
-            .harnessManaged(object.isManaged())
-            .createdAt(object.getCreatedAt())
-            .lastModifiedAt(object.getLastModifiedAt())
-            .build();
+        .scope(ScopeMapper.toDTO(scope))
+        .harnessManaged(object.isManaged())
+        .createdAt(object.getCreatedAt())
+        .lastModifiedAt(object.getLastModifiedAt())
+        .build();
   }
 
   public static RoleAssignmentDTO toDTO(RoleAssignment object) {
     return RoleAssignmentDTO.builder()
-            .identifier(object.getIdentifier())
-            .principal(PrincipalDTO.builder()
-                    .scopeLevel(object.getPrincipalScopeLevel())
-                    .identifier(object.getPrincipalIdentifier())
-                    .type(object.getPrincipalType())
-                    .build())
-            .resourceGroupIdentifier(object.getResourceGroupIdentifier())
-            .roleIdentifier(object.getRoleIdentifier())
-            .disabled(object.isDisabled())
-            .managed(object.isManaged())
-            .build();
+        .identifier(object.getIdentifier())
+        .principal(PrincipalDTO.builder()
+                       .scopeLevel(object.getPrincipalScopeLevel())
+                       .identifier(object.getPrincipalIdentifier())
+                       .type(object.getPrincipalType())
+                       .build())
+        .resourceGroupIdentifier(object.getResourceGroupIdentifier())
+        .roleIdentifier(object.getRoleIdentifier())
+        .disabled(object.isDisabled())
+        .managed(object.isManaged())
+        .build();
   }
 
   public static RoleAssignment fromDTO(Scope scope, RoleAssignmentDTO object) {
@@ -84,65 +84,65 @@ public class RoleAssignmentDTOMapper {
 
   public static RoleAssignment fromDTO(Scope scope, RoleAssignmentDTO object, boolean managed) {
     RoleAssignmentBuilder roleAssignmentBuilder =
-            RoleAssignment.builder()
-                    .identifier(isEmpty(object.getIdentifier())
-                            ? "role_assignment_".concat(CryptoUtils.secureRandAlphaNumString(20))
-                            : object.getIdentifier())
-                    .principalIdentifier(object.getPrincipal().getIdentifier())
-                    .principalScopeLevel(object.getPrincipal().getScopeLevel())
-                    .principalType(object.getPrincipal().getType())
-                    .resourceGroupIdentifier(object.getResourceGroupIdentifier())
-                    .roleIdentifier(object.getRoleIdentifier())
-                    .disabled(object.isDisabled())
-                    .managed(managed)
-                    .scopeIdentifier(scope.toString())
-                    .scopeLevel(scope.getLevel().toString());
+        RoleAssignment.builder()
+            .identifier(isEmpty(object.getIdentifier())
+                    ? "role_assignment_".concat(CryptoUtils.secureRandAlphaNumString(20))
+                    : object.getIdentifier())
+            .principalIdentifier(object.getPrincipal().getIdentifier())
+            .principalScopeLevel(object.getPrincipal().getScopeLevel())
+            .principalType(object.getPrincipal().getType())
+            .resourceGroupIdentifier(object.getResourceGroupIdentifier())
+            .roleIdentifier(object.getRoleIdentifier())
+            .disabled(object.isDisabled())
+            .managed(managed)
+            .scopeIdentifier(scope.toString())
+            .scopeLevel(scope.getLevel().toString());
     return roleAssignmentBuilder.build();
   }
 
   public static RoleAssignmentFilter fromDTO(String scopeIdentifier, RoleAssignmentFilterDTO object) {
     return RoleAssignmentFilter.builder()
-            .scopeFilter(scopeIdentifier)
-            .includeChildScopes(false)
-            .roleFilter(object.getRoleFilter() == null ? new HashSet<>() : object.getRoleFilter())
-            .resourceGroupFilter(
-                    object.getResourceGroupFilter() == null ? new HashSet<>() : object.getResourceGroupFilter())
-            .principalFilter(object.getPrincipalFilter() == null
-                    ? new HashSet<>()
-                    : object.getPrincipalFilter()
-                    .stream()
-                    .map(principalDTO
-                            -> Principal.builder()
-                            .principalScopeLevel(principalDTO.getScopeLevel())
-                            .principalType(principalDTO.getType())
-                            .principalIdentifier(principalDTO.getIdentifier())
-                            .build())
-                    .collect(Collectors.toSet()))
-            .principalTypeFilter(
-                    object.getPrincipalTypeFilter() == null ? new HashSet<>() : object.getPrincipalTypeFilter())
-            .principalScopeLevelFilter(
-                    object.getPrincipalScopeLevelFilter() == null ? new HashSet<>() : object.getPrincipalScopeLevelFilter())
-            .managedFilter(Objects.isNull(object.getHarnessManagedFilter())
-                    ? ManagedFilter.NO_FILTER
-                    : buildFromSet(object.getHarnessManagedFilter()))
-            .disabledFilter(object.getDisabledFilter() == null ? new HashSet<>() : object.getDisabledFilter())
-            .build();
+        .scopeFilter(scopeIdentifier)
+        .includeChildScopes(false)
+        .roleFilter(object.getRoleFilter() == null ? new HashSet<>() : object.getRoleFilter())
+        .resourceGroupFilter(
+            object.getResourceGroupFilter() == null ? new HashSet<>() : object.getResourceGroupFilter())
+        .principalFilter(object.getPrincipalFilter() == null
+                ? new HashSet<>()
+                : object.getPrincipalFilter()
+                      .stream()
+                      .map(principalDTO
+                          -> Principal.builder()
+                                 .principalScopeLevel(principalDTO.getScopeLevel())
+                                 .principalType(principalDTO.getType())
+                                 .principalIdentifier(principalDTO.getIdentifier())
+                                 .build())
+                      .collect(Collectors.toSet()))
+        .principalTypeFilter(
+            object.getPrincipalTypeFilter() == null ? new HashSet<>() : object.getPrincipalTypeFilter())
+        .principalScopeLevelFilter(
+            object.getPrincipalScopeLevelFilter() == null ? new HashSet<>() : object.getPrincipalScopeLevelFilter())
+        .managedFilter(Objects.isNull(object.getHarnessManagedFilter())
+                ? ManagedFilter.NO_FILTER
+                : buildFromSet(object.getHarnessManagedFilter()))
+        .disabledFilter(object.getDisabledFilter() == null ? new HashSet<>() : object.getDisabledFilter())
+        .build();
   }
 
   public static RoleAssignmentValidationRequest fromDTO(Scope scope, RoleAssignmentValidationRequestDTO object) {
     return RoleAssignmentValidationRequest.builder()
-            .roleAssignment(fromDTO(scope, object.getRoleAssignment()))
-            .validatePrincipal(object.isValidatePrincipal())
-            .validateResourceGroup(object.isValidateResourceGroup())
-            .validateRole(object.isValidateRole())
-            .build();
+        .roleAssignment(fromDTO(scope, object.getRoleAssignment()))
+        .validatePrincipal(object.isValidatePrincipal())
+        .validateResourceGroup(object.isValidateResourceGroup())
+        .validateRole(object.isValidateRole())
+        .build();
   }
 
   public static RoleAssignmentValidationResponseDTO toDTO(RoleAssignmentValidationResult object) {
     return RoleAssignmentValidationResponseDTO.builder()
-            .principalValidationResult(ValidationResultMapper.toDTO(object.getPrincipalValidationResult()))
-            .resourceGroupValidationResult(ValidationResultMapper.toDTO(object.getResourceGroupValidationResult()))
-            .roleValidationResult(ValidationResultMapper.toDTO(object.getRoleValidationResult()))
-            .build();
+        .principalValidationResult(ValidationResultMapper.toDTO(object.getPrincipalValidationResult()))
+        .resourceGroupValidationResult(ValidationResultMapper.toDTO(object.getResourceGroupValidationResult()))
+        .roleValidationResult(ValidationResultMapper.toDTO(object.getRoleValidationResult()))
+        .build();
   }
 }
