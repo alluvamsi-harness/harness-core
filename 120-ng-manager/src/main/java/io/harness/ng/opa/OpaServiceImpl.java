@@ -29,6 +29,7 @@ import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.serializer.JsonUtils;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -53,10 +54,9 @@ public class OpaServiceImpl implements OpaService {
       String projectIdentifier, String identifier, String action, String key) {
     OpaEvaluationResponseHolder response;
     try {
-      String name = identifier;
       String userIdentifier = getUserIdentifier();
-      String entityString = getEntityString(accountId, orgIdentifier, projectIdentifier, identifier);
-      String entityMetadata = getEntityMetadataString(accountId, orgIdentifier, projectIdentifier, identifier, name);
+      String entityString = identifier;
+      String entityMetadata = getEntityMetadataString(identifier);
 
       response = SafeHttpCall.executeWithExceptions(opaServiceClient.evaluateWithCredentials(key, accountId,
           orgIdentifier, projectIdentifier, action, entityString, entityMetadata, userIdentifier, context));
@@ -131,19 +131,9 @@ public class OpaServiceImpl implements OpaService {
     return policyMetadataList;
   }
 
-  private String getEntityMetadataString(String accountId, String orgIdentifier, String projectIdentifier,
-      String identifier, String name) throws UnsupportedEncodingException {
-    Map<String, String> metadataMap = new HashMap<>();
+  private String getEntityMetadataString(String name) throws UnsupportedEncodingException {
+    Map<String, String> metadataMap = ImmutableMap.<String, String>builder().put("entityName", name).build();
 
-    metadataMap.put("accountIdentifier", accountId);
-    metadataMap.put("identifier", identifier);
-    metadataMap.put("name", name);
-    if (isNotEmpty(orgIdentifier)) {
-      metadataMap.put("orgIdentifier", orgIdentifier);
-    }
-    if (isNotEmpty(projectIdentifier)) {
-      metadataMap.put("projectIdentifier", projectIdentifier);
-    }
     return URLEncoder.encode(JsonUtils.asJson(metadataMap), StandardCharsets.UTF_8.toString());
   }
 
