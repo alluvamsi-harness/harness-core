@@ -83,7 +83,10 @@ public class SshWinRmAzureInfrastructure implements Infrastructure, Visitable, W
   @Wither
   ParameterField<Map<String, String>> tags;
 
-  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH) @Wither ParameterField<Boolean> usePublicDns;
+  @YamlSchemaTypes({runtime})
+  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)
+  @Wither
+  ParameterField<Boolean> usePublicDns;
 
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
