@@ -1,11 +1,11 @@
 # Based on https://willhaley.com/blog/generate-jwt-with-bash/
 # JWT Encoder Bash Script
 
-accountToken=$DELEGATE_TOKEN
+secret=$DELEGATE_TOKEN
 accountId=$ACCOUNT_ID
 issuer=$ISSUER
 
-  if [ -z "$accountToken" ]
+  if [ -z "$secret" ]
   then
     echo "Missing DELEGATE_TOKEN in env"
     exit 1
@@ -26,23 +26,16 @@ header='{
         "alg":"HS256"
 }'
 
-payload=$( jq -n \
-              --arg sub "$accountId" \
-              --arg iss "$issuer" \
-              '{sub: $sub, issuer: $iss}' )
+payload_template='{"sub":"%s",
+                  "issuer":"%s",
+                  "iat":%s,
+                  "exp":%s}'
 
+# `iat` is set to now, and `exp` is now + 600 seconds.
+iat=$(date +%s)
+exp=$(($iat + 600))
 
-# Use jq to set the dynamic `iat` and `exp`
-# fields on the payload using the current time.
-# `iat` is set to now, and `exp` is now + 60 seconds.
-payload=$(
-        echo "${payload}" | jq --arg time_str "$(date +%s)" \
-        '
-        ($time_str | tonumber) as $time_num
-        | .iat=$time_num
-        | .exp=($time_num + 120)
-        '
-)
+payload=$(printf "$payload_template" "$accountId" "$issuer" "$iat" "$exp")
 
 base64_encode()
 {
@@ -53,7 +46,7 @@ base64_encode()
 
 json() {
         declare input=${1:-$(</dev/stdin)}
-        printf '%s' "${input}" | jq -c .
+        printf '%s' "${input}" | tr -d [:space:]
 }
 
 hmacsha256_sign()
