@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
+import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.exception.ApprovalStepNGException;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.AsyncExecutableWithRollback;
@@ -41,16 +42,18 @@ public class CustomApprovalStep extends AsyncExecutableWithRollback {
       StepType.newBuilder().setType(StepSpecTypeConstants.CUSTOM_APPROVAL).setStepCategory(StepCategory.STEP).build();
 
   @Inject private ApprovalInstanceService approvalInstanceService;
+  @Inject private CustomApprovalInstanceHandler customApprovalInstanceHandler;
 
   @Override
   public AsyncExecutableResponse executeAsync(Ambiance ambiance, StepElementParameters stepParameters,
       StepInputPackage inputPackage, PassThroughData passThroughData) {
     CustomApprovalInstance approvalInstance = CustomApprovalInstance.fromStepParameters(ambiance, stepParameters);
     approvalInstance = (CustomApprovalInstance) approvalInstanceService.save(approvalInstance);
+    customApprovalInstanceHandler.wakeup();
     return AsyncExecutableResponse.newBuilder()
         .addCallbackIds(approvalInstance.getId())
-        .addAllLogKeys(CollectionUtils.emptyIfNull(
-            StepUtils.generateLogKeys(StepUtils.generateLogAbstractions(ambiance), Collections.emptyList())))
+        .addAllLogKeys(CollectionUtils.emptyIfNull(StepUtils.generateLogKeys(
+            StepUtils.generateLogAbstractions(ambiance), Collections.singletonList(ShellScriptTaskNG.COMMAND_UNIT))))
         .build();
   }
 

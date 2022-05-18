@@ -5,59 +5,55 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.pms.approval;
+package io.harness.steps.approval.step.custom;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.mongo.iterator.MongoPersistenceIterator.SchedulingType.REGULAR;
 
 import static java.time.Duration.ofSeconds;
 
-import io.harness.PipelineServiceIteratorsConfig;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.iterator.PersistenceIterator;
+import io.harness.iterator.PersistenceIterator.ProcessMode;
 import io.harness.iterator.PersistenceIteratorFactory;
 import io.harness.mongo.iterator.IteratorConfig;
 import io.harness.mongo.iterator.MongoPersistenceIterator;
+import io.harness.mongo.iterator.MongoPersistenceIterator.SchedulingType;
 import io.harness.mongo.iterator.filter.SpringFilterExpander;
 import io.harness.mongo.iterator.provider.SpringPersistenceRequiredProvider;
 import io.harness.steps.approval.step.beans.ApprovalStatus;
 import io.harness.steps.approval.step.beans.ApprovalType;
+import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
-import io.harness.steps.approval.step.jira.JiraApprovalHelperService;
-import io.harness.steps.approval.step.jira.entities.JiraApprovalInstance;
-import io.harness.steps.approval.step.servicenow.ServiceNowApprovalHelperService;
-import io.harness.steps.approval.step.servicenow.entities.ServiceNowApprovalInstance;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 
 @OwnedBy(CDC)
+@Singleton
 @Slf4j
-public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler<ApprovalInstance> {
+public class CustomApprovalInstanceHandler implements MongoPersistenceIterator.Handler<ApprovalInstance> {
   private static final IteratorConfig DEFAULT_ITERATOR_CONFIG =
       IteratorConfig.builder().enabled(true).targetIntervalInSeconds(60).build();
+  PersistenceIterator<ApprovalInstance> iterator;
 
-  private final JiraApprovalHelperService jiraApprovalHelperService;
+  private CustomApprovalHelperService customApprovalHelperService;
   private final MongoTemplate mongoTemplate;
   private final PersistenceIteratorFactory persistenceIteratorFactory;
-  private final PipelineServiceIteratorsConfig iteratorsConfig;
-  private final ServiceNowApprovalHelperService serviceNowApprovalHelperService;
 
   @Inject
-  public ApprovalInstanceHandler(JiraApprovalHelperService jiraApprovalHelperService, MongoTemplate mongoTemplate,
-      PersistenceIteratorFactory persistenceIteratorFactory, PipelineServiceIteratorsConfig iteratorsConfig,
-      ServiceNowApprovalHelperService serviceNowApprovalHelperService) {
-    this.jiraApprovalHelperService = jiraApprovalHelperService;
+  public CustomApprovalInstanceHandler(CustomApprovalHelperService customApprovalHelperService,
+      MongoTemplate mongoTemplate, PersistenceIteratorFactory persistenceIteratorFactory) {
+    this.customApprovalHelperService = customApprovalHelperService;
     this.mongoTemplate = mongoTemplate;
     this.persistenceIteratorFactory = persistenceIteratorFactory;
-    this.iteratorsConfig = iteratorsConfig;
-    this.serviceNowApprovalHelperService = serviceNowApprovalHelperService;
   }
 
-  public void registerIterators() {
-    IteratorConfig iteratorConfig = iteratorsConfig.getApprovalInstanceConfig();
+  public void registerIterators(IteratorConfig approvalIteratorConfig) {
+    IteratorConfig iteratorConfig = approvalIteratorConfig;
     if (iteratorConfig == null) {
       iteratorConfig = DEFAULT_ITERATOR_CONFIG;
     }
@@ -65,16 +61,17 @@ public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler
       return;
     }
 
-    persistenceIteratorFactory.createPumpIteratorWithDedicatedThreadPool(
+    iterator = persistenceIteratorFactory.createLoopIteratorWithDedicatedThreadPool(
         PersistenceIteratorFactory.PumpExecutorOptions.builder()
-            .name("ApprovalInstanceHandler")
+            .name("CustomApprovalInstanceHandler")
             .poolSize(iteratorConfig.getThreadPoolCount())
             .interval(ofSeconds(iteratorConfig.getTargetIntervalInSeconds()))
             .build(),
-        ApprovalInstanceHandler.class,
+        CustomApprovalInstanceHandler.class,
         MongoPersistenceIterator.<ApprovalInstance, SpringFilterExpander>builder()
+            .mode(ProcessMode.PUMP)
             .clazz(ApprovalInstance.class)
-            .fieldName(ApprovalInstanceKeys.nextIteration)
+            .fieldName(CustomApprovalInstance.CustomApprovalInstanceKeys.nextIterations)
             .targetInterval(ofSeconds(iteratorConfig.getTargetIntervalInSeconds()))
             .acceptableNoAlertDelay(ofSeconds(iteratorConfig.getTargetIntervalInSeconds() * 2))
             .handler(this)
@@ -82,26 +79,21 @@ public class ApprovalInstanceHandler implements MongoPersistenceIterator.Handler
                 -> query.addCriteria(Criteria.where(ApprovalInstanceKeys.status)
                                          .is(ApprovalStatus.WAITING)
                                          .and(ApprovalInstanceKeys.type)
-                                         .in(ApprovalType.JIRA_APPROVAL, ApprovalType.SERVICENOW_APPROVAL)))
-            .schedulingType(REGULAR)
+                                         .is(ApprovalType.CUSTOM_APPROVAL)))
+            .schedulingType(SchedulingType.IRREGULAR)
             .persistenceProvider(new SpringPersistenceRequiredProvider<>(mongoTemplate))
             .redistribute(true));
   }
 
+  public void wakeup() {
+    if (iterator != null) {
+      iterator.wakeup();
+    }
+  }
+
   @Override
   public void handle(ApprovalInstance entity) {
-    switch (entity.getType()) {
-      case JIRA_APPROVAL:
-        JiraApprovalInstance jiraApprovalInstance = (JiraApprovalInstance) entity;
-        jiraApprovalHelperService.handlePollingEvent(jiraApprovalInstance);
-        break;
-      case SERVICENOW_APPROVAL:
-        ServiceNowApprovalInstance serviceNowApprovalInstance = (ServiceNowApprovalInstance) entity;
-        log.info("Executing ServiceNow approval instance with id: {}", serviceNowApprovalInstance.getId());
-        serviceNowApprovalHelperService.handlePollingEvent(serviceNowApprovalInstance);
-        break;
-      default:
-        log.warn("ApprovalInstance without registered handler encountered. Id: {}", entity.getId());
-    }
+    CustomApprovalInstance customApprovalInstance = (CustomApprovalInstance) entity;
+    customApprovalHelperService.handlePollingEvent(customApprovalInstance);
   }
 }

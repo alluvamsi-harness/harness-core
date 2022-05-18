@@ -17,6 +17,7 @@ import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.harness.beans.HarnessApprovalActivityRequestDTO;
 import io.harness.steps.approval.step.harness.entities.HarnessApprovalInstance;
 
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -29,6 +30,8 @@ public interface ApprovalInstanceService {
   HarnessApprovalInstance getHarnessApprovalInstance(@NotNull String approvalInstanceId);
 
   void delete(@NotNull String approvalInstanceId);
+
+  void resetNextIterations(@NotNull String approvalInstanceId, List<Long> nextIterations);
 
   void expireByNodeExecutionId(@NotNull String approvalInstanceId);
 

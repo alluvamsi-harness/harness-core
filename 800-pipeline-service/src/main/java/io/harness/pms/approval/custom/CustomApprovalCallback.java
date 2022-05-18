@@ -28,6 +28,7 @@ import io.harness.servicenow.TicketNG;
 import io.harness.shell.ShellExecutionData;
 import io.harness.steps.approval.step.beans.ApprovalStatus;
 import io.harness.steps.approval.step.beans.CriteriaSpecDTO;
+import io.harness.steps.approval.step.custom.CustomApprovalInstanceHandler;
 import io.harness.steps.approval.step.custom.beans.CustomApprovalTicketNG;
 import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
 import io.harness.steps.approval.step.custom.evaluation.CustomApprovalCriteriaEvaluator;
@@ -55,6 +56,7 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
   @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
   @Inject private KryoSerializer kryoSerializer;
   @Inject private ShellScriptHelperService shellScriptHelperService;
+  @Inject private CustomApprovalInstanceHandler customApprovalInstanceHandler;
 
   @Builder
   public CustomApprovalCallback(String approvalInstanceId) {
@@ -66,6 +68,8 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
     CustomApprovalInstance instance = (CustomApprovalInstance) approvalInstanceService.get(approvalInstanceId);
     try (AutoLogContext ignore = instance.autoLogContext()) {
       pushInternal(response);
+    } finally {
+      resetNextIteration(instance);
     }
   }
 
@@ -119,6 +123,11 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
               LogColor.Red));
       throw new HarnessCustomApprovalException("Error while evaluating approval/rejection criteria", ex, USER_SRE);
     }
+  }
+
+  private void resetNextIteration(CustomApprovalInstance instance) {
+    approvalInstanceService.resetNextIterations(instance.getId(), instance.recalculateNextIterations());
+    customApprovalInstanceHandler.wakeup();
   }
 
   @Override

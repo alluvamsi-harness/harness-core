@@ -22,6 +22,7 @@ import io.harness.servicenow.TicketNG;
 import io.harness.steps.approval.step.beans.ApprovalStatus;
 import io.harness.steps.approval.step.beans.ApprovalType;
 import io.harness.steps.approval.step.custom.beans.CustomApprovalResponseData;
+import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
 import io.harness.steps.approval.step.harness.HarnessApprovalResponseData;
@@ -38,6 +39,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.mongodb.client.result.UpdateResult;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -99,6 +101,12 @@ public class ApprovalInstanceServiceImpl implements ApprovalInstanceService {
   @Override
   public void delete(@NotNull String approvalInstanceId) {
     approvalInstanceRepository.deleteById(approvalInstanceId);
+  }
+
+  @Override
+  public void resetNextIterations(@NotNull String approvalInstanceId, List<Long> nextIterations) {
+    approvalInstanceRepository.updateFirst(new Query(Criteria.where(Mapper.ID_KEY).is(approvalInstanceId)),
+        new Update().set(CustomApprovalInstance.CustomApprovalInstanceKeys.nextIterations, nextIterations));
   }
 
   @Override
