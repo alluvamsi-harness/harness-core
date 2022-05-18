@@ -15,7 +15,7 @@ import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.task.shell.ShellScriptTaskResponseNG;
 import io.harness.exception.ApprovalStepNGException;
 import io.harness.exception.ExceptionUtils;
-import io.harness.exception.HarnessJiraException;
+import io.harness.exception.HarnessCustomApprovalException;
 import io.harness.logging.AutoLogContext;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogLevel;
@@ -91,7 +91,7 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
       scriptTaskResponse = (ShellScriptTaskResponseNG) responseData;
     } catch (Exception ex) {
       logCallback.saveExecutionLog(
-          LogHelper.color(String.format("Error fetching jira issue response: %s. Retrying in sometime...",
+          LogHelper.color(String.format("Error fetching custom approval response: %s. Retrying in sometime...",
                               ExceptionUtils.getMessage(ex)),
               LogColor.Red));
       log.error("Failed to run custom approval script", ex);
@@ -117,7 +117,7 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
           LogHelper.color(String.format("Error evaluating approval/rejection criteria: %s. Retrying in sometime...",
                               ExceptionUtils.getMessage(ex)),
               LogColor.Red));
-      throw new HarnessJiraException("Error while evaluating approval/rejection criteria", ex, USER_SRE);
+      throw new HarnessCustomApprovalException("Error while evaluating approval/rejection criteria", ex, USER_SRE);
     }
   }
 

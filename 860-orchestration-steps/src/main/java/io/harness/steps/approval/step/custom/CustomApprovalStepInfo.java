@@ -99,4 +99,9 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
         .scriptTimeout(getScriptTimeout())
         .build();
   }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> fetchDelegateSelectors() {
+    return getDelegateSelectors();
+  }
 }
