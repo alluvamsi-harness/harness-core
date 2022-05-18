@@ -105,7 +105,7 @@ public class YamlSchemaValidator {
           continue;
         }
         errorDTOS.add(YamlSchemaErrorDTO.builder()
-                          .message(validationMessage.getMessage())
+                          .message(removeFqnFromErrorMessage(validationMessage.getMessage()))
                           .stageInfo(SchemaValidationUtils.getStageErrorInfo(validationMessage.getPath(), jsonNode))
                           .stepInfo(SchemaValidationUtils.getStepErrorInfo(validationMessage.getPath(), jsonNode))
                           .fqn(validationMessage.getPath())
