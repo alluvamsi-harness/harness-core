@@ -174,14 +174,10 @@ public class SchemaValidationUtils {
   private boolean checkIfNodePathIsPresentInAllPaths(
       Collection<String> allPaths, String pathTillNode, String completePath) {
     for (String path : allPaths) {
+      // Checking if pathTillNode's children is present in errors.
       if (!path.equals(completePath) && path.startsWith(pathTillNode)) {
         return true;
       }
-      // Checking if pathTillNode's children is present in errors.
-      //      String pathTillPreviousNode = getPathTillPreviousNode(path);
-      //      if (path.startsWith(pathTillNode) && !pathTillNode.startsWith(pathTillPreviousNode)) {
-      //        return true;
-      //      }
     }
     return false;
   }
