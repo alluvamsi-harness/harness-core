@@ -572,7 +572,11 @@ public class NativeHelmStepHelper extends CDStepHelper {
         helmValuesFetchResponse.getHelmChartValuesFileMapContent();
     String valuesFileContent = helmValuesFetchResponse.getValuesFileContent();
     if (isNotEmpty(valuesFileContent)) {
-      helmValuesFetchFilesResultMap.get(helmChartIdentifier).getHelmValuesFileContents().add(0, valuesFileContent);
+      helmValuesFetchFilesResultMap = new HashMap<>();
+      helmValuesFetchFilesResultMap.put(helmChartIdentifier,
+          HelmFetchFileResult.builder()
+              .helmValuesFileContents(new ArrayList<>(Arrays.asList(valuesFileContent)))
+              .build());
     }
 
     // TODO Achyuth: Handle the case of k8sApply Inline store when we only have helm chart and helm chart with values
@@ -658,7 +662,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
 
   public void addValuesFileFromHelmChartManifest(Map<String, HelmFetchFileResult> helmChartValuesFilesResultMap,
       List<String> valuesFileContents, String helmChartIdentifier) {
-    if (helmChartValuesFilesResultMap.containsKey(helmChartIdentifier)) {
+    if (isNotEmpty(helmChartValuesFilesResultMap) && helmChartValuesFilesResultMap.containsKey(helmChartIdentifier)) {
       List<String> baseValuesFileContent =
           helmChartValuesFilesResultMap.get(helmChartIdentifier).getHelmValuesFileContents();
       if (isNotEmpty(baseValuesFileContent)) {

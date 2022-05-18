@@ -29,7 +29,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.expressions.CDExpressionResolveFunctor;
-import io.harness.cdng.helm.beans.NativeHelmExecutionPassThroughData;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.k8s.beans.GitFetchResponsePassThroughData;
 import io.harness.cdng.k8s.beans.HelmValuesFetchResponsePassThroughData;
@@ -904,7 +903,11 @@ public class K8sStepHelper extends CDStepHelper {
     Map<String, HelmFetchFileResult> helmValuesFetchFilesResultMap =
         helmValuesFetchResponse.getHelmChartValuesFileMapContent();
     if (isNotEmpty(valuesFileContent)) {
-      helmValuesFetchFilesResultMap.get(k8sManifestIdentifier).getHelmValuesFileContents().add(0, valuesFileContent);
+      helmValuesFetchFilesResultMap = new HashMap<>();
+      helmValuesFetchFilesResultMap.put(k8sManifestIdentifier,
+          HelmFetchFileResult.builder()
+              .helmValuesFileContents(new ArrayList<>(Arrays.asList(valuesFileContent)))
+              .build());
     }
 
     // TODO Achyuth: Handle the case of k8sApply Inline store when we only have helm chart and helm chart with values
@@ -1025,7 +1028,7 @@ public class K8sStepHelper extends CDStepHelper {
 
   public void addValuesFileFromHelmChartManifest(Map<String, HelmFetchFileResult> helmChartValuesResultMap,
       List<String> valuesFileContents, String k8sManifestIdentifier) {
-    if (isNotEmpty(helmChartValuesResultMap)) {
+    if (isNotEmpty(helmChartValuesResultMap) && helmChartValuesResultMap.containsKey(k8sManifestIdentifier)) {
       List<String> baseValuesFileContent =
           helmChartValuesResultMap.get(k8sManifestIdentifier).getHelmValuesFileContents();
       if (isNotEmpty(baseValuesFileContent)) {

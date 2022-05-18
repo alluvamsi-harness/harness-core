@@ -783,13 +783,14 @@ public class CDStepHelper {
       String valuesIdentifier = valuesManifest.getIdentifier();
       if (ManifestStoreType.INLINE.equals(store.getKind())) {
         valuesFileContents.add(((InlineStoreConfig) store).extractContent());
-      } else if (gitFetchFilesResultMap.containsKey(valuesIdentifier)) {
+      } else if (isNotEmpty(gitFetchFilesResultMap) && gitFetchFilesResultMap.containsKey(valuesIdentifier)) {
         FetchFilesResult gitFetchFilesResult = gitFetchFilesResultMap.get(valuesIdentifier);
         if (!isNull(gitFetchFilesResult)) {
           valuesFileContents.addAll(
               gitFetchFilesResult.getFiles().stream().map(GitFile::getFileContent).collect(Collectors.toList()));
         }
-      } else if (helmChartFetchFilesResultMap.containsKey(valuesIdentifier)) {
+      } else if (isNotEmpty(helmChartFetchFilesResultMap)
+          && helmChartFetchFilesResultMap.containsKey(valuesIdentifier)) {
         List<String> helmChartValuesFileContent =
             helmChartFetchFilesResultMap.get(valuesIdentifier).getHelmValuesFileContents();
         if (isNotEmpty(helmChartValuesFileContent)) {
