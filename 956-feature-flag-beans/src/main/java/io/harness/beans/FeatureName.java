@@ -345,7 +345,8 @@ public enum FeatureName {
   USER_GROUP_AS_EXPRESSION,
   HELM_OCI_SUPPORT,
   HELP_PANEL,
-  CHAOS_ENABLED;
+  CHAOS_ENABLED,
+  EXECUTION_ID_BASED_TF_BASE_DIR;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;

@@ -225,8 +225,11 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
           .build();
     }
 
-    String baseDir = terraformBaseHelper.resolveBaseDir(
-        parameters.getAccountId(), String.valueOf(parameters.getEntityId().hashCode()));
+    String baseDir = parameters.isUseExecutionIdBasedTfBaseDir()
+        ? terraformBaseHelper.executionIdBasedBaseDir(parameters.getAccountId(),
+            String.valueOf(parameters.getEntityId().hashCode()), parameters.getWorkflowExecutionId())
+        : terraformBaseHelper.resolveBaseDir(
+            parameters.getAccountId(), String.valueOf(parameters.getEntityId().hashCode()));
     String tfVarDirectory = Paths.get(baseDir, TF_VAR_FILES_DIR).toString();
     String workingDir = Paths.get(baseDir, TF_SCRIPT_DIR).toString();
 
