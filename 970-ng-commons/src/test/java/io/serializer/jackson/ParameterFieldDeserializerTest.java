@@ -7,6 +7,7 @@
 
 package io.serializer.jackson;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
@@ -27,14 +28,17 @@ import lombok.Data;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
 
 public class ParameterFieldDeserializerTest extends CategoryTest implements MultilineStringMixin {
   private ObjectMapper objectMapper;
-
+  @InjectMocks ParameterFieldDeserializer parameterFieldDeserializer;
   @Before
   public void setUp() {
     objectMapper = new ObjectMapper(new YAMLFactory());
     objectMapper.registerModule(new NGHarnessJacksonModule());
+    MockitoAnnotations.initMocks(this);
   }
 
   @Test
@@ -115,6 +119,24 @@ public class ParameterFieldDeserializerTest extends CategoryTest implements Mult
         .isEqualTo(InputSetValidatorType.ALLOWED_VALUES);
     assertThat(infrastructure.getInner10().getInputSetValidator().getParameters())
         .isEqualTo("dev, <+env>, <+env2>, stage");
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.BRIJESH)
+  @Category(UnitTests.class)
+  public void testExtractDefaultValue() {
+    String text = "<+input>.default(\"value\")";
+    assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
+    text = "<+input>.default(\"value\").executionInput()";
+    assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
+    for (InputSetValidatorType validatorType : InputSetValidatorType.values()) {
+      text = "<+input>.default(\"value\")." + validatorType.getYamlName() + "(\"random\")";
+      assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
+    }
+    text = "<+input>.default(\"value\").allowedValues(\"random\").executionInput()";
+    assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
+    text = "<+input>.allowedValues(\"random\").default(\"value\").executionInput()";
+    assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
   }
 
   @Data

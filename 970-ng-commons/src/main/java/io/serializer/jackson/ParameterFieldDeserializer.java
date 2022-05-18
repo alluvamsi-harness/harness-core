@@ -25,11 +25,12 @@ import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?>> implements ContextualDeserializer {
   private static final long serialVersionUID = 1L;
@@ -91,7 +92,8 @@ public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?
     if (NGExpressionUtils.matchesInputSetPattern(text)) {
       String defaultValue = extractDefaultValue(text);
 
-      return ParameterField.createExpressionField(true, NGExpressionUtils.DEFAULT_INPUT_SET_EXPRESSION,
+      return ParameterField.createExpressionFieldWithDefault(defaultValue == null,
+          NGExpressionUtils.DEFAULT_INPUT_SET_EXPRESSION,
           defaultValue == null ? null : JsonUtils.asObject(defaultValue, this.referenceType.getRawClass()),
           inputSetValidator, isTypeString);
     }
@@ -168,20 +170,20 @@ public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?
     }
   }
 
-  private String extractDefaultValue(String text) {
+  protected String extractDefaultValue(String text) {
     String defaultValueString = null;
     Matcher matcher = Pattern.compile("\\.default\\((.*?)\\)$").matcher(text);
-
     if (matcher.find()) {
       defaultValueString = matcher.group(1);
-      List<Pattern> patterns = new ArrayList<>();
-      patterns.add(Pattern.compile("\\.default\\((.*?)\\).allowedValues\\(.*?\\)$"));
+      List<Pattern> patterns = Arrays.stream(InputSetValidatorType.values())
+                                   .map(o -> Pattern.compile("\\.default\\((.*?)\\)." + o.getYamlName() + "\\(.*?\\)$"))
+                                   .collect(Collectors.toList());
       patterns.add(Pattern.compile("\\.default\\((.*?)\\).executionInput\\(.*?\\)$"));
       for (Pattern pattern : patterns) {
         Matcher m = pattern.matcher(text);
         if (m.find()) {
           String defaultValue = m.group(1);
-          if (defaultValueString == null || defaultValueString.length() < defaultValue.length()) {
+          if (defaultValueString == null || defaultValue.length() < defaultValueString.length()) {
             defaultValueString = defaultValue;
           }
         }

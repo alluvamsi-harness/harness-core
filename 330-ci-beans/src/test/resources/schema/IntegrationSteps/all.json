@@ -434,6 +434,9 @@
     "ParameterField": {
       "type": "object",
       "properties": {
+        "defaultValue": {
+          "type": "object"
+        },
         "expression": {
           "type": "boolean"
         },
@@ -461,6 +464,12 @@
     "ParameterFieldListString": {
       "type": "object",
       "properties": {
+        "defaultValue": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "expression": {
           "type": "boolean"
         },
@@ -491,6 +500,12 @@
     "ParameterFieldMapStringJsonNode": {
       "type": "object",
       "properties": {
+        "defaultValue": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/JsonNode"
+          }
+        },
         "expression": {
           "type": "boolean"
         },

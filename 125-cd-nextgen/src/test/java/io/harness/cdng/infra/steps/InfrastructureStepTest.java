@@ -309,7 +309,7 @@ public class InfrastructureStepTest extends CategoryTest {
     k8SDirectInfrastructureBuilder.connectorRef(ParameterField.createValueField("connector"));
     infrastructureStep.validateInfrastructure(k8SDirectInfrastructureBuilder.build());
 
-    k8SDirectInfrastructureBuilder.connectorRef(new ParameterField<>(null, true, "expression1", null, true));
+    k8SDirectInfrastructureBuilder.connectorRef(new ParameterField<>(null, null, true, "expression1", null, true));
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(k8SDirectInfrastructureBuilder.build()))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression1]");
@@ -331,10 +331,11 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructureSshKeyExpression() {
-    PdcInfrastructure infrastructure = PdcInfrastructure.builder()
-                                           .credentialsRef(new ParameterField<>(null, true, "expression1", null, true))
-                                           .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
-                                           .build();
+    PdcInfrastructure infrastructure =
+        PdcInfrastructure.builder()
+            .credentialsRef(new ParameterField<>(null, null, true, "expression1", null, true))
+            .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+            .build();
 
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
         .isInstanceOf(InvalidRequestException.class)
@@ -345,11 +346,12 @@ public class InfrastructureStepTest extends CategoryTest {
   @Owner(developers = FILIP)
   @Category(UnitTests.class)
   public void testValidatePdcInfrastructureHostsAndConnectorAreExpressions() {
-    PdcInfrastructure infrastructure = PdcInfrastructure.builder()
-                                           .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
-                                           .hosts(new ParameterField<>(null, true, "expression1", null, true))
-                                           .connectorRef(new ParameterField<>(null, true, "expression2", null, true))
-                                           .build();
+    PdcInfrastructure infrastructure =
+        PdcInfrastructure.builder()
+            .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
+            .hosts(new ParameterField<>(null, null, true, "expression1", null, true))
+            .connectorRef(new ParameterField<>(null, null, true, "expression2", null, true))
+            .build();
 
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
         .isInstanceOf(InvalidRequestException.class)

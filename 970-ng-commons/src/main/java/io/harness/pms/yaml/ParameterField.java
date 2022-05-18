@@ -52,24 +52,21 @@ public class ParameterField<T> {
 
   public static <T> ParameterField<T> createExpressionField(
       boolean isExpression, String expressionValue, InputSetValidator inputSetValidator, boolean isTypeString) {
-    return new ParameterField<>(null, isExpression, expressionValue, inputSetValidator, isTypeString);
+    return new ParameterField<>(null, null, isExpression, expressionValue, inputSetValidator, isTypeString);
   }
 
-  public static <T> ParameterField<T> createExpressionField(boolean isExpression, String expressionValue,
+  public static <T> ParameterField<T> createExpressionFieldWithDefault(boolean isExpression, String expressionValue,
       T defaultValue, InputSetValidator inputSetValidator, boolean isTypeString) {
-    if (expressionValue.equals("<+input>")) {
-      return new ParameterField<>(null, defaultValue, false, null, inputSetValidator, isTypeString);
-    }
     return new ParameterField<>(null, defaultValue, isExpression, expressionValue, inputSetValidator, isTypeString);
   }
 
   public static <T> ParameterField<T> createValueField(T value) {
-    return new ParameterField<>(value, false, null, null, value != null && value.getClass().equals(String.class));
+    return new ParameterField<>(value, null, false, null, null, value != null && value.getClass().equals(String.class));
   }
 
   public static <T> ParameterField<T> createValueFieldWithInputSetValidator(
       T value, InputSetValidator inputSetValidator, boolean isTypeString) {
-    return new ParameterField<>(value, false, null, inputSetValidator, isTypeString);
+    return new ParameterField<>(value, null, false, null, inputSetValidator, isTypeString);
   }
 
   public static <T> ParameterField<T> createJsonResponseField(String responseField) {
@@ -102,11 +99,6 @@ public class ParameterField<T> {
     this.inputSetValidator = inputSetValidator;
     this.jsonResponseField = jsonResponseField;
     this.responseField = responseField;
-  }
-
-  public ParameterField(
-      T value, boolean expression, String expressionValue, InputSetValidator inputSetValidator, boolean typeString) {
-    this(expressionValue, expression, value, null, typeString, inputSetValidator, false, null);
   }
 
   public ParameterField(T value, T defaultValue, boolean expression, String expressionValue,
