@@ -80,13 +80,24 @@ public class ParameterField<T> {
     return (ParameterField<T>) EMPTY;
   }
 
-  @Builder
   public ParameterField(String expressionValue, boolean expression, T value, T defaultValue, boolean typeString,
       InputSetValidator inputSetValidator, boolean jsonResponseField, String responseField) {
     this.expressionValue = expressionValue;
     this.expression = expression;
     this.value = value;
     this.defaultValue = defaultValue;
+    this.typeString = typeString;
+    this.inputSetValidator = inputSetValidator;
+    this.jsonResponseField = jsonResponseField;
+    this.responseField = responseField;
+  }
+
+  @Builder
+  public ParameterField(String expressionValue, boolean expression, T value, boolean typeString,
+      InputSetValidator inputSetValidator, boolean jsonResponseField, String responseField) {
+    this.expressionValue = expressionValue;
+    this.expression = expression;
+    this.value = value;
     this.typeString = typeString;
     this.inputSetValidator = inputSetValidator;
     this.jsonResponseField = jsonResponseField;
