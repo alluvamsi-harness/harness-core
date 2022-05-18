@@ -11,6 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.visitor.YamlTypes;
+import io.harness.data.structure.UUIDGenerator;
 import io.harness.ng.core.environment.yaml.NGEnvironmentInfoConfig;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.adviser.success.OnSuccessAdviserParameters;
@@ -55,7 +56,8 @@ public class EnvironmentPlanCreator implements PartialPlanCreator<NGEnvironmentI
 
     ByteString advisorParameters = ByteString.copyFrom(
         kryoSerializer.asBytes(OnSuccessAdviserParameters.builder().nextNodeId(serviceSpecNodeUuid).build()));
-    PlanNode planNode = EnvironmentPlanCreatorHelper.getPlanNode(infraSectionStepParameters, advisorParameters);
+    PlanNode planNode = EnvironmentPlanCreatorHelper.getPlanNode(
+        UUIDGenerator.generateUuid(), infraSectionStepParameters, advisorParameters);
     return PlanCreationResponse.builder().planNode(planNode).build();
   }
 }

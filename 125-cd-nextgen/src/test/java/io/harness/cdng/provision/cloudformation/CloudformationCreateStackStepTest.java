@@ -35,6 +35,7 @@ import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.provision.cloudformation.beans.CloudFormationCreateStackPassThroughData;
 import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.connector.ConnectorInfoDTO;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awsconnector.AwsCredentialDTO;
@@ -50,6 +51,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
 import io.harness.logging.UnitStatus;
 import io.harness.ng.core.EntityDetail;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
@@ -218,11 +220,18 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
                                                       .type(CloudformationTemplateFileTypes.Remote)
                                                       .build())
                                     .build());
+    TaskSelectorYaml taskSelectorYaml = new TaskSelectorYaml("create-d-selector-1");
+    parameters.setDelegateSelectors(ParameterField.createValueField(Arrays.asList(taskSelectorYaml)));
+
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(parameters).build();
     mockStatic(StepUtils.class);
     PowerMockito.when(StepUtils.prepareCDTaskRequest(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(TaskRequest.newBuilder().build());
     ArgumentCaptor<TaskData> taskDataArgumentCaptor = ArgumentCaptor.forClass(TaskData.class);
+
+    Class<ArrayList<TaskSelector>> delegateSelectors = (Class<ArrayList<TaskSelector>>) (Class) ArrayList.class;
+    ArgumentCaptor<ArrayList<TaskSelector>> taskSelectorsArgumentCaptor = ArgumentCaptor.forClass(delegateSelectors);
+
     List<EncryptedDataDetail> encryptedDataDetails = new ArrayList<>();
     CloudformationTaskNGParameters cloudformationTaskNGParameters = CloudformationTaskNGParameters.builder()
                                                                         .accountId("test-account")
@@ -237,13 +246,15 @@ public class CloudformationCreateStackStepTest extends CategoryTest {
             cloudformationTaskNGParameters, CloudFormationCreateStackPassThroughData.builder().build());
     assertThat(taskChainResponse).isNotNull();
     PowerMockito.verifyStatic(StepUtils.class, times(1));
-    StepUtils.prepareCDTaskRequest(any(), taskDataArgumentCaptor.capture(), any(), any(), any(), any(), any());
+    StepUtils.prepareCDTaskRequest(
+        any(), taskDataArgumentCaptor.capture(), any(), any(), any(), taskSelectorsArgumentCaptor.capture(), any());
     assertThat(taskDataArgumentCaptor.getValue()).isNotNull();
     assertThat(taskDataArgumentCaptor.getValue().getParameters()).isNotNull();
     CloudformationTaskNGParameters taskParameters =
         (CloudformationTaskNGParameters) taskDataArgumentCaptor.getValue().getParameters()[0];
     assertThat(taskParameters.getTaskType()).isEqualTo(CloudformationTaskType.CREATE_STACK);
     assertThat(taskDataArgumentCaptor.getValue().getTaskType()).isEqualTo(TaskType.CLOUDFORMATION_TASK_NG.name());
+    assertThat(taskSelectorsArgumentCaptor.getValue().get(0).getSelector()).isEqualTo("create-d-selector-1");
   }
 
   @Test

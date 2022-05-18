@@ -36,6 +36,7 @@ import software.wings.service.impl.artifact.ArtifactCollectionUtils;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.ArtifactCleanupService;
 import software.wings.service.intfc.SettingsService;
+import software.wings.utils.DelegateArtifactCollectionUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -71,7 +72,7 @@ public class ArtifactCleanupHandler implements Handler<ArtifactStream> {
             .entityProcessController(new AccountStatusBasedEntityProcessController<>(accountService))
             .filterExpander(query
                 -> query.field(ArtifactStreamKeys.artifactStreamType)
-                       .in(ArtifactCollectionUtils.SUPPORTED_ARTIFACT_CLEANUP_LIST)
+                       .in(DelegateArtifactCollectionUtils.SUPPORTED_ARTIFACT_CLEANUP_LIST)
                        .field(ArtifactStreamKeys.collectionEnabled)
                        .in(Arrays.asList(true, null)))
             .schedulingType(REGULAR)

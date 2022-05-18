@@ -158,7 +158,7 @@ public class DeploymentStageFilterJsonCreatorV2 extends GenericStageFilterJsonCr
 
   private void addFiltersFromServiceV2(FilterCreationContext filterCreationContext, CdFilterBuilder filterBuilder,
       ServiceYamlV2 service, ServiceDefinitionType deploymentType) {
-    final ParameterField<String> serviceEntityRef = service.getServiceConfigRef();
+    final ParameterField<String> serviceEntityRef = service.getServiceRef();
     if (serviceEntityRef == null || serviceEntityRef.fetchFinalValue() == null) {
       throw new InvalidYamlRuntimeException(format(
           "serviceConfigRef should be present in stage [%s] when referring to a service entity. Please add it and try again",

@@ -783,6 +783,21 @@ public class ScmServiceClientImpl implements ScmServiceClient {
         slug, gitProvider, newBranchName, latestCommitResponse.getCommit().getSha(), scmBlockingStub);
   }
 
+  @Override
+  public CreatePRResponse createPullRequestV2(ScmConnector scmConnector, String sourceBranchName,
+      String targetBranchName, String prTitle, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+    String slug = scmGitProviderHelper.getSlug(scmConnector);
+    Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
+    return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createPR,
+        CreatePRRequest.newBuilder()
+            .setSlug(slug)
+            .setTitle(prTitle)
+            .setProvider(gitProvider)
+            .setSource(sourceBranchName)
+            .setTarget(targetBranchName)
+            .build());
+  }
+
   private FileContentBatchResponse processListFilesByFilePaths(ScmConnector connector, List<String> filePaths,
       String branch, String commitId, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(connector);

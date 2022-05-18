@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.ws.rs.DefaultValue;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -44,7 +45,6 @@ public class EnvironmentYamlV2 implements Visitable {
   @ApiModelProperty(hidden = true)
   private String uuid;
 
-  // For New Service Yaml
   @NotNull
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.RUNTIME_OR_FIXED_IDENTIFIER_PATTERN)
@@ -55,5 +55,6 @@ public class EnvironmentYamlV2 implements Visitable {
   // environmentInputs
   Map<String, Object> environmentInputs;
 
-  List<ClusterYaml> gitopsClusters;
+  @DefaultValue("false") Boolean deployToAll;
+  List<ClusterYaml> gitOpsClusters;
 }

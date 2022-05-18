@@ -203,9 +203,22 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
     verify(mockCvConfigService).list(builderFactory.getContext().getMonitoredServiceParams());
     assertThat(pageResponse).isNotNull();
     assertThat(pageResponse.getContent()).isNotEmpty();
+    List<AnalyzedRadarChartLogDataWithCountDTO.LiveMonitoringEventCount> eventCounts =
+        analyzedRadarChartLogDataWithCountDTO.getEventCounts();
+    assertThat(eventCounts.get(0).getClusterType()).isEqualTo(RadarChartTag.KNOWN_EVENT);
+    assertThat(eventCounts.get(0).getCount()).isEqualTo(0);
+    assertThat(eventCounts.get(1).getClusterType()).isEqualTo(RadarChartTag.UNEXPECTED_FREQUENCY);
+    assertThat(eventCounts.get(1).getCount()).isEqualTo(2);
+    assertThat(eventCounts.get(2).getClusterType()).isEqualTo(RadarChartTag.UNKNOWN_EVENT);
+    assertThat(eventCounts.get(2).getCount()).isEqualTo(2);
     pageResponse.getContent().forEach(analyzedLogDataDTO -> {
       assertThat(Arrays.asList(LogAnalysisTag.UNKNOWN, LogAnalysisTag.UNEXPECTED)
                      .contains(analyzedLogDataDTO.getClusterType()));
+      if (analyzedLogDataDTO.getClusterType().equals(RadarChartTag.UNEXPECTED_FREQUENCY)) {
+        assertThat(analyzedLogDataDTO.getRadius() >= 1 && analyzedLogDataDTO.getRadius() <= 2);
+      } else {
+        assertThat(analyzedLogDataDTO.getRadius() >= 2 && analyzedLogDataDTO.getRadius() <= 3);
+      }
     });
 
     boolean containsKnown = false;

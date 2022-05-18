@@ -6156,4 +6156,37 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         .order(Sort.descending(WorkflowExecutionKeys.createdAt))
         .asList(new FindOptions().skip(executionsToSkip).limit(executionsToIncludeInResponse));
   }
+
+  @Override
+  public WorkflowExecution getLastSuccessfulWorkflowExecution(
+      String accountId, String appId, String workflowId, String envId, String serviceId, String infraMappingId) {
+    return wingsPersistence.createQuery(WorkflowExecution.class)
+        .filter(WorkflowExecutionKeys.accountId, accountId)
+        .filter(WorkflowExecutionKeys.appId, appId)
+        .filter(WorkflowExecutionKeys.workflowId, workflowId)
+        .filter(WorkflowExecutionKeys.envId, envId)
+        .filter(WorkflowExecutionKeys.serviceIds, serviceId)
+        .filter(WorkflowExecutionKeys.infraMappingIds, infraMappingId)
+        .filter(WorkflowExecutionKeys.status, SUCCESS)
+        .order(Sort.descending(WorkflowExecutionKeys.createdAt))
+        .get();
+  }
+
+  @Override
+  public WorkflowExecutionInfo getWorkflowExecutionInfo(String appId, String workflowExecutionId) {
+    WorkflowExecution workflowExecution =
+        wingsPersistence.getWithAppId(WorkflowExecution.class, appId, workflowExecutionId);
+    if (workflowExecution == null) {
+      throw new InvalidRequestException("Couldn't find a workflow Execution with Id: " + workflowExecutionId, USER);
+    }
+
+    return WorkflowExecutionInfo.builder()
+        .accountId(workflowExecution.getAccountId())
+        .name(workflowExecution.getName())
+        .appId(workflowExecution.getAppId())
+        .executionId(workflowExecutionId)
+        .workflowId(workflowExecution.getWorkflowId())
+        .startTs(workflowExecution.getStartTs())
+        .build();
+  }
 }

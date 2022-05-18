@@ -54,6 +54,7 @@ public class CVNGStepInfo implements CVStepInfoBase {
 
   @NotNull String type;
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true) VerificationJobSpec spec;
+
   @Builder
   @ConstructorProperties({"type", "spec"})
   public CVNGStepInfo(String type, VerificationJobSpec spec) {

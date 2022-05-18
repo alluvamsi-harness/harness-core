@@ -719,7 +719,6 @@ public class NextGenApplication extends Application<NextGenConfiguration> {
     environment.jersey().register(NGAccessDeniedExceptionMapper.class);
     environment.jersey().register(WingsExceptionMapperV2.class);
     environment.jersey().register(GenericExceptionMapperV2.class);
-    environment.jersey().register(new JsonProcessingExceptionMapper(true));
   }
 
   private void registerJerseyFeatures(Environment environment) {

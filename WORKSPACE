@@ -4336,9 +4336,9 @@ plain_artifacts = [
     "ch.qos.logback:logback-classic:1.2.3",
     "ch.qos.logback:logback-core:1.2.11",
     "com.auth0:java-jwt:3.1.0",
-    "com.azure:azure-core:1.28.0",
+    "com.azure:azure-core:1.10.0",
     "com.azure:azure-identity:1.1.2",
-    "com.azure:azure-storage-blob:12.16.0",
+    "com.azure:azure-storage-blob:12.9.0",
     "com.azure:azure-storage-common:12.9.0",
     "com.bertramlabs.plugins:hcl4j:0.1.7",
     "com.bettercloud:vault-java-driver:4.0.0",
@@ -4668,7 +4668,12 @@ plain_artifacts = [
     "io.netty:netty:3.10.6.Final",
     "io.netty:netty-all:4.1.51.Final",
     "io.netty:netty-buffer:4.1.52.Final",
-    "io.netty:netty-common:4.1.75.Final",
+    "io.netty:netty-codec-dns:4.1.52.Final",
+    "io.netty:netty-codec-http2:4.1.52.Final",
+    "io.netty:netty-codec-http:4.1.60.Final",
+    "io.netty:netty-codec-socks:4.1.52.Final",
+    "io.netty:netty-codec:4.1.52.Final",
+    "io.netty:netty-common:4.1.52.Final",
     "io.netty:netty-handler-proxy:4.1.52.Final",
     "io.netty:netty-handler:4.1.52.Final",
     "io.netty:netty-resolver-dns:4.1.52.Final",
@@ -4676,7 +4681,7 @@ plain_artifacts = [
     "io.netty:netty-transport-native-epoll:linux-x86_64:4.1.52.Final",
     "io.netty:netty-transport-native-kqueue:4.1.63_Final",
     "io.netty:netty-transport-native-unix-common:4.1.52.Final",
-    "io.netty:netty-transport:4.1.75.Final",
+    "io.netty:netty-transport:4.1.52.Final",
     "io.opencensus:opencensus-api:0.24.0",
     "io.opencensus:opencensus-contrib-http-util:0.24.0",
     "io.opencensus:opencensus-exporter-stats-stackdriver:0.28.0",
@@ -5210,6 +5215,18 @@ maven_install(
     name = "batch",
     artifacts = [
         "com.fasterxml.jackson.core:jackson-databind:2.13.1",
+    ],
+    repositories = [
+        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
+        "https://harness.jfrog.io/harness/thirdparty-annonymous",
+    ],
+    version_conflict_policy = "pinned",
+)
+
+maven_install(
+    name = "ce-nextgen",
+    artifacts = [
+        "com.azure:azure-core:1.25.0",
     ],
     repositories = [
         "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",

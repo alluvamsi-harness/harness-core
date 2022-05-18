@@ -14,6 +14,7 @@ import static io.harness.delegate.beans.DelegateConfiguration.Action.SELF_DESTRU
 import static io.harness.delegate.message.MessageConstants.DELEGATE_DASH;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_GO_AHEAD;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_HEARTBEAT;
+import static io.harness.delegate.message.MessageConstants.DELEGATE_ID;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_IS_NEW;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_JRE_VERSION;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_MIGRATE;
@@ -37,6 +38,7 @@ import static io.harness.delegate.message.MessageConstants.NEW_DELEGATE;
 import static io.harness.delegate.message.MessageConstants.NEW_WATCHER;
 import static io.harness.delegate.message.MessageConstants.NEXT_WATCHER;
 import static io.harness.delegate.message.MessageConstants.RUNNING_DELEGATES;
+import static io.harness.delegate.message.MessageConstants.UNREGISTERED;
 import static io.harness.delegate.message.MessageConstants.UPGRADING_DELEGATE;
 import static io.harness.delegate.message.MessageConstants.WATCHER_DATA;
 import static io.harness.delegate.message.MessageConstants.WATCHER_GO_AHEAD;
@@ -223,6 +225,15 @@ public class WatcherServiceImpl implements WatcherService {
   private final AtomicInteger minMinorVersion = new AtomicInteger(0);
   private final Set<Integer> illegalVersions = new HashSet<>();
   private final Map<String, Long> delegateVersionMatchedAt = new HashMap<>();
+  private static volatile String delegateId;
+
+  private void setDelegateId(String delegateId) {
+    this.delegateId = delegateId;
+  }
+
+  public static String getDelegateId() {
+    return isEmpty(delegateId) ? UNREGISTERED : delegateId;
+  }
 
   @Override
   public void run(boolean upgrade) {
@@ -460,7 +471,7 @@ public class WatcherServiceImpl implements WatcherService {
     heartbeatExecutor.scheduleWithFixedDelay(
         new Schedulable("Error while heart-beating", this::heartbeat), 0, 10, TimeUnit.SECONDS);
     heartbeatExecutor.scheduleWithFixedDelay(
-        new Schedulable("Error while logging-performance", this::logPerformance), 0, 30, TimeUnit.SECONDS);
+        new Schedulable("Error while logging-performance", this::logPerformance), 0, 60, TimeUnit.SECONDS);
     watchExecutor.scheduleWithFixedDelay(
         new Schedulable("Error while watching delegate", this::syncWatchDelegate), 0, 10, TimeUnit.SECONDS);
   }
@@ -616,6 +627,12 @@ public class WatcherServiceImpl implements WatcherService {
                 String migrateToJreVersion = (String) delegateData.get(MIGRATE_TO_JRE_VERSION);
                 upgradeJre(delegateJreVersion, migrateToJreVersion);
               }
+
+              if (UNREGISTERED.equals(getDelegateId())) {
+                String delegateIdFromAgent = (String) delegateData.get(DELEGATE_ID);
+                this.setDelegateId(delegateIdFromAgent);
+              }
+
               String delegateVersion = (String) delegateData.get(DELEGATE_VERSION);
               runningVersions.put(delegateVersion, delegateProcess);
               int delegateMinorVersion = getMinorVersion(delegateVersion);

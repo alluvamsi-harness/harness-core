@@ -21,6 +21,7 @@ import io.harness.walktree.visitor.Visitable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import lombok.Builder;
@@ -42,5 +43,6 @@ public class ServiceYamlV2 implements Visitable {
   @NotNull
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.RUNTIME_OR_FIXED_IDENTIFIER_PATTERN)
-  private ParameterField<String> serviceConfigRef;
+  private ParameterField<String> serviceRef;
+  Map<String, Object> serviceInputs;
 }

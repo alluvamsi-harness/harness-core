@@ -8,6 +8,7 @@
 package io.harness.ngtriggers.buildtriggers.helper.generator;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,6 +18,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.ngtriggers.beans.dto.TriggerDetails;
 import io.harness.ngtriggers.buildtriggers.helpers.BuildTriggerHelper;
 import io.harness.ngtriggers.buildtriggers.helpers.dtos.BuildTriggerOpsData;
+import io.harness.ngtriggers.buildtriggers.helpers.generator.ArtifactoryRegistryPollingItemGenerator;
 import io.harness.ngtriggers.buildtriggers.helpers.generator.DockerRegistryPollingItemGenerator;
 import io.harness.ngtriggers.buildtriggers.helpers.generator.EcrPollingItemGenerator;
 import io.harness.ngtriggers.buildtriggers.helpers.generator.GCSHelmPollingItemGenerator;
@@ -47,6 +49,7 @@ public class GeneratorFactoryTest extends CategoryTest {
   private GcrPollingItemGenerator gcrPollingItemGenerator;
   private EcrPollingItemGenerator ecrPollingItemGenerator;
   private DockerRegistryPollingItemGenerator dockerRegistryPollingItemGenerator;
+  private ArtifactoryRegistryPollingItemGenerator artifactoryRegistryPollingItemGenerator;
   private GeneratorFactory generatorFactory;
   @InjectMocks private NGTriggerElementMapper ngTriggerElementMapper;
   private ClassLoader classLoader;
@@ -62,9 +65,11 @@ public class GeneratorFactoryTest extends CategoryTest {
     EcrPollingItemGenerator ecrPollingItemGenerator = new EcrPollingItemGenerator(buildTriggerHelper);
     DockerRegistryPollingItemGenerator dockerRegistryPollingItemGenerator =
         new DockerRegistryPollingItemGenerator(buildTriggerHelper);
+    ArtifactoryRegistryPollingItemGenerator artifactoryRegistryPollingItemGenerator =
+        new ArtifactoryRegistryPollingItemGenerator(buildTriggerHelper);
     generatorFactory = new GeneratorFactory(buildTriggerHelper, httpHelmPollingItemGenerator,
         s3HelmPollingItemGenerator, gcsHelmPollingItemGenerator, gcrPollingItemGenerator, ecrPollingItemGenerator,
-        dockerRegistryPollingItemGenerator);
+        dockerRegistryPollingItemGenerator, artifactoryRegistryPollingItemGenerator);
     classLoader = getClass().getClassLoader();
   }
 
@@ -90,6 +95,14 @@ public class GeneratorFactoryTest extends CategoryTest {
   public void testDockerRegistryPollingItemGeneration_pipelineContainsFixedValuesExceptTag() throws Exception {
     assertType("dockerregistry_pipeline_artifact_snippet_runtime_all.yaml", "ng-trigger-artifact-dockerregistry.yaml",
         DockerRegistryPollingItemGenerator.class);
+  }
+
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void testArtifactoryPollingItemGeneration_pipelineContainsFixedValuesExceptTag() throws Exception {
+    assertType("artifactory_pipeline_artifact_snippet_runtime_all.yaml", "ng-trigger-artifact-artifactory.yaml",
+        ArtifactoryRegistryPollingItemGenerator.class);
   }
 
   private void assertType(String pipelinePath, String triggerYmlPath, Class expectedGeneratprClass) throws Exception {
