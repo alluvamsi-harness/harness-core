@@ -16,6 +16,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(PL)
 public class ScmErrorHints {
-  public static final String INVALID_CREDENTIALS = "Please check your bitbucket credentials.";
-  public static final String REPO_NOT_FOUND = "Please check your bitbucket repository.";
+  public static final String INVALID_CREDENTIALS = "Please check if your Bitbucket credentials are valid.";
+  public static final String REPO_NOT_FOUND = "Please check if the requested Bitbucket repository exists.";
 }

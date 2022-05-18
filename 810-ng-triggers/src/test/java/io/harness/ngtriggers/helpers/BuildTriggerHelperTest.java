@@ -13,6 +13,7 @@ import static io.harness.ngtriggers.beans.source.NGTriggerType.ARTIFACT;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.MANIFEST;
 import static io.harness.polling.contracts.HelmVersion.V2;
 import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
@@ -31,6 +32,7 @@ import io.harness.ngtriggers.beans.source.artifact.EcrSpec;
 import io.harness.ngtriggers.beans.source.artifact.HelmManifestSpec;
 import io.harness.ngtriggers.beans.source.artifact.ManifestTriggerConfig;
 import io.harness.ngtriggers.buildtriggers.helpers.BuildTriggerHelper;
+import io.harness.polling.contracts.ArtifactoryRegistryPayload;
 import io.harness.polling.contracts.DockerHubPayload;
 import io.harness.polling.contracts.EcrPayload;
 import io.harness.polling.contracts.GcrPayload;
@@ -43,6 +45,7 @@ import io.harness.polling.contracts.S3HelmPayload;
 import io.harness.rule.Owner;
 
 import java.io.IOException;
+import org.apache.logging.log4j.util.Strings;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -88,6 +91,175 @@ public class BuildTriggerHelperTest extends CategoryTest {
     assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoImage))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("imagePath can not be blank. Needs to have concrete value");
+  }
+
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void testValidatePollingItemForArtifact_ArtifactoryGenericRegistry() {
+    PollingItem pollingItem = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository("repo")
+                                               .setArtifactDirectory("dir")
+                                               .setRepositoryFormat("generic")
+                                               .setArtifactPath(Strings.EMPTY)
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    validatePollingItemForArtifact(pollingItem);
+
+    final PollingItem pollingItemNoConn = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef(Strings.EMPTY)
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository("repo")
+                                               .setArtifactDirectory("dir")
+                                               .setRepositoryFormat("generic")
+                                               .setArtifactPath(Strings.EMPTY)
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoConn))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("ConnectorRef can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoRepository = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository(Strings.EMPTY)
+                                               .setArtifactDirectory("dir")
+                                               .setRepositoryFormat("generic")
+                                               .setArtifactPath(Strings.EMPTY)
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoRepository))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("repository can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoArtifactDirectory =
+        generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+            PollingPayloadData.newBuilder()
+                .setConnectorRef("conn")
+                .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                                   .setRepository("repo")
+                                                   .setArtifactDirectory(Strings.EMPTY)
+                                                   .setRepositoryFormat("generic")
+                                                   .setArtifactPath(Strings.EMPTY)
+                                                   .setRepositoryUrl(Strings.EMPTY)
+                                                   .build())
+                .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoArtifactDirectory))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("artifactDirectory can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoRepositoryFormat =
+        generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+            PollingPayloadData.newBuilder()
+                .setConnectorRef("conn")
+                .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                                   .setRepository("repo")
+                                                   .setArtifactDirectory("dir")
+                                                   .setRepositoryFormat(Strings.EMPTY)
+                                                   .setArtifactPath(Strings.EMPTY)
+                                                   .setRepositoryUrl(Strings.EMPTY)
+                                                   .build())
+                .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoRepositoryFormat))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("repositoryFormat can not be blank. Needs to have concrete value");
+  }
+
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void testValidatePollingItemForArtifact_ArtifactoryDockerRegistry() {
+    PollingItem pollingItem = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository("repo")
+                                               .setArtifactDirectory(Strings.EMPTY)
+                                               .setRepositoryFormat("docker")
+                                               .setArtifactPath("path")
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    validatePollingItemForArtifact(pollingItem);
+
+    final PollingItem pollingItemNoConn = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef(Strings.EMPTY)
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository("repo")
+                                               .setArtifactDirectory(Strings.EMPTY)
+                                               .setRepositoryFormat("docker")
+                                               .setArtifactPath("path")
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoConn))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("ConnectorRef can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoRepository = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository(Strings.EMPTY)
+                                               .setArtifactDirectory(Strings.EMPTY)
+                                               .setRepositoryFormat("docker")
+                                               .setArtifactPath("path")
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoRepository))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("repository can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoArtifactPath = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                               .setRepository("repo")
+                                               .setArtifactDirectory(Strings.EMPTY)
+                                               .setRepositoryFormat("docker")
+                                               .setArtifactPath(Strings.EMPTY)
+                                               .setRepositoryUrl(Strings.EMPTY)
+                                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoArtifactPath))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("artifactPath can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoRepositoryFormat =
+        generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+            PollingPayloadData.newBuilder()
+                .setConnectorRef("conn")
+                .setArtifactoryRegistryPayload(ArtifactoryRegistryPayload.newBuilder()
+                                                   .setRepository("repo")
+                                                   .setArtifactDirectory(Strings.EMPTY)
+                                                   .setRepositoryFormat(Strings.EMPTY)
+                                                   .setArtifactPath("path")
+                                                   .setRepositoryUrl(Strings.EMPTY)
+                                                   .build())
+                .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoRepositoryFormat))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("repositoryFormat can not be blank. Needs to have concrete value");
   }
 
   @Test

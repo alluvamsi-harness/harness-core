@@ -64,7 +64,7 @@ public class KryoRegistrationTest extends CategoryTest {
   @Test
   @Owner(developers = JOHANNES)
   @Category(UnitTests.class)
-  public void testKryoRegistrarForDuplicateClasses()
+  public void testForDuplicateClassesBetweenKryoRegistrars()
       throws InstantiationException, IllegalAccessException, NoSuchFieldException {
     Map<Class, ImmutablePair<String, Integer>> processedRegistrations = new HashMap<>();
     for (Class<? extends KryoRegistrar> registrarClass : getAllKryoRegistrars()) {
@@ -108,7 +108,7 @@ public class KryoRegistrationTest extends CategoryTest {
   @Test
   @Owner(developers = JOHANNES)
   @Category(UnitTests.class)
-  public void testKryoRegistrarForDuplicateIds()
+  public void testForDuplicateIdsBetweenKryoRegistrars()
       throws InstantiationException, IllegalAccessException, NoSuchFieldException {
     IntMap<ImmutablePair<String, String>> processedRegistrations = new IntMap<>();
     for (Class<? extends KryoRegistrar> registrarClass : getAllKryoRegistrars()) {

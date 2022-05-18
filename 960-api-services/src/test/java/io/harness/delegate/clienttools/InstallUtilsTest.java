@@ -106,6 +106,41 @@ public class InstallUtilsTest {
 
   @Test
   @Owner(developers = MARKO)
+  @Category(FunctionalTests.class)
+  public void whenCustomBinaryNameThenTheyAreUsed() {
+    final String helm3Path = "/usr/local/bin/helm3";
+    final String helmPath = "/usr/local/bin/helm2";
+    final DelegateConfiguration customConfig = DelegateConfiguration.builder()
+                                                   .managerUrl("localhost")
+                                                   .clientToolsDownloadDisabled(true)
+                                                   .helm3Path(helm3Path)
+                                                   .helmPath(helmPath)
+                                                   .build();
+
+    setupClientTools(customConfig);
+
+    assertThat(getPath(HELM, HelmVersion.V2)).isEqualTo(helmPath);
+    assertThat(getPath(HELM, HelmVersion.V3)).isEqualTo(helm3Path);
+  }
+
+  @Test
+  @Owner(developers = MARKO)
+  @Category(FunctionalTests.class)
+  public void whenNoAbsoluthPathThenTheyAreUsed() {
+    final String kubectl = "kubectl";
+    final DelegateConfiguration customConfig = DelegateConfiguration.builder()
+                                                   .managerUrl("localhost")
+                                                   .clientToolsDownloadDisabled(true)
+                                                   .kubectlPath(kubectl)
+                                                   .build();
+
+    setupClientTools(customConfig);
+
+    assertThat(getPath(KUBECTL, KubectlVersion.V1_13)).isEqualTo(PWD + "/kubectl");
+  }
+
+  @Test
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenCustomHelm2ThenHelm3Default() {
     final String customHelm2Path = "/custom/helm2Path/helm";

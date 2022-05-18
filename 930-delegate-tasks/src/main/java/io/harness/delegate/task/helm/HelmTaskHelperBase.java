@@ -50,6 +50,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.chartmuseum.ChartMuseumServer;
+import io.harness.chartmuseum.ChartmuseumClient;
 import io.harness.delegate.beans.connector.helm.HttpHelmAuthType;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmUsernamePasswordDTO;
@@ -57,7 +58,7 @@ import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
-import io.harness.delegate.chartmuseum.NGChartMuseumService;
+import io.harness.delegate.chartmuseum.NgChartmuseumClientFactory;
 import io.harness.delegate.exception.ManifestCollectionException;
 import io.harness.delegate.task.k8s.HelmChartManifestDelegateConfig;
 import io.harness.exception.ExceptionUtils;
@@ -65,6 +66,7 @@ import io.harness.exception.HelmClientException;
 import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.helm.HelmCliCommandType;
 import io.harness.helm.HelmCommandFlagsUtils;
 import io.harness.helm.HelmCommandTemplateFactory;
@@ -76,8 +78,6 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
-
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -123,7 +123,7 @@ public class HelmTaskHelperBase {
   public static final String REGISTRY_URL = "${REGISTRY_URL}";
 
   @Inject private K8sGlobalConfigService k8sGlobalConfigService;
-  @Inject private NGChartMuseumService ngChartMuseumService;
+  @Inject private NgChartmuseumClientFactory ngChartmuseumClientFactory;
   @Inject private SecretDecryptionService decryptionService;
   private String randPrefix;
 
@@ -562,6 +562,7 @@ public class HelmTaskHelperBase {
   public void downloadChartFilesUsingChartMuseum(
       HelmChartManifestDelegateConfig manifest, String destinationDirectory, long timeoutInMillis) throws Exception {
     String resourceDirectory = null;
+    ChartmuseumClient chartmuseumClient = null;
     ChartMuseumServer chartMuseumServer = null;
     String repoName = null;
     String repoDisplayName = null;
@@ -597,8 +598,8 @@ public class HelmTaskHelperBase {
 
     try {
       resourceDirectory = createNewDirectoryAtPath(RESOURCE_DIR_BASE);
-      chartMuseumServer =
-          ngChartMuseumService.startChartMuseumServer(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartmuseumClient = ngChartmuseumClientFactory.createClient(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartMuseumServer = chartmuseumClient.start();
 
       addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), destinationDirectory,
           manifest.getHelmVersion(), timeoutInMillis, cacheDir);
@@ -607,8 +608,8 @@ public class HelmTaskHelperBase {
           cacheDir);
 
     } finally {
-      if (chartMuseumServer != null) {
-        ngChartMuseumService.stopChartMuseumServer(chartMuseumServer);
+      if (chartmuseumClient != null && chartMuseumServer != null) {
+        chartmuseumClient.stop(chartMuseumServer);
       }
 
       if (repoName != null) {
@@ -1065,6 +1066,7 @@ public class HelmTaskHelperBase {
   private List<String> fetchVersionsUsingChartMuseumServer(
       HelmChartManifestDelegateConfig manifest, String destinationDirectory, long timeoutInMillis) throws Exception {
     String resourceDirectory = null;
+    ChartmuseumClient chartmuseumClient = null;
     ChartMuseumServer chartMuseumServer = null;
     String repoName = null;
     String repoDisplayName = null;
@@ -1081,8 +1083,8 @@ public class HelmTaskHelperBase {
 
     try {
       resourceDirectory = createNewDirectoryAtPath(RESOURCE_DIR_BASE);
-      chartMuseumServer =
-          ngChartMuseumService.startChartMuseumServer(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartmuseumClient = ngChartmuseumClientFactory.createClient(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartMuseumServer = chartmuseumClient.start();
 
       addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), destinationDirectory,
           manifest.getHelmVersion(), timeoutInMillis, "");
@@ -1094,8 +1096,8 @@ public class HelmTaskHelperBase {
       String commandOutput = processResult.getOutput().getUTF8();
       return parseHelmVersionsFromOutput(commandOutput, manifest);
     } finally {
-      if (chartMuseumServer != null) {
-        ngChartMuseumService.stopChartMuseumServer(chartMuseumServer);
+      if (chartmuseumClient != null && chartMuseumServer != null) {
+        chartmuseumClient.stop(chartMuseumServer);
       }
     }
   }

@@ -14,6 +14,7 @@ import static io.harness.eventsframework.EventsFrameworkConstants.GIT_SYNC_ENTIT
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.CONNECTOR_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ENTITY_TYPE;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ENVIRONMENT_GROUP_ENTITY;
+import static io.harness.eventsframework.EventsFrameworkMetadataConstants.GITOPS_CLUSTER_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.PROJECT_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.SECRET_ENTITY;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.SETUP_USAGE_ENTITY;
@@ -62,6 +63,7 @@ public class EntityCRUDStreamConsumer implements Runnable {
       @Named(USER_GROUP + ENTITY_CRUD) MessageListener userGroupEntityCRUDStreamListener,
       @Named(USER_SCOPE_RECONCILIATION) MessageListener userMembershipReconciliationMessageProcessor,
       @Named(GIT_SYNC_ENTITY_STREAM + ENTITY_CRUD) MessageListener gitSyncProjectCleanup,
+      @Named(GITOPS_CLUSTER_ENTITY + ENTITY_CRUD) MessageListener gitopsClusterCleanupProcessor,
       QueueController queueController) {
     this.redisConsumer = redisConsumer;
     this.queueController = queueController;
@@ -74,6 +76,7 @@ public class EntityCRUDStreamConsumer implements Runnable {
     messageListenersList.add(secretEntityCRUDStreamListner);
     messageListenersList.add(userGroupEntityCRUDStreamListener);
     messageListenersList.add(userMembershipReconciliationMessageProcessor);
+    messageListenersList.add(gitopsClusterCleanupProcessor);
     processorMap = new HashMap<>();
     processorMap.put(SETUP_USAGE_ENTITY, setupUsageChangeEventMessageProcessor);
   }
