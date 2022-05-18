@@ -33,7 +33,6 @@ public class InstanceSyncStepResolver {
       K8sRollingStep.STEP_TYPE.getType(), K8sCanaryStep.STEP_TYPE.getType(), K8sBlueGreenStep.STEP_TYPE.getType(),
       K8sRollingRollbackStep.STEP_TYPE.getType(), HelmDeployStep.STEP_TYPE.getType(),
       HelmRollbackStep.STEP_TYPE.getType(), ServerlessAwsLambdaDeployStep.STEP_TYPE.getType()));
-  // todo: discuss for rollback
 
   public boolean shouldRunInstanceSync(StepType stepType) {
     return nonNull(stepType) && INSTANCE_SYN_STEP_TYPES.contains(stepType.getType());

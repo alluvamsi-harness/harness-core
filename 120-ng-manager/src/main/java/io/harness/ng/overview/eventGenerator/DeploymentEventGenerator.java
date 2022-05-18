@@ -101,7 +101,6 @@ public class DeploymentEventGenerator implements OrchestrationEventHandler {
 
     Optional<ArtifactsOutcome> optionalArtifactsOutcome = getArtifactOutcomeFromAmbiance(ambiance);
     if (optionalArtifactsOutcome.isPresent()) {
-      // todo
       deploymentInfoDTOBuilder.setArtifactDetails(
           ArtifactDetails.newBuilder()
               .setArtifactType(optionalArtifactsOutcome.get().getPrimary().getArtifactType())
