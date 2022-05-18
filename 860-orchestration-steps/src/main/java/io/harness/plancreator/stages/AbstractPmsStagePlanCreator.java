@@ -82,8 +82,4 @@ public abstract class AbstractPmsStagePlanCreator<T extends PmsAbstractStageNode
         .adviserObtainments(getAdviserObtainmentFromMetaData(ctx.getCurrentField()))
         .build();
   }
-
-  /**
-   * Adds the nextStepAdviser to the given node if it is not the end stage
-   */
 }

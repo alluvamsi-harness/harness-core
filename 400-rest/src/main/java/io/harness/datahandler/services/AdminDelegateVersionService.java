@@ -7,11 +7,16 @@
 
 package io.harness.datahandler.services;
 
-import io.harness.delegate.beans.AccountVersionOverride;
-import io.harness.delegate.beans.AccountVersionOverride.AccountVersionOverrideKeys;
+import static io.harness.delegate.beans.VersionOverrideType.DELEGATE_IMAGE_TAG;
+import static io.harness.delegate.beans.VersionOverrideType.DELEGATE_JAR;
+import static io.harness.delegate.beans.VersionOverrideType.UPGRADER_IMAGE_TAG;
+import static io.harness.delegate.beans.VersionOverrideType.WATCHER_JAR;
+
+import io.harness.delegate.beans.VersionOverride;
+import io.harness.delegate.beans.VersionOverride.VersionOverrideKeys;
+import io.harness.delegate.beans.VersionOverrideType;
 import io.harness.persistence.HPersistence;
 
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import org.joda.time.DateTime;
@@ -23,32 +28,31 @@ public class AdminDelegateVersionService {
   private final HPersistence persistence;
 
   public void setDelegateImageTag(final String delegateTag, final String accountId, final int validFor) {
-    setVersionOverride(accountId, AccountVersionOverrideKeys.delegateImageTag, delegateTag, validFor);
+    setVersionOverride(accountId, DELEGATE_IMAGE_TAG, delegateTag, validFor);
   }
 
   public void setUpgraderImageTag(final String upgraderTag, final String accountId, final int validFor) {
-    setVersionOverride(accountId, AccountVersionOverrideKeys.upgraderImageTag, upgraderTag, validFor);
+    setVersionOverride(accountId, UPGRADER_IMAGE_TAG, upgraderTag, validFor);
   }
 
   public void setDelegateVersion(final String delegateVersion, final String accountId, final int validFor) {
-    setVersionOverride(
-        accountId, AccountVersionOverrideKeys.delegateJarVersions, Lists.newArrayList(delegateVersion), validFor);
+    setVersionOverride(accountId, DELEGATE_JAR, delegateVersion, validFor);
   }
 
   public void setWatcherVersion(final String watcherVersion, final String accountId, final int validFor) {
-    setVersionOverride(
-        accountId, AccountVersionOverrideKeys.watcherJarVersions, Lists.newArrayList(watcherVersion), validFor);
+    setVersionOverride(accountId, WATCHER_JAR, watcherVersion, validFor);
   }
 
   private void setVersionOverride(
-      final String accountId, final String overrideKey, final Object overrideValue, final int validFor) {
+      final String accountId, final VersionOverrideType overrideType, final String overrideValue, final int validFor) {
     final DateTime validity = DateTime.now().plusDays(validFor);
-    final Query<AccountVersionOverride> filter =
-        persistence.createQuery(AccountVersionOverride.class).filter(AccountVersionOverrideKeys.accountId, accountId);
-    final UpdateOperations<AccountVersionOverride> updateOperation =
-        persistence.createUpdateOperations(AccountVersionOverride.class)
-            .set(overrideKey, overrideValue)
-            .set(AccountVersionOverrideKeys.validUntil, validity.toDate());
+    final Query<VersionOverride> filter = persistence.createQuery(VersionOverride.class)
+                                              .filter(VersionOverrideKeys.accountId, accountId)
+                                              .filter(VersionOverrideKeys.overrideType, overrideType);
+    final UpdateOperations<VersionOverride> updateOperation =
+        persistence.createUpdateOperations(VersionOverride.class)
+            .set(VersionOverrideKeys.version, overrideValue)
+            .set(VersionOverrideKeys.validUntil, validity.toDate());
 
     persistence.upsert(filter, updateOperation);
   }

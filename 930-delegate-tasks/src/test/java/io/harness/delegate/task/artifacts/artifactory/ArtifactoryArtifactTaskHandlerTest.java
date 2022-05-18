@@ -7,7 +7,10 @@
 
 package io.harness.delegate.task.artifacts.artifactory;
 
+import static io.harness.artifactory.service.ArtifactoryRegistryService.DEFAULT_ARTIFACT_FILTER;
+import static io.harness.artifactory.service.ArtifactoryRegistryService.MAX_NO_OF_BUILDS_PER_ARTIFACT;
 import static io.harness.rule.OwnerRule.MLUKIC;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -18,19 +21,25 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifact.ArtifactMetadataKeys;
 import io.harness.artifactory.ArtifactoryConfigRequest;
+import io.harness.artifactory.ArtifactoryNgService;
 import io.harness.artifactory.service.ArtifactoryRegistryService;
 import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthType;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryAuthenticationDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConnectorDTO;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
+import io.harness.delegate.task.artifactory.ArtifactoryRequestMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.encryption.SecretRefData;
 import io.harness.rule.Owner;
+import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryFormat;
 
 import io.fabric8.utils.Lists;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Rule;
@@ -38,6 +47,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -51,13 +61,19 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
   private static String ARTIFACTORY_USERNAME = "username";
   private static String ARTIFACTORY_PASSWORD = "password";
   private static String REPO_NAME = "repoName";
+  private static String ARTIFACT_DIRECTORY = "dir";
   private static String IMAGE_NAME = "imageName";
   private static String IMAGE_TAG = "imageTag";
   private static String IMAGE_TAG_REGEX = "\\*";
+  private static String ARTIFACT_PATH = "path";
+  private static String COMBINED_ARTIFACT_PATH = ARTIFACT_DIRECTORY + "/" + ARTIFACT_PATH;
   private static int MAX_NO_OF_TAGS_PER_IMAGE = 10000;
 
   @Mock ArtifactoryRegistryService artifactoryRegistryService;
   @InjectMocks ArtifactoryArtifactTaskHandler artifactoryArtifactService;
+  @Mock ArtifactoryNgService artifactoryNgService;
+  @Mock SecretDecryptionService secretDecryptionService;
+  @Spy ArtifactoryRequestMapper artifactoryRequestMapper;
 
   @Test
   @Owner(developers = MLUKIC)
@@ -75,14 +91,14 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
             .artifactRepositoryUrl(ARTIFACT_REPO_URL)
             .build();
 
-    ArtifactoryDockerArtifactDelegateRequest sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
-                                                                    .repositoryName(REPO_NAME)
-                                                                    .artifactPath(IMAGE_NAME)
-                                                                    .repositoryFormat(RepositoryFormat.docker.name())
-                                                                    .tag(IMAGE_TAG)
-                                                                    .artifactRepositoryUrl(ARTIFACT_REPO_URL)
-                                                                    .artifactoryConnectorDTO(artifactoryConnectorDTO)
-                                                                    .build();
+    ArtifactoryArtifactDelegateRequest sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
+                                                              .repositoryName(REPO_NAME)
+                                                              .artifactPath(IMAGE_NAME)
+                                                              .repositoryFormat(RepositoryFormat.docker.name())
+                                                              .tag(IMAGE_TAG)
+                                                              .artifactRepositoryUrl(ARTIFACT_REPO_URL)
+                                                              .artifactoryConnectorDTO(artifactoryConnectorDTO)
+                                                              .build();
 
     doReturn(buildDetailsInternal)
         .when(artifactoryRegistryService)
@@ -93,9 +109,9 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
     assertThat(lastSuccessfulBuild).isNotNull();
     assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().size()).isEqualTo(1);
     assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().get(0))
-        .isInstanceOf(ArtifactoryDockerArtifactDelegateResponse.class);
-    ArtifactoryDockerArtifactDelegateResponse attributes =
-        (ArtifactoryDockerArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
+        .isInstanceOf(ArtifactoryArtifactDelegateResponse.class);
+    ArtifactoryArtifactDelegateResponse attributes =
+        (ArtifactoryArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
     assertThat(attributes.getArtifactPath()).isEqualTo(IMAGE_NAME);
     assertThat(attributes.getTag()).isEqualTo(sourceAttributes.getTag());
   }
@@ -126,14 +142,14 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
             .artifactRepositoryUrl(ARTIFACT_REPO_URL)
             .build();
 
-    ArtifactoryDockerArtifactDelegateRequest sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
-                                                                    .repositoryName(REPO_NAME)
-                                                                    .artifactPath(IMAGE_NAME)
-                                                                    .repositoryFormat(RepositoryFormat.docker.name())
-                                                                    .tagRegex(IMAGE_TAG_REGEX)
-                                                                    .artifactRepositoryUrl(ARTIFACT_REPO_URL)
-                                                                    .artifactoryConnectorDTO(artifactoryConnectorDTO)
-                                                                    .build();
+    ArtifactoryArtifactDelegateRequest sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
+                                                              .repositoryName(REPO_NAME)
+                                                              .artifactPath(IMAGE_NAME)
+                                                              .repositoryFormat(RepositoryFormat.docker.name())
+                                                              .tagRegex(IMAGE_TAG_REGEX)
+                                                              .artifactRepositoryUrl(ARTIFACT_REPO_URL)
+                                                              .artifactoryConnectorDTO(artifactoryConnectorDTO)
+                                                              .build();
 
     doReturn(buildDetailsInternal)
         .when(artifactoryRegistryService)
@@ -145,9 +161,9 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
     assertThat(lastSuccessfulBuild).isNotNull();
     assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().size()).isEqualTo(1);
     assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().get(0))
-        .isInstanceOf(ArtifactoryDockerArtifactDelegateResponse.class);
-    ArtifactoryDockerArtifactDelegateResponse attributes =
-        (ArtifactoryDockerArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
+        .isInstanceOf(ArtifactoryArtifactDelegateResponse.class);
+    ArtifactoryArtifactDelegateResponse attributes =
+        (ArtifactoryArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
     assertThat(attributes.getArtifactPath()).isEqualTo(IMAGE_NAME);
     assertThat(attributes.getTag()).isEqualTo(IMAGE_TAG);
   }
@@ -182,13 +198,13 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
             .artifactRepositoryUrl(ARTIFACT_REPO_URL)
             .build();
 
-    ArtifactoryDockerArtifactDelegateRequest sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
-                                                                    .repositoryName(REPO_NAME)
-                                                                    .artifactPath(IMAGE_NAME)
-                                                                    .repositoryFormat(RepositoryFormat.docker.name())
-                                                                    .artifactRepositoryUrl(ARTIFACT_REPO_URL)
-                                                                    .artifactoryConnectorDTO(artifactoryConnectorDTO)
-                                                                    .build();
+    ArtifactoryArtifactDelegateRequest sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
+                                                              .repositoryName(REPO_NAME)
+                                                              .artifactPath(IMAGE_NAME)
+                                                              .repositoryFormat(RepositoryFormat.docker.name())
+                                                              .artifactRepositoryUrl(ARTIFACT_REPO_URL)
+                                                              .artifactoryConnectorDTO(artifactoryConnectorDTO)
+                                                              .build();
 
     doReturn(Lists.newArrayList(buildDetailsInternal))
         .when(artifactoryRegistryService)
@@ -199,13 +215,69 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
     assertThat(lastSuccessfulBuild).isNotNull();
     assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().size()).isEqualTo(1);
     assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().get(0))
-        .isInstanceOf(ArtifactoryDockerArtifactDelegateResponse.class);
-    ArtifactoryDockerArtifactDelegateResponse attributes =
-        (ArtifactoryDockerArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
+        .isInstanceOf(ArtifactoryArtifactDelegateResponse.class);
+    ArtifactoryArtifactDelegateResponse attributes =
+        (ArtifactoryArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
     assertThat(attributes.getArtifactPath()).isEqualTo(IMAGE_NAME);
     assertThat(attributes.getTag()).isEqualTo(IMAGE_TAG);
     assertThat(attributes.getBuildDetails().getMetadata().get(ArtifactMetadataKeys.IMAGE))
         .isEqualTo(ARTIFACT_REPO_URL + "/" + IMAGE_NAME + ":" + IMAGE_TAG);
+  }
+
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void testGetBuildsForGeneric() {
+    ArtifactoryUsernamePasswordAuthDTO artifactoryUsernamePasswordAuthDTO =
+        ArtifactoryUsernamePasswordAuthDTO.builder()
+            .username(ARTIFACTORY_USERNAME)
+            .passwordRef(SecretRefData.builder().decryptedValue(ARTIFACTORY_PASSWORD.toCharArray()).build())
+            .build();
+
+    ArtifactoryConnectorDTO artifactoryConnectorDTO = ArtifactoryConnectorDTO.builder()
+                                                          .artifactoryServerUrl(ARTIFACTORY_URL)
+                                                          .auth(ArtifactoryAuthenticationDTO.builder()
+                                                                    .authType(ArtifactoryAuthType.USER_PASSWORD)
+                                                                    .credentials(artifactoryUsernamePasswordAuthDTO)
+                                                                    .build())
+                                                          .build();
+
+    BuildDetails buildDetailsInternal =
+        BuildDetails.Builder.aBuildDetails().withArtifactPath(COMBINED_ARTIFACT_PATH).build();
+
+    ArtifactoryConfigRequest artifactoryInternalConfig =
+        ArtifactoryConfigRequest.builder()
+            .artifactoryUrl(artifactoryConnectorDTO.getArtifactoryServerUrl())
+            .username(artifactoryUsernamePasswordAuthDTO.getUsername())
+            .password(artifactoryUsernamePasswordAuthDTO.getPasswordRef().getDecryptedValue())
+            .hasCredentials(true)
+            .build();
+
+    ArtifactoryGenericArtifactDelegateRequest sourceAttributes = ArtifactoryGenericArtifactDelegateRequest.builder()
+                                                                     .repositoryName(REPO_NAME)
+                                                                     .repositoryFormat(RepositoryFormat.generic.name())
+                                                                     .artifactDirectory(ARTIFACT_DIRECTORY)
+                                                                     .artifactoryConnectorDTO(artifactoryConnectorDTO)
+                                                                     .build();
+
+    String artifactDirectory = sourceAttributes.getArtifactDirectory();
+    String filePath = Paths.get(artifactDirectory, DEFAULT_ARTIFACT_FILTER).toString();
+
+    doReturn(Lists.newArrayList(buildDetailsInternal))
+        .when(artifactoryNgService)
+        .getArtifactList(
+            artifactoryInternalConfig, sourceAttributes.getRepositoryName(), filePath, MAX_NO_OF_BUILDS_PER_ARTIFACT);
+
+    ArtifactTaskExecutionResponse lastSuccessfulBuild = artifactoryArtifactService.getBuilds(sourceAttributes);
+    assertThat(lastSuccessfulBuild).isNotNull();
+    assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().size()).isEqualTo(1);
+    assertThat(lastSuccessfulBuild.getArtifactDelegateResponses().get(0))
+        .isInstanceOf(ArtifactoryGenericArtifactDelegateResponse.class);
+    ArtifactoryGenericArtifactDelegateResponse attributes =
+        (ArtifactoryGenericArtifactDelegateResponse) lastSuccessfulBuild.getArtifactDelegateResponses().get(0);
+    assertThat(attributes.getArtifactPath()).isEqualTo(ARTIFACT_PATH);
+    assertThat(lastSuccessfulBuild.getBuildDetails().size()).isEqualTo(1);
+    assertThat(lastSuccessfulBuild.getBuildDetails().get(0).getArtifactPath()).isEqualTo(ARTIFACT_PATH);
   }
 
   @Test
@@ -233,14 +305,14 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
             .artifactRepositoryUrl(ARTIFACT_REPO_URL)
             .build();
 
-    ArtifactoryDockerArtifactDelegateRequest sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
-                                                                    .repositoryName(REPO_NAME)
-                                                                    .artifactPath(IMAGE_NAME)
-                                                                    .repositoryFormat(RepositoryFormat.docker.name())
-                                                                    .tag(IMAGE_TAG)
-                                                                    .artifactRepositoryUrl(ARTIFACT_REPO_URL)
-                                                                    .artifactoryConnectorDTO(artifactoryConnectorDTO)
-                                                                    .build();
+    ArtifactoryArtifactDelegateRequest sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
+                                                              .repositoryName(REPO_NAME)
+                                                              .artifactPath(IMAGE_NAME)
+                                                              .repositoryFormat(RepositoryFormat.docker.name())
+                                                              .tag(IMAGE_TAG)
+                                                              .artifactRepositoryUrl(ARTIFACT_REPO_URL)
+                                                              .artifactoryConnectorDTO(artifactoryConnectorDTO)
+                                                              .build();
     doReturn(true).when(artifactoryRegistryService).validateCredentials(artifactoryInternalConfig);
 
     ArtifactTaskExecutionResponse lastSuccessfulBuild =
@@ -253,17 +325,17 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testIsRegex() {
-    ArtifactoryDockerArtifactDelegateRequest sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
-                                                                    .repositoryName(REPO_NAME)
-                                                                    .artifactPath(IMAGE_NAME)
-                                                                    .repositoryFormat(RepositoryFormat.docker.name())
-                                                                    .tag(IMAGE_TAG)
-                                                                    .tagRegex(IMAGE_TAG_REGEX)
-                                                                    .build();
+    ArtifactoryArtifactDelegateRequest sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
+                                                              .repositoryName(REPO_NAME)
+                                                              .artifactPath(IMAGE_NAME)
+                                                              .repositoryFormat(RepositoryFormat.docker.name())
+                                                              .tag(IMAGE_TAG)
+                                                              .tagRegex(IMAGE_TAG_REGEX)
+                                                              .build();
     boolean regex = artifactoryArtifactService.isRegex(sourceAttributes);
     assertThat(regex).isTrue();
 
-    sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
+    sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
                            .repositoryName(REPO_NAME)
                            .artifactPath(IMAGE_NAME)
                            .repositoryFormat(RepositoryFormat.docker.name())
@@ -272,7 +344,7 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
     regex = artifactoryArtifactService.isRegex(sourceAttributes);
     assertThat(regex).isTrue();
 
-    sourceAttributes = ArtifactoryDockerArtifactDelegateRequest.builder()
+    sourceAttributes = ArtifactoryArtifactDelegateRequest.builder()
                            .repositoryName(REPO_NAME)
                            .artifactPath(IMAGE_NAME)
                            .repositoryFormat(RepositoryFormat.docker.name())
@@ -304,19 +376,19 @@ public class ArtifactoryArtifactTaskHandlerTest extends CategoryTest {
     return metadata;
   }
 
-  private ArtifactoryDockerArtifactDelegateRequest createArtifactoryDelegateRequestWithTag(
+  private ArtifactoryArtifactDelegateRequest createArtifactoryDelegateRequestWithTag(
       ArtifactoryConnectorDTO artifactoryConnectorDTO) {
     return createArtifactoryDelegateRequest(artifactoryConnectorDTO, IMAGE_TAG, null, ARTIFACTORY_URL_HOSTNAME);
   }
 
-  private ArtifactoryDockerArtifactDelegateRequest createArtifactoryDelegateRequestWithTagRegex(
+  private ArtifactoryArtifactDelegateRequest createArtifactoryDelegateRequestWithTagRegex(
       ArtifactoryConnectorDTO artifactoryConnectorDTO) {
     return createArtifactoryDelegateRequest(artifactoryConnectorDTO, null, IMAGE_TAG_REGEX, ARTIFACTORY_URL_HOSTNAME);
   }
 
-  private ArtifactoryDockerArtifactDelegateRequest createArtifactoryDelegateRequest(
+  private ArtifactoryArtifactDelegateRequest createArtifactoryDelegateRequest(
       ArtifactoryConnectorDTO artifactoryConnectorDTO, String tag, String tagRegex, String artifactRepoUrl) {
-    return ArtifactoryDockerArtifactDelegateRequest.builder()
+    return ArtifactoryArtifactDelegateRequest.builder()
         .repositoryName(REPO_NAME)
         .artifactPath(IMAGE_NAME)
         .repositoryFormat(RepositoryFormat.docker.name())

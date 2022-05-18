@@ -30,6 +30,7 @@ import io.harness.pms.merger.fqn.FQN;
 import io.harness.pms.pipeline.PMSPipelineResponseDTO;
 import io.harness.pms.pipeline.TemplatesResolvedPipelineResponseDTO;
 import io.harness.pms.yaml.YamlUtils;
+import io.harness.polling.contracts.ArtifactoryRegistryPayload;
 import io.harness.polling.contracts.BuildInfo;
 import io.harness.polling.contracts.DockerHubPayload;
 import io.harness.polling.contracts.EcrPayload;
@@ -234,6 +235,8 @@ public class BuildTriggerHelper {
       validatePollingItemForDockerRegistry(pollingItem);
     } else if (pollingPayloadData.hasEcrPayload()) {
       validatePollingItemForEcr(pollingItem);
+    } else if (pollingPayloadData.hasArtifactoryRegistryPayload()) {
+      validatePollingItemForArtifactory(pollingItem);
     } else {
       throw new InvalidRequestException("Invalid Polling Type");
     }
@@ -257,6 +260,33 @@ public class BuildTriggerHelper {
     String error = checkFiledValueError("imagePath", dockerHubPayload.getImagePath());
     if (isNotBlank(error)) {
       throw new InvalidRequestException(error);
+    }
+  }
+
+  private void validatePollingItemForArtifactory(PollingItem pollingItem) {
+    ArtifactoryRegistryPayload artifactoryRegistryPayload =
+        pollingItem.getPollingPayloadData().getArtifactoryRegistryPayload();
+    String error = checkFiledValueError("repository", artifactoryRegistryPayload.getRepository());
+    if (isNotBlank(error)) {
+      throw new InvalidRequestException(error);
+    }
+
+    error = checkFiledValueError("repositoryFormat", artifactoryRegistryPayload.getRepositoryFormat());
+    if (isNotBlank(error)) {
+      throw new InvalidRequestException(error);
+    }
+
+    String repositoryFormat = artifactoryRegistryPayload.getRepositoryFormat();
+    if (repositoryFormat.equals("generic")) {
+      error = checkFiledValueError("artifactDirectory", artifactoryRegistryPayload.getArtifactDirectory());
+      if (isNotBlank(error)) {
+        throw new InvalidRequestException(error);
+      }
+    } else {
+      error = checkFiledValueError("artifactPath", artifactoryRegistryPayload.getArtifactPath());
+      if (isNotBlank(error)) {
+        throw new InvalidRequestException(error);
+      }
     }
   }
 

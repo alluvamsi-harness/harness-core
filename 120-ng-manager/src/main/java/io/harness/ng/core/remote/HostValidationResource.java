@@ -55,7 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 @Api("/host-validation")
 @Produces({"application/json", "application/yaml"})
 @Consumes({"application/json", "application/yaml"})
-@Tag(name = "ValidateHost", description = "This contains APIs related to SSH host validation")
+@Tag(name = "ValidateHost", description = "This contains APIs related to SSH or WinRm host validation")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {
@@ -82,28 +82,28 @@ public class HostValidationResource {
 
   @POST
   @Consumes({"application/json"})
-  @Path("ssh")
-  @ApiOperation(value = "Validate SSH hosts connectivity", nickname = "validateSshHosts")
-  @Operation(operationId = "validateSshHosts", summary = "Validates hosts connectivity using SSH credentials",
+  @ApiOperation(value = "Validate hosts connectivity", nickname = "validateHosts")
+  @Operation(operationId = "validateHosts", summary = "Validates hosts connectivity credentials",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns validation response")
       })
   public ResponseDTO<List<HostValidationDTO>>
-  validateSshHost(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
-                      NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+  validateHost(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+                   NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Parameter(description = "Secret Identifier") @QueryParam(
           NGCommonEntityConstants.IDENTIFIER_KEY) @NotNull String secretIdentifier,
-      @RequestBody(required = true, description = "List of SSH hosts to validate, and Delegate tags (optional)")
+      @RequestBody(
+          required = true, description = "List of SSH or WinRm hosts to validate, and Delegate tags (optional)")
       @NotNull HostValidationParams hostValidationParams) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountIdentifier, orgIdentifier, projectIdentifier),
         Resource.of(SECRET_RESOURCE_TYPE, secretIdentifier), SECRET_ACCESS_PERMISSION, "Unauthorized to view secrets.");
 
-    return ResponseDTO.newResponse(hostValidationService.validateSSHHosts(hostValidationParams.getHosts(),
+    return ResponseDTO.newResponse(hostValidationService.validateHosts(hostValidationParams.getHosts(),
         accountIdentifier, orgIdentifier, projectIdentifier, secretIdentifier,
         hostValidationParams.getTags() != null ? hostValidationParams.getTags().stream().collect(Collectors.toSet())
                                                : Collections.emptySet()));

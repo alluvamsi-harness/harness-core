@@ -273,6 +273,10 @@ if [[ "" != "$DELEGATE_DOCKER_IMAGE" ]]; then
   yq write -i $CONFIG_FILE portal.delegateDockerImage "$DELEGATE_DOCKER_IMAGE"
 fi
 
+if [[ "" != "$OPTIONAL_DELEGATE_TASK_REJECT_AT_LIMIT" ]]; then
+  yq write -i $CONFIG_FILE portal.optionalDelegateTaskRejectAtLimit "$OPTIONAL_DELEGATE_TASK_REJECT_AT_LIMIT"
+fi
+
 if [[ "" != "$BACKGROUND_SCHEDULER_CLUSTERED" ]]; then
   yq write -i $CONFIG_FILE backgroundScheduler.clustered "$BACKGROUND_SCHEDULER_CLUSTERED"
 fi

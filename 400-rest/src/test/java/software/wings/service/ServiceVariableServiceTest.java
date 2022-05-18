@@ -25,9 +25,9 @@ import static io.harness.rule.OwnerRule.VUK;
 import static io.harness.rule.OwnerRule.YOGESH;
 
 import static software.wings.beans.ServiceTemplate.Builder.aServiceTemplate;
-import static software.wings.beans.ServiceVariable.Type.ARTIFACT;
-import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
-import static software.wings.beans.ServiceVariable.Type.TEXT;
+import static software.wings.beans.ServiceVariableType.ARTIFACT;
+import static software.wings.beans.ServiceVariableType.ENCRYPTED_TEXT;
+import static software.wings.beans.ServiceVariableType.TEXT;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.OBTAIN_VALUE;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;

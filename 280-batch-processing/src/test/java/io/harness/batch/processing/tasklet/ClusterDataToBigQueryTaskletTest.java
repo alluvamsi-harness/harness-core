@@ -7,6 +7,7 @@
 
 package io.harness.batch.processing.tasklet;
 
+import static io.harness.rule.OwnerRule.HITESH;
 import static io.harness.rule.OwnerRule.ROHIT;
 import static io.harness.rule.OwnerRule.TRUNAPUSHPA;
 
@@ -40,9 +41,12 @@ import com.sun.istack.internal.NotNull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -146,6 +150,18 @@ public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
     assertEquals(clusterBillingData.size(), instances.size());
     assertEquals(clusterBillingData.get(0).getLabels(), Collections.singletonList(new Label(LABEL_KEY, LABEL_VALUE)));
     assertEquals(clusterBillingData.get(1).getLabels(), Collections.emptyList());
+  }
+
+  @Test
+  @Owner(developers = HITESH)
+  @Category(UnitTests.class)
+  public void testAddendLabel() {
+    List<Label> labels = new ArrayList<>();
+    Set<String> labelKeySet = new HashSet<>();
+    clusterDataToBigQueryTasklet.appendLabel("k1", "v1", labelKeySet, labels);
+    clusterDataToBigQueryTasklet.appendLabel("k2", "v2", labelKeySet, labels);
+    clusterDataToBigQueryTasklet.appendLabel("k1", "v3", labelKeySet, labels);
+    assertEquals(labels.size(), 2);
   }
 
   private void mockGetWorkload() {

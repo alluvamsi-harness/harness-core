@@ -11,10 +11,12 @@ import static io.harness.common.CIExecutionConstants.HARNESS_CI_INDIRECT_LOG_UPL
 import static io.harness.common.CIExecutionConstants.LITE_ENGINE_CONTAINER_NAME;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.LOG_SERVICE_TOKEN_VARIABLE;
-import static io.harness.common.CIExecutionConstants.SETUP_ADDON_ARGS;
 import static io.harness.common.CIExecutionConstants.SETUP_ADDON_CONTAINER_NAME;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_ENDPOINT_VARIABLE;
 import static io.harness.common.CIExecutionConstants.TI_SERVICE_TOKEN_VARIABLE;
+import static io.harness.common.CIExecutionConstants.UNIX_SETUP_ADDON_ARGS;
+import static io.harness.common.STOExecutionConstants.STO_SERVICE_ENDPOINT_VARIABLE;
+import static io.harness.common.STOExecutionConstants.STO_SERVICE_TOKEN_VARIABLE;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ALEKSANDAR;
 
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.beans.FeatureName;
 import io.harness.beans.sweepingoutputs.K8PodDetails;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
 import io.harness.delegate.beans.ci.pod.CIK8ContainerParams;
@@ -54,11 +57,11 @@ public class InternalContainerParamsProviderTest extends CIExecutionTestBase {
     ConnectorDetails connectorDetails = ConnectorDetails.builder().build();
 
     CIK8ContainerParams containerParams = internalContainerParamsProvider.getSetupAddonContainerParams(
-        connectorDetails, null, "workspace", null, "account");
+        connectorDetails, null, "workspace", null, "account", OSType.Linux);
 
     assertThat(containerParams.getName()).isEqualTo(SETUP_ADDON_CONTAINER_NAME);
     assertThat(containerParams.getContainerType()).isEqualTo(CIContainerType.ADD_ON);
-    assertThat(containerParams.getArgs()).isEqualTo(Collections.singletonList(SETUP_ADDON_ARGS));
+    assertThat(containerParams.getArgs()).isEqualTo(Collections.singletonList(UNIX_SETUP_ADDON_ARGS));
   }
 
   @Test
@@ -97,6 +100,11 @@ public class InternalContainerParamsProviderTest extends CIExecutionTestBase {
     tiEnvVars.put(TI_SERVICE_ENDPOINT_VARIABLE, tiEndpoint);
     tiEnvVars.put(TI_SERVICE_TOKEN_VARIABLE, tiToken);
 
+    String stoToken = "token";
+    String stoEndpoint = "http://localhost:4000";
+    Map<String, String> stoEnvVars = new HashMap<>();
+    stoEnvVars.put(STO_SERVICE_ENDPOINT_VARIABLE, stoEndpoint);
+    stoEnvVars.put(STO_SERVICE_TOKEN_VARIABLE, stoToken);
     Map<String, String> volumeToMountPath = new HashMap<>();
 
     Integer stageCpuRequest = 500;
@@ -104,7 +112,7 @@ public class InternalContainerParamsProviderTest extends CIExecutionTestBase {
 
     CIK8ContainerParams containerParams = internalContainerParamsProvider.getLiteEngineContainerParams(connectorDetails,
         publishArtifactConnectorDetailsMap, k8PodDetails, stageCpuRequest, stageMemoryRequest, logEnvVars, tiEnvVars,
-        volumeToMountPath, "/step-exec/workspace", null, "test", ambiance);
+        stoEnvVars, volumeToMountPath, "/step-exec/workspace", null, "test", ambiance);
 
     assertThat(containerParams.getName()).isEqualTo(LITE_ENGINE_CONTAINER_NAME);
     assertThat(containerParams.getContainerType()).isEqualTo(CIContainerType.LITE_ENGINE);

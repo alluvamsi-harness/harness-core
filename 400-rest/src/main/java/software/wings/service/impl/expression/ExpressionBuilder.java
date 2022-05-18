@@ -56,6 +56,7 @@ import software.wings.beans.EntityType;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
 import software.wings.beans.ServiceVariable.ServiceVariableKeys;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SubEntityType;
 import software.wings.beans.artifact.Artifact.ArtifactKeys;
 import software.wings.service.intfc.AppService;
@@ -352,7 +353,7 @@ public abstract class ExpressionBuilder {
     if (featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {
       Set<String> serviceVariableMentions = new HashSet<>();
       serviceVariables.forEach(serviceVariable -> {
-        if (ServiceVariable.Type.ARTIFACT == serviceVariable.getType()) {
+        if (ServiceVariableType.ARTIFACT == serviceVariable.getType()) {
           String artifactMentions = "artifacts." + serviceVariable.getName();
           serviceVariableMentions.add(artifactMentions);
           for (String suffix : getArtifactExpressionSuffixes()) {

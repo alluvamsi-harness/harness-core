@@ -227,7 +227,7 @@ public class AccessControlModule extends AbstractModule {
                                             .parameterNameProvider(new ReflectionParameterNameProvider())
                                             .buildValidatorFactory();
     install(new ValidationModule(validatorFactory));
-
+    install(new MetricsModule());
     install(
         new ServiceAccountClientModule(config.getServiceAccountClientConfiguration().getServiceAccountServiceConfig(),
             config.getServiceAccountClientConfiguration().getServiceAccountServiceSecret(),
@@ -347,7 +347,6 @@ public class AccessControlModule extends AbstractModule {
     bind(RoleResource.class).to(RoleResourceImpl.class);
 
     if (config.getAggregatorConfiguration().isExportMetricsToStackDriver()) {
-      install(new MetricsModule());
       bind(MetricsPublisher.class).to(AggregatorStackDriverMetricsPublisherImpl.class).in(Scopes.SINGLETON);
     } else {
       log.info("No configuration provided for Stack Driver, aggregator metrics will not be recorded");

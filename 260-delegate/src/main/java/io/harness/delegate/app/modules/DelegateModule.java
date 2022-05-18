@@ -83,8 +83,6 @@ import io.harness.delegate.cf.PcfRollbackCommandTaskHandler;
 import io.harness.delegate.cf.PcfRouteUpdateCommandTaskHandler;
 import io.harness.delegate.cf.PcfRunPluginCommandTaskHandler;
 import io.harness.delegate.cf.PcfValidationCommandTaskHandler;
-import io.harness.delegate.chartmuseum.NGChartMuseumService;
-import io.harness.delegate.chartmuseum.NGChartMuseumServiceImpl;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.delegate.exceptionhandler.handler.AmazonClientExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.AmazonServiceExceptionHandler;
@@ -140,9 +138,9 @@ import io.harness.delegate.task.artifactory.ArtifactoryDelegateTask;
 import io.harness.delegate.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactTaskHandler;
@@ -159,6 +157,7 @@ import io.harness.delegate.task.aws.AwsCodeCommitApiDelegateTask;
 import io.harness.delegate.task.aws.AwsCodeCommitDelegateTask;
 import io.harness.delegate.task.aws.AwsDelegateTask;
 import io.harness.delegate.task.aws.AwsValidationHandler;
+import io.harness.delegate.task.aws.S3FetchFilesTaskNG;
 import io.harness.delegate.task.azure.AzureValidationHandler;
 import io.harness.delegate.task.azure.appservice.AzureAppServiceTaskParameters.AzureAppServiceTaskType;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
@@ -477,8 +476,6 @@ import software.wings.helpers.ext.azure.devops.AzureArtifactsService;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsServiceImpl;
 import software.wings.helpers.ext.bamboo.BambooService;
 import software.wings.helpers.ext.bamboo.BambooServiceImpl;
-import software.wings.helpers.ext.chartmuseum.ChartMuseumClient;
-import software.wings.helpers.ext.chartmuseum.ChartMuseumClientImpl;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.customrepository.CustomRepositoryService;
 import software.wings.helpers.ext.customrepository.CustomRepositoryServiceImpl;
@@ -642,6 +639,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -784,7 +782,7 @@ public class DelegateModule extends AbstractModule {
   @Provides
   @Singleton
   @Named("taskExecutor")
-  public ExecutorService taskExecutor() {
+  public ThreadPoolExecutor taskExecutor() {
     int maxPoolSize = Integer.MAX_VALUE;
     long delegateXmx = 0;
     try {
@@ -814,7 +812,7 @@ public class DelegateModule extends AbstractModule {
   @Provides
   @Singleton
   @Named("timeoutExecutor")
-  public ExecutorService timeoutExecutor() {
+  public ThreadPoolExecutor timeoutExecutor() {
     return ThreadPool.create(10, 40, 7, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("timeout-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
@@ -982,7 +980,6 @@ public class DelegateModule extends AbstractModule {
     bind(AwsRoute53HelperServiceDelegate.class).to(AwsRoute53HelperServiceDelegateImpl.class);
     bind(AwsServiceDiscoveryHelperServiceDelegate.class).to(AwsServiceDiscoveryHelperServiceDelegateImpl.class);
     bind(ServiceNowDelegateService.class).to(ServiceNowDelegateServiceImpl.class);
-    bind(ChartMuseumClient.class).to(ChartMuseumClientImpl.class);
     bind(SpotInstHelperServiceDelegate.class).to(SpotInstHelperServiceDelegateImpl.class);
     bind(AwsS3HelperServiceDelegate.class).to(AwsS3HelperServiceDelegateImpl.class);
     bind(GcbService.class).to(GcbServiceImpl.class);
@@ -1106,7 +1103,6 @@ public class DelegateModule extends AbstractModule {
     bind(AzureManagementClient.class).to(AzureManagementClientImpl.class);
     bind(AzureBlueprintClient.class).to(AzureBlueprintClientImpl.class);
     bind(AzureAuthorizationClient.class).to(AzureAuthorizationClientImpl.class);
-    bind(NGChartMuseumService.class).to(NGChartMuseumServiceImpl.class);
     bind(ScmDelegateClient.class).to(ScmDelegateClientImpl.class);
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(ManifestCollectionService.class).to(HelmChartCollectionService.class);
@@ -1173,7 +1169,7 @@ public class DelegateModule extends AbstractModule {
         artifactoryDockerArtifactServiceMapBinder =
             MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
-    artifactoryDockerArtifactServiceMapBinder.addBinding(ArtifactoryDockerArtifactDelegateRequest.class)
+    artifactoryDockerArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
         .toInstance(ArtifactoryArtifactTaskHandler.class);
 
     MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
@@ -1590,6 +1586,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SERVICENOW_CONNECTIVITY_TASK_NG).toInstance(ServiceNowTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.SERVICENOW_TASK_NG).toInstance(ServiceNowTaskNG.class);
     mapBinder.addBinding(TaskType.CLOUDFORMATION_TASK_NG).toInstance(CloudformationTaskNG.class);
+    mapBinder.addBinding(TaskType.FETCH_S3_FILE_TASK_NG).toInstance(S3FetchFilesTaskNG.class);
     mapBinder.addBinding(TaskType.SERVERLESS_GIT_FETCH_TASK_NG).toInstance(ServerlessGitFetchTask.class);
     mapBinder.addBinding(TaskType.SERVERLESS_COMMAND_TASK).toInstance(ServerlessCommandTask.class);
   }

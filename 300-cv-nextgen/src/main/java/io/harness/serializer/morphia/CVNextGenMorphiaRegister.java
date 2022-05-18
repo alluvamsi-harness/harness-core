@@ -45,7 +45,6 @@ import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
-import io.harness.cvng.core.entities.DeletedCVConfig;
 import io.harness.cvng.core.entities.DeploymentDataCollectionTask;
 import io.harness.cvng.core.entities.DynatraceCVConfig;
 import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
@@ -82,6 +81,7 @@ import io.harness.cvng.core.entities.demo.CVNGDemoPerpetualTask;
 import io.harness.cvng.dashboard.entities.HealthVerificationHeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.migration.beans.CVNGSchema;
+import io.harness.cvng.notification.entities.MonitoredServiceNotificationRule;
 import io.harness.cvng.notification.entities.NotificationRule;
 import io.harness.cvng.notification.entities.SLONotificationRule;
 import io.harness.cvng.servicelevelobjective.entities.RatioServiceLevelIndicator;
@@ -122,7 +122,6 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(CVConfig.class);
     set.add(CVNGSchema.class);
     set.add(DataCollectionTask.class);
-    set.add(DeletedCVConfig.class);
     set.add(SplunkCVConfig.class);
     set.add(AppDynamicsCVConfig.class);
     set.add(StackdriverCVConfig.class);
@@ -212,6 +211,7 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(VerificationTaskIdAware.class);
     set.add(NotificationRule.class);
     set.add(SLONotificationRule.class);
+    set.add(MonitoredServiceNotificationRule.class);
   }
 
   @Override

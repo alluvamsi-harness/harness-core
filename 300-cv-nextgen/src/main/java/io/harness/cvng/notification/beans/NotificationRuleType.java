@@ -8,8 +8,15 @@
 package io.harness.cvng.notification.beans;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
 
 public enum NotificationRuleType {
-  @JsonProperty("monitoredService") MONITORED_SERVICE,
-  @JsonProperty("slo") SLO;
+  @JsonProperty("MonitoredService") MONITORED_SERVICE("monitoredservice"),
+  @JsonProperty("ServiceLevelObjective") SLO("slo");
+
+  @Getter private final String templateSuffixIdentifier;
+
+  NotificationRuleType(String templateSuffixIdentifier) {
+    this.templateSuffixIdentifier = templateSuffixIdentifier;
+  }
 }

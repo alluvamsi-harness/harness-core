@@ -12,6 +12,7 @@ import static io.harness.distribution.constraint.Consumer.State.ACTIVE;
 import static io.harness.distribution.constraint.Consumer.State.BLOCKED;
 import static io.harness.distribution.constraint.Consumer.State.FINISHED;
 import static io.harness.rule.OwnerRule.ALEXEI;
+import static io.harness.rule.OwnerRule.FERNANDOD;
 import static io.harness.rule.OwnerRule.PRASHANT;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +29,7 @@ import io.harness.OrchestrationStepsTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.distribution.constraint.Constraint;
 import io.harness.distribution.constraint.Consumer.State;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
@@ -43,6 +45,7 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.repositories.ResourceRestraintInstanceRepository;
 import io.harness.rule.Owner;
+import io.harness.steps.resourcerestraint.beans.ResourceRestraint;
 import io.harness.steps.resourcerestraint.beans.ResourceRestraintInstance;
 import io.harness.testlib.RealMongo;
 
@@ -368,5 +371,20 @@ public class ResourceRestraintInstanceServiceImplTest extends OrchestrationSteps
 
   private ResourceRestraintInstance getResourceRestraint(State state) {
     return ResourceRestraintInstance.builder().resourceRestraintId(generateUuid()).state(state).build();
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldCreateAbstraction() {
+    ResourceRestraint resourceRestraint =
+        ResourceRestraint.builder().uuid("UUID").capacity(1010).strategy(Constraint.Strategy.ASAP).build();
+    Constraint constraint = resourceRestraintInstanceService.createAbstraction(resourceRestraint);
+    assertThat(constraint).isNotNull();
+    assertThat(constraint.getId()).isNotNull();
+    assertThat(constraint.getId().getValue()).isEqualTo("UUID");
+    assertThat(constraint.getSpec()).isNotNull();
+    assertThat(constraint.getSpec().getLimits()).isEqualTo(1010);
+    assertThat(constraint.getSpec().getStrategy()).isEqualTo(Constraint.Strategy.ASAP);
   }
 }

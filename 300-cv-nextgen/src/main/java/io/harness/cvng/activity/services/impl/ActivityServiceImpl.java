@@ -62,6 +62,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 import org.mongodb.morphia.query.UpdateOperations;
 
 @Slf4j
@@ -232,6 +233,20 @@ public class ActivityServiceImpl implements ActivityService {
                                    .greaterThanOrEq(startTime)
                                    .field(ActivityKeys.activityStartTime)
                                    .lessThan(endTime)
+                                   .get());
+  }
+
+  @Override
+  public Optional<Activity> getAnyEventFromListOfActivityTypes(MonitoredServiceParams monitoredServiceParams,
+      List<ActivityType> activityTypes, Instant startTime, Instant endTime) {
+    return Optional.ofNullable(createQuery(monitoredServiceParams)
+                                   .field(ActivityKeys.type)
+                                   .in(activityTypes)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .greaterThanOrEq(startTime)
+                                   .field(ActivityKeys.activityStartTime)
+                                   .lessThan(endTime)
+                                   .order(Sort.descending(ActivityKeys.activityStartTime))
                                    .get());
   }
 

@@ -25,4 +25,7 @@ public interface ScmFacilitatorService {
 
   GitBranchesResponseDTO listBranchesV2(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String connectorRef, String repoName, PageRequest pageRequest, String searchTerm);
+
+  String getDefaultBranch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef, String repoName);
 }

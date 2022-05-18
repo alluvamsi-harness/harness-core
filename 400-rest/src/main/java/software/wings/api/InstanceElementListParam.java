@@ -13,10 +13,8 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
 
@@ -46,11 +44,6 @@ public class InstanceElementListParam implements ContextElement {
   @Override
   public String getName() {
     return INSTANCE_LIST_PARAMS;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

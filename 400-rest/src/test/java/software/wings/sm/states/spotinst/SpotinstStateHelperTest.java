@@ -91,6 +91,7 @@ import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.inject.Inject;
 import java.util.Arrays;
@@ -116,6 +117,7 @@ public class SpotinstStateHelperTest extends WingsBaseTest {
   @Mock private ServiceResourceService mockServiceResourceService;
   @Mock private AwsCommandHelper mockCommandHelper;
   @Mock private SweepingOutputService sweepingOutputService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Captor private ArgumentCaptor<SweepingOutputInquiry> sweepingOutputInquiryArgumentCaptor;
 
   @Spy @Inject @InjectMocks SpotInstStateHelper spotInstStateHelper;
@@ -178,7 +180,7 @@ public class SpotinstStateHelperTest extends WingsBaseTest {
     WorkflowStandardParams mockWorkflowStandardParams = mock(WorkflowStandardParams.class);
     doReturn(mockWorkflowStandardParams).when(mockContext).getContextElement(any());
     Environment environment = anEnvironment().uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(environment).when(mockWorkflowStandardParams).fetchRequiredEnv();
+    doReturn(environment).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockWorkflowStandardParams);
     doReturn(environment).when(mockContext).fetchRequiredEnvironment();
     Application application = anApplication().appId(APP_ID).name("app-name").build();
     doReturn(application).when(mockContext).fetchRequiredApp();
@@ -354,11 +356,16 @@ public class SpotinstStateHelperTest extends WingsBaseTest {
     on(helper).set("infrastructureMappingService", mockInfraService);
     on(helper).set("settingsService", mockSettings);
     on(helper).set("secretManager", mockSecret);
+    on(helper).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
     ExecutionContext mockContext = mock(ExecutionContext.class);
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).getContextElement(any());
-    doReturn(anApplication().appId(APP_ID).build()).when(mockParams).fetchRequiredApp();
-    doReturn(anEnvironment().uuid(ENV_ID).build()).when(mockParams).fetchRequiredEnv();
+    doReturn(anApplication().appId(APP_ID).build())
+        .when(workflowStandardParamsExtensionService)
+        .fetchRequiredApp(mockParams);
+    doReturn(anEnvironment().uuid(ENV_ID).build())
+        .when(workflowStandardParamsExtensionService)
+        .fetchRequiredEnv(mockParams);
     doReturn(anAwsAmiInfrastructureMapping().withUuid(INFRA_MAPPING_ID).build())
         .when(mockInfraService)
         .get(anyString(), anyString());

@@ -97,6 +97,7 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionContext;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -144,6 +145,7 @@ public class ShellScriptStateTest extends WingsBaseTest {
   @Mock private FeatureFlagService featureFlagService;
   @Mock private StateExecutionService stateExecutionService;
   @Mock private SSHVaultService sshVaultService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @InjectMocks private ShellScriptState shellScriptState = new ShellScriptState("ShellScript");
 
   private ExecutionResponse asyncExecutionResponse;
@@ -268,8 +270,9 @@ public class ShellScriptStateTest extends WingsBaseTest {
         .thenReturn("echo \"John Doe\"");
     when(workflowStandardParams.getAppId()).thenReturn(APP_ID);
     when(workflowStandardParams.getEnvId()).thenReturn(ENV_ID);
-    when(workflowStandardParams.getApp()).thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
-    when(workflowStandardParams.getEnv())
+    when(workflowStandardParamsExtensionService.getApp(workflowStandardParams))
+        .thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
         .thenReturn(anEnvironment().uuid(ENV_ID).name(ENV_NAME).environmentType(NON_PROD).build());
 
     doReturn("TASKID").when(delegateService).queueTask(any());
@@ -323,8 +326,9 @@ public class ShellScriptStateTest extends WingsBaseTest {
 
     when(workflowStandardParams.getAppId()).thenReturn(APP_ID);
     when(workflowStandardParams.getEnvId()).thenReturn(ENV_ID);
-    when(workflowStandardParams.getApp()).thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
-    when(workflowStandardParams.getEnv())
+    when(workflowStandardParamsExtensionService.getApp(workflowStandardParams))
+        .thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
         .thenReturn(anEnvironment().uuid(ENV_ID).name(ENV_NAME).environmentType(NON_PROD).build());
 
     doReturn("TASKID").when(delegateService).queueTask(any());
@@ -474,7 +478,7 @@ public class ShellScriptStateTest extends WingsBaseTest {
 
     doReturn("TASKID").when(delegateService).queueTask(any());
     WinRmConnectionAttributes winRmConnectionAttributes = new WinRmConnectionAttributes(
-        null, "", "TestUser", new char[10], true, 80, true, false, null, true, ACCOUNT_ID, "");
+        null, "", "TestUser", new char[10], true, 80, true, false, null, true, ACCOUNT_ID, "", null);
 
     when(settingsService.get(any()))
         .thenReturn(SettingAttribute.Builder.aSettingAttribute()
@@ -523,7 +527,7 @@ public class ShellScriptStateTest extends WingsBaseTest {
 
     doReturn("TASKID").when(delegateService).queueTask(any());
     WinRmConnectionAttributes winRmConnectionAttributes = new WinRmConnectionAttributes(
-        null, "", "TestUser", new char[10], true, 80, true, false, null, true, ACCOUNT_ID, "");
+        null, "", "TestUser", new char[10], true, 80, true, false, null, true, ACCOUNT_ID, "", null);
     when(templateExpressionProcessor.resolveSettingAttribute(any(), any()))
         .thenReturn(SettingAttribute.Builder.aSettingAttribute()
                         .withName("SETTING")
@@ -575,7 +579,7 @@ public class ShellScriptStateTest extends WingsBaseTest {
 
     doReturn("TASKID").when(delegateService).queueTask(any());
     WinRmConnectionAttributes winRmConnectionAttributes = new WinRmConnectionAttributes(
-        null, "", "TestUser", new char[10], true, 80, true, false, null, true, ACCOUNT_ID, "");
+        null, "", "TestUser", new char[10], true, 80, true, false, null, true, ACCOUNT_ID, "", null);
     when(templateExpressionProcessor.resolveSettingAttribute(any(), any()))
         .thenReturn(SettingAttribute.Builder.aSettingAttribute()
                         .withName("SETTING")
@@ -692,8 +696,9 @@ public class ShellScriptStateTest extends WingsBaseTest {
     when(executionContext.renderExpression(eq("localhost"), any(StateExecutionContext.class))).thenReturn("localhost");
     when(workflowStandardParams.getAppId()).thenReturn(APP_ID);
     when(workflowStandardParams.getEnvId()).thenReturn(ENV_ID);
-    when(workflowStandardParams.getApp()).thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
-    when(workflowStandardParams.getEnv())
+    when(workflowStandardParamsExtensionService.getApp(workflowStandardParams))
+        .thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
         .thenReturn(anEnvironment().uuid(ENV_ID).name(ENV_NAME).environmentType(NON_PROD).build());
   }
 }

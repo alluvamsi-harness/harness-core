@@ -57,6 +57,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.StackDriverLogState.StackDriverLogStateKeys;
 import software.wings.stencils.DefaultValue;
 import software.wings.verification.VerificationDataAnalysisResponse;
@@ -110,6 +111,10 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
 
   @Transient @Inject @SchemaIgnore protected AnalysisService analysisService;
   @Transient @Inject @SchemaIgnore protected VersionInfoManager versionInfoManager;
+  @Transient
+  @Inject
+  @SchemaIgnore
+  protected WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @SchemaIgnore @Transient private String renderedQuery;
 
@@ -232,7 +237,8 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
           WorkflowStandardParams workflowStandardParams =
               executionContext.getContextElement(ContextElementType.STANDARD);
           baselineWorkflowExecutionId = workflowExecutionBaselineService.getBaselineExecutionId(
-              analysisContext.getAppId(), analysisContext.getWorkflowId(), workflowStandardParams.getEnv().getUuid(),
+              analysisContext.getAppId(), analysisContext.getWorkflowId(),
+              workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid(),
               analysisContext.getServiceId());
           if (isEmpty(baselineWorkflowExecutionId)) {
             responseMessage = "No baseline was set for the workflow. Workflow running with auto baseline.";

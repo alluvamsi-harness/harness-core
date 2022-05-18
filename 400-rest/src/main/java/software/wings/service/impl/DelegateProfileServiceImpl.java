@@ -369,6 +369,7 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
       persistence.delete(delegateProfile);
 
       delegateCache.invalidateDelegateProfileCache(accountId, delegateProfileId);
+
       auditServiceHelper.reportDeleteForAuditingUsingAccountId(delegateProfile.getAccountId(), delegateProfile);
       log.info("Auditing deleting of Delegate Profile for accountId={}", delegateProfile.getAccountId());
 
@@ -390,6 +391,7 @@ public class DelegateProfileServiceImpl implements DelegateProfileService, Accou
       persistence.delete(delegateProfile);
 
       delegateCache.invalidateDelegateProfileCache(accountId, delegateProfile.getUuid());
+
       auditServiceHelper.reportDeleteForAuditingUsingAccountId(delegateProfile.getAccountId(), delegateProfile);
       log.info("Auditing deleting of Delegate Profile for accountId={}", delegateProfile.getAccountId());
 

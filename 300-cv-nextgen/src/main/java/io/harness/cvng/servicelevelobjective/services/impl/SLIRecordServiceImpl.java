@@ -26,6 +26,7 @@ import io.harness.persistence.HPersistence;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -44,6 +45,7 @@ public class SLIRecordServiceImpl implements SLIRecordService {
   @VisibleForTesting static int MAX_NUMBER_OF_POINTS = 2000;
   private static final int RETRY_COUNT = 3;
   @Inject private HPersistence hPersistence;
+  @Inject Clock clock;
 
   @Override
   public void create(List<SLIRecordParam> sliRecordParamList, String sliId, String verificationTaskId, int sliVersion) {
@@ -205,6 +207,30 @@ public class SLIRecordServiceImpl implements SLIRecordService {
         .filter(SLIRecordKeys.sliId, sliId)
         .order(Sort.descending(SLIRecordKeys.timestamp))
         .asList(new FindOptions().limit(count));
+  }
+
+  @Override
+  public List<SLIRecord> getSLIRecordsForLookBackDuration(String sliId, long lookBackDuration) {
+    Instant startTime = clock.instant().minusMillis(lookBackDuration);
+    Instant endTime = clock.instant().minusMillis(Duration.ofMinutes(1).toMillis());
+    List<Instant> minutes = new ArrayList<>();
+    minutes.add(startTime);
+    minutes.add(endTime);
+    return hPersistence.createQuery(SLIRecord.class, excludeAuthorityCount)
+        .filter(SLIRecordKeys.sliId, sliId)
+        .field(SLIRecordKeys.timestamp)
+        .in(minutes)
+        .order(Sort.ascending(SLIRecordKeys.timestamp))
+        .asList();
+  }
+
+  @Override
+  public double getErrorBudgetBurnRate(String sliId, long lookBackDuration, int totalErrorBudgetMinutes) {
+    List<SLIRecord> sliRecords = getSLIRecordsForLookBackDuration(sliId, lookBackDuration);
+    return sliRecords.size() < 2
+        ? 0
+        : (((double) (sliRecords.get(1).getRunningBadCount() - sliRecords.get(0).getRunningBadCount()) * 100)
+            / totalErrorBudgetMinutes);
   }
 
   private List<SLIRecord> sliRecords(String sliId, Instant startTime, Instant endTime, TimeRangeParams filter) {

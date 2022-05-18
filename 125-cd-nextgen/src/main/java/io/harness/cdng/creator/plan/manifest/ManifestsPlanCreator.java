@@ -17,8 +17,6 @@ import io.harness.cdng.manifest.steps.ManifestsStep;
 import io.harness.cdng.manifest.yaml.ManifestAttributes;
 import io.harness.cdng.manifest.yaml.ManifestConfig;
 import io.harness.cdng.manifest.yaml.ManifestConfigWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSetWrapper;
-import io.harness.cdng.manifest.yaml.ManifestOverrideSets;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.utilities.ManifestsUtility;
 import io.harness.cdng.visitor.YamlTypes;
@@ -36,7 +34,6 @@ import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse.PlanCreationResponseBuilder;
 import io.harness.pms.sdk.core.plan.creation.creators.ChildrenPlanCreator;
 import io.harness.pms.yaml.DependenciesUtils;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.serializer.KryoSerializer;
@@ -74,7 +71,6 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
     List<ManifestConfigWrapper> manifestListConfig =
         serviceConfig.getServiceDefinition().getServiceSpec().getManifests();
     ManifestListBuilder manifestListBuilder = new ManifestListBuilder(manifestListConfig);
-    manifestListBuilder.addOverrideSets(serviceConfig);
     manifestListBuilder.addStageOverrides(serviceConfig);
     ManifestList manifestList = manifestListBuilder.build();
     if (EmptyPredicate.isEmpty(manifestList.getManifests())) {
@@ -103,7 +99,7 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
    */
   public String addDependenciesForIndividualManifest(YamlField manifestsYamlField, String manifestIdentifier,
       ManifestStepParameters stepParameters, Map<String, YamlNode> manifestIdentifierToYamlNodeMap,
-      LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap) {
+      Map<String, PlanCreationResponse> planCreationResponseMap) {
     YamlField individualManifest = ManifestsUtility.fetchIndividualManifestYamlField(
         manifestsYamlField, manifestIdentifier, manifestIdentifierToYamlNodeMap);
 
@@ -201,35 +197,6 @@ public class ManifestsPlanCreator extends ChildrenPlanCreator<ManifestsListConfi
       return new ManifestList(manifests == null
               ? null
               : manifests.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build())));
-    }
-
-    void addOverrideSets(ServiceConfig serviceConfig) {
-      if (serviceConfig.getStageOverrides() == null
-          || ParameterField.isNull(serviceConfig.getStageOverrides().getUseManifestOverrideSets())) {
-        return;
-      }
-
-      for (String useManifestOverrideSet : serviceConfig.getStageOverrides().getUseManifestOverrideSets().getValue()) {
-        List<ManifestOverrideSets> manifestOverrideSetsList =
-            serviceConfig.getServiceDefinition()
-                .getServiceSpec()
-                .getManifestOverrideSets()
-                .stream()
-                .map(ManifestOverrideSetWrapper::getOverrideSet)
-                .filter(overrideSet -> overrideSet.getIdentifier().equals(useManifestOverrideSet))
-                .collect(Collectors.toList());
-        if (manifestOverrideSetsList.size() == 0) {
-          throw new InvalidRequestException(
-              String.format("Invalid identifier [%s] in manifest override sets", useManifestOverrideSet));
-        }
-        if (manifestOverrideSetsList.size() > 1) {
-          throw new InvalidRequestException(
-              String.format("Duplicate identifier [%s] in manifest override sets", useManifestOverrideSet));
-        }
-
-        List<ManifestConfigWrapper> manifestConfigList = manifestOverrideSetsList.get(0).getManifests();
-        addOverrides(manifestConfigList, ManifestStepParametersBuilder::overrideSet);
-      }
     }
 
     void addStageOverrides(ServiceConfig serviceConfig) {

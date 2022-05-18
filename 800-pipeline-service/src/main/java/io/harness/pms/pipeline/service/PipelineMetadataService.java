@@ -7,11 +7,14 @@
 
 package io.harness.pms.pipeline.service;
 
+import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineMetadataV2;
 
 import java.util.Optional;
 
 public interface PipelineMetadataService {
+  int incrementRunSequence(PipelineEntity entity);
+
   int incrementExecutionCounter(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier);
 

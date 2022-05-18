@@ -28,6 +28,7 @@ import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.interrupts.Interrupt;
+import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.IssuedBy;
@@ -57,6 +58,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import com.mongodb.client.result.UpdateResult;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -205,6 +207,9 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
       // Ignore TimeRange filter if StartTime and EndTime both are null.
     }
 
+    if (EmptyPredicate.isNotEmpty(piplineFilter.getPipelineTags())) {
+      addPipelineTagsCriteria(criteria, piplineFilter.getPipelineTags());
+    }
     if (EmptyPredicate.isNotEmpty(piplineFilter.getStatus())) {
       criteria.and(PlanExecutionSummaryKeys.status).in(piplineFilter.getStatus());
     }
@@ -212,6 +217,22 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
       ModuleInfoFilterUtils.processNode(
           JsonUtils.readTree(piplineFilter.getModuleProperties().toJson()), "moduleInfo", criteria);
     }
+  }
+
+  private void addPipelineTagsCriteria(Criteria criteria, List<NGTag> pipelineTags) {
+    List<String> tags = new ArrayList<>();
+    pipelineTags.forEach(o -> {
+      tags.add(o.getKey());
+      tags.add(o.getValue());
+    });
+    Criteria tagsCriteria = new Criteria();
+    tagsCriteria.orOperator(where(PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.tags + "."
+                                + "key")
+                                .in(tags),
+        where(PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.tags + "."
+            + "value")
+            .in(tags));
+    criteria.andOperator(tagsCriteria);
   }
 
   @Override

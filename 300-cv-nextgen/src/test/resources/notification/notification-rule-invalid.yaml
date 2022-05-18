@@ -3,7 +3,7 @@ name: rule
 identifier: rule
 orgIdentifier: $orgIdentifier
 projectIdentifier: $projectIdentifier
-type: slo
+type: ServiceLevelObjective
 notificationMethod:
   type: Email
   spec:

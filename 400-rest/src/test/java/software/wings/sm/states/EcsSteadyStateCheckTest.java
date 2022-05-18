@@ -86,6 +86,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.amazonaws.regions.Regions;
 import com.google.common.collect.ImmutableMap;
@@ -110,6 +111,7 @@ public class EcsSteadyStateCheckTest extends WingsBaseTest {
   @Mock private ContainerDeploymentManagerHelper mockContainerDeploymentManagerHelper;
   @Mock private FeatureFlagService featureFlagService;
   @Mock private StateExecutionService stateExecutionService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private EcsSteadyStateCheck check = new EcsSteadyStateCheck("stateName");
 
@@ -132,7 +134,7 @@ public class EcsSteadyStateCheckTest extends WingsBaseTest {
     doReturn(app).when(mockContext).getApp();
     Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
     doReturn(env).when(mockContext).getEnv();
-    doReturn(env).when(mockParams).getEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     ContainerInfrastructureMapping containerInfrastructureMapping =
         anEcsInfrastructureMapping()
             .withUuid(INFRA_MAPPING_ID)

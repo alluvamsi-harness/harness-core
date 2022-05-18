@@ -430,7 +430,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1818,7 +1818,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
     Workflow workflow3 = workflowService.readWorkflow(workflow1.getAppId(), workflow1.getUuid());
     assertThat(workflow3).isNotNull().hasFieldOrPropertyWithValue("envId", ENV_ID_CHANGED);
     OrchestrationWorkflow orchestrationWorkflow = workflow3.getOrchestrationWorkflow();
-    assertThat(orchestrationWorkflow.isValid()).isTrue();
+    assertThat(orchestrationWorkflow.isValid()).isFalse();
 
     List<WorkflowPhase> workflowPhases =
         ((CanaryOrchestrationWorkflow) workflow3.getOrchestrationWorkflow()).getWorkflowPhases();
@@ -1826,7 +1826,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
 
     WorkflowPhase workflowPhase = workflowPhases.get(0);
     assertThat(workflowPhase).isNotNull().hasFieldOrPropertyWithValue("name", PHASE_NAME_PREFIX + 1);
-    assertThat(workflowPhase.getInfraDefinitionId()).isEqualTo(INFRA_DEFINITION_ID);
+    assertThat(workflowPhase.getInfraDefinitionId()).isNull();
   }
 
   @Test

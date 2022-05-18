@@ -19,7 +19,7 @@ import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
@@ -108,7 +108,7 @@ public class ArtifactDelegateRequestUtils {
       return getArtifactoryGenericArtifactDelegateRequest(repositoryName, repositoryFormat, artifactDirectory, null,
           null, null, artifactoryConnectorDTO, encryptedDataDetails, ArtifactSourceType.ARTIFACTORY_REGISTRY);
     }
-    return ArtifactoryDockerArtifactDelegateRequest.builder()
+    return ArtifactoryArtifactDelegateRequest.builder()
         .repositoryName(repositoryName)
         .artifactPath(trim(artifactPath))
         .repositoryFormat(repositoryFormat)

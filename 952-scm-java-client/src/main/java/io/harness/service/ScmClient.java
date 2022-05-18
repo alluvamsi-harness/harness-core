@@ -29,6 +29,7 @@ import io.harness.product.ci.scm.proto.FindCommitResponse;
 import io.harness.product.ci.scm.proto.FindFilesInBranchResponse;
 import io.harness.product.ci.scm.proto.FindFilesInCommitResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.IsLatestFileResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
@@ -96,4 +97,13 @@ public interface ScmClient {
   FindCommitResponse findCommit(ScmConnector scmConnector, String commitId);
 
   GetUserReposResponse getUserRepos(ScmConnector scmConnector, PageRequestDTO pageRequest);
+
+  GetUserRepoResponse getRepoDetails(ScmConnector scmConnector);
+
+  GetUserReposResponse getAllUserRepos(ScmConnector scmConnector);
+
+  CreateBranchResponse createNewBranchV2(ScmConnector scmConnector, String newBranchName, String baseBranchName);
+
+  CreatePRResponse createPullRequestV2(
+      ScmConnector scmConnector, String sourceBranchName, String targetBranchName, String prTitle);
 }

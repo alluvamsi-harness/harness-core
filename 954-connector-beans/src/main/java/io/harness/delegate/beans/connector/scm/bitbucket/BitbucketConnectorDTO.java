@@ -16,6 +16,7 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.exception.InvalidRequestException;
 import io.harness.git.GitClientHelper;
 import io.harness.gitsync.beans.GitRepositoryDTO;
 import io.harness.utils.FilePathUtils;
@@ -95,6 +96,12 @@ public class BitbucketConnectorDTO extends ConnectorConfigDTO implements ScmConn
   @Override
   public String getGitConnectionUrl(String repoName) {
     if (connectionType == GitConnectionType.REPO) {
+      String linkedRepo = GitClientHelper.getGitRepo(url);
+      if (!linkedRepo.equals(repoName)) {
+        throw new InvalidRequestException(
+            String.format("Provided repoName [%s] does not match with the repoName [%s] provided in connector.",
+                repoName, linkedRepo));
+      }
       return getUrl();
     }
     return FilePathUtils.addEndingSlashIfMissing(getUrl()) + repoName;

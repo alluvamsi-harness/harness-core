@@ -35,7 +35,6 @@ import io.harness.pms.pipeline.StepPalleteInfo;
 import io.harness.pms.sdk.PmsSdkInstanceService;
 import io.harness.repositories.pipeline.PMSPipelineRepository;
 import io.harness.rule.Owner;
-import io.harness.telemetry.TelemetryReporter;
 
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
@@ -64,7 +63,6 @@ public class PMSPipelineServiceImplTest extends PipelineServiceTestBase {
   @Mock private PMSPipelineServiceStepHelper pmsPipelineServiceStepHelper;
   @Mock private PMSPipelineServiceHelper pmsPipelineServiceHelper;
   @Mock private OutboxServiceImpl outboxService;
-  @Mock private TelemetryReporter telemetryReporter;
   @Inject private PipelineMetadataService pipelineMetadataService;
   @InjectMocks private PMSPipelineServiceImpl pmsPipelineService;
   @Inject private PMSPipelineRepository pmsPipelineRepository;

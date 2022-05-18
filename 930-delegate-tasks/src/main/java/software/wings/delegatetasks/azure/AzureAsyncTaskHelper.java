@@ -19,11 +19,11 @@ import io.harness.azure.client.AzureAuthorizationClient;
 import io.harness.azure.client.AzureComputeClient;
 import io.harness.azure.client.AzureContainerRegistryClient;
 import io.harness.azure.client.AzureKubernetesClient;
-import io.harness.azure.model.AzureAuthenticationType;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.kube.AzureKubeConfig;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
+import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
@@ -31,11 +31,11 @@ import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.task.artifacts.mappers.AcrRequestResponseMapper;
-import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.AzureAKSException;
 import io.harness.exception.AzureAuthenticationException;
 import io.harness.exception.AzureContainerRegistryException;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.WingsException;
 import io.harness.expression.RegexFunctor;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.CommandExecutionStatus;
@@ -50,8 +50,6 @@ import com.microsoft.azure.management.containerregistry.Registry;
 import com.microsoft.azure.management.containerservice.KubernetesCluster;
 import com.microsoft.azure.management.resources.Subscription;
 import com.microsoft.azure.management.resources.fluentcore.arm.models.HasName;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,33 +65,28 @@ public class AzureAsyncTaskHelper {
   @Inject private AzureComputeClient azureComputeClient;
   @Inject private AzureContainerRegistryClient azureContainerRegistryClient;
   @Inject private AzureKubernetesClient azureKubernetesClient;
-  @Inject private NGErrorHelper ngErrorHelper;
 
   private final String TAG_LABEL = "Tag#";
 
   public ConnectorValidationResult getConnectorValidationResult(
       List<EncryptedDataDetail> encryptedDataDetails, AzureConnectorDTO connectorDTO) {
-    ConnectorValidationResult connectorValidationResult;
-    try {
-      AzureConfig azureConfig = AcrRequestResponseMapper.toAzureInternalConfig(connectorDTO.getCredential(),
-          encryptedDataDetails, connectorDTO.getCredential().getAzureCredentialType(),
-          connectorDTO.getAzureEnvironmentType(), secretDecryptionService);
+    String errorMessage;
 
-      azureAuthorizationClient.validateAzureConnection(azureConfig);
-      connectorValidationResult = ConnectorValidationResult.builder()
-                                      .status(ConnectivityStatus.SUCCESS)
-                                      .testedAt(System.currentTimeMillis())
-                                      .build();
-    } catch (Exception e) {
-      String errorMessage = e.getMessage();
-      connectorValidationResult = ConnectorValidationResult.builder()
-                                      .status(ConnectivityStatus.FAILURE)
-                                      .errors(Collections.singletonList(ngErrorHelper.createErrorDetail(errorMessage)))
-                                      .errorSummary(ngErrorHelper.getErrorSummary(errorMessage))
-                                      .testedAt(System.currentTimeMillis())
-                                      .build();
+    AzureConfig azureConfig = AcrRequestResponseMapper.toAzureInternalConfig(connectorDTO.getCredential(),
+        encryptedDataDetails, connectorDTO.getCredential().getAzureCredentialType(),
+        connectorDTO.getAzureEnvironmentType(), secretDecryptionService);
+
+    if (azureAuthorizationClient.validateAzureConnection(azureConfig)) {
+      return ConnectorValidationResult.builder()
+          .status(ConnectivityStatus.SUCCESS)
+          .testedAt(System.currentTimeMillis())
+          .build();
     }
-    return connectorValidationResult;
+
+    errorMessage = "Testing connection to Azure has timed out.";
+
+    throw NestedExceptionUtils.hintWithExplanationException("Failed to validate connection for Azure connector",
+        "Please check you Azure connector configuration.", new AzureAuthenticationException(errorMessage));
   }
 
   public AzureSubscriptionsResponse listSubscriptions(
@@ -192,16 +185,6 @@ public class AzureAsyncTaskHelper {
         encryptionDetails, azureConnector.getCredential().getAzureCredentialType(),
         azureConnector.getAzureEnvironmentType(), secretDecryptionService);
 
-    // temp implementation until jackson library is upgraded works only for secret pass
-    if (azureConfig.getAzureAuthenticationType() != AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET) {
-      throw NestedExceptionUtils.hintWithExplanationException(
-          format(
-              "Unable to list repositories, registryHost: %s, subscriptionId: %s", containerRegistry, subscriptionId),
-          "Please enter the value manually",
-          new AzureAuthenticationException(
-              "This action is currently not supported for the following connectors: Service Principal/certificate, User Assigned Managed Identity and System Assigned Managed Identity"));
-    }
-
     AzureRepositoriesResponse response;
     Registry registry =
         azureContainerRegistryClient
@@ -224,31 +207,6 @@ public class AzureAsyncTaskHelper {
 
   public List<BuildDetailsInternal> getImageTags(
       AzureConfig azureConfig, String subscriptionId, String containerRegistry, String repository) {
-    // temp implementation until jackson library is upgraded works only for secret pass
-    if (azureConfig.getAzureAuthenticationType() != AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET) {
-      throw NestedExceptionUtils.hintWithExplanationException(
-          format("Unable to list tags, registryHost: %s, subscriptionId: %s repository: %s", containerRegistry,
-              subscriptionId, repository),
-          "Please enter the value manually",
-          new AzureAuthenticationException(
-              "This action is currently not supported for the following connectors: Service Principal/certificate, User Assigned Managed Identity and System Assigned Managed Identity"));
-    }
-
-    return getImageTags(azureConfig, subscriptionId, containerRegistry, repository, null);
-  }
-
-  // temp implementation until jackson library is upgraded
-  public List<BuildDetailsInternal> getImageTags(
-      AzureConfig azureConfig, String subscriptionId, String containerRegistry, String repository, List<String> tags) {
-    if (azureConfig.getAzureAuthenticationType() == AzureAuthenticationType.SERVICE_PRINCIPAL_CERT) {
-      throw NestedExceptionUtils.hintWithExplanationException(
-          format("Unable to list tags, registryHost: %s, subscriptionId: %s repository: %s", containerRegistry,
-              subscriptionId, repository),
-          "Please use another Azure type connector.",
-          new AzureAuthenticationException(
-              "This action is currently not supported for the following connectors: Service Principal/certificate."));
-    }
-
     Registry registry =
         azureContainerRegistryClient
             .findFirstContainerRegistryByNameOnSubscription(azureConfig, subscriptionId, containerRegistry)
@@ -262,9 +220,7 @@ public class AzureAsyncTaskHelper {
 
     String registryUrl = registry.loginServerUrl().toLowerCase();
     String imageUrl = registryUrl + "/" + ArtifactUtilities.trimSlashforwardChars(repository);
-    if (tags == null) {
-      tags = azureContainerRegistryClient.listRepositoryTags(azureConfig, registryUrl, repository);
-    }
+    List<String> tags = azureContainerRegistryClient.listRepositoryTags(azureConfig, registryUrl, repository);
     return tags.stream()
         .map(tag -> {
           Map<String, String> metadata = new HashMap<>();
@@ -291,14 +247,6 @@ public class AzureAsyncTaskHelper {
           String.format("TagRegex field contains an invalid regex value '%s'.", tagRegex),
           new AzureContainerRegistryException(e.getMessage()));
     }
-    // Temporary check as currently azure client is supported only for secret text type authentication
-    if (azureConfig.getAzureAuthenticationType() != AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET
-        && azureConfig.getKey() != null) {
-      throw NestedExceptionUtils.hintWithExplanationException("Currently not supported",
-          "Currently regex field could not be used with connector that uses Certificate or Managed Identity for authentication",
-          new AzureContainerRegistryException(
-              String.format("Could not find an artifact tag that matches tagRegex '%s'", tagRegex)));
-    }
 
     List<BuildDetailsInternal> builds = getImageTags(azureConfig, subscription, registry, repository);
     builds = builds.stream()
@@ -320,8 +268,7 @@ public class AzureAsyncTaskHelper {
 
   public BuildDetailsInternal verifyBuildNumber(
       AzureConfig azureConfig, String subscription, String registry, String repository, String tag) {
-    List<BuildDetailsInternal> builds =
-        getImageTags(azureConfig, subscription, registry, repository, Arrays.asList(tag));
+    List<BuildDetailsInternal> builds = getImageTags(azureConfig, subscription, registry, repository);
     builds = builds.stream().filter(build -> build.getNumber().equals(tag)).collect(Collectors.toList());
 
     if (builds.isEmpty()) {
@@ -348,7 +295,7 @@ public class AzureAsyncTaskHelper {
     try {
       AzureKubeConfig azureKubeConfig =
           new ObjectMapper(new YAMLFactory())
-              .readValue(new String(k8sCluster.adminKubeConfigContent()), AzureKubeConfig.class);
+              .readValue(new String(k8sCluster.userKubeConfigContent()), AzureKubeConfig.class);
       return KubernetesConfig.builder()
           .namespace(namespace)
           .masterUrl(azureKubeConfig.getClusters().get(0).getCluster().getServer())
@@ -358,8 +305,24 @@ public class AzureAsyncTaskHelper {
           .clientKey(azureKubeConfig.getUsers().get(0).getUser().getClientKeyData().toCharArray())
           .build();
     } catch (Exception e) {
-      throw new AzureAKSException(
-          String.format("Admin Kube Config could not be read from cluster %s ", k8sCluster.name()));
+      throw NestedExceptionUtils.hintWithExplanationException(
+          format("Kube Config could not be read from cluster %s ", k8sCluster.name()),
+          "Please check your Azure permissions", new AzureAKSException(e.getMessage(), WingsException.USER, e));
     }
+  }
+
+  public AzureAcrTokenTaskResponse getServicePrincipalCertificateAcrLoginToken(
+      String registry, List<EncryptedDataDetail> encryptionDetails, AzureConnectorDTO azureConnector) {
+    AzureConfig azureConfig = AcrRequestResponseMapper.toAzureInternalConfig(azureConnector.getCredential(),
+        encryptionDetails, azureConnector.getCredential().getAzureCredentialType(),
+        azureConnector.getAzureEnvironmentType(), secretDecryptionService);
+
+    String azureAccessToken = azureAuthorizationClient.getUserAccessToken(azureConfig).getAccessToken();
+    String refreshToken = azureContainerRegistryClient.getAcrRefreshToken(registry, azureAccessToken);
+
+    return AzureAcrTokenTaskResponse.builder()
+        .token(refreshToken)
+        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+        .build();
   }
 }

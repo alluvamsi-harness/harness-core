@@ -47,7 +47,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public class JenkinsCollectionTask extends AbstractDelegateRunnableTask {
   @Inject private JenkinsUtils jenkinsUtil;
   @Inject private EncryptionService encryptionService;
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
 
   public JenkinsCollectionTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> postExecute, BooleanSupplier preExecute) {
@@ -78,7 +78,7 @@ public class JenkinsCollectionTask extends AbstractDelegateRunnableTask {
         log.info("Collecting artifact {} of job {}", artifactPath, jobName);
         Pair<String, InputStream> fileInfo =
             jenkins.downloadArtifact(jobName, arguments.get(ArtifactMetadataKeys.buildNo), artifactPath);
-        artifactCollectionTaskHelper.addDataToResponse(
+        artifactCollectionCommonTaskHelper.addDataToResponse(
             fileInfo, artifactPath, res, getDelegateId(), getTaskId(), getAccountId());
       }
     } catch (Exception e) {

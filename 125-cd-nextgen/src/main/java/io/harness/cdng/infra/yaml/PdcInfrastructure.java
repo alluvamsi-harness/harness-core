@@ -19,6 +19,7 @@ import io.harness.cdng.infra.beans.PdcInfraMapping;
 import io.harness.cdng.infra.beans.PdcInfraMapping.PdcInfraMappingBuilder;
 import io.harness.filters.ConnectorRefExtractorHelper;
 import io.harness.filters.WithConnectorRef;
+import io.harness.ng.core.infrastructure.InfrastructureKind;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
@@ -61,7 +62,7 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
   @NotEmpty
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Wither
-  ParameterField<String> sshKeyRef;
+  ParameterField<String> credentialsRef;
 
   @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = SwaggerConstants.STRING_LIST_CLASSPATH)
@@ -90,7 +91,7 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
 
   @Override
   public InfraMapping getInfraMapping() {
-    final PdcInfraMappingBuilder builder = PdcInfraMapping.builder().sshKeyRef(sshKeyRef.getValue());
+    final PdcInfraMappingBuilder builder = PdcInfraMapping.builder().credentialsRef(credentialsRef.getValue());
 
     if (hosts != null) {
       builder.hosts(hosts.getValue());
@@ -121,9 +122,9 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
   @Override
   public String[] getInfrastructureKeyValues() {
     if (connectorRef == null) {
-      return new String[] {sshKeyRef.getValue()};
+      return new String[] {credentialsRef.getValue()};
     } else {
-      return new String[] {sshKeyRef.getValue(), connectorRef.getValue()};
+      return new String[] {credentialsRef.getValue(), connectorRef.getValue()};
     }
   }
 
@@ -131,8 +132,8 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
   public PdcInfrastructure applyOverrides(Infrastructure overrideConfig) {
     PdcInfrastructure config = (PdcInfrastructure) overrideConfig;
     PdcInfrastructure resultantInfra = this;
-    if (!ParameterField.isNull(config.getSshKeyRef())) {
-      resultantInfra = resultantInfra.withSshKeyRef(config.getSshKeyRef());
+    if (!ParameterField.isNull(config.getCredentialsRef())) {
+      resultantInfra = resultantInfra.withCredentialsRef(config.getCredentialsRef());
     }
     if (!ParameterField.isNull(config.getHosts())) {
       resultantInfra = resultantInfra.withHosts(config.getHosts());

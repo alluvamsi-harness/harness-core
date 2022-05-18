@@ -8,6 +8,7 @@
 package io.harness.ng.core.mapper;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.ng.core.mapper.EmbeddedUserDTOMapper.fromEmbeddedUser;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.filestore.node.FileNodeDTO;
@@ -20,10 +21,26 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class FileStoreNodeDTOMapper {
   public FileNodeDTO getFileNodeDTO(NGFile ngFile) {
-    return FileNodeDTO.builder().identifier(ngFile.getIdentifier()).name(ngFile.getName()).build();
+    return FileNodeDTO.builder()
+        .identifier(ngFile.getIdentifier())
+        .parentIdentifier(ngFile.getParentIdentifier())
+        .name(ngFile.getName())
+        .fileUsage(ngFile.getFileUsage())
+        .description(ngFile.getDescription())
+        .tags(ngFile.getTags())
+        .lastModifiedAt(ngFile.getLastModifiedAt())
+        .lastModifiedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
+        .mimeType(ngFile.getMimeType())
+        .build();
   }
 
   public FolderNodeDTO getFolderNodeDTO(NGFile ngFile) {
-    return FolderNodeDTO.builder().identifier(ngFile.getIdentifier()).name(ngFile.getName()).build();
+    return FolderNodeDTO.builder()
+        .identifier(ngFile.getIdentifier())
+        .parentIdentifier(ngFile.getParentIdentifier())
+        .name(ngFile.getName())
+        .lastModifiedAt(ngFile.getLastModifiedAt())
+        .lastModifiedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
+        .build();
   }
 }

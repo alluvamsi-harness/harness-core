@@ -20,11 +20,15 @@ import software.wings.settings.SettingVariableTypes;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import org.apache.commons.lang3.StringUtils;
@@ -60,7 +64,11 @@ public class VaultRestClientFactory {
     if (isCertValidationRequired) {
       httpClient = Http.getSafeOkHttpClientBuilder(vaultUrl, 10, 10).addInterceptor(loggingInterceptor).build();
     } else {
-      httpClient = Http.getUnsafeOkHttpClientBuilder(vaultUrl, 10, 10).addInterceptor(loggingInterceptor).build();
+      httpClient = Http.getUnsafeOkHttpClientBuilder(vaultUrl, 10, 10)
+                       .addInterceptor(loggingInterceptor)
+                       .connectionPool(new ConnectionPool(0, 1, TimeUnit.NANOSECONDS))
+                       .protocols(Arrays.asList(Protocol.HTTP_1_1))
+                       .build();
     }
     return new Retrofit.Builder()
         .baseUrl(vaultUrl)

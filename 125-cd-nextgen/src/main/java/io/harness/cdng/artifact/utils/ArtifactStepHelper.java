@@ -284,11 +284,7 @@ public class ArtifactStepHelper {
     if (stepParameters.getSpec() != null) {
       artifactList.add(stepParameters.getSpec());
     }
-    // 2. Override sets
-    if (stepParameters.getOverrideSets() != null) {
-      artifactList.addAll(stepParameters.getOverrideSets());
-    }
-    // 3. Stage Overrides
+    // 2. Stage Overrides
     if (stepParameters.getStageOverride() != null) {
       artifactList.add(stepParameters.getStageOverride());
     }

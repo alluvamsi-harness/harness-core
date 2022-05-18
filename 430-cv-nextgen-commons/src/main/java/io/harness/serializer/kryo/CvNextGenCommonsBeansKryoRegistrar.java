@@ -20,8 +20,6 @@ import io.harness.cvng.beans.CustomHealthDataCollectionInfo.CustomHealthMetricIn
 import io.harness.cvng.beans.CustomHealthLogDataCollectionInfo;
 import io.harness.cvng.beans.DataCollectionConnectorBundle;
 import io.harness.cvng.beans.DataCollectionInfo;
-import io.harness.cvng.beans.DataCollectionRequest;
-import io.harness.cvng.beans.DataCollectionRequestType;
 import io.harness.cvng.beans.DataCollectionType;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.DatadogLogDataCollectionInfo;
@@ -125,10 +123,8 @@ public class CvNextGenCommonsBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(K8ActivityDataCollectionInfo.class, 9030);
     kryo.register(KubernetesActivitySourceDTO.class, 9031);
     kryo.register(KubernetesActivitySourceConfig.class, 9032);
-    kryo.register(DataCollectionRequest.class, 9033);
     kryo.register(SplunkDataCollectionRequest.class, 9034);
     kryo.register(SplunkSavedSearchRequest.class, 9035);
-    kryo.register(DataCollectionRequestType.class, 9036);
     kryo.register(ActivityStatusDTO.class, 9037);
     kryo.register(ActivityVerificationStatus.class, 9038);
     kryo.register(StackdriverDashboardRequest.class, 9039);

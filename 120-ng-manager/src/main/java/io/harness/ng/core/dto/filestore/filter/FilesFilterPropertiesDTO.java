@@ -11,9 +11,11 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.filter.FilterConstants.FILE_STORE_FILTER;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.filestore.FileUsage;
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterPropertiesDTO;
+import io.harness.ng.core.EntityDetail;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
+import io.harness.ng.core.filestore.FileUsage;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -39,8 +41,8 @@ import lombok.experimental.FieldDefaults;
 @OwnedBy(CDP)
 public class FilesFilterPropertiesDTO extends FilterPropertiesDTO {
   @Schema(description = "This specifies the file usage") FileUsage fileUsage;
-  @Schema(description = "File created by user") String createdBy;
-  @Schema(description = "File referenced by other entity") String referencedBy;
+  @Schema(description = "File created by user") EmbeddedUserDetailsDTO createdBy;
+  @Schema(description = "File referenced by other entity") EntityDetail referencedBy;
 
   @Override
   public FilterType getFilterType() {

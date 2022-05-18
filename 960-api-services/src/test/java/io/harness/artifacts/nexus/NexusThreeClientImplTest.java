@@ -35,6 +35,8 @@ import software.wings.utils.RepositoryFormat;
 import com.github.tomakehurst.wiremock.core.Options;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,10 +55,7 @@ public class NexusThreeClientImplTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Rule
   public WireMockRule wireMockRule =
-      new WireMockRule(WireMockConfiguration.wireMockConfig()
-                           .usingFilesUnderDirectory("960-api-services/src/test/resources")
-                           .port(Options.DYNAMIC_PORT),
-          false);
+      new WireMockRule(WireMockConfiguration.options().wireMockConfig().port(Options.DYNAMIC_PORT), false);
   @InjectMocks NexusThreeClientImpl nexusThreeService;
   @Mock NexusThreeRestClient nexusThreeRestClient;
 
@@ -188,7 +187,7 @@ public class NexusThreeClientImplTest {
   @Test
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
-  public void testGetArtifactsVersionsSuccess() {
+  public void testGetArtifactsVersionsSuccess() throws UnsupportedEncodingException {
     NexusRequest nexusConfig = NexusRequest.builder()
                                    .nexusUrl(url)
                                    .username("username")
@@ -198,7 +197,7 @@ public class NexusThreeClientImplTest {
                                    .version("3.x")
                                    .build();
 
-    String repoKey = "TestRepoKey";
+    String repoKey = "TestRepoKey1";
     String artifactPath = "test/artifact";
 
     wireMockRule.stubFor(get(urlEqualTo("/service/rest/v1/repositories"))
@@ -236,7 +235,8 @@ public class NexusThreeClientImplTest {
                                  + "}")));
 
     wireMockRule.stubFor(
-        get(urlEqualTo("/service/rest/v1/search?repository=" + repoKey + "&name=" + artifactPath + "&format=docker"))
+        get(urlEqualTo("/service/rest/v1/search?repository=" + repoKey
+                + "&name=" + URLEncoder.encode(artifactPath, "UTF-8") + "&format=docker"))
             .willReturn(aResponse().withStatus(200).withBody("{\n"
                 + "    \"items\": [\n"
                 + "{\n"
@@ -299,7 +299,7 @@ public class NexusThreeClientImplTest {
   @Test
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
-  public void testGetBuildDetails() {
+  public void testGetBuildDetails() throws UnsupportedEncodingException {
     NexusRequest nexusConfig = NexusRequest.builder()
                                    .nexusUrl(url)
                                    .username("username")
@@ -309,7 +309,7 @@ public class NexusThreeClientImplTest {
                                    .version("3.x")
                                    .build();
 
-    String repoKey = "TestRepoKey";
+    String repoKey = "TestRepoKey2";
     String artifactPath = "test/artifact";
     String tag = "latest2";
 
@@ -348,8 +348,8 @@ public class NexusThreeClientImplTest {
                                  + "}")));
 
     wireMockRule.stubFor(
-        get(urlEqualTo("/service/rest/v1/search?repository=" + repoKey + "&name=" + artifactPath
-                + "&format=docker&version=" + tag))
+        get(urlEqualTo("/service/rest/v1/search?repository=" + repoKey
+                + "&name=" + URLEncoder.encode(artifactPath, "UTF-8") + "&format=docker&version=" + tag))
             .willReturn(aResponse().withStatus(200).withBody("{\n"
                 + "    \"items\": [\n"
                 + "{\n"

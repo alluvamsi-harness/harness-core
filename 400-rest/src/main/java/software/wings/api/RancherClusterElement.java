@@ -15,11 +15,8 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,14 +46,6 @@ public class RancherClusterElement implements ContextElement {
   @Override
   public String getName() {
     return this.clusterName;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put(RANCHER, this);
-
-    return paramMap;
   }
 
   @Override

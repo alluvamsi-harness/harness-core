@@ -58,6 +58,7 @@ public class PmsCommonsModuleRegistrars {
           .add(PmsCommonsMorphiaRegistrar.class)
           .addAll(NGCommonsRegistrars.morphiaRegistrars)
           .addAll(GitSyncSdkRegistrar.morphiaRegistrars)
+          .addAll(YamlBeansModuleRegistrars.morphiaRegistrars)
           .build();
 
   public final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =

@@ -63,6 +63,7 @@ BAZEL_MODULES="\
   //300-cv-nextgen:module \
   //310-ci-manager:module \
   //320-ci-execution:module \
+  //323-sto-execution:module \
   //325-sto-beans:module \
   //330-ci-beans:module \
   //340-ce-nextgen:module \

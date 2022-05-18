@@ -15,6 +15,7 @@ import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
 import static io.harness.outbox.OutboxSDKConstants.DEFAULT_OUTBOX_POLL_CONFIGURATION;
 
+import io.harness.account.AccountClientModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.PrimaryVersionManagerModule;
 import io.harness.audit.client.remote.AuditClientModule;
@@ -58,8 +59,8 @@ import io.harness.template.handler.TemplateYamlConversionHandlerRegistry;
 import io.harness.template.mappers.TemplateFilterPropertiesMapper;
 import io.harness.template.services.NGTemplateService;
 import io.harness.template.services.NGTemplateServiceImpl;
-import io.harness.template.services.TemplateMergeService;
-import io.harness.template.services.TemplateMergeServiceImpl;
+import io.harness.template.services.TemplateRefreshService;
+import io.harness.template.services.TemplateRefreshServiceImpl;
 import io.harness.time.TimeModule;
 import io.harness.token.TokenClientModule;
 import io.harness.waiter.AbstractWaiterModule;
@@ -143,6 +144,8 @@ public class TemplateServiceModule extends AbstractModule {
     install(AccessControlClientModule.getInstance(
         this.templateServiceConfiguration.getAccessControlClientConfiguration(), TEMPLATE_SERVICE.getServiceId()));
     install(new TemplateEventsFrameworkModule(this.templateServiceConfiguration.getEventsFrameworkConfiguration()));
+    install(new AccountClientModule(templateServiceConfiguration.getManagerClientConfig(),
+        templateServiceConfiguration.getManagerServiceSecret(), TEMPLATE_SERVICE.toString()));
 
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("taskPollExecutor"))
@@ -153,7 +156,7 @@ public class TemplateServiceModule extends AbstractModule {
     bind(OutboxEventHandler.class).to(TemplateOutboxEventHandler.class);
     bind(HPersistence.class).to(MongoPersistence.class);
     bind(NGTemplateService.class).to(NGTemplateServiceImpl.class);
-    bind(TemplateMergeService.class).to(TemplateMergeServiceImpl.class);
+    bind(TemplateRefreshService.class).to(TemplateRefreshServiceImpl.class);
 
     install(EnforcementClientModule.getInstance(templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId(),

@@ -66,12 +66,7 @@ public class CVNGStepServiceImpl implements CVNGStepService {
     if (!isDeploymentStage(stageYaml)) {
       return;
     }
-    String serviceIdentifier = CVNGStepUtils.getServiceRefNode(stageYaml).asText();
-    String envIdentifier = CVNGStepUtils.getEnvRefNode(stageYaml).asText();
-    if (NGExpressionUtils.matchesInputSetPattern(serviceIdentifier)
-        || NGExpressionUtils.matchesInputSetPattern(envIdentifier)) {
-      addDummyInputFieldToVerifyStep(CVNGStepUtils.getExecutionNodeField(stageYaml));
-    }
+    addDummyInputFieldToVerifyStep(CVNGStepUtils.getExecutionNodeField(stageYaml));
   }
 
   private boolean isDeploymentStage(YamlNode stageYaml) {

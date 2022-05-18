@@ -113,6 +113,7 @@ import software.wings.sm.StateExecutionContext;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.stencils.DefaultValue;
 import software.wings.utils.ApplicationManifestUtils;
 import software.wings.utils.ServiceVersionConvention;
@@ -152,6 +153,7 @@ public class PcfSetupState extends State {
   @Inject private transient FeatureFlagService featureFlagService;
   @Inject private ApplicationManifestUtils applicationManifestUtils;
   @Inject private transient SweepingOutputService sweepingOutputService;
+  @Inject private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   public static final String PCF_SETUP_COMMAND = "PCF Setup";
   public static final String URL = "url";
@@ -246,7 +248,7 @@ public class PcfSetupState extends State {
     PhaseElement phaseElement = context.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
     Application app = appService.get(context.getAppId());
-    Environment env = workflowStandardParams.getEnv();
+    Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
     notNullCheck("Env can not be null", env);
     ServiceElement serviceElement = phaseElement.getServiceElement();
 

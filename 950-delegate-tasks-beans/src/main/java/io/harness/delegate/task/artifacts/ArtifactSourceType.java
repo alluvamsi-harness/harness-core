@@ -43,7 +43,7 @@ public enum ArtifactSourceType {
     return displayName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static ArtifactSourceType getArtifactSourceType(@JsonProperty("type") String displayName) {
     for (ArtifactSourceType sourceType : ArtifactSourceType.values()) {
       if (sourceType.displayName.equalsIgnoreCase(displayName)) {

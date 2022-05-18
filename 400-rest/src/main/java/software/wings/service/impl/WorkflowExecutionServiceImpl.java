@@ -196,7 +196,6 @@ import software.wings.beans.ApprovalDetails;
 import software.wings.beans.ArtifactStreamMetadata;
 import software.wings.beans.ArtifactVariable;
 import software.wings.beans.AwsLambdaExecutionSummary;
-import software.wings.beans.Base;
 import software.wings.beans.BuildExecutionSummary;
 import software.wings.beans.CanaryOrchestrationWorkflow;
 import software.wings.beans.CanaryWorkflowExecutionAdvisor;
@@ -335,6 +334,7 @@ import software.wings.sm.StateMachineExecutor;
 import software.wings.sm.StateType;
 import software.wings.sm.StepExecutionSummary;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.rollback.RollbackStateMachineGenerator;
 import software.wings.sm.states.ElementStateExecutionData;
 import software.wings.sm.states.EnvState.EnvStateKeys;
@@ -456,6 +456,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private HelmChartService helmChartService;
   @Inject private StateInspectionService stateInspectionService;
   @Inject private ApplicationManifestService applicationManifestService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Inject private Injector injector;
 
   @Inject @RateLimitCheck private PreDeploymentChecker deployLimitChecker;
@@ -2211,7 +2212,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       if (newArtifact.getUuid() == null) {
         artifacts.add(newArtifact);
       } else {
-        if (artifacts.stream().map(Base::getUuid).noneMatch(newArtifact.getUuid()::equals)) {
+        if (artifacts.stream().map(Artifact::getUuid).noneMatch(newArtifact.getUuid()::equals)) {
           artifacts.add(newArtifact);
         }
       }
@@ -2219,7 +2220,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     workflowExecution.setArtifacts(artifacts);
     executionArgs.setArtifacts(artifacts);
-    List<String> artifactIds = artifacts.stream().map(Base::getUuid).collect(toList());
+    List<String> artifactIds = artifacts.stream().map(Artifact::getUuid).collect(toList());
     stdParams.setArtifactIds(artifactIds);
   }
 
@@ -5201,7 +5202,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       return null;
     }
     WorkflowStandardParams workflowStandardParams = executionContext.fetchWorkflowStandardParamsFromContext();
-    String envId = workflowStandardParams.fetchRequiredEnv().getUuid();
+    String envId = workflowStandardParamsExtensionService.fetchRequiredEnv(workflowStandardParams).getUuid();
     PhaseElement phaseElement = executionContext.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
     String serviceId = phaseElement.getServiceElement().getUuid();
 
@@ -5571,7 +5572,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     }
 
     collectedArtifacts.addAll(artifacts);
-    collectedArtifacts = collectedArtifacts.stream().filter(distinctByKey(Base::getUuid)).collect(toList());
+    collectedArtifacts = collectedArtifacts.stream().filter(distinctByKey(Artifact::getUuid)).collect(toList());
 
     Query<WorkflowExecution> updatedQuery = wingsPersistence.createQuery(WorkflowExecution.class)
                                                 .project(WorkflowExecutionKeys.artifacts, true)
@@ -6154,5 +6155,38 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         .in(serviceIds)
         .order(Sort.descending(WorkflowExecutionKeys.createdAt))
         .asList(new FindOptions().skip(executionsToSkip).limit(executionsToIncludeInResponse));
+  }
+
+  @Override
+  public WorkflowExecution getLastSuccessfulWorkflowExecution(
+      String accountId, String appId, String workflowId, String envId, String serviceId, String infraMappingId) {
+    return wingsPersistence.createQuery(WorkflowExecution.class)
+        .filter(WorkflowExecutionKeys.accountId, accountId)
+        .filter(WorkflowExecutionKeys.appId, appId)
+        .filter(WorkflowExecutionKeys.workflowId, workflowId)
+        .filter(WorkflowExecutionKeys.envId, envId)
+        .filter(WorkflowExecutionKeys.serviceIds, serviceId)
+        .filter(WorkflowExecutionKeys.infraMappingIds, infraMappingId)
+        .filter(WorkflowExecutionKeys.status, SUCCESS)
+        .order(Sort.descending(WorkflowExecutionKeys.createdAt))
+        .get();
+  }
+
+  @Override
+  public WorkflowExecutionInfo getWorkflowExecutionInfo(String appId, String workflowExecutionId) {
+    WorkflowExecution workflowExecution =
+        wingsPersistence.getWithAppId(WorkflowExecution.class, appId, workflowExecutionId);
+    if (workflowExecution == null) {
+      throw new InvalidRequestException("Couldn't find a workflow Execution with Id: " + workflowExecutionId, USER);
+    }
+
+    return WorkflowExecutionInfo.builder()
+        .accountId(workflowExecution.getAccountId())
+        .name(workflowExecution.getName())
+        .appId(workflowExecution.getAppId())
+        .executionId(workflowExecutionId)
+        .workflowId(workflowExecution.getWorkflowId())
+        .startTs(workflowExecution.getStartTs())
+        .build();
   }
 }

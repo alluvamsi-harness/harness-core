@@ -11,6 +11,7 @@ import static io.harness.filter.FilterConstants.PIPELINE_EXECUTION_FILTER;
 
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterPropertiesDTO;
+import io.harness.ng.core.common.beans.NGTag;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.execution.TimeRange;
 
@@ -36,6 +37,7 @@ import lombok.experimental.FieldDefaults;
 @ApiModel("PipelineExecutionFilterProperties")
 @JsonTypeName(PIPELINE_EXECUTION_FILTER)
 public class PipelineExecutionFilterPropertiesDTO extends FilterPropertiesDTO {
+  private List<NGTag> pipelineTags;
   private List<ExecutionStatus> status;
   private String pipelineName;
   private TimeRange timeRange;

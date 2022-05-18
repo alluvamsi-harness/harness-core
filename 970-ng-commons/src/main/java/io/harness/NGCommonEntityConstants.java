@@ -80,6 +80,10 @@ public class NGCommonEntityConstants {
   public static final String DELETED_PARAM_MESSAGE = "Deletion status for Entity";
   public static final String VERSION_PARAM_MESSAGE = "Version of Entity";
   public static final String FILE_PARAM_MESSAGE = "The file identifier";
+  public static final String FILE_LIST_IDENTIFIERS_PARAM_MESSAGE =
+      "This is the list of File IDs. Details specific to these IDs would be fetched.";
+  public static final String FILE_SEARCH_TERM_PARAM_MESSAGE =
+      "This would be used to filter Files. Any Files having the specified string in its Name, ID and Tag would be filtered.";
 
   public static final String GCP_CONNECTOR_IDENTIFIER = "GCP Connector Identifier";
 
@@ -96,4 +100,5 @@ public class NGCommonEntityConstants {
 
   // Environment Group
   public static final String ENVIRONMENT_GROUP_KEY = "envGroupIdentifier";
+  public static final String ENV_PARAM_MESSAGE = "Environment Identifier for the Entity.";
 }

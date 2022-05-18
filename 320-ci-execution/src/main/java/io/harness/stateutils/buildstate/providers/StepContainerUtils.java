@@ -8,19 +8,26 @@
 package io.harness.stateutils.buildstate.providers;
 
 import static io.harness.common.CIExecutionConstants.PORT_PREFIX;
-import static io.harness.common.CIExecutionConstants.STEP_COMMAND;
+import static io.harness.common.CIExecutionConstants.UNIX_STEP_COMMAND;
+import static io.harness.common.CIExecutionConstants.WIN_STEP_COMMAND;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @OwnedBy(HarnessTeam.CI)
 public class StepContainerUtils {
-  public static List<String> getCommand() {
+  public static List<String> getCommand(OSType os) {
+    String cmd = UNIX_STEP_COMMAND;
+    if (os == OSType.Windows) {
+      cmd = WIN_STEP_COMMAND;
+    }
+
     List<String> command = new ArrayList<>();
-    command.add(STEP_COMMAND);
+    command.add(cmd);
     return command;
   }
 

@@ -31,20 +31,24 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class CVNGStepServiceImplTest extends CvNextGenTestBase {
-  private static List<YamlTest> YAML_TEMPLATE_API_TESTS =
-      Arrays.asList(YamlTest.builder()
-                        .pipelineYamlFile("pipeline/inputset/pipeline1.yaml")
-                        .outputYamlFile("pipeline/inputset/output-template1.yaml")
-                        .build(),
-          YamlTest.builder()
-              .pipelineYamlFile("pipeline/inputset/pipeline2.yaml")
-              .outputYamlFile("pipeline/inputset/output-template2.yaml")
-              .build(),
-          YamlTest.builder()
-              .pipelineYamlFile("pipeline/inputset/bluegreen-canary-pipeline.yaml")
-              .outputYamlFile("pipeline/inputset/bluegreen-canary-output-template.yaml")
-              .build(),
-          YamlTest.builder().pipelineYamlFile("pipeline/inputset/pipeline-with-fixed-service-env.yaml").build());
+  private static List<YamlTest> YAML_TEMPLATE_API_TESTS = Arrays.asList(
+      YamlTest.builder()
+          .pipelineYamlFile("pipeline/inputset/pipeline1.yaml")
+          .outputYamlFile("pipeline/inputset/output-template1.yaml")
+          .build(),
+      YamlTest.builder()
+          .pipelineYamlFile("pipeline/inputset/pipeline2.yaml")
+          .outputYamlFile("pipeline/inputset/output-template2.yaml")
+          .build(),
+      YamlTest.builder()
+          .pipelineYamlFile("pipeline/inputset/bluegreen-canary-pipeline.yaml")
+          .outputYamlFile("pipeline/inputset/bluegreen-canary-output-template.yaml")
+          .build(),
+      YamlTest.builder()
+          .pipelineYamlFile("pipeline/inputset/pipeline-with-fixed-service-env.yaml")
+          .outputYamlFile("pipeline/inputset/pipeline-with-fixed-service-env-output-template.yaml")
+          .build(),
+      YamlTest.builder().pipelineYamlFile("pipeline/inputset/pipeline-with-fixed-svc-and-no-verify-step.yaml").build());
   @Inject private CVNGStepService cvngStepService;
   @Before
   public void setup() throws IllegalAccessException {}

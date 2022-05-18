@@ -24,7 +24,7 @@ aeriform("//126-instance:module")
 
 aeriform("//126-instance:tests")
 
-aeriform("//127-cd-nextgen-beans:module")
+aeriform("//127-cd-nextgen-entities:module")
 
 aeriform("//136-git-sync-manager:module")
 
@@ -87,6 +87,10 @@ aeriform("//310-ci-manager:tests")
 aeriform("//320-ci-execution:module")
 
 aeriform("//320-ci-execution:tests")
+
+aeriform("//323-sto-execution:module")
+
+aeriform("//323-sto-execution:tests")
 
 aeriform("//325-sto-beans:module")
 

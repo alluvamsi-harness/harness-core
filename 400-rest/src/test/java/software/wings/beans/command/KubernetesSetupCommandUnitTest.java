@@ -52,13 +52,13 @@ import software.wings.beans.container.KubernetesServiceType;
 import software.wings.cloudprovider.gke.GkeClusterService;
 
 import com.google.common.collect.ImmutableMap;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ReplicationController;
 import io.fabric8.kubernetes.api.model.ReplicationControllerBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Date;
@@ -273,10 +273,6 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().containsKey("version")).isTrue();
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("app")).isEqualTo("appName");
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("version")).isEqualTo("9");
-    assertThat(horizontalPodAutoscaler.getSpec().getAdditionalProperties()).isNotNull();
-    assertThat(horizontalPodAutoscaler.getSpec().getAdditionalProperties()).hasSize(1);
-    assertThat(horizontalPodAutoscaler.getSpec().getAdditionalProperties().keySet().iterator().next())
-        .isEqualTo("metrics");
     assertThat(horizontalPodAutoscaler.getSpec().getMinReplicas()).isEqualTo(Integer.valueOf(3));
     assertThat(horizontalPodAutoscaler.getSpec().getMaxReplicas()).isEqualTo(Integer.valueOf(6));
   }
@@ -319,7 +315,6 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("version")).isEqualTo("9");
     assertThat(horizontalPodAutoscaler.getSpec().getMinReplicas()).isEqualTo(Integer.valueOf(1));
     assertThat(horizontalPodAutoscaler.getSpec().getMaxReplicas()).isEqualTo(Integer.valueOf(2));
-    assertThat(horizontalPodAutoscaler.getSpec().getTargetCPUUtilizationPercentage()).isEqualTo(Integer.valueOf(20));
 
     setupParams = KubernetesSetupParamsBuilder
                       .aKubernetesSetupParams()
@@ -347,7 +342,6 @@ public class KubernetesSetupCommandUnitTest extends WingsBaseTest {
     assertThat(horizontalPodAutoscaler.getMetadata().getLabels().get("version")).isEqualTo("9");
     assertThat(horizontalPodAutoscaler.getSpec().getMinReplicas()).isEqualTo(Integer.valueOf(2));
     assertThat(horizontalPodAutoscaler.getSpec().getMaxReplicas()).isEqualTo(Integer.valueOf(3));
-    assertThat(horizontalPodAutoscaler.getSpec().getTargetCPUUtilizationPercentage()).isEqualTo(Integer.valueOf(30));
   }
 
   @Test

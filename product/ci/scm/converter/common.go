@@ -104,6 +104,14 @@ func ConvertRepo(r *scm.Repository) (*pb.Repository, error) {
 	}, nil
 }
 
+// ConvertRepo converts scm.Repository to protobuf object
+func ConvertsAndMinimiseRepo(r *scm.Repository) (*pb.Repository, error) {
+	return &pb.Repository{
+		Namespace: r.Namespace,
+		Name:      r.Name,
+	}, nil
+}
+
 // convertSignature converts scm.Signature to protobuf object
 func convertSignature(s *scm.Signature) (*pb.Signature, error) {
 	date := timestamppb.New(s.Date)

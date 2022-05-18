@@ -7,7 +7,7 @@
 
 package io.harness.exception.runtime.serverless;
 
-import static io.harness.eraro.ErrorCode.SERVERLESS_EXECUTION_ERROR;
+import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -26,7 +26,7 @@ public class ServerlessCommandExecutionException extends WingsException {
   }
 
   public ServerlessCommandExecutionException(String message, Throwable cause) {
-    super(message, cause, SERVERLESS_EXECUTION_ERROR, Level.ERROR, null, EnumSet.of(FailureType.APPLICATION_ERROR));
+    super(message, cause, INVALID_REQUEST, Level.ERROR, null, EnumSet.of(FailureType.APPLICATION_ERROR));
     super.param(MESSAGE_ARG, message);
   }
 }

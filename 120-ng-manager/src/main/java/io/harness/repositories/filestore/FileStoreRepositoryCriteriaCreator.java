@@ -7,19 +7,22 @@
 
 package io.harness.repositories.filestore;
 
+import static io.harness.NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
-import io.harness.filestore.NGFileType;
+import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.entities.NGFile.NGFiles;
+import io.harness.ng.core.filestore.NGFileType;
+import io.harness.ng.core.filestore.dto.FileFilterDTO;
 import io.harness.ng.core.mapper.TagMapper;
 import io.harness.ng.core.utils.URLDecoderUtility;
 
+import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -41,14 +44,14 @@ public class FileStoreRepositoryCriteriaCreator {
   }
 
   public static Criteria createFilesFilterCriteria(
-      Scope scope, FilesFilterPropertiesDTO filterProperties, String searchTerm) {
+      Scope scope, FilesFilterPropertiesDTO filterProperties, String searchTerm, List<String> fileIdentifiers) {
     Criteria criteria = createScopeCriteria(scope);
     criteria.and(NGFiles.type).is(NGFileType.FILE);
 
     searchTerm = URLDecoderUtility.getDecodedString(searchTerm);
 
     if (isNotEmpty(searchTerm)) {
-      criteria.and(NGFiles.name).regex(searchTerm, NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS);
+      criteria.and(NGFiles.name).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS);
     }
 
     if (filterProperties != null && filterProperties.getFileUsage() != null) {
@@ -56,11 +59,39 @@ public class FileStoreRepositoryCriteriaCreator {
     }
 
     if (filterProperties != null && filterProperties.getCreatedBy() != null) {
-      criteria.and(NGFiles.createdBy).is(filterProperties.getCreatedBy());
+      criteria.orOperator(Criteria.where(NGFiles.CREATED_BY_NAME).is(filterProperties.getCreatedBy().getName()),
+          Criteria.where(NGFiles.CREATED_BY_EMAIL).is(filterProperties.getCreatedBy().getEmail()));
     }
 
     if (filterProperties != null && !isEmpty(filterProperties.getTags())) {
       criteria.and(NGFiles.tags).in(TagMapper.convertToList(filterProperties.getTags()));
+    }
+
+    if (!isEmpty(fileIdentifiers)) {
+      criteria.and(NGFiles.identifier).in(fileIdentifiers);
+    }
+
+    return criteria;
+  }
+
+  public static Criteria createFilesAndFoldersFilterCriteria(Scope scope, FileFilterDTO fileFilterDTO) {
+    Criteria criteria = createScopeCriteria(scope);
+
+    if (fileFilterDTO == null) {
+      return criteria;
+    }
+
+    String searchTerm = URLDecoderUtility.getDecodedString(fileFilterDTO.getSearchTerm());
+
+    if (isNotEmpty(searchTerm)) {
+      criteria.orOperator(Criteria.where(NGFiles.name).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS),
+          Criteria.where(NGFiles.identifier).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS),
+          Criteria.where(NGFiles.tags + "." + NGTagKeys.key).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS),
+          Criteria.where(NGFiles.tags + "." + NGTagKeys.value).regex(searchTerm, CASE_INSENSITIVE_MONGO_OPTIONS));
+    }
+
+    if (isNotEmpty(fileFilterDTO.getIdentifiers())) {
+      criteria.and(NGFiles.identifier).in(fileFilterDTO.getIdentifiers());
     }
 
     return criteria;

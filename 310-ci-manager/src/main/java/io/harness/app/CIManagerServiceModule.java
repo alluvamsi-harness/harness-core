@@ -48,6 +48,7 @@ import io.harness.redis.RedisConfig;
 import io.harness.remote.client.ClientMode;
 import io.harness.secrets.SecretNGManagerClientModule;
 import io.harness.service.DelegateServiceDriverModule;
+import io.harness.stoserviceclient.STOServiceClientModule;
 import io.harness.telemetry.AbstractTelemetryModule;
 import io.harness.telemetry.TelemetryConfiguration;
 import io.harness.threading.ThreadPool;
@@ -254,6 +255,7 @@ public class CIManagerServiceModule extends AbstractModule {
     install(UserClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),
         ciManagerConfiguration.getManagerServiceSecret(), CI_MANAGER.getServiceId()));
     install(new TIServiceClientModule(ciManagerConfiguration.getTiServiceConfig()));
+    install(new STOServiceClientModule(ciManagerConfiguration.getStoServiceConfig()));
     install(new AccountClientModule(ciManagerConfiguration.getManagerClientConfig(),
         ciManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.toString()));
     install(EnforcementClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),

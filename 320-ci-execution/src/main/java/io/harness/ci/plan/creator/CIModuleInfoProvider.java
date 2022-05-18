@@ -78,7 +78,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider {
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private ConnectorUtils connectorUtils;
-
+  String NULL_STR = "null";
   @Override
   public boolean shouldRun(OrchestrationEvent event) {
     StepType currentStepType = AmbianceUtils.getCurrentStepType(event.getAmbiance());
@@ -125,7 +125,7 @@ public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider 
             if (url == null) {
               url = connectorUtils.retrieveURL(connectorDetails);
             }
-            if (repoName == null) {
+            if (isEmpty(repoName) || repoName.equals(NULL_STR)) {
               repoName = getGitRepo(url);
             }
 

@@ -14,6 +14,7 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.network.SafeHttpCall;
 import io.harness.ng.core.dto.AccountDTO;
@@ -36,6 +37,7 @@ import io.harness.pms.utils.CompletableFutures;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.project.remote.ProjectClient;
+import io.harness.variable.remote.VariableClient;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -61,6 +63,7 @@ public class VariableCreatorMergeService {
   @Inject private Map<String, List<String>> serviceExpressionMap;
   @Inject private OrganizationClient organizationClient;
   @Inject private ProjectClient projectClient;
+  @Inject private VariableClient variableClient;
 
   private static final int MAX_DEPTH = 10;
   private final Executor executor = Executors.newFixedThreadPool(5);
@@ -69,6 +72,27 @@ public class VariableCreatorMergeService {
   public VariableCreatorMergeService(PmsSdkHelper pmsSdkHelper, PmsGitSyncHelper pmsGitSyncHelper) {
     this.pmsSdkHelper = pmsSdkHelper;
     this.pmsGitSyncHelper = pmsGitSyncHelper;
+  }
+
+  public VariableMergeServiceResponse createVariablesResponses(String yaml, boolean newVersion) {
+    try {
+      return createVariablesResponse(yaml, newVersion);
+    } catch (Exception ex) {
+      log.error("Error happened while creating variables for pipeline:", ex);
+      throw new InvalidRequestException(
+          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
+    }
+  }
+
+  public VariableMergeServiceResponse createVariablesResponsesV2(
+      String accountId, String orgId, String projectId, String yaml) {
+    try {
+      return createVariablesResponseV2(accountId, orgId, projectId, yaml);
+    } catch (Exception ex) {
+      log.error("Error happened while creating variables for pipeline:", ex);
+      throw new InvalidRequestException(
+          format("Error happened while creating variables for pipeline: %s", ex.getMessage()));
+    }
   }
 
   public VariableMergeServiceResponse createVariablesResponse(@NotNull String yaml, boolean newVersion)
@@ -241,6 +265,13 @@ public class VariableCreatorMergeService {
       resultMap.put("project", VariableCreatorHelper.getExpressionsInObject(projectDTO, "project"));
     } catch (Exception ex) {
       log.error("Couldn't get project details", ex);
+    }
+    // Adding variable details
+    try {
+      resultMap.put("variable",
+          SafeHttpCall.execute(variableClient.getExpressions(accountId, orgIdentifier, projectIdentifier)).getData());
+    } catch (Exception ex) {
+      log.error("Couldn't get variable details", ex);
     }
     return resultMap;
   }

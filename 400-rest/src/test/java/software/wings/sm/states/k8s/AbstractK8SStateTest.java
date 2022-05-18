@@ -106,7 +106,6 @@ import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.manifests.response.CustomManifestValuesFetchResponse;
 import io.harness.deployment.InstanceDetails;
-import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.expression.VariableResolverTracker;
@@ -122,6 +121,7 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 
 import software.wings.WingsBaseTest;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.DeploymentType;
 import software.wings.api.InstanceElement;
 import software.wings.api.InstanceElementListParam;
@@ -204,6 +204,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.utils.ApplicationManifestUtils;
 
 import com.google.common.collect.ImmutableMap;
@@ -259,7 +260,6 @@ public class AbstractK8SStateTest extends WingsBaseTest {
   @Mock private ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
   @Mock private InstanceService instanceService;
   @Mock private GitConfigHelperService gitConfigHelperService;
-  @Mock private K8sStateHelper mockK8sStateHelper;
   @Mock private AwsCommandHelper awsCommandHelper;
   @Mock private StateExecutionService stateExecutionService;
 
@@ -306,8 +306,6 @@ public class AbstractK8SStateTest extends WingsBaseTest {
   @Before
   public void setup() {
     context = new ExecutionContextImpl(stateExecutionInstance);
-    on(workflowStandardParams).set("appService", appService);
-    on(workflowStandardParams).set("environmentService", environmentService);
     on(context).set("infrastructureMappingService", infrastructureMappingService);
     on(context).set("serviceResourceService", serviceResourceService);
     on(context).set("artifactService", artifactService);
@@ -317,16 +315,30 @@ public class AbstractK8SStateTest extends WingsBaseTest {
     on(context).set("stateExecutionInstance", stateExecutionInstance);
     on(context).set("sweepingOutputService", sweepingOutputService);
 
+    WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService =
+        new WorkflowStandardParamsExtensionService(
+            appService, accountService, artifactService, environmentService, null, null);
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(k8sStateHelper).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(abstractK8SState).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(k8sRollingDeploy).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(k8sCanaryDeploy).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+
     on(abstractK8SState).set("kryoSerializer", kryoSerializer);
-    on(abstractK8SState).set("k8sStateHelper", k8sStateHelper);
     on(abstractK8SState).set("sweepingOutputService", sweepingOutputService);
     on(abstractK8SState).set("applicationManifestService", applicationManifestService);
+    on(abstractK8SState).set("k8sStateHelper", k8sStateHelper);
+    on(k8sRollingDeploy).set("k8sStateHelper", k8sStateHelper);
+    on(k8sCanaryDeploy).set("k8sStateHelper", k8sStateHelper);
 
     on(k8sStateHelper).set("sweepingOutputService", mockedSweepingOutputService);
     on(k8sStateHelper).set("infrastructureMappingService", infrastructureMappingService);
 
-    on(workflowStandardParams).set("subdomainUrlHelper", subdomainUrlHelper);
     when(subdomainUrlHelper.getPortalBaseUrl(any())).thenReturn("baseUrl");
+    ContextElementParamMapperFactory contextElementParamMapperFactory =
+        new ContextElementParamMapperFactory(subdomainUrlHelper, null, artifactService, null,
+            applicationManifestService, featureFlagService, null, workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
 
     when(accountService.getAccountWithDefaults(ACCOUNT_ID))
         .thenReturn(Account.Builder.anAccount().withUuid(ACCOUNT_ID).withAccountName(ACCOUNT_NAME).build());
@@ -989,12 +1001,8 @@ public class AbstractK8SStateTest extends WingsBaseTest {
     assertThat(releaseName).isEqualTo("64317ae8-c2a8-3fd8-af26-68f2e717431a");
 
     infrastructureMapping.setReleaseName("-release-name");
-    try {
-      abstractK8SState.fetchReleaseName(context, infrastructureMapping);
-      fail("Should not reach here");
-    } catch (Exception ex) {
-      assertThatExceptionOfType(InvalidArgumentsException.class);
-    }
+    releaseName = abstractK8SState.fetchReleaseName(context, infrastructureMapping);
+    assertThat(releaseName).isEqualTo("-release-name");
   }
 
   @Test

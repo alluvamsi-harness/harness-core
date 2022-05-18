@@ -75,11 +75,8 @@ public class ManagerGrpcClientModule extends ProviderModule {
   }
 
   private boolean isSsl(Config config, @Named("Application") String application) {
-    if ("ONPREM".equals(deployMode) || "KUBERNETES_ONPREM".equals(deployMode)) {
-      if (("Delegate".equalsIgnoreCase(application)) && ("https".equalsIgnoreCase(config.scheme))) {
-        return true;
-      }
-      return false;
+    if ("KUBERNETES_ONPREM".equals(deployMode)) {
+      return ("Delegate".equalsIgnoreCase(application)) && ("https".equalsIgnoreCase(config.scheme));
     }
     return true;
   }

@@ -20,7 +20,7 @@ import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.approval.Criteria;
 import software.wings.beans.security.UserGroup;
-import software.wings.service.impl.servicenow.ServiceNowServiceImpl.ServiceNowTicketType;
+import software.wings.beans.servicenow.ServiceNowTicketType;
 import software.wings.service.intfc.UserGroupService;
 import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.sm.StateExecutionData;

@@ -14,8 +14,8 @@ import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryUsernamePasswordAuthDTO;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateRequest;
-import io.harness.delegate.task.artifacts.artifactory.ArtifactoryDockerArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateResponse;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
@@ -27,7 +27,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.CDP)
 public class ArtifactoryRequestResponseMapper {
-  public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryDockerArtifactDelegateRequest request) {
+  public ArtifactoryConfigRequest toArtifactoryInternalConfig(ArtifactoryArtifactDelegateRequest request) {
     char[] password = null;
     String username = null;
     boolean hasCredentials = false;
@@ -53,9 +53,9 @@ public class ArtifactoryRequestResponseMapper {
         .build();
   }
 
-  public ArtifactoryDockerArtifactDelegateResponse toArtifactoryDockerResponse(
-      BuildDetailsInternal buildDetailsInternal, ArtifactoryDockerArtifactDelegateRequest request) {
-    return ArtifactoryDockerArtifactDelegateResponse.builder()
+  public ArtifactoryArtifactDelegateResponse toArtifactoryDockerResponse(
+      BuildDetailsInternal buildDetailsInternal, ArtifactoryArtifactDelegateRequest request) {
+    return ArtifactoryArtifactDelegateResponse.builder()
         .buildDetails(ArtifactBuildDetailsMapper.toBuildDetailsNG(buildDetailsInternal))
         .repositoryName(request.getRepositoryName())
         .artifactPath(request.getArtifactPath())

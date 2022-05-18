@@ -18,6 +18,7 @@ java_library(
         "//955-delegate-beans:module",
         "//960-continuous-features:module",
         "//960-yaml-sdk:module",
+        "//999-annotations:module",
         "//clients/notification:module",
         "//platform-service/modules/notification-service/contracts:module",
         "@maven//:com_esotericsoftware_kryo",

@@ -142,6 +142,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -167,6 +168,7 @@ public class EcsStateHelperTest extends CategoryTest {
   @Mock private FeatureFlagService featureFlagService;
   @Mock private SweepingOutputService sweepingOutputService;
   @Mock private StateExecutionService stateExecutionService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Inject @InjectMocks private EcsStateHelper helper;
 
   @Before
@@ -371,8 +373,8 @@ public class EcsStateHelperTest extends CategoryTest {
     doReturn(mockParams).when(mockContext).getContextElement(any());
     Application app = anApplication().uuid(APP_ID).name(APP_NAME).build();
     Environment env = anEnvironment().uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(app).when(mockParams).fetchRequiredApp();
-    doReturn(env).when(mockParams).getEnv();
+    doReturn(app).when(workflowStandardParamsExtensionService).fetchRequiredApp(mockParams);
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     Artifact artifact = anArtifact().build();
     doReturn(artifact).when(mockContext).getDefaultArtifactForService(anyString());
     ImageDetails details = ImageDetails.builder().name("imgName").tag("imgTag").build();
@@ -801,8 +803,8 @@ public class EcsStateHelperTest extends CategoryTest {
     doReturn(mockParams).when(mockContext).getContextElement(any());
     Application app = anApplication().uuid(APP_ID).name(APP_NAME).build();
     Environment env = anEnvironment().uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(app).when(mockParams).fetchRequiredApp();
-    doReturn(env).when(mockParams).getEnv();
+    doReturn(app).when(workflowStandardParamsExtensionService).fetchRequiredApp(mockParams);
+    doReturn(env).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     PhaseElement phaseElement = PhaseElement.builder()
                                     .phaseName("Rollback Phase1")
                                     .phaseNameForRollback("Phase1")

@@ -14,7 +14,7 @@ import static io.harness.exception.WingsException.USER;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.CGConstants.GLOBAL_ENV_ID;
-import static software.wings.beans.ServiceVariable.Type.ARTIFACT;
+import static software.wings.beans.ServiceVariableType.ARTIFACT;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -42,7 +42,7 @@ import software.wings.beans.Service.Yaml;
 import software.wings.beans.Service.Yaml.YamlBuilder;
 import software.wings.beans.ServiceVariable;
 import software.wings.beans.ServiceVariable.ServiceVariableBuilder;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.yaml.ChangeContext;
 import software.wings.service.impl.yaml.handler.ArtifactVariableYamlHelper;
 import software.wings.service.impl.yaml.handler.BaseYamlHandler;
@@ -128,12 +128,12 @@ public class ServiceYamlHandler extends BaseYamlHandler<Yaml, Service> {
     return serviceVariables.stream()
         .map(serviceVariable -> {
           List<AllowedValueYaml> allowedValueYamlList = new ArrayList<>();
-          Type variableType = serviceVariable.getType();
+          ServiceVariableType variableType = serviceVariable.getType();
           String value = null;
-          if (Type.ENCRYPTED_TEXT == variableType) {
+          if (ServiceVariableType.ENCRYPTED_TEXT == variableType) {
             value =
                 secretManager.getEncryptedYamlRef(serviceVariable.getAccountId(), serviceVariable.getEncryptedValue());
-          } else if (Type.TEXT == variableType) {
+          } else if (ServiceVariableType.TEXT == variableType) {
             if (serviceVariable.getValue() != null) {
               value = String.valueOf(serviceVariable.getValue());
             }
@@ -163,6 +163,7 @@ public class ServiceYamlHandler extends BaseYamlHandler<Yaml, Service> {
     String serviceName = yamlHelper.getServiceName(yamlFilePath);
 
     Yaml yaml = changeContext.getYaml();
+    validateConfigVariableType(yaml);
 
     filterNonUpdatablePropertiesChanges(appId, yaml, serviceName);
 
@@ -446,10 +447,10 @@ public class ServiceYamlHandler extends BaseYamlHandler<Yaml, Service> {
                                                         .templateId(ServiceVariable.DEFAULT_TEMPLATE_ID);
 
     if ("TEXT".equals(cv.getValueType())) {
-      serviceVariableBuilder.type(Type.TEXT);
+      serviceVariableBuilder.type(ServiceVariableType.TEXT);
       serviceVariableBuilder.value(cv.getValue() != null ? cv.getValue().toCharArray() : null);
     } else if ("ENCRYPTED_TEXT".equals(cv.getValueType())) {
-      serviceVariableBuilder.type(Type.ENCRYPTED_TEXT);
+      serviceVariableBuilder.type(ServiceVariableType.ENCRYPTED_TEXT);
       // wingsPersistence will encrypt the record depending on type and value, so we need not
       // setEncryptedValue. If the value is already a secret reference ( eg. safeHarness:xxxxx ),
       // it will be persisted as such which we do not want, therefore we need to extract out the
@@ -458,7 +459,7 @@ public class ServiceYamlHandler extends BaseYamlHandler<Yaml, Service> {
           cv.getValue() != null ? yamlHelper.extractEncryptedRecordId(cv.getValue(), accountId).toCharArray() : null);
     } else if ("ARTIFACT".equals(cv.getValueType())) {
       if (featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {
-        serviceVariableBuilder.type(Type.ARTIFACT);
+        serviceVariableBuilder.type(ServiceVariableType.ARTIFACT);
         List<String> allowedList =
             artifactVariableYamlHelper.computeAllowedList(accountId, cv.getAllowedList(), cv.getName());
         serviceVariableBuilder.allowedList(allowedList);
@@ -495,5 +496,24 @@ public class ServiceYamlHandler extends BaseYamlHandler<Yaml, Service> {
     Service service = serviceOptional.get();
     serviceResourceService.deleteByYamlGit(
         service.getAppId(), service.getUuid(), changeContext.getChange().isSyncFromGit());
+  }
+
+  private void validateConfigVariableType(Yaml yaml) {
+    if (yaml == null) {
+      return;
+    }
+
+    if (isEmpty(yaml.getConfigVariables())) {
+      return;
+    }
+
+    for (NameValuePair.Yaml configVariable : yaml.getConfigVariables()) {
+      if (!("TEXT".equals(configVariable.getValueType()) || "ENCRYPTED_TEXT".equals(configVariable.getValueType())
+              || "ARTIFACT".equals(configVariable.getValueType()))) {
+        log.error("Yaml does not support {} type service variables", configVariable.getValueType());
+        throw new InvalidRequestException(
+            String.format("Yaml does not support %s type service variables", configVariable.getValueType()));
+      }
+    }
   }
 }

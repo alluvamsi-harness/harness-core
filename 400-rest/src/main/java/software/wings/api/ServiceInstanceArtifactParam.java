@@ -10,7 +10,6 @@ package software.wings.api;
 import io.harness.context.ContextElementType;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,11 +40,6 @@ public class ServiceInstanceArtifactParam implements ContextElement {
 
   public void setInstanceArtifactMap(Map<String, String> instanceArtifactMap) {
     this.instanceArtifactMap = instanceArtifactMap;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

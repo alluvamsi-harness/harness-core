@@ -15,6 +15,7 @@ import static io.harness.beans.ExecutionStatus.REJECTED;
 import static io.harness.beans.ExecutionStatus.SKIPPED;
 import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.exception.WingsException.USER;
 import static io.harness.rule.OwnerRule.AGORODETKI;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.DHRUV;
@@ -70,6 +71,7 @@ import static software.wings.utils.WingsTestConstants.WORKFLOW_URL;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.reflect.FieldUtils.writeField;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -87,13 +89,16 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.FeatureName;
 import io.harness.beans.PageResponse;
 import io.harness.beans.SweepingOutputInstance;
 import io.harness.beans.WorkflowType;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
@@ -231,6 +236,7 @@ public class ApprovalStateTest extends WingsBaseTest {
   @Mock private TemplateExpressionProcessor templateExpressionProcessor;
   @Mock private ServiceResourceService serviceResourceService;
   @Mock private ActivityService activityService;
+  @Mock private FeatureFlagService featureFlagService;
   @InjectMocks private ApprovalState approvalState = new ApprovalState("ApprovalState");
 
   @Inject KryoSerializer kryoSerializer;
@@ -2184,5 +2190,73 @@ public class ApprovalStateTest extends WingsBaseTest {
     assertThat(approvalState.approvalStateParams.getServiceNowApprovalParams().getApproval().fetchConditions())
         .containsKeys("approval", "state");
     assertThat(approvalState.getApprovalStateType()).isEqualTo(ApprovalStateType.SERVICENOW);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldResolveUserGroupExpression() {
+    String expression = "${userGroupExpression}";
+    approvalState.setUserGroupAsExpression(true);
+    approvalState.setUserGroupExpression(expression);
+
+    when(featureFlagService.isNotEnabled(eq(FeatureName.USER_GROUP_AS_EXPRESSION), anyString())).thenReturn(false);
+    when(context.renderExpression(expression)).thenReturn("group1, group2");
+    when(context.getAccountId()).thenReturn(ACCOUNT_ID);
+    when(userGroupService.get(ACCOUNT_ID, "group1")).thenReturn(UserGroup.builder().uuid("A1").build());
+    when(userGroupService.get(ACCOUNT_ID, "group2")).thenReturn(UserGroup.builder().uuid("B2").build());
+
+    approvalState.resolveUserGroupFromExpression(context);
+
+    assertThat(approvalState.getUserGroups()).containsOnly("A1", "B2");
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenUserGroupExpressionNull() {
+    when(featureFlagService.isNotEnabled(eq(FeatureName.USER_GROUP_AS_EXPRESSION), any())).thenReturn(false);
+
+    assertThatThrownBy(() -> {
+      approvalState.setUserGroupExpression(null);
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is set but value is not provided")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenUserGroupExpressionEmpty() {
+    when(featureFlagService.isNotEnabled(eq(FeatureName.USER_GROUP_AS_EXPRESSION), any())).thenReturn(false);
+
+    assertThatThrownBy(() -> {
+      approvalState.setUserGroupExpression("");
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is set but value is not provided")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldThrowInvalidRequestWhenRenderedExpressionEmpty() {
+    when(featureFlagService.isNotEnabled(eq(FeatureName.USER_GROUP_AS_EXPRESSION), any())).thenReturn(false);
+
+    String expression = "${userGroupExpression}";
+    approvalState.setUserGroupAsExpression(true);
+    approvalState.setUserGroupExpression(expression);
+
+    assertThatThrownBy(() -> {
+      when(context.renderExpression(expression)).thenReturn("");
+      approvalState.resolveUserGroupFromExpression(context);
+    })
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("User group expression is invalid")
+        .hasFieldOrPropertyWithValue("reportTargets", USER);
   }
 }

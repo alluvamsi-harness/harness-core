@@ -7,9 +7,9 @@
 
 package io.harness.cdng.creator.variables;
 
-import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.infrastructure.InfrastructureKind;
 import io.harness.pms.contracts.plan.YamlProperties;
 import io.harness.pms.sdk.core.variables.VariableCreatorHelper;
 import io.harness.pms.sdk.core.variables.beans.VariableCreationResponse;
@@ -175,7 +175,7 @@ public class InfraVariableCreator {
       return;
     }
 
-    addVariableForYamlType(YamlTypes.SSH_KEY_REF, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.CREDENTIALS_REF, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.HOSTS, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.CONNECTOR_REF, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.ATTRIBUTE_FILTERS, infraSpecNode, yamlPropertiesMap);

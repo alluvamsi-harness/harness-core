@@ -80,6 +80,10 @@ if [[ "" != "$NG_MANAGER_BASE_URL" ]]; then
   yq write -i $CONFIG_FILE ngManagerServiceHttpClientConfig.baseUrl $NG_MANAGER_BASE_URL
 fi
 
+if [[ "" != "$MANAGER_CLIENT_BASEURL" ]]; then
+  yq write -i $CONFIG_FILE managerClientConfig.baseUrl $MANAGER_CLIENT_BASEURL
+fi
+
 if [[ "" != "$NG_MANAGER_SERVICE_SECRET" ]]; then
   yq write -i $CONFIG_FILE ngManagerServiceSecret $NG_MANAGER_SERVICE_SECRET
 fi

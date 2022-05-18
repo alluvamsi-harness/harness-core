@@ -23,8 +23,8 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(CDP)
 @UtilityClass
 public class AzureCapabilityHelper extends ConnectorCapabilityBaseHelper {
-  private static final String AZURE_URL = "https://azure.microsoft.com/";
-  private static final String AZURE_US_GOV_URL = "https://usgovcloudapi.microsoft.com/";
+  private static final String AZURE_URL = "https://login.microsoftonline.com/";
+  private static final String AZURE_US_GOV_URL = "https://login.microsoftonline.us/";
 
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(
       ConnectorConfigDTO connectorConfigDTO, ExpressionEvaluator maskingEvaluator) {

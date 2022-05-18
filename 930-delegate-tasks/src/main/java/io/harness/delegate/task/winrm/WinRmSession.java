@@ -16,7 +16,9 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.delegate.configuration.InstallUtils;
+import io.harness.delegate.clienttools.ClientTool;
+import io.harness.delegate.clienttools.HarnessPywinrmVersion;
+import io.harness.delegate.clienttools.InstallUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.logging.LogCallback;
@@ -135,8 +137,10 @@ public class WinRmSession implements AutoCloseable {
         byte[] buff = command.getBytes(StandardCharsets.UTF_8);
         Files.write(Paths.get(commandFilePath), buff);
 
-        return SshHelperUtils.executeLocalCommand(format(COMMAND_PLACEHOLDER, InstallUtils.getHarnessPywinrmToolPath(),
-                                                      args.getArgs(commandFile.getAbsolutePath())),
+        return SshHelperUtils.executeLocalCommand(
+                   format(COMMAND_PLACEHOLDER,
+                       InstallUtils.getPath(ClientTool.HARNESS_PYWINRM, HarnessPywinrmVersion.V0_4),
+                       args.getArgs(commandFile.getAbsolutePath())),
                    logCallback, output, isOutputWriter, args.getEnvironmentMap())
             ? 0
             : 1;

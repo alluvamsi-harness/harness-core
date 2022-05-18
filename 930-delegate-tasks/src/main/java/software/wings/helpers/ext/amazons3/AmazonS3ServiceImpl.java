@@ -28,7 +28,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
-import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionTaskHelper;
+import software.wings.delegatetasks.collect.artifacts.ArtifactCollectionCommonTaskHelper;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.service.intfc.aws.delegate.AwsS3HelperServiceDelegate;
 
@@ -56,7 +56,7 @@ import org.apache.commons.lang3.tuple.Pair;
 @Slf4j
 public class AmazonS3ServiceImpl implements AmazonS3Service {
   @Inject AwsS3HelperServiceDelegate awsS3HelperServiceDelegate;
-  @Inject private ArtifactCollectionTaskHelper artifactCollectionTaskHelper;
+  @Inject private ArtifactCollectionCommonTaskHelper artifactCollectionCommonTaskHelper;
   private static final int MAX_FILES_TO_SHOW_IN_UI = 1000;
   private static final int FETCH_FILE_COUNT_IN_BUCKET = 500;
 
@@ -236,7 +236,7 @@ public class AmazonS3ServiceImpl implements AmazonS3Service {
     for (String objectKey : objectKeyList) {
       Pair<String, InputStream> stringInputStreamPair =
           downloadArtifact(awsConfig, encryptionDetails, bucketName, objectKey);
-      artifactCollectionTaskHelper.addDataToResponse(
+      artifactCollectionCommonTaskHelper.addDataToResponse(
           stringInputStreamPair, artifactpathRegex, res, delegateId, taskId, accountId);
     }
   }

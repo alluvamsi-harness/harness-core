@@ -16,6 +16,7 @@ import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthScoreDTO;
 import io.harness.cvng.core.beans.monitoredService.HistoricalTrend;
 import io.harness.cvng.core.beans.monitoredService.MetricDTO;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceChangeDetailSLO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
@@ -29,6 +30,7 @@ import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.logsFilterParams.LiveMonitoringLogsFilter;
 import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.services.api.DeleteEntityByHandler;
+import io.harness.cvng.notification.beans.NotificationRuleResponse;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 
@@ -41,6 +43,8 @@ import lombok.NonNull;
 
 public interface MonitoredServiceService extends DeleteEntityByHandler<MonitoredService> {
   MonitoredServiceResponse create(String accountId, MonitoredServiceDTO monitoredServiceDTO);
+  MonitoredServiceResponse createFromYaml(ProjectParams projectParams, String yaml);
+  MonitoredServiceResponse updateFromYaml(ProjectParams projectParams, String identifier, String yaml);
   MonitoredServiceResponse update(String accountId, MonitoredServiceDTO monitoredServiceDTO);
   boolean delete(ProjectParams projectParams, String identifier);
   List<MonitoredServiceResponse> get(ProjectParams projectParams, Set<String> identifier);
@@ -97,4 +101,10 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
       ProjectParams projectParams, List<String> services, List<String> environments);
   PageResponse<CVNGLogDTO> getCVNGLogs(MonitoredServiceParams monitoredServiceParams,
       LiveMonitoringLogsFilter liveMonitoringLogsFilter, PageParams pageParams);
+
+  List<MonitoredServiceChangeDetailSLO> getMonitoredServiceChangeDetails(
+      ProjectParams projectParams, String monitoredServiceIdentifier, Long startTime, Long endTime);
+  void sendNotification(MonitoredService monitoredService);
+  PageResponse<NotificationRuleResponse> getNotificationRules(
+      ProjectParams projectParams, String monitoredServiceIdentifier, PageParams pageParams);
 }

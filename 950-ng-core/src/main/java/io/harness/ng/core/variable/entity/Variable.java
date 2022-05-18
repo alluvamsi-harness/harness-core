@@ -7,7 +7,6 @@
 
 package io.harness.ng.core.variable.entity;
 
-import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -46,7 +45,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("variables")
 @StoreIn(DbAliases.NG_MANAGER)
 @Persistent
-@HarnessEntity(exportable = true)
 public abstract class Variable implements PersistentEntity, NGAccountAccess {
   @Id @org.mongodb.morphia.annotations.Id String id;
   @NotEmpty @EntityIdentifier String identifier;
@@ -77,5 +75,19 @@ public abstract class Variable implements PersistentEntity, NGAccountAccess {
                  .descSortField(VariableKeys.createdAt)
                  .build())
         .build();
+  }
+
+  public String getScope() {
+    if (orgIdentifier != null) {
+      if (projectIdentifier != null) {
+        return "project";
+      }
+      return "org";
+    }
+    return "account";
+  }
+
+  public String getExpression() {
+    return "variable" + (getScope().equals("project") ? "" : "." + getScope()) + "." + getIdentifier();
   }
 }

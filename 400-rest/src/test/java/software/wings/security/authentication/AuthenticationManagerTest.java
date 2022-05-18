@@ -138,14 +138,6 @@ public class AuthenticationManagerTest extends WingsBaseTest {
   @Test
   @Owner(developers = VIKAS)
   @Category(UnitTests.class)
-  public void testDefaultLoginAccountForInvalidUserinOnPrem() {
-    when(MAIN_CONFIGURATION.getDeployMode()).thenReturn(DeployMode.ONPREM);
-    testLoginAttemptForInvalidUser();
-  }
-
-  @Test
-  @Owner(developers = VIKAS)
-  @Category(UnitTests.class)
   public void testDefaultLoginAccountForInvalidUserinKubernetesOnPrem() {
     when(MAIN_CONFIGURATION.getDeployMode()).thenReturn(DeployMode.KUBERNETES_ONPREM);
     testLoginAttemptForInvalidUser();
@@ -342,15 +334,6 @@ public class AuthenticationManagerTest extends WingsBaseTest {
 
     String token = authenticationManager.extractToken("Basic testData", "Basic");
     assertThat(token).isEqualTo("testData");
-  }
-
-  @Test
-  @Owner(developers = VIKAS)
-  @Category(UnitTests.class)
-  public void testGetLoginTypeResponseForInvalidUserForOnPrem() throws IllegalAccessException {
-    when(MAIN_CONFIGURATION.getDeployMode()).thenReturn(DeployMode.ONPREM);
-    FieldUtils.writeDeclaredField(authenticationManager, "mainConfiguration", MAIN_CONFIGURATION, true);
-    testForInvalidUserInOnPrem();
   }
 
   @Test

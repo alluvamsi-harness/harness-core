@@ -12,9 +12,7 @@ import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveS
 import io.harness.mongo.iterator.MongoPersistenceIterator.Handler;
 
 import com.google.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class SLONotificationHandler implements Handler<ServiceLevelObjective> {
   @Inject private ServiceLevelObjectiveService serviceLevelObjectiveService;
 

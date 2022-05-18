@@ -19,4 +19,6 @@ public class SetupAbstractionKeys {
   public final String userEmail = "userEmail";
   public final String ng = "ng";
   public final String owner = "owner";
+  public final String pipelineId = "pipelineId";
+  public final String runSequence = "runSequence";
 }

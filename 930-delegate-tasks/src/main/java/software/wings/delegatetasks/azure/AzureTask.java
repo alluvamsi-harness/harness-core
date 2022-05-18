@@ -25,7 +25,9 @@ import io.harness.exception.NestedExceptionUtils;
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @OwnedBy(HarnessTeam.CDP)
 public class AzureTask extends AbstractDelegateRunnableTask {
   @Inject private AzureAsyncTaskHelper azureAsyncTaskHelper;
@@ -85,6 +87,13 @@ public class AzureTask extends AbstractDelegateRunnableTask {
             azureTaskParams.getAzureConnector(),
             azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.SUBSCRIPTION_ID),
             azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.CONTAINER_REGISTRY));
+      }
+      case GET_ACR_TOKEN: {
+        msg = "Could not retrieve any container registries because of invalid parameter(s)";
+        validateContainerRegistryExist(azureTaskParams, msg);
+        return azureAsyncTaskHelper.getServicePrincipalCertificateAcrLoginToken(
+            azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.CONTAINER_REGISTRY),
+            azureTaskParams.getEncryptionDetails(), azureTaskParams.getAzureConnector());
       }
       default:
         throw new InvalidRequestException("Task type not identified");

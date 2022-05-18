@@ -7,10 +7,12 @@
 
 package io.harness.gitsync.common.helper;
 
+import static io.harness.rule.OwnerRule.HARSH;
 import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -26,7 +28,9 @@ import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.GitSyncTestBase;
+import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.rule.Owner;
+import io.harness.tasks.DecryptGitApiAccessHelper;
 
 import java.util.Optional;
 import org.junit.Before;
@@ -38,8 +42,10 @@ import org.mockito.MockitoAnnotations;
 
 @OwnedBy(HarnessTeam.PL)
 public class GitSyncConnectorHelperTest extends GitSyncTestBase {
-  @InjectMocks GitSyncConnectorHelper gitSyncConnectorHelper;
+  @Mock YamlGitConfigService yamlGitConfigService;
+  @Mock DecryptGitApiAccessHelper decryptGitApiAccessHelper;
   @Mock ConnectorService connectorService;
+  @InjectMocks GitSyncConnectorHelper gitSyncConnectorHelper;
 
   private static final String ACCOUNT_IDENTIFIER = "account";
   private static final String ORG_IDENTIFIER = "org";
@@ -49,6 +55,25 @@ public class GitSyncConnectorHelperTest extends GitSyncTestBase {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+  }
+
+  @Test
+  @Owner(developers = HARSH)
+  @Category(UnitTests.class)
+  public void testGetScmConnector() {
+    when(connectorService.get(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, CONNECTOR_REF))
+        .thenReturn(Optional.of(
+            ConnectorResponseDTO.builder()
+                .connector(ConnectorInfoDTO.builder().connectorConfig(GithubConnectorDTO.builder().build()).build())
+                .build()));
+    when(decryptGitApiAccessHelper.decryptScmApiAccess(any(), any(), any(), any()))
+        .thenReturn(GithubConnectorDTO.builder().build());
+    when(yamlGitConfigService.getByProjectIdAndRepoOptional(
+             ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, "Repo"))
+        .thenReturn(Optional.empty());
+    ScmConnector scmConnector = gitSyncConnectorHelper.getDecryptedConnector(
+        ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, CONNECTOR_REF, "Repo");
+    assertThat(scmConnector.getConnectorType()).isEqualTo(ConnectorType.GITHUB);
   }
 
   @Test

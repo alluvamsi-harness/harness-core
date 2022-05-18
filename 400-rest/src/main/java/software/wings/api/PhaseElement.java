@@ -16,21 +16,16 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.beans.FeatureName;
 import io.harness.context.ContextElementType;
 import io.harness.ff.FeatureFlagService;
 
 import software.wings.beans.NameValuePair;
-import software.wings.beans.artifact.Artifact;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -80,22 +75,6 @@ public class PhaseElement implements ContextElement {
   @Override
   public ContextElement cloneMin() {
     return this;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(SERVICE, serviceElement);
-
-    if (rollbackArtifactId != null) {
-      Artifact artifact = artifactService.getWithSource(rollbackArtifactId);
-      map.put(ARTIFACT, artifact);
-    } else if (isRollback()
-        && featureFlagService.isEnabled(FeatureName.ROLLBACK_NONE_ARTIFACT, context.getAccountId())) {
-      // In case of rollback if don't find rollbackArtifactId, set artifact object to null.
-      map.put(ARTIFACT, null);
-    }
-    return map;
   }
 
   public String getPhaseExecutionIdForSweepingOutput() {

@@ -201,7 +201,7 @@ public class InfrastructureMapperTest extends CategoryTest {
   public void testPdcInfrastructureWithConnectorToOutcome() {
     PdcInfrastructure infrastructure =
         PdcInfrastructure.builder()
-            .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+            .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
             .connectorRef(ParameterField.createValueField("connector-ref"))
             .hostFilters(ParameterField.createValueField(Arrays.asList("host1", "host2")))
             .build();
@@ -211,7 +211,7 @@ public class InfrastructureMapperTest extends CategoryTest {
 
     assertThat(infrastructureOutcome)
         .isEqualToIgnoringGivenFields(PdcInfrastructureOutcome.builder()
-                                          .sshKeyRef("ssh-key-ref")
+                                          .credentialsRef("ssh-key-ref")
                                           .connectorRef("connector-ref")
                                           .hostFilters(Arrays.asList("host1", "host2"))
                                           .environment(environment)
@@ -225,7 +225,7 @@ public class InfrastructureMapperTest extends CategoryTest {
   public void testPdcInfrastructureWithHostsToOutcome() {
     PdcInfrastructure infrastructure =
         PdcInfrastructure.builder()
-            .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+            .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
             .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2", "host3")))
             .build();
 
@@ -234,7 +234,7 @@ public class InfrastructureMapperTest extends CategoryTest {
 
     assertThat(infrastructureOutcome)
         .isEqualToIgnoringGivenFields(PdcInfrastructureOutcome.builder()
-                                          .sshKeyRef("ssh-key-ref")
+                                          .credentialsRef("ssh-key-ref")
                                           .hosts(Arrays.asList("host1", "host2", "host3"))
                                           .environment(environment)
                                           .build(),
@@ -257,7 +257,7 @@ public class InfrastructureMapperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testPdcInfrastructureEmptyHostsAndConnector() {
     PdcInfrastructure emptySshKeyRef = PdcInfrastructure.builder()
-                                           .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+                                           .credentialsRef(ParameterField.createValueField("ssh-key-ref"))
                                            .hosts(ParameterField.ofNull())
                                            .connectorRef(ParameterField.ofNull())
                                            .build();

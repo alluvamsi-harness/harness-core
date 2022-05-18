@@ -99,10 +99,29 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
   }
 
   @Override
+  public List<EntitySetupUsageDTO> listAllReferredUsages(
+      String accountIdentifier, String referredByEntityFQN, EntityType referredEntityType) {
+    Criteria criteria = entitySetupUsageFilterHelper.createCriteriaForListAllReferredUsages(
+        accountIdentifier, referredByEntityFQN, referredEntityType, null);
+    return entityReferenceRepository.findAll(criteria, Pageable.unpaged())
+        .getContent()
+        .stream()
+        .map(entityReference -> setupUsageEntityToDTO.createEntityReferenceDTO(entityReference))
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public Boolean isEntityReferenced(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType) {
     Criteria criteria = entitySetupUsageFilterHelper.createCriteriaToCheckWhetherThisEntityIsReferred(
         accountIdentifier, referredEntityFQN, referredEntityType);
     return entityReferenceRepository.exists(criteria);
+  }
+
+  @Override
+  public Long referredByEntityCount(String accountIdentifier, String referredEntityFQN, EntityType referredEntityType) {
+    Criteria criteria = entitySetupUsageFilterHelper.createCriteriaToCheckWhetherThisEntityIsReferred(
+        accountIdentifier, referredEntityFQN, referredEntityType);
+    return entityReferenceRepository.countAll(criteria);
   }
 
   @Override
@@ -247,5 +266,16 @@ public class EntitySetupUsageServiceImpl implements EntitySetupUsageService {
   @Override
   public long deleteByReferredByEntityType(EntityType referredByEntityType) {
     return entityReferenceRepository.deleteAllByReferredByEntityType(referredByEntityType.getYamlName());
+  }
+
+  @Override
+  public Page<EntitySetupUsageDTO> listAllEntityUsagePerEntityScope(int page, int size, String accountIdentifier,
+      String referredEntityFQScope, EntityType referredEntityType, EntityType referredByEntityType, Sort sort) {
+    Criteria criteria = entitySetupUsageFilterHelper.createCriteriaForEntitiesInScope(
+        accountIdentifier, referredEntityFQScope, referredEntityType, referredByEntityType);
+
+    Pageable pageable = getPageRequest(page, size, sort);
+    Page<EntitySetupUsage> entityReferences = entityReferenceRepository.findAll(criteria, pageable);
+    return entityReferences.map(entityReference -> setupUsageEntityToDTO.createEntityReferenceDTO(entityReference));
   }
 }

@@ -634,6 +634,30 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "CustomStageConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StageInfoConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "steps"
+          ],
+          "properties": {
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ExecutionWrapperConfig"
+              },
+              "maxItems": 2147483647,
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "Distribution": {
       "type": "object",
       "required": [
@@ -1160,82 +1184,6 @@
     },
     "JsonNode": {
       "type": "object",
-      "properties": {
-        "array": {
-          "type": "boolean"
-        },
-        "bigDecimal": {
-          "type": "boolean"
-        },
-        "bigInteger": {
-          "type": "boolean"
-        },
-        "binary": {
-          "type": "boolean"
-        },
-        "boolean": {
-          "type": "boolean"
-        },
-        "containerNode": {
-          "type": "boolean"
-        },
-        "double": {
-          "type": "boolean"
-        },
-        "float": {
-          "type": "boolean"
-        },
-        "floatingPointNumber": {
-          "type": "boolean"
-        },
-        "int": {
-          "type": "boolean"
-        },
-        "integralNumber": {
-          "type": "boolean"
-        },
-        "long": {
-          "type": "boolean"
-        },
-        "missingNode": {
-          "type": "boolean"
-        },
-        "nodeType": {
-          "type": "string",
-          "enum": [
-            "ARRAY",
-            "BINARY",
-            "BOOLEAN",
-            "MISSING",
-            "NULL",
-            "NUMBER",
-            "OBJECT",
-            "POJO",
-            "STRING"
-          ]
-        },
-        "null": {
-          "type": "boolean"
-        },
-        "number": {
-          "type": "boolean"
-        },
-        "object": {
-          "type": "boolean"
-        },
-        "pojo": {
-          "type": "boolean"
-        },
-        "short": {
-          "type": "boolean"
-        },
-        "textual": {
-          "type": "boolean"
-        },
-        "valueNode": {
-          "type": "boolean"
-        }
-      },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "KeyValuesCriteriaSpec": {
@@ -2844,6 +2792,22 @@
                 "properties": {
                   "spec": {
                     "$ref": "#/definitions/ApprovalStageConfig"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "Custom"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/definitions/CustomStageConfig"
                   }
                 }
               }

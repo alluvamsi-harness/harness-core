@@ -48,6 +48,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.harness.agent.sdk.HarnessAlwaysRun;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -233,6 +234,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = BRETT)
   @Category(UnitTests.class)
+  @HarnessAlwaysRun
   public void shouldExecuteTask() {
     Delegate delegate = createDelegateBuilder().build();
     persistence.save(delegate);
