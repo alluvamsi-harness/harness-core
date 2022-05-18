@@ -169,12 +169,14 @@ public class CloudformationCreateStackStep
     CloudFormationCreateStackNGResponse cloudFormationCreateStackNGResponse =
         (CloudFormationCreateStackNGResponse) cloudformationTaskNGResponse.getCloudFormationCommandNGResponse();
 
-    cloudformationStepHelper.saveCloudFormationInheritOutput(stepConfiguration,
-        getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()), ambiance,
-        cloudFormationCreateStackNGResponse.isExistentStack());
-    CloudformationConfig cloudformationConfig = cloudformationStepHelper.getCloudformationConfig(
-        ambiance, stepParameters, (CloudFormationCreateStackPassThroughData) passThroughData);
-    cloudformationConfigDAL.saveCloudformationConfig(cloudformationConfig);
+    if (!cloudformationTaskNGResponse.isStackSkipped()) {
+      cloudformationStepHelper.saveCloudFormationInheritOutput(stepConfiguration,
+          getParameterFieldValue(cloudformationCreateStackStepParameters.getProvisionerIdentifier()), ambiance,
+          cloudFormationCreateStackNGResponse.isExistentStack());
+      CloudformationConfig cloudformationConfig = cloudformationStepHelper.getCloudformationConfig(
+          ambiance, stepParameters, (CloudFormationCreateStackPassThroughData) passThroughData);
+      cloudformationConfigDAL.saveCloudformationConfig(cloudformationConfig);
+    }
     return StepResponse.builder()
         .unitProgressList(cloudformationTaskNGResponse.getUnitProgressData().getUnitProgresses())
         .stepOutcome(StepResponse.StepOutcome.builder()
