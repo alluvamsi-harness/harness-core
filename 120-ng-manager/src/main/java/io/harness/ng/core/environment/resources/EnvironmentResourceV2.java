@@ -49,7 +49,6 @@ import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.environment.mappers.EnvironmentFilterHelper;
 import io.harness.ng.core.environment.mappers.EnvironmentMapper;
-import io.harness.ng.core.environment.mappers.NGEnvironmentEntityMapper;
 import io.harness.ng.core.environment.services.EnvironmentService;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.utils.CoreCriteriaUtils;
@@ -62,6 +61,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -126,7 +126,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
           @Content(mediaType = NGCommonEntityConstants.APPLICATION_YAML_MEDIA_TYPE,
               schema = @Schema(implementation = ErrorDTO.class))
     })
-@OwnedBy(HarnessTeam.PIPELINE)
+@OwnedBy(HarnessTeam.CDC)
 public class EnvironmentResourceV2 {
   private final EnvironmentService environmentService;
   private final AccessControlClient accessControlClient;
@@ -161,8 +161,8 @@ public class EnvironmentResourceV2 {
     if (environment.isPresent()) {
       version = environment.get().getVersion().toString();
       if (EmptyPredicate.isEmpty(environment.get().getYaml())) {
-        NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment.get());
-        environment.get().setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+        NGEnvironmentConfig ngEnvironmentConfig = EnvironmentMapper.toNGEnvironmentConfig(environment.get());
+        environment.get().setYaml(EnvironmentMapper.toYaml(ngEnvironmentConfig));
       }
     } else {
       throw new NotFoundException(String.format("Environment with identifier [%s] in project [%s], org [%s] not found",
@@ -322,8 +322,8 @@ public class EnvironmentResourceV2 {
     Page<Environment> environmentEntities = environmentService.list(criteria, pageRequest);
     environmentEntities.forEach(environment -> {
       if (EmptyPredicate.isEmpty(environment.getYaml())) {
-        NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment);
-        environment.setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+        NGEnvironmentConfig ngEnvironmentConfig = EnvironmentMapper.toNGEnvironmentConfig(environment);
+        environment.setYaml(EnvironmentMapper.toYaml(ngEnvironmentConfig));
       }
     });
     return ResponseDTO.newResponse(getNGPageResponse(environmentEntities.map(EnvironmentMapper::toResponseWrapper)));
@@ -375,6 +375,15 @@ public class EnvironmentResourceV2 {
     List<AccessControlDTO> accessControlList =
         accessControlClient.checkForAccess(permissionCheckDTOS).getAccessControlList();
     return ResponseDTO.newResponse(filterEnvironmentResponseByPermissionAndId(accessControlList, environmentList));
+  }
+
+  @GET
+  @Path("/dummy-env-api")
+  @ApiOperation(value = "This is dummy api to expose NGEnvironmentConfig", nickname = "dummyNGEnvironmentConfigApi")
+  @Hidden
+  // do not delete this.
+  public ResponseDTO<NGEnvironmentConfig> getNGEnvironmentConfig() {
+    return ResponseDTO.newResponse(NGEnvironmentConfig.builder().build());
   }
 
   private List<EnvironmentResponse> filterEnvironmentResponseByPermissionAndId(

@@ -26,6 +26,7 @@ import io.harness.cdng.infra.steps.InfraStepParameters;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
+import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
 import io.harness.cdng.k8s.DeleteResourcesWrapper;
 import io.harness.cdng.k8s.K8sBlueGreenOutcome;
 import io.harness.cdng.k8s.K8sCanaryOutcome;
@@ -52,8 +53,21 @@ import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
 import io.harness.cdng.pipeline.beans.RollbackNode;
 import io.harness.cdng.pipeline.beans.RollbackOptionalChildChainStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
+import io.harness.cdng.provision.cloudformation.CloudformationCreateStackStepInfo;
+import io.harness.cdng.provision.cloudformation.CloudformationDeleteStackStepInfo;
+import io.harness.cdng.provision.cloudformation.CloudformationRollbackStepInfo;
 import io.harness.cdng.provision.terraform.TerraformApplyStepInfo;
 import io.harness.cdng.provision.terraform.TerraformPlanStepInfo;
+import io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepInfo;
+import io.harness.cdng.serverless.ServerlessAwsLambdaDeployStepParameters;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackDataOutcome;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepInfo;
+import io.harness.cdng.serverless.ServerlessAwsLambdaRollbackStepParameters;
+import io.harness.cdng.serverless.ServerlessGitFetchOutcome;
+import io.harness.cdng.serverless.ServerlessStepPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessExecutionPassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessGitFetchFailurePassThroughData;
+import io.harness.cdng.serverless.beans.ServerlessStepExceptionPassThroughData;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchOutcome;
 import io.harness.cdng.tasks.manifestFetch.step.ManifestFetchParameters;
@@ -124,5 +138,20 @@ public class NGKryoRegistrar implements KryoRegistrar {
     kryo.register(CDAccountExecutionMetadata.class, 12550);
 
     kryo.register(InfraSectionStepParameters.class, 12552);
+    kryo.register(CloudformationCreateStackStepInfo.class, 12566);
+    kryo.register(CloudformationDeleteStackStepInfo.class, 12567);
+
+    kryo.register(ServerlessAwsLambdaDeployStepInfo.class, 12571);
+    kryo.register(ServerlessAwsLambdaDeployStepParameters.class, 12572);
+    kryo.register(ServerlessStepPassThroughData.class, 12573);
+    kryo.register(ServerlessAwsLambdaRollbackStepInfo.class, 12574);
+    kryo.register(ServerlessAwsLambdaRollbackStepParameters.class, 12575);
+    kryo.register(ServerlessExecutionPassThroughData.class, 12577);
+    kryo.register(ServerlessAwsLambdaInfrastructure.class, 12579);
+    kryo.register(ServerlessStepExceptionPassThroughData.class, 12580);
+    kryo.register(ServerlessGitFetchFailurePassThroughData.class, 12581);
+    kryo.register(ServerlessGitFetchOutcome.class, 12582);
+    kryo.register(ServerlessAwsLambdaRollbackDataOutcome.class, 12583);
+    kryo.register(CloudformationRollbackStepInfo.class, 12584);
   }
 }

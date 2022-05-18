@@ -238,7 +238,7 @@ pmsGrpcClientConfig:
   target: localhost:12011
   authority: localhost
 
-shouldConfigureWithPMS: false
+shouldConfigureWithPMS: ${SHOULD_CONFIGURE_WITH_PMS:-false}
 
 ceAwsSetupConfig:
   accessKey: ce_aws_accessKey_placeholder
@@ -401,7 +401,8 @@ scopeAccessCheckEnabled: true
 
 hostname: ${HOSTNAME:-localhost}
 
-signupTargetEnv: "CI Target"
+signupTargetEnv: "CI PR Target"
+delegateStatusEndpoint: "34.123.209.41"
 
 basePathPrefix: ${BASE_PATH_PREFIX:-""}
 

@@ -255,7 +255,6 @@ public class AzureVMSSSetupStateTest extends WingsBaseTest {
     assertThat(azureVMSSSetupContextElement.cloneMin()).isNull();
     assertThat(azureVMSSSetupContextElement.toString()).isNotNull();
     assertThat(azureVMSSSetupContextElement.getElementType()).isEqualTo(ContextElementType.AZURE_VMSS_SETUP);
-    assertThat(azureVMSSSetupContextElement.paramMap(context)).isNotEmpty();
 
     assertThat(executionResponse.getStateExecutionData()).isInstanceOf(AzureVMSSSetupStateExecutionData.class);
     AzureVMSSSetupStateExecutionData stateExecutionData =

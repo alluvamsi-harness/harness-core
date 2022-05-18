@@ -10,6 +10,7 @@ package io.harness.ng.core.dto.filestore.node;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.filestore.NGFileType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -31,8 +32,9 @@ public final class FolderNodeDTO extends FileStoreNodeDTO {
   @Schema(description = "Node children") private final List<FileStoreNodeDTO> children = new ArrayList<>();
 
   @Builder
-  public FolderNodeDTO(String identifier, String name, Long lastModifiedAt, String lastModifiedBy) {
-    super(NGFileType.FOLDER, identifier, name, lastModifiedAt, lastModifiedBy);
+  public FolderNodeDTO(String identifier, String parentIdentifier, String name, Long lastModifiedAt,
+      EmbeddedUserDetailsDTO lastModifiedBy) {
+    super(NGFileType.FOLDER, identifier, parentIdentifier, name, lastModifiedAt, lastModifiedBy);
   }
 
   public FileStoreNodeDTO addChild(FileStoreNodeDTO child) {

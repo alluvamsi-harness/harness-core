@@ -44,6 +44,7 @@ import io.harness.data.validator.EntityIdentifier;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.beans.SearchPageParams;
 import io.harness.ng.core.common.beans.NGTag;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -388,7 +389,10 @@ public class FileStoreResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of supported entity types")
       })
   public ResponseDTO<List<EntityType>>
-  getSupportedEntityTypes() {
+  getSupportedEntityTypes(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) @NotBlank String accountIdentifier) {
+    accessControlClient.checkForAccessOrThrow(
+        ResourceScope.of(accountIdentifier, null, null), Resource.of(FILE, null), FILE_VIEW_PERMISSION);
     return ResponseDTO.newResponse(fileStoreService.getSupportedEntityTypes());
   }
 
@@ -425,7 +429,7 @@ public class FileStoreResource {
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of created by usernames")
       })
-  public ResponseDTO<Set<String>>
+  public ResponseDTO<Set<EmbeddedUserDetailsDTO>>
   getCreatedByList(@Parameter(description = ACCOUNT_PARAM_MESSAGE) @QueryParam(ACCOUNT_KEY) String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(ORG_KEY) String orgIdentifier,
       @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(PROJECT_KEY) String projectIdentifier) {

@@ -24,6 +24,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.beans.PageRequestDTO;
+import io.harness.beans.Scope;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectorInfoDTO;
@@ -39,8 +40,10 @@ import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.Commit;
+import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
+import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
@@ -230,5 +233,32 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
     assertThat(listBranchesWithDefaultResponse.getBranchesCount()).isEqualTo(1);
     assertThat(listBranchesWithDefaultResponse.getDefaultBranch()).isEqualTo(defaultBranch);
     assertThat(listBranchesWithDefaultResponse.getBranchesList().get(0)).isEqualTo(branch);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testGetRepoDetails() {
+    when(scmClient.getRepoDetails(any()))
+        .thenReturn(GetUserRepoResponse.newBuilder()
+                        .setRepo(Repository.newBuilder().setBranch(defaultBranch).setName(repoName).build())
+                        .build());
+    final GetUserRepoResponse getUserRepoResponse = scmManagerFacilitatorService.getRepoDetails(
+        accountIdentifier, orgIdentifier, projectIdentifier, (ScmConnector) connectorInfo.getConnectorConfig());
+    assertThat(getUserRepoResponse.getRepo().getName()).isEqualTo(repoName);
+    assertThat(getUserRepoResponse.getRepo().getBranch()).isEqualTo(defaultBranch);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreateNewBranch() {
+    when(scmClient.createNewBranchV2(any(), any(), any()))
+        .thenReturn(CreateBranchResponse.newBuilder().setStatus(200).setError("").build());
+    final CreateBranchResponse createBranchResponse =
+        scmManagerFacilitatorService.createNewBranch(Scope.of(accountIdentifier, orgIdentifier, projectIdentifier),
+            (ScmConnector) connectorInfo.getConnectorConfig(), branch, defaultBranch);
+    assertThat(createBranchResponse.getStatus()).isEqualTo(200);
+    assertThat(createBranchResponse.getError()).isEmpty();
   }
 }

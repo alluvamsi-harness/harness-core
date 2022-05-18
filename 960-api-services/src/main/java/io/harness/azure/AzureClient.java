@@ -7,7 +7,6 @@
 
 package io.harness.azure;
 
-import static io.harness.exception.WingsException.USER;
 import static io.harness.network.Http.getOkHttpClientBuilder;
 
 import static com.google.common.base.Charsets.UTF_8;
@@ -22,10 +21,11 @@ import io.harness.azure.context.AzureClientContext;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.AzureConstants;
 import io.harness.azure.utility.AzureUtils;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.AzureAuthenticationException;
 import io.harness.exception.ExceptionUtils;
-import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.WingsException;
 import io.harness.network.Http;
 
 import com.auth0.jwt.JWT;
@@ -83,12 +83,14 @@ public class AzureClient {
 
     } catch (Exception e) {
       handleAzureAuthenticationException(e);
-      throw new InvalidRequestException("Failed to connect to Azure cluster. " + ExceptionUtils.getMessage(e), USER);
     }
+
+    return null;
   }
 
   protected void handleAzureAuthenticationException(Exception e) {
-    String message = "Authentication failed";
+    String message = null;
+
     Throwable e1 = e;
     while (e1.getCause() != null) {
       e1 = e1.getCause();
@@ -100,8 +102,12 @@ public class AzureClient {
       }
     }
 
-    throw NestedExceptionUtils.hintWithExplanationException(
-        "Check your Azure credentials", "Failed to connect to Azure", new AzureAuthenticationException(message));
+    if (EmptyPredicate.isEmpty(message)) {
+      message = e.getMessage();
+    }
+
+    throw NestedExceptionUtils.hintWithExplanationException("Check your Azure credentials",
+        "Failed to connect to Azure", new AzureAuthenticationException(message, WingsException.USER, e));
   }
 
   protected AzureManagementRestClient getAzureManagementRestClient(AzureEnvironmentType azureEnvironmentType) {

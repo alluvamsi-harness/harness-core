@@ -173,3 +173,5 @@ replace_key_value accessControlClientConfig.accessControlServiceConfig.baseUrl "
 replace_key_value accessControlClientConfig.accessControlServiceSecret "$ACCESS_CONTROL_SECRET"
 
 replace_key_value templateServiceClientConfig.baseUrl "$TEMPLATE_SERVICE_ENDPOINT"
+replace_key_value templateServiceSecret "$TEMPLATE_SERVICE_SECRET"
+

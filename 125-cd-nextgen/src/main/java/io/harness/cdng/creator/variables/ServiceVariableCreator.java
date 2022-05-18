@@ -114,23 +114,10 @@ public class ServiceVariableCreator {
     if (manifestsNode != null) {
       addVariablesForManifests(manifestsNode, yamlPropertiesMap);
     }
-    YamlField artifactOverrideSetsNode = serviceSpecNode.getNode().getField(YamlTypes.ARTIFACT_OVERRIDE_SETS);
-    if (artifactOverrideSetsNode != null) {
-      addVariablesForArtifactOverrideSets(artifactOverrideSetsNode, yamlPropertiesMap);
-    }
-    YamlField manifestOverrideSetsNode = serviceSpecNode.getNode().getField(YamlTypes.MANIFEST_OVERRIDE_SETS);
-    if (manifestOverrideSetsNode != null) {
-      addVariablesForManifestOverrideSets(manifestOverrideSetsNode, yamlPropertiesMap);
-    }
 
     YamlField variablesField = serviceSpecNode.getNode().getField(YAMLFieldNameConstants.VARIABLES);
     if (variablesField != null) {
       VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
-    }
-
-    YamlField variableOverrideSetsField = serviceSpecNode.getNode().getField(YamlTypes.VARIABLE_OVERRIDE_SETS);
-    if (variableOverrideSetsField != null) {
-      addVariablesForVariableOverrideSets(variableOverrideSetsField, yamlPropertiesMap);
     }
   }
 
@@ -140,19 +127,9 @@ public class ServiceVariableCreator {
       addVariablesForArtifacts(artifactsNode, yamlPropertiesMap);
     }
 
-    YamlField artifactOverrideSetsNode = serviceSpecNode.getNode().getField(YamlTypes.ARTIFACT_OVERRIDE_SETS);
-    if (artifactOverrideSetsNode != null) {
-      addVariablesForArtifactOverrideSets(artifactOverrideSetsNode, yamlPropertiesMap);
-    }
-
     YamlField variablesField = serviceSpecNode.getNode().getField(YAMLFieldNameConstants.VARIABLES);
     if (variablesField != null) {
       VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
-    }
-
-    YamlField variableOverrideSetsField = serviceSpecNode.getNode().getField(YamlTypes.VARIABLE_OVERRIDE_SETS);
-    if (variableOverrideSetsField != null) {
-      addVariablesForVariableOverrideSets(variableOverrideSetsField, yamlPropertiesMap);
     }
   }
 
@@ -303,51 +280,6 @@ public class ServiceVariableCreator {
     fields.forEach(field -> {
       if (!field.getName().equals(YamlTypes.UUID)) {
         VariableCreatorHelper.addFieldToPropertiesMap(field, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
-      }
-    });
-  }
-
-  private void addVariablesForArtifactOverrideSets(YamlField fieldNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    List<YamlNode> overrideNodes = fieldNode.getNode().asArray();
-    overrideNodes.forEach(yamlNode -> {
-      YamlField field = yamlNode.getField(YamlTypes.OVERRIDE_SET);
-      if (field != null) {
-        YamlField artifactsNode = field.getNode().getField(YamlTypes.ARTIFACT_LIST_CONFIG);
-        if (VariableCreatorHelper.isNotYamlFieldEmpty(artifactsNode)) {
-          addVariablesForArtifacts(artifactsNode, yamlPropertiesMap);
-        }
-      }
-    });
-  }
-
-  private void addVariablesForManifestOverrideSets(YamlField fieldNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    List<YamlNode> overrideNodes = fieldNode.getNode().asArray();
-    overrideNodes.forEach(yamlNode -> {
-      YamlField field = yamlNode.getField(YamlTypes.OVERRIDE_SET);
-      if (field != null) {
-        YamlField manifestsNode = field.getNode().getField(YamlTypes.MANIFEST_LIST_CONFIG);
-        if (manifestsNode != null) {
-          List<YamlNode> manifestNodes = Optional.of(manifestsNode.getNode().asArray()).orElse(Collections.emptyList());
-          for (YamlNode manifestNode : manifestNodes) {
-            YamlField manifestField = manifestNode.getField(YamlTypes.MANIFEST_CONFIG);
-            if (VariableCreatorHelper.isNotYamlFieldEmpty(manifestField)) {
-              addVariablesForManifest(manifestField, yamlPropertiesMap);
-            }
-          }
-        }
-      }
-    });
-  }
-
-  private void addVariablesForVariableOverrideSets(YamlField fieldNode, Map<String, YamlProperties> yamlPropertiesMap) {
-    List<YamlNode> overrideNodes = fieldNode.getNode().asArray();
-    overrideNodes.forEach(yamlNode -> {
-      YamlField field = yamlNode.getField(YamlTypes.OVERRIDE_SET);
-      if (field != null) {
-        YamlField variablesField = field.getNode().getField(YAMLFieldNameConstants.VARIABLES);
-        if (variablesField != null) {
-          VariableCreatorHelper.addVariablesForVariables(variablesField, yamlPropertiesMap, YamlTypes.SERVICE_CONFIG);
-        }
       }
     });
   }

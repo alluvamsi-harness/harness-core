@@ -34,7 +34,7 @@ public class ResourceRestraintServiceImpl implements ResourceRestraintService {
   public ResourceRestraint get(String accountId, String resourceConstraintId) {
     final Optional<ResourceRestraint> resourceConstraint = resourceRestraintRepository.findById(resourceConstraintId);
     if (resourceConstraint.isPresent() && accountId != null
-        && !resourceConstraint.get().getAccountId().equals(accountId)) {
+        && !accountId.equals(resourceConstraint.get().getAccountId())) {
       return null;
     }
     return resourceConstraint.orElse(null);

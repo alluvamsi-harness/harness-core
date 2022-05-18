@@ -22,13 +22,10 @@ import io.harness.context.ContextElementType;
 import io.harness.ecs.EcsContainerDetails;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 import software.wings.sm.VerificationElement;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Objects;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -61,19 +58,6 @@ public class InstanceElement implements ContextElement, VerificationElement {
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.INSTANCE;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put(INSTANCE, this);
-    if (host != null) {
-      map.putAll(host.paramMap(context));
-    }
-    if (serviceTemplateElement != null) {
-      map.putAll(serviceTemplateElement.paramMap(context));
-    }
-    return map;
   }
 
   public EcsContainerDetails getEcsContainerDetails() {

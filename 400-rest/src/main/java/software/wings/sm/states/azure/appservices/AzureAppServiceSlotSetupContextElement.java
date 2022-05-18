@@ -15,13 +15,9 @@ import io.harness.context.ContextElementType;
 import io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData;
 
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.google.common.collect.ImmutableMap;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -51,14 +47,6 @@ public class AzureAppServiceSlotSetupContextElement implements ContextElement, S
   @Override
   public ContextElementType getElementType() {
     return ContextElementType.AZURE_WEBAPP_SETUP;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("webApp", webApp);
-    map.put("deploymentSlot", deploymentSlot);
-    return ImmutableMap.of("azurewebapp", map);
   }
 
   @Override

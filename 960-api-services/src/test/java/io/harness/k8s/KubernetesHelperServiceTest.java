@@ -111,18 +111,6 @@ public class KubernetesHelperServiceTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = ANSHUL)
-  @Category(UnitTests.class)
-  public void testGetIstioClient() {
-    KubernetesConfig kubernetesConfig = KubernetesConfig.builder().build();
-    kubernetesConfig.setAuthType(KubernetesClusterAuthType.OIDC);
-    doReturn(null).when(oidcTokenRetriever).getOidcIdToken(kubernetesConfig);
-
-    helperService.getIstioClient(kubernetesConfig);
-    verify(oidcTokenRetriever, times(1)).getOidcIdToken(kubernetesConfig);
-  }
-
-  @Test
   @Owner(developers = OwnerRule.SATYAM)
   @Category(UnitTests.class)
   public void testValidateCluster() {

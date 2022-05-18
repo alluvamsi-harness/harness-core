@@ -79,6 +79,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
@@ -100,6 +101,7 @@ public class EcsBGUpdateListnerStateTest extends WingsBaseTest {
   @Mock private ActivityService mockActivityService;
   @Mock private EcsStateHelper mockEcsStateHelper;
   @Mock private LogService mockLogService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private EcsBGUpdateListnerState state = new EcsBGUpdateListnerState("stateName");
   @InjectMocks
@@ -119,7 +121,7 @@ public class EcsBGUpdateListnerStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).getContextElement(any());
     Environment environment = anEnvironment().uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(environment).when(mockParams).getEnv();
+    doReturn(environment).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     Application application = anApplication().uuid(APP_ID).name(APP_NAME).accountId(ACCOUNT_ID).build();
     doReturn(application).when(mockAppService).get(anyString());
     EcsInfrastructureMapping mapping = anEcsInfrastructureMapping()

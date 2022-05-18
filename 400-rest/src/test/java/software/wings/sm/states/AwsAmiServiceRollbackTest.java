@@ -94,6 +94,7 @@ import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
@@ -119,6 +120,7 @@ public class AwsAmiServiceRollbackTest extends WingsBaseTest {
   @Mock private KryoSerializer kryoSerializer;
   @Mock private StateExecutionService stateExecutionService;
   @Mock private FeatureFlagService featureFlagService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks private AwsAmiServiceRollback state = new AwsAmiServiceRollback("stepName");
 
@@ -184,10 +186,10 @@ public class AwsAmiServiceRollbackTest extends WingsBaseTest {
     doReturn(EmbeddedUser.builder().email("user@harness.io").name("user").build()).when(mockParams).getCurrentUser();
     doReturn(mockParams).when(mockContext).getContextElement(any());
     Environment environment = anEnvironment().uuid(ENV_ID).environmentType(PROD).name(ENV_NAME).build();
-    doReturn(environment).when(mockParams).getEnv();
+    doReturn(environment).when(workflowStandardParamsExtensionService).getEnv(mockParams);
     doReturn(environment).when(mockContext).fetchRequiredEnvironment();
     Application application = anApplication().uuid(APP_ID).name(APP_NAME).accountId(ACCOUNT_ID).build();
-    doReturn(application).when(mockParams).getApp();
+    doReturn(application).when(workflowStandardParamsExtensionService).getApp(mockParams);
     Service service = Service.builder().uuid(SERVICE_ID).name(SERVICE_NAME).build();
     doReturn(service).when(mockServiceResourceService).getWithDetails(anyString(), anyString());
     doReturn(serviceSetupElement)

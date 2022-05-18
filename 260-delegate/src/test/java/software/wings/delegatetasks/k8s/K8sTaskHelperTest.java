@@ -112,6 +112,7 @@ import software.wings.exception.ShellScriptException;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.helm.HelmHelper;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
+import software.wings.helpers.ext.k8s.K8sManagerHelper;
 import software.wings.helpers.ext.k8s.request.K8sApplyTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
@@ -403,8 +404,10 @@ public class K8sTaskHelperTest extends CategoryTest {
 
     // only values.yaml
     FileData fileData = prepareValuesYamlFile();
-    ManifestFile values =
-        ManifestFile.builder().fileName(fileData.getFileName()).fileContent(fileData.getFileContent()).build();
+    software.wings.beans.dto.ManifestFile values = software.wings.beans.dto.ManifestFile.builder()
+                                                       .fileName(fileData.getFileName())
+                                                       .fileContent(fileData.getFileContent())
+                                                       .build();
     assertThat(helper.fetchManifestFilesAndWriteToDirectory(
                    K8sDelegateManifestConfig.builder().manifestFiles(asList(values)).manifestStoreTypes(Local).build(),
                    manifestFileDirectory, logCallback, LONG_TIMEOUT_INTERVAL))
@@ -509,9 +512,13 @@ public class K8sTaskHelperTest extends CategoryTest {
     assertThat(file.list()).contains("test.yaml");
   }
 
-  private List<ManifestFile> convertFileDataToManifestFiles(List<FileData> fileDataList) {
+  private List<software.wings.beans.dto.ManifestFile> convertFileDataToManifestFiles(List<FileData> fileDataList) {
     return fileDataList.stream()
-        .map(p -> ManifestFile.builder().fileName(p.getFileName()).fileContent(p.getFileContent()).build())
+        .map(p
+            -> software.wings.beans.dto.ManifestFile.builder()
+                   .fileName(p.getFileName())
+                   .fileContent(p.getFileContent())
+                   .build())
         .collect(Collectors.toList());
   }
 
@@ -519,7 +526,7 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void manifestFilesFromGitFetchFilesResult() {
-    List<ManifestFile> manifestFiles = K8sTaskHelper.manifestFilesFromGitFetchFilesResult(
+    List<ManifestFile> manifestFiles = K8sManagerHelper.manifestFilesFromGitFetchFilesResult(
         GitFetchFilesResult.builder()
             .files(asList(GitFile.builder().fileContent("abc").filePath("file-1").build()))
             .build(),
@@ -528,14 +535,15 @@ public class K8sTaskHelperTest extends CategoryTest {
     assertThat(manifestFiles.get(0).getFileContent()).isEqualTo("abc");
     assertThat(manifestFiles.get(0).getFileName()).isEqualTo("file-1");
 
-    assertThat(K8sTaskHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), "")).isEmpty();
+    assertThat(K8sManagerHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), ""))
+        .isEmpty();
   }
 
   @Test
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void manifestFilesFromGitFetchFilesResult_EmptyFiles() {
-    assertThat(K8sTaskHelper.manifestFilesFromGitFetchFilesResult(
+    assertThat(K8sManagerHelper.manifestFilesFromGitFetchFilesResult(
                    GitFetchFilesResult.builder().files(emptyList()).build(), ""))
         .isEmpty();
   }
@@ -544,7 +552,8 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Owner(developers = YOGESH)
   @Category(UnitTests.class)
   public void manifestFilesFromGitFetchFilesResult_NullFiles() {
-    assertThat(K8sTaskHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), "")).isEmpty();
+    assertThat(K8sManagerHelper.manifestFilesFromGitFetchFilesResult(GitFetchFilesResult.builder().build(), ""))
+        .isEmpty();
   }
 
   @Test
@@ -1018,7 +1027,7 @@ public class K8sTaskHelperTest extends CategoryTest {
     K8sDelegateManifestConfig config =
         K8sDelegateManifestConfig.builder()
             .manifestStoreTypes(Remote)
-            .manifestFiles(singletonList(ManifestFile.builder().accountId("1234").build()))
+            .manifestFiles(singletonList(software.wings.beans.dto.ManifestFile.builder().accountId("1234").build()))
             .build();
 
     FileData fileData = FileData.builder().fileName("test").build();
@@ -1049,7 +1058,7 @@ public class K8sTaskHelperTest extends CategoryTest {
     K8sDelegateManifestConfig config =
         K8sDelegateManifestConfig.builder()
             .manifestStoreTypes(Remote)
-            .manifestFiles(singletonList(ManifestFile.builder().accountId("1234").build()))
+            .manifestFiles(singletonList(software.wings.beans.dto.ManifestFile.builder().accountId("1234").build()))
             .build();
     KubernetesResource resource = KubernetesResource.builder().spec("spec").build();
 

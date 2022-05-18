@@ -118,6 +118,7 @@ import software.wings.settings.SettingVariableTypes;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.utils.GitUtilsManager;
 import software.wings.utils.WingsTestConstants;
 
@@ -159,6 +160,7 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
   @Mock private LogService logService;
   @Mock private FeatureFlagService featureFlagService;
   @Mock private StateExecutionService stateExecutionService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @InjectMocks @Spy private CloudFormationCreateStackState state = new CloudFormationCreateStackState("stateName");
 
@@ -172,7 +174,7 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
     WorkflowStandardParams mockParams = mock(WorkflowStandardParams.class);
     doReturn(mockParams).when(mockContext).fetchWorkflowStandardParamsFromContext();
     Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
-    doReturn(env).when(mockParams).fetchRequiredEnv();
+    doReturn(env).when(workflowStandardParamsExtensionService).fetchRequiredEnv(mockParams);
 
     Application application = new Application();
     application.setAppId(APP_ID);

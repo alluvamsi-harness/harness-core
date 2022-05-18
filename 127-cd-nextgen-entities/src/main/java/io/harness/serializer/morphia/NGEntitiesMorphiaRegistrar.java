@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.serializer.morphia;
 
 import io.harness.cdng.artifact.bean.yaml.AcrArtifactConfig;
@@ -9,6 +16,7 @@ import io.harness.cdng.artifact.bean.yaml.SidecarArtifact;
 import io.harness.cdng.artifact.outcome.AcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
+import io.harness.cdng.gitops.entity.Cluster;
 import io.harness.cdng.manifest.yaml.ManifestsOutcome;
 import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.service.beans.ServiceConfigOutcome;
@@ -17,6 +25,8 @@ import io.harness.cdng.service.beans.ServiceUseFromStage;
 import io.harness.cdng.service.beans.StageOverridesConfig;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.morphia.MorphiaRegistrarHelperPut;
+import io.harness.ng.core.environment.beans.Environment;
+import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
 import io.harness.ng.core.service.entity.ServiceEntity;
 
 import java.util.Set;
@@ -25,6 +35,9 @@ public class NGEntitiesMorphiaRegistrar implements MorphiaRegistrar {
   @Override
   public void registerClasses(Set<Class> set) {
     set.add(ServiceEntity.class);
+    set.add(Cluster.class);
+    set.add(Environment.class);
+    set.add(InfrastructureEntity.class);
   }
 
   @Override

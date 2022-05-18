@@ -29,6 +29,7 @@ public interface StepSpecTypeConstants {
   String SERVICENOW_CREATE = "ServiceNowCreate";
   String SERVICENOW_UPDATE = "ServiceNowUpdate";
   String APPROVAL_STAGE = "Approval";
+  String CUSTOM_STAGE = "Custom";
   String DEPLOYMENT_STAGE = "Deployment";
   String CI_STAGE = "CI";
   String SECURITY_STAGE = "SecurityTests";

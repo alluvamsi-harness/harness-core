@@ -348,7 +348,8 @@ public enum TaskType {
   CLOUDFORMATION_TASK_NG(TaskGroup.CLOUDFORMATION_NG, "Cloudformation Task"),
   ACR_ARTIFACT_TASK_NG(TaskGroup.ARTIFACT_COLLECT_NG, "ACR Task"),
   SERVERLESS_GIT_FETCH_TASK_NG(TaskGroup.SERVERLESS_NG, "Git Fetch Files Task"),
-  SERVERLESS_COMMAND_TASK(TaskGroup.SERVERLESS_NG, "Serverless Deploy Task");
+  SERVERLESS_COMMAND_TASK(TaskGroup.SERVERLESS_NG, "Serverless Deploy Task"),
+  FETCH_S3_FILE_TASK_NG(TaskGroup.AWS, "Fetch S3 files Task");
 
   private final TaskGroup taskGroup;
   private final String displayName;

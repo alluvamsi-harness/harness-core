@@ -32,7 +32,7 @@ public class MonitoredServiceYamlExpressionEvaluator extends EngineExpressionEva
   protected void initialize() {
     super.initialize();
     addToContext("__yamlExpression",
-        MonitoredServiceYamlExpressionFunctor.builder().rootYamlField(getPipelineYamlField()).build());
+        MonitoredServiceYamlExpressionFunctor.builder().rootYamlField(getMonitoredServiceYamlField()).build());
   }
 
   @Override
@@ -41,7 +41,7 @@ public class MonitoredServiceYamlExpressionEvaluator extends EngineExpressionEva
     return listBuilder.add("__yamlExpression").addAll(super.fetchPrefixes()).build();
   }
 
-  private YamlField getPipelineYamlField() {
+  private YamlField getMonitoredServiceYamlField() {
     try {
       YamlField yamlField = YamlUtils.readTree(yaml);
       return yamlField.getNode().getField("monitoredService");

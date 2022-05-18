@@ -55,6 +55,7 @@ import software.wings.sm.InstanceStatusSummary;
 import software.wings.sm.State;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.stencils.DefaultValue;
 
 import com.github.reinert.jjschema.Attributes;
@@ -78,6 +79,7 @@ public class KubernetesSteadyStateCheck extends State {
   @Inject private transient ActivityService activityService;
   @Inject private transient ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
   @Inject private transient ContainerMasterUrlHelper containerMasterUrlHelper;
+  @Inject private transient WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Getter @Setter @Attributes(title = "Labels") private List<Label> labels = Lists.newArrayList();
 
@@ -99,7 +101,7 @@ public class KubernetesSteadyStateCheck extends State {
     try {
       WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
       Application app = appService.get(context.getAppId());
-      Environment env = workflowStandardParams.getEnv();
+      Environment env = workflowStandardParamsExtensionService.getEnv(workflowStandardParams);
       ContainerInfrastructureMapping containerInfraMapping =
           (ContainerInfrastructureMapping) infrastructureMappingService.get(
               app.getUuid(), context.fetchInfraMappingId());

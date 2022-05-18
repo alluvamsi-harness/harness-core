@@ -63,4 +63,9 @@ public class YAMLFieldNameConstants {
   public final String CONFIGURATION = "configuration";
   public final String TEMPLATE = "template";
   public final String TEMPLATE_INPUTS = "templateInputs";
+
+  public final String BASE_IMAGE_CONNECTOR_REFS = "baseImageConnectorRefs";
+
+  // SpecNode dependency
+  public final String CHILD_NODE_OF_SPEC = "childNodeOfSpec";
 }

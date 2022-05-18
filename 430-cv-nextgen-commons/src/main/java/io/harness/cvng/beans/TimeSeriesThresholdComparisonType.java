@@ -39,7 +39,7 @@ public enum TimeSeriesThresholdComparisonType {
     return displayName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static TimeSeriesThresholdComparisonType fromDisplayName(String displayName) {
     for (TimeSeriesThresholdComparisonType timeSeriesThresholdComparisonType :
         TimeSeriesThresholdComparisonType.values()) {

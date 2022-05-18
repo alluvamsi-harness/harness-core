@@ -50,7 +50,7 @@ public class NextStepAdviser implements Adviser {
       return false;
     }
     // Todo: Create a custom adviser for CD and stitch it with the planNode for cd
-    // This is required so that the next stage does not run if the given stage is rolled back. If removed, the next step
+    // This is required so that the next step does not run if the given stage is rolled back. If removed, the next step
     // would be marked as skipped, rather than NotStarted
     OptionalSweepingOutput optionalSweepingOutput =
         executionSweepingOutputService.resolveOptional(advisingEvent.getAmbiance(),

@@ -238,11 +238,11 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
   // Dependency passed from parent to its children plan creator
   private PlanCreationResponse createPlanForDependencyInternal(
       String currentYaml, YamlField field, PlanCreationContext ctx, Dependency dependency) {
-    String fullyQualifiedName = YamlUtils.getFullyQualifiedName(field.getNode());
     try (AutoLogContext ignore =
              PlanCreatorUtils.autoLogContext(ctx.getMetadata().getMetadata(), ctx.getMetadata().getAccountIdentifier(),
                  ctx.getMetadata().getOrgIdentifier(), ctx.getMetadata().getProjectIdentifier())) {
       try {
+        String fullyQualifiedName = YamlUtils.getFullyQualifiedName(field.getNode());
         Optional<PartialPlanCreator<?>> planCreatorOptional =
             PlanCreatorServiceHelper.findPlanCreator(planCreators, field);
         if (!planCreatorOptional.isPresent()) {

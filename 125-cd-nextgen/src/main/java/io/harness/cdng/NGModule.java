@@ -32,6 +32,8 @@ import io.harness.cdng.buckets.resources.service.GcsResourceServiceImpl;
 import io.harness.cdng.envGroup.mappers.EnvironmentGroupFilterPropertiesMapper;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
 import io.harness.cdng.envGroup.services.EnvironmentGroupServiceImpl;
+import io.harness.cdng.gitops.ClusterServiceImpl;
+import io.harness.cdng.gitops.service.ClusterService;
 import io.harness.cdng.instance.info.InstanceInfoService;
 import io.harness.cdng.instance.info.InstanceInfoServiceImpl;
 import io.harness.cdng.jira.resources.service.JiraResourceService;
@@ -51,6 +53,10 @@ import io.harness.filter.mapper.FilterPropertiesMapper;
 import io.harness.filter.service.FilterService;
 import io.harness.licensing.usage.interfaces.LicenseUsageInterface;
 import io.harness.ng.core.NGCoreModule;
+import io.harness.ng.core.environment.services.EnvironmentService;
+import io.harness.ng.core.environment.services.impl.EnvironmentServiceImpl;
+import io.harness.ng.core.infrastructure.services.InfrastructureEntityService;
+import io.harness.ng.core.infrastructure.services.impl.InfrastructureEntityServiceImpl;
 import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.ng.core.service.services.impl.ServiceEntityServiceImpl;
 import io.harness.service.instance.InstanceService;
@@ -93,12 +99,15 @@ public class NGModule extends AbstractModule {
     bind(LicenseUsageInterface.class).to(CDLicenseUsageImpl.class);
     bind(InstanceService.class).to(InstanceServiceImpl.class);
     bind(ServiceEntityService.class).to(ServiceEntityServiceImpl.class);
+    bind(EnvironmentService.class).to(EnvironmentServiceImpl.class);
     bind(ServiceNowResourceService.class).to(ServiceNowResourceServiceImpl.class);
     bind(ArtifactoryResourceService.class).to(ArtifactoryResourceServiceImpl.class);
     bind(EnvironmentGroupService.class).to(EnvironmentGroupServiceImpl.class);
     bind(AcrResourceService.class).to(AcrResourceServiceImpl.class);
     bind(AzureResourceService.class).to(AzureResourceServiceImpl.class);
     bind(FilterService.class).to(FilterServiceImpl.class);
+    bind(ClusterService.class).to(ClusterServiceImpl.class);
+    bind(InfrastructureEntityService.class).to(InfrastructureEntityServiceImpl.class);
 
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);

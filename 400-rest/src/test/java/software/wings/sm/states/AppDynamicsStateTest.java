@@ -76,6 +76,7 @@ import software.wings.service.intfc.ServiceResourceService;
 import software.wings.service.intfc.appdynamics.AppdynamicsService;
 import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionResponse;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.AbstractAnalysisState.CVInstanceApiResponse;
 import software.wings.sm.states.AppDynamicsState.AppDynamicsStateKeys;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
@@ -108,6 +109,7 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
   @Mock private MetricDataAnalysisService metricAnalysisService;
   @Mock private InfrastructureMappingService infraMappingService;
   @Mock private ServiceResourceService serviceResourceService;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   @Mock private AppdynamicsService appdynamicsService;
   @Mock private PhaseElement phaseElement;
@@ -159,6 +161,8 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
     FieldUtils.writeField(appDynamicsState, "appService", appService, true);
     FieldUtils.writeField(appDynamicsState, "accountService", accountService, true);
     FieldUtils.writeField(appDynamicsState, "cvActivityLogService", cvActivityLogService, true);
+    FieldUtils.writeField(
+        appDynamicsState, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
     FieldUtils.writeField(
         appDynamicsState, "workflowVerificationResultService", workflowVerificationResultService, true);
     when(cvActivityLogService.getLoggerByStateExecutionId(anyString(), anyString()))
@@ -321,7 +325,7 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
         .getCVInstanceAPIResponse(any());
     doReturn(workflowId).when(spyAppDynamicsState).getWorkflowId(executionContext);
     doReturn(serviceId).when(spyAppDynamicsState).getPhaseServiceId(executionContext);
-    when(workflowStandardParams.getEnv())
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
         .thenReturn(Environment.Builder.anEnvironment().uuid(UUID.randomUUID().toString()).build());
     when(executionContext.getContextElement(ContextElementType.STANDARD)).thenReturn(workflowStandardParams);
 
@@ -404,7 +408,7 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
     when(executionContext.renderExpression("${workflow.variables.AppDynamics_Tier}")).thenReturn("30889");
     when(appdynamicsService.getTiers(anyString(), anyLong(), anyString(), anyString(), any()))
         .thenReturn(Sets.newHashSet(AppdynamicsTier.builder().id(30889).name("tier").build()));
-    when(workflowStandardParams.getEnv())
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
         .thenReturn(Environment.Builder.anEnvironment().uuid(UUID.randomUUID().toString()).build());
     when(executionContext.getContextElement(ContextElementType.STANDARD)).thenReturn(workflowStandardParams);
     ExecutionResponse executionResponse = spyAppDynamicsState.execute(executionContext);
@@ -696,8 +700,8 @@ public class AppDynamicsStateTest extends APMStateVerificationTestBase {
     when(executionContext.renderExpression("${workflow.variables.AppDynamics_App}")).thenReturn("test_app");
     when(executionContext.renderExpression("${workflow.variables.AppDynamics_Tier}")).thenReturn("test_tier");
     doReturn(Environment.Builder.anEnvironment().uuid(UUID.randomUUID().toString()).build())
-        .when(workflowStandardParams)
-        .getEnv();
+        .when(workflowStandardParamsExtensionService)
+        .getEnv(workflowStandardParams);
     when(executionContext.getContextElement(ContextElementType.STANDARD)).thenReturn(workflowStandardParams);
 
     doReturn(CVInstanceApiResponse.builder()

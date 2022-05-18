@@ -208,7 +208,7 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
             .runSequence(String.valueOf(ambiance.getMetadata().getRunSequence()))
             .executionSource(initializeStepInfo.getExecutionSource())
             .build(),
-        initializeStepInfo.getExecutionElementConfig().getSteps(), AmbianceUtils.getAccountId(ambiance));
+        initializeStepInfo.getExecutionElementConfig().getSteps(), ambiance);
   }
 
   private StepResponse handleK8TaskResponse(

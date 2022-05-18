@@ -77,6 +77,7 @@ import io.harness.rule.Owner;
 import software.wings.WingsBaseTest;
 import software.wings.api.ContainerServiceElement;
 import software.wings.api.ContainerServiceElement.ContainerServiceElementBuilder;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.DeploymentType;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
@@ -138,6 +139,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -186,6 +188,10 @@ public class KubernetesSetupTest extends WingsBaseTest {
   @Mock private ContainerMasterUrlHelper containerMasterUrlHelper;
   @Mock private ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
   @Mock private StateExecutionService stateExecutionService;
+
+  // gets initialized in setup.
+  private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
+  private ContextElementParamMapperFactory contextElementParamMapperFactory;
 
   @InjectMocks private KubernetesSetup kubernetesSetup = new KubernetesSetup("name");
 
@@ -306,15 +312,14 @@ public class KubernetesSetupTest extends WingsBaseTest {
     kubernetesContainerTask.setContainerDefinitions(Lists.newArrayList(containerDefinition));
     when(serviceResourceService.getContainerTaskByDeploymentType(APP_ID, SERVICE_ID, DeploymentType.KUBERNETES.name()))
         .thenReturn(kubernetesContainerTask);
-    on(workflowStandardParams).set("appService", appService);
-    on(workflowStandardParams).set("environmentService", environmentService);
-    on(workflowStandardParams).set("artifactService", artifactService);
-    on(workflowStandardParams).set("serviceTemplateService", serviceTemplateService);
-    on(workflowStandardParams).set("configuration", configuration);
-    on(workflowStandardParams).set("artifactStreamService", artifactStreamService);
-    on(workflowStandardParams).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    on(workflowStandardParams).set("featureFlagService", featureFlagService);
-    on(workflowStandardParams).set("subdomainUrlHelper", subdomainUrlHelper);
+
+    workflowStandardParamsExtensionService = new WorkflowStandardParamsExtensionService(
+        appService, null, artifactService, environmentService, artifactStreamServiceBindingService, null);
+    on(kubernetesSetup).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+
+    contextElementParamMapperFactory =
+        new ContextElementParamMapperFactory(subdomainUrlHelper, workflowExecutionService, artifactService,
+            artifactStreamService, null, featureFlagService, null, workflowStandardParamsExtensionService);
 
     when(artifactService.get(any())).thenReturn(artifact);
     when(artifactStreamService.get(any())).thenReturn(artifactStream);
@@ -364,6 +369,8 @@ public class KubernetesSetupTest extends WingsBaseTest {
     on(context).set("sweepingOutputService", sweepingOutputService);
     on(context).set("evaluator", evaluator);
     on(context).set("settingsService", settingsService);
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
     when(variableProcessor.getVariables(any(), any())).thenReturn(emptyMap());
     when(evaluator.substitute(anyString(), anyMap(), any(VariableResolverTracker.class), anyString()))
         .thenAnswer(i -> i.getArguments()[0]);
@@ -560,6 +567,8 @@ public class KubernetesSetupTest extends WingsBaseTest {
     on(context).set("evaluator", evaluator);
     on(context).set("featureFlagService", featureFlagService);
     on(context).set("settingsService", settingsService);
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
 
     CommandExecutionResult result =
         CommandExecutionResult.builder()

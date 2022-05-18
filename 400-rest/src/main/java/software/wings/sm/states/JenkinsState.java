@@ -68,6 +68,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.State;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.mixin.SweepingOutputStateMixin;
 import software.wings.stencils.DefaultValue;
 
@@ -121,6 +122,7 @@ public class JenkinsState extends State implements SweepingOutputStateMixin {
   @Transient @Inject private SettingsService settingsService;
   @Transient @Inject private KryoSerializer kryoSerializer;
   @Transient @Inject private InfrastructureMappingService infrastructureMappingService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   public JenkinsState(String name) {
     super(name, StateType.JENKINS.name());
@@ -250,9 +252,10 @@ public class JenkinsState extends State implements SweepingOutputStateMixin {
     }
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
 
-    String envId = (workflowStandardParams == null || workflowStandardParams.getEnv() == null)
+    String envId = (workflowStandardParams == null
+                       || workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null)
         ? null
-        : workflowStandardParams.getEnv().getUuid();
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
 
     String accountId = ((ExecutionContextImpl) context).fetchRequiredApp().getAccountId();
 
@@ -387,9 +390,10 @@ public class JenkinsState extends State implements SweepingOutputStateMixin {
     }
     WorkflowStandardParams workflowStandardParams = context.getContextElement(ContextElementType.STANDARD);
 
-    String envId = (workflowStandardParams == null || workflowStandardParams.getEnv() == null)
+    String envId = (workflowStandardParams == null
+                       || workflowStandardParamsExtensionService.getEnv(workflowStandardParams) == null)
         ? null
-        : workflowStandardParams.getEnv().getUuid();
+        : workflowStandardParamsExtensionService.getEnv(workflowStandardParams).getUuid();
 
     String infrastructureMappingId = context.fetchInfraMappingId();
 

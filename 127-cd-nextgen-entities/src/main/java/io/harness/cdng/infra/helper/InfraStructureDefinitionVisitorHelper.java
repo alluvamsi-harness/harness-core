@@ -7,10 +7,14 @@
 
 package io.harness.cdng.infra.helper;
 
-import io.harness.cdng.infra.yaml.InfraStructureDefinition;
+import static io.harness.annotations.dev.HarnessTeam.CDC;
+
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.infra.yaml.InfraStructureDefinitionYaml;
 import io.harness.walktree.visitor.validation.ConfigValidator;
 import io.harness.walktree.visitor.validation.ValidationVisitor;
 
+@OwnedBy(CDC)
 public class InfraStructureDefinitionVisitorHelper implements ConfigValidator {
   @Override
   public void validate(Object object, ValidationVisitor visitor) {
@@ -19,6 +23,6 @@ public class InfraStructureDefinitionVisitorHelper implements ConfigValidator {
 
   @Override
   public Object createDummyVisitableElement(Object originalElement) {
-    return InfraStructureDefinition.builder().build();
+    return InfraStructureDefinitionYaml.builder().build();
   }
 }

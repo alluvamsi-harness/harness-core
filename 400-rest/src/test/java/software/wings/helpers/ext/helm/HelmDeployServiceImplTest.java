@@ -97,8 +97,8 @@ import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
 import software.wings.beans.appmanifest.StoreType;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.command.HelmDummyCommandUnit;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.command.HelmDummyCommandUnitConstants;
+import software.wings.beans.dto.HelmChartSpecification;
 import software.wings.beans.yaml.GitFetchFilesResult;
 import software.wings.delegatetasks.ScmFetchFilesHelper;
 import software.wings.delegatetasks.helm.HarnessHelmDeployConfig;
@@ -253,7 +253,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     when(containerDeploymentDelegateHelper.useK8sSteadyStateCheck(anyBoolean(), any(), any())).thenReturn(true);
     when(k8sTaskHelperBase.readManifests(any(), any())).thenReturn(resources);
     when(k8sTaskHelperBase.getContainerInfos(any(), any(), anyString(), anyLong())).thenReturn(containerInfos);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
              anyString(), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(true);
 
@@ -267,13 +267,13 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
 
     verify(helmClient).install(argumentCaptor.capture(), eq(false));
 
-    verify(k8sTaskHelper, times(1))
+    verify(k8sTaskHelperBase, times(1))
         .doStatusCheckAllResourcesForHelm(any(Kubectl.class),
             eq(asList(
                 KubernetesResourceId.builder().name("helm-deploy").namespace("default").kind("Deployment").build(),
                 KubernetesResourceId.builder().name("helm-deploy-2").namespace("default").kind("StatefulSet").build())),
             anyString(), anyString(), eq("default"), anyString(), any(ExecutionLogCallback.class));
-    verify(k8sTaskHelper, times(1))
+    verify(k8sTaskHelperBase, times(1))
         .doStatusCheckAllResourcesForHelm(any(Kubectl.class),
             eq(asList(KubernetesResourceId.builder()
                           .name("helm-deploy-1")
@@ -304,7 +304,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     when(containerDeploymentDelegateHelper.useK8sSteadyStateCheck(anyBoolean(), any(), any())).thenReturn(true);
     when(k8sTaskHelperBase.readManifests(any(), any())).thenReturn(resources);
     when(k8sTaskHelperBase.getContainerInfos(any(), any(), anyString(), anyLong())).thenReturn(containerInfos);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyList(), anyString(), anyString(),
              eq("default"), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(true);
 
@@ -359,7 +359,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
     HelmCommandResponse response = spyHelmDeployService.deploy(helmInstallCommandRequest);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(FAILURE);
     verify(spyHelmDeployService, never())
-        .getExecutionLogCallback(helmInstallCommandRequest, HelmDummyCommandUnit.WaitForSteadyState);
+        .getExecutionLogCallback(helmInstallCommandRequest, HelmDummyCommandUnitConstants.WaitForSteadyState);
   }
 
   @Test
@@ -1083,7 +1083,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         .thenReturn(containerInfosDefault2);
     when(k8sTaskHelperBase.getContainerInfos(any(), eq("release"), eq("default-3"), eq(LONG_TIMEOUT_INTERVAL)))
         .thenReturn(containerInfosDefault3);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyListOf(KubernetesResourceId.class),
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), anyListOf(KubernetesResourceId.class),
              anyString(), anyString(), anyString(), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(true);
 
@@ -1302,8 +1302,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
         resources.stream().map(KubernetesResource::getResourceId).collect(Collectors.toList());
 
     when(containerDeploymentDelegateHelper.useK8sSteadyStateCheck(anyBoolean(), any(), any())).thenReturn(true);
-    when(k8sTaskHelper.doStatusCheckAllResourcesForHelm(any(Kubectl.class), eq(resourceIds), anyString(), anyString(),
-             anyString(), anyString(), any(ExecutionLogCallback.class)))
+    when(k8sTaskHelperBase.doStatusCheckAllResourcesForHelm(any(Kubectl.class), eq(resourceIds), anyString(),
+             anyString(), anyString(), anyString(), any(ExecutionLogCallback.class)))
         .thenReturn(false);
 
     assertThatExceptionOfType(InvalidRequestException.class)
@@ -1312,7 +1312,7 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
                             helmInstallCommandRequest, resourceIds, executionLogCallback, LONG_TIMEOUT_INTERVAL))
         .withMessage("Steady state check failed");
 
-    verify(k8sTaskHelper, times(1))
+    verify(k8sTaskHelperBase, times(1))
         .doStatusCheckAllResourcesForHelm(
             any(), any(), any(), anyString(), anyString(), anyString(), any(ExecutionLogCallback.class));
   }

@@ -334,6 +334,7 @@ import software.wings.sm.StateMachineExecutor;
 import software.wings.sm.StateType;
 import software.wings.sm.StepExecutionSummary;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.rollback.RollbackStateMachineGenerator;
 import software.wings.sm.states.ElementStateExecutionData;
 import software.wings.sm.states.EnvState.EnvStateKeys;
@@ -455,6 +456,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   @Inject private HelmChartService helmChartService;
   @Inject private StateInspectionService stateInspectionService;
   @Inject private ApplicationManifestService applicationManifestService;
+  @Inject private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Inject private Injector injector;
 
   @Inject @RateLimitCheck private PreDeploymentChecker deployLimitChecker;
@@ -5200,7 +5202,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       return null;
     }
     WorkflowStandardParams workflowStandardParams = executionContext.fetchWorkflowStandardParamsFromContext();
-    String envId = workflowStandardParams.fetchRequiredEnv().getUuid();
+    String envId = workflowStandardParamsExtensionService.fetchRequiredEnv(workflowStandardParams).getUuid();
     PhaseElement phaseElement = executionContext.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
     String serviceId = phaseElement.getServiceElement().getUuid();
 
@@ -6153,5 +6155,38 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
         .in(serviceIds)
         .order(Sort.descending(WorkflowExecutionKeys.createdAt))
         .asList(new FindOptions().skip(executionsToSkip).limit(executionsToIncludeInResponse));
+  }
+
+  @Override
+  public WorkflowExecution getLastSuccessfulWorkflowExecution(
+      String accountId, String appId, String workflowId, String envId, String serviceId, String infraMappingId) {
+    return wingsPersistence.createQuery(WorkflowExecution.class)
+        .filter(WorkflowExecutionKeys.accountId, accountId)
+        .filter(WorkflowExecutionKeys.appId, appId)
+        .filter(WorkflowExecutionKeys.workflowId, workflowId)
+        .filter(WorkflowExecutionKeys.envId, envId)
+        .filter(WorkflowExecutionKeys.serviceIds, serviceId)
+        .filter(WorkflowExecutionKeys.infraMappingIds, infraMappingId)
+        .filter(WorkflowExecutionKeys.status, SUCCESS)
+        .order(Sort.descending(WorkflowExecutionKeys.createdAt))
+        .get();
+  }
+
+  @Override
+  public WorkflowExecutionInfo getWorkflowExecutionInfo(String appId, String workflowExecutionId) {
+    WorkflowExecution workflowExecution =
+        wingsPersistence.getWithAppId(WorkflowExecution.class, appId, workflowExecutionId);
+    if (workflowExecution == null) {
+      throw new InvalidRequestException("Couldn't find a workflow Execution with Id: " + workflowExecutionId, USER);
+    }
+
+    return WorkflowExecutionInfo.builder()
+        .accountId(workflowExecution.getAccountId())
+        .name(workflowExecution.getName())
+        .appId(workflowExecution.getAppId())
+        .executionId(workflowExecutionId)
+        .workflowId(workflowExecution.getWorkflowId())
+        .startTs(workflowExecution.getStartTs())
+        .build();
   }
 }

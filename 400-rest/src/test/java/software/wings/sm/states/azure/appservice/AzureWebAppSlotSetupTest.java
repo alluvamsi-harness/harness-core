@@ -638,7 +638,6 @@ public class AzureWebAppSlotSetupTest extends WingsBaseTest {
     assertThat(setupContextElement.cloneMin()).isNull();
     assertThat(setupContextElement.toString()).isNotNull();
     assertThat(setupContextElement.getElementType()).isEqualTo(AZURE_WEBAPP_SETUP);
-    assertThat(setupContextElement.paramMap(context)).isNotEmpty();
     assertThat(setupContextElement.getType()).isNotNull();
   }
 

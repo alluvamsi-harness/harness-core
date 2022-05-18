@@ -49,6 +49,7 @@ import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,6 +75,8 @@ import io.harness.http.HttpServiceImpl;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
+import software.wings.api.ContextElementParamMapper;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.HostElement;
 import software.wings.api.HttpStateExecutionData;
 import software.wings.api.ServiceElement;
@@ -96,6 +99,8 @@ import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
+import software.wings.sm.WorkflowStandardParamsParamMapper;
 
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -158,15 +163,17 @@ public class HttpStateTest extends WingsBaseTest {
    */
   @Rule public WireMockRule wireMockRule = new WireMockRule(8088);
 
+  @Inject private HttpServiceImpl httpService;
+  @Inject private Injector injector;
+
   @Mock private WorkflowStandardParams workflowStandardParams;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
   @Mock private ActivityHelperService activityHelperService;
   @Mock private FeatureFlagService featureFlagService;
-  @Inject private Injector injector;
   @Mock private DelegateService delegateService;
   @Mock private ExecutionContextImpl executionContext;
   @Mock private TemplateUtils templateUtils;
   @Mock private StateExecutionService stateExecutionService;
-  @Inject private HttpServiceImpl httpService;
   @Mock private AccountServiceImpl accountService;
   @Mock private InfrastructureMappingService infrastructureMappingService;
 
@@ -190,14 +197,15 @@ public class HttpStateTest extends WingsBaseTest {
 
     when(accountService.isCertValidationRequired(any())).thenReturn(false);
 
-    when(workflowStandardParams.fetchRequiredApp()).thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
-    when(workflowStandardParams.getEnv())
+    when(workflowStandardParamsExtensionService.fetchRequiredApp(workflowStandardParams))
+        .thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
+    when(workflowStandardParamsExtensionService.getEnv(workflowStandardParams))
         .thenReturn(anEnvironment().uuid(ENV_ID).name(ENV_NAME).environmentType(EnvironmentType.NON_PROD).build());
+    when(workflowStandardParamsExtensionService.getApp(workflowStandardParams)).thenReturn(app);
     when(workflowStandardParams.getAppId()).thenReturn(APP_ID);
     when(workflowStandardParams.getEnvId()).thenReturn(ENV_ID);
-    when(workflowStandardParams.getApp()).thenReturn(app);
-
     when(workflowStandardParams.getElementType()).thenReturn(ContextElementType.STANDARD);
+
     context = new ExecutionContextImpl(stateExecutionInstance, null, injector);
     context.pushContextElement(workflowStandardParams);
     context.pushContextElement(HostElement.builder().hostName("localhost").build());
@@ -253,12 +261,6 @@ public class HttpStateTest extends WingsBaseTest {
                     .withBody(
                         "{\"status\":{\"code\":\"SUCCESS\"},\"data\":{\"title\":\"Some server\",\"version\":\"2.31.0-MASTER-SNAPSHOT\",\"buildTimestamp\":1506086747259}}")));
 
-    Map<String, Object> map = ImmutableMap.of(ARTIFACT,
-        anArtifact()
-            .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "2.31.0-MASTER-SNAPSHOT")))
-            .build());
-    when(workflowStandardParams.paramMap(context)).thenReturn(map);
-
     HttpState.Builder jsonHttpStateBuilder =
         aHttpState()
             .withName("healthCheck1")
@@ -271,6 +273,21 @@ public class HttpStateTest extends WingsBaseTest {
 
     HttpState httpState = getHttpState(jsonHttpStateBuilder.but(), context);
     FieldUtils.writeField(httpState, "stateExecutionService", stateExecutionService, true);
+
+    // overwrite mapper factory set in getHttpState
+    ContextElementParamMapper workflowStandardParamsMapper = spy(ContextElementParamMapper.class);
+    when(workflowStandardParamsMapper.paramMap(context))
+        .thenReturn(ImmutableMap.of(ARTIFACT,
+            anArtifact()
+                .withMetadata(
+                    new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "2.31.0-MASTER-SNAPSHOT")))
+                .build()));
+
+    ContextElementParamMapperFactory contextElementParamMapperFactory =
+        spy(injector.getInstance(ContextElementParamMapperFactory.class));
+    when(contextElementParamMapperFactory.getParamMapper(workflowStandardParams))
+        .thenReturn(workflowStandardParamsMapper);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
 
     ExecutionResponse response = httpState.execute(context);
 
@@ -313,7 +330,7 @@ public class HttpStateTest extends WingsBaseTest {
         anArtifact()
             .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "2.31.0-MASTER-SNAPSHOT")))
             .build());
-    when(workflowStandardParams.paramMap(context)).thenReturn(map);
+    //    when(workflowStandardParams.paramMap(context)).thenReturn(map);
     List<Variable> templateVariables = asList(aVariable().name("url").value("localhost:8088/health/status").build(),
         aVariable().name("buildNo").value("2.31.0-MASTER-SNAPSHOT").build(),
         aVariable().name("contentType").value("application/json").build());
@@ -785,6 +802,20 @@ public class HttpStateTest extends WingsBaseTest {
     on(httpState).set("accountService", accountService);
     on(httpState).set("infrastructureMappingService", infrastructureMappingService);
     on(httpState).set("featureFlagService", featureFlagService);
+    on(httpState).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+
+    WorkflowStandardParamsParamMapper workflowStandardParamsParamMapper =
+        injector.getInstance(WorkflowStandardParamsParamMapper.class);
+    on(workflowStandardParamsParamMapper)
+        .set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(workflowStandardParamsParamMapper).set("element", workflowStandardParams);
+    ContextElementParamMapperFactory contextElementParamMapperFactory =
+        spy(injector.getInstance(ContextElementParamMapperFactory.class));
+    when(contextElementParamMapperFactory.getParamMapper(workflowStandardParams))
+        .thenReturn(workflowStandardParamsParamMapper);
+
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
 
     doAnswer(invocation -> {
       DelegateTask task = invocation.getArgumentAt(0, DelegateTask.class);

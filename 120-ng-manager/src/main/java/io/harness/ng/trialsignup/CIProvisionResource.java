@@ -8,10 +8,14 @@
 package io.harness.ng.trialsignup;
 
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CI;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.OrgIdentifier;
+import io.harness.ng.core.ProjectIdentifier;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -75,16 +79,27 @@ public class CIProvisionResource {
       @RequestBody(required = true,
           description = "Details of the Connector to create") @Valid @NotNull ScmConnectorDTO scmConnectorDTO,
       @Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
-    return ResponseDTO.newResponse(provisionService.createDefaultScm(scmConnectorDTO, accountIdentifier));
+          NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier) {
+    return ResponseDTO.newResponse(
+        provisionService.createDefaultScm(accountIdentifier, orgIdentifier, projectIdentifier, scmConnectorDTO));
   }
 
   @GET
   @Path("fetch-repo-list")
   @ApiOperation(value = "Get all repositories of the user from scm", nickname = "getAllUserRepos")
   public ResponseDTO<List<UserRepoResponse>> getAllUserRepos(
-      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
-      @NotNull @QueryParam("repoRef") String repoRef) {
-    return ResponseDTO.newResponse(provisionService.getAllUserRepos(accountId, repoRef));
+      @Parameter(description = "Connector ID") @QueryParam("connectorRef") String connectorIdentifier,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
+      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier) {
+    return ResponseDTO.newResponse(
+        provisionService.getAllUserRepos(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier));
   }
 }

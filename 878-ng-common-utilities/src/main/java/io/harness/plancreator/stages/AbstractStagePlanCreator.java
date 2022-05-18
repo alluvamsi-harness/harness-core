@@ -63,7 +63,7 @@ public abstract class AbstractStagePlanCreator<T extends AbstractStageNode> exte
   public abstract PlanNode createPlanForParentNode(PlanCreationContext ctx, T stageNode, List<String> childrenNodeIds);
 
   /**
-   * Adds the nextStepAdviser to the given node if it is not the end stage
+   * Adds the nextStageAdviser to the given node if it is not the end stage
    */
   protected List<AdviserObtainment> getAdviserObtainmentFromMetaData(YamlField stageField) {
     List<AdviserObtainment> adviserObtainments = new ArrayList<>();

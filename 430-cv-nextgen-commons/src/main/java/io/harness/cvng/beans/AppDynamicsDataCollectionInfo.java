@@ -68,20 +68,17 @@ public class AppDynamicsDataCollectionInfo extends TimeSeriesDataCollectionInfo<
       dslEnvVariables.put("groupName", groupName);
 
       if (this.isCollectHostData()) {
-        List<String> customMetricPaths =
-            getCustomMetrics()
-                .stream()
-                .map(mi -> createFullMetricPath(mi.getBaseFolder(), mi.getServiceInstanceMetricPath()))
-                .collect(Collectors.toList());
+        List<String> customMetricPaths = getCustomMetrics()
+                                             .stream()
+                                             .map(mi -> mi.getCompleteServiceInstanceMetricPath())
+                                             .collect(Collectors.toList());
         List<Integer> getServiceInstanceIndexs =
             customMetricPaths.stream().map(this::getServiceInstanceIndex).collect(Collectors.toList());
         dslEnvVariables.put("metricPaths", customMetricPaths);
         dslEnvVariables.put("serviceInstanceIndexes", getServiceInstanceIndexs);
       } else {
-        List<String> customMetricPaths = getCustomMetrics()
-                                             .stream()
-                                             .map(mi -> createFullMetricPath(mi.getBaseFolder(), mi.getMetricPath()))
-                                             .collect(Collectors.toList());
+        List<String> customMetricPaths =
+            getCustomMetrics().stream().map(mi -> mi.getCompleteMetricPath()).collect(Collectors.toList());
         dslEnvVariables.put("metricPaths", customMetricPaths);
       }
     }
@@ -104,10 +101,6 @@ public class AppDynamicsDataCollectionInfo extends TimeSeriesDataCollectionInfo<
     return Collections.emptyMap();
   }
 
-  private String createFullMetricPath(String baseFolder, String metricPath) {
-    return baseFolder + '|' + tierName + "|" + metricPath;
-  }
-
   private Integer getServiceInstanceIndex(String fullMetricPath) {
     return ArrayUtils.indexOf(fullMetricPath.split("\\|"), "Individual Nodes") + 1;
   }
@@ -117,9 +110,8 @@ public class AppDynamicsDataCollectionInfo extends TimeSeriesDataCollectionInfo<
   @FieldDefaults(level = AccessLevel.PRIVATE)
   public static class AppMetricInfoDTO {
     String metricName;
-    String baseFolder;
-    String metricPath;
     String metricIdentifier;
-    String serviceInstanceMetricPath;
+    String completeMetricPath;
+    String completeServiceInstanceMetricPath;
   }
 }

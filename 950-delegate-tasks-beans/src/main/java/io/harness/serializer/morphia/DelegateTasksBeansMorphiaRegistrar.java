@@ -59,6 +59,7 @@ import software.wings.beans.GitConfig;
 import software.wings.beans.JenkinsConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SpotInstConfig;
+import software.wings.beans.command.ContainerSetupCommandUnitExecutionData;
 import software.wings.beans.config.ArtifactSourceable;
 import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
 import software.wings.beans.infrastructure.instance.info.K8sPodInfo;
@@ -71,8 +72,14 @@ import software.wings.beans.yaml.GitDiffRequest;
 import software.wings.beans.yaml.GitDiffResult;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
 import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateStackResponse;
+import software.wings.helpers.ext.ecs.request.EcsBGListenerUpdateRequest;
+import software.wings.helpers.ext.ecs.request.EcsRunTaskDeployRequest;
+import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
+import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
+import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
+import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.sm.states.JenkinsExecutionResponse;
 import software.wings.sm.states.KubernetesSteadyStateCheckResponse;
@@ -149,10 +156,13 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.yaml.GitDiffRequest", GitDiffRequest.class);
     w.put("beans.yaml.GitDiffResult", GitDiffResult.class);
     w.put("beans.JenkinsConfig", JenkinsConfig.class);
+    w.put("beans.command.ContainerSetupCommandUnitExecutionData", ContainerSetupCommandUnitExecutionData.class);
     w.put("sm.states.JenkinsExecutionResponse", JenkinsExecutionResponse.class);
     w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
     w.put("beans.GcpConfig", GcpConfig.class);
     w.put("helpers.ext.ecs.response.EcsCommandExecutionResponse", EcsCommandExecutionResponse.class);
+    w.put("helpers.ext.ecs.response.EcsServiceSetupResponse", EcsServiceSetupResponse.class);
+    w.put("helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse", EcsBGRoute53ServiceSetupResponse.class);
     w.put("beans.EcrConfig", EcrConfig.class);
     w.put("beans.SpotInstConfig", SpotInstConfig.class);
     w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
@@ -163,5 +173,9 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
     w.put(cf + "response.CloudFormationCommandExecutionResponse", CloudFormationCommandExecutionResponse.class);
     w.put(cf + "response.CloudFormationCreateStackResponse", CloudFormationCreateStackResponse.class);
+    w.put("helpers.ext.ecs.response.EcsRunTaskDeployResponse", EcsRunTaskDeployResponse.class);
+    w.put("helpers.ext.ecs.response.EcsRunTaskDeployRequest", EcsRunTaskDeployRequest.class);
+    w.put("helpers.ext.ecs.request.EcsBGListenerUpdateRequest", EcsBGListenerUpdateRequest.class);
+    w.put("helpers.ext.ecs.response.EcsListenerUpdateCommandResponse", EcsListenerUpdateCommandResponse.class);
   }
 }

@@ -8,20 +8,25 @@
 package io.harness.cvng.notification.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import lombok.experimental.FieldDefaults;
 
 @Data
-@SuperBuilder
-@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXTERNAL_PROPERTY, visible = true)
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = SLONotificationRuleCondition.class, name = "ServiceLevelObjective")
-  , @JsonSubTypes.Type(value = MonitoredServiceNotificationRuleCondition.class, name = "MonitoredService")
-})
-public abstract class NotificationRuleCondition {}
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
+public class NotificationRuleCondition {
+  @JsonProperty("type") NotificationRuleConditionType type;
+
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type", visible = true)
+  @Valid
+  @NotNull
+  NotificationRuleConditionSpec spec;
+}

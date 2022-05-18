@@ -48,6 +48,7 @@ import io.harness.pms.pipeline.service.PMSPipelineServiceHelper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.pipeline.service.PMSYamlSchemaService;
 import io.harness.pms.pipeline.service.PipelineEnforcementService;
+import io.harness.pms.pipeline.service.PipelineMetadataService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.creation.PlanCreatorMergeService;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
@@ -83,6 +84,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExecutionHelper {
   PMSPipelineService pmsPipelineService;
+  PipelineMetadataService pipelineMetadataService;
   PMSPipelineServiceHelper pmsPipelineServiceHelper;
   TriggeredByHelper triggeredByHelper;
   PlanExecutionService planExecutionService;
@@ -195,15 +197,16 @@ public class ExecutionHelper {
   private ExecutionMetadata buildExecutionMetadata(@NotNull String pipelineIdentifier, String moduleType,
       ExecutionTriggerInfo triggerInfo, PipelineEntity pipelineEntity, String executionId,
       RetryExecutionInfo retryExecutionInfo, List<NotificationRules> notificationRules) {
-    ExecutionMetadata.Builder builder = ExecutionMetadata.newBuilder()
-                                            .setExecutionUuid(executionId)
-                                            .setTriggerInfo(triggerInfo)
-                                            .setModuleType(moduleType)
-                                            .setRunSequence(pmsPipelineService.incrementRunSequence(pipelineEntity))
-                                            .setPipelineIdentifier(pipelineIdentifier)
-                                            .setRetryInfo(retryExecutionInfo)
-                                            .setPrincipalInfo(principalInfoHelper.getPrincipalInfoFromSecurityContext())
-                                            .setIsNotificationConfigured(EmptyPredicate.isNotEmpty(notificationRules));
+    ExecutionMetadata.Builder builder =
+        ExecutionMetadata.newBuilder()
+            .setExecutionUuid(executionId)
+            .setTriggerInfo(triggerInfo)
+            .setModuleType(moduleType)
+            .setRunSequence(pipelineMetadataService.incrementRunSequence(pipelineEntity))
+            .setPipelineIdentifier(pipelineIdentifier)
+            .setRetryInfo(retryExecutionInfo)
+            .setPrincipalInfo(principalInfoHelper.getPrincipalInfoFromSecurityContext())
+            .setIsNotificationConfigured(EmptyPredicate.isNotEmpty(notificationRules));
     ByteString gitSyncBranchContext = pmsGitSyncHelper.getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
     if (gitSyncBranchContext != null) {
       builder.setGitSyncBranchContext(gitSyncBranchContext);

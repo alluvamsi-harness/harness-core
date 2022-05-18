@@ -31,6 +31,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort
 import io.harness.EntityType;
 import io.harness.FileStoreConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.beans.Scope;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
@@ -39,7 +40,7 @@ import io.harness.file.beans.NGBaseFile;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.ng.core.beans.SearchPageParams;
-import io.harness.ng.core.dto.filestore.CreatedBy;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FileStoreNodeDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
@@ -51,6 +52,7 @@ import io.harness.ng.core.filestore.api.FileFailsafeService;
 import io.harness.ng.core.filestore.api.FileStoreService;
 import io.harness.ng.core.filestore.dto.FileDTO;
 import io.harness.ng.core.filestore.dto.FileFilterDTO;
+import io.harness.ng.core.mapper.EmbeddedUserDTOMapper;
 import io.harness.ng.core.mapper.FileDTOMapper;
 import io.harness.ng.core.mapper.FileStoreNodeDTOMapper;
 import io.harness.repositories.filestore.spring.FileStoreRepository;
@@ -172,7 +174,7 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
 
     NGFile file = fetchFileOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
-    fileReferenceService.validateIsReferencedBy(file);
+    fileReferenceService.validateReferenceByAndThrow(file);
 
     return deleteFileOrFolder(file);
   }
@@ -234,8 +236,14 @@ public class FileStoreServiceImpl implements FileStoreService {
       filterProperties = (FilesFilterPropertiesDTO) filterDTO.getFilterProperties();
     }
 
+    List<String> fileIdentifiers = null;
+    if (filterProperties != null && filterProperties.getReferencedBy() != null) {
+      fileIdentifiers = fileReferenceService.listAllReferredFileUsageIdentifiers(
+          accountIdentifier, getReferredByEntityFQN(filterProperties));
+    }
+
     Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
-    Criteria criteria = createFilesFilterCriteria(scope, filterProperties, searchTerm);
+    Criteria criteria = createFilesFilterCriteria(scope, filterProperties, searchTerm, fileIdentifiers);
 
     Page<NGFile> ngFiles = fileStoreRepository.findAllAndSort(criteria, createSortByLastModifiedAtDesc(), pageable);
     List<FileDTO> fileDTOS = ngFiles.stream().map(FileDTOMapper::getFileDTOFromNGFile).collect(Collectors.toList());
@@ -243,7 +251,8 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   @Override
-  public Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+  public Set<EmbeddedUserDetailsDTO> getCreatedByList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     Scope scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
     Criteria criteria = createScopeCriteria(scope);
     criteria.and(NGFiles.type).is(NGFileType.FILE);
@@ -251,9 +260,14 @@ public class FileStoreServiceImpl implements FileStoreService {
     Aggregation aggregation = Aggregation.newAggregation(
         match(criteria), group(NGFiles.createdBy), sort(Sort.Direction.ASC, NGFiles.createdBy));
 
-    AggregationResults<CreatedBy> aggregate = fileStoreRepository.aggregate(aggregation, CreatedBy.class);
+    AggregationResults<EmbeddedUser> aggregate = fileStoreRepository.aggregate(aggregation, EmbeddedUser.class);
 
-    return aggregate.getMappedResults().stream().map(CreatedBy::getCreatedBy).collect(Collectors.toSet());
+    return aggregate.getMappedResults()
+        .stream()
+        .filter(Objects::nonNull)
+        .filter(EmbeddedUser::existNameAndEmail)
+        .map(EmbeddedUserDTOMapper::fromEmbeddedUser)
+        .collect(Collectors.toSet());
   }
 
   @Override
@@ -376,5 +390,12 @@ public class FileStoreServiceImpl implements FileStoreService {
     }
 
     return fileFailsafeService.deleteAndPublish(file);
+  }
+
+  private String getReferredByEntityFQN(FilesFilterPropertiesDTO filterProperties) {
+    if (filterProperties.getReferencedBy() == null || filterProperties.getReferencedBy().getEntityRef() == null) {
+      return null;
+    }
+    return filterProperties.getReferencedBy().getEntityRef().getFullyQualifiedName();
   }
 }

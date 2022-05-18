@@ -37,4 +37,5 @@ public class ScmGitRefTaskResponseData implements DelegateResponseData {
   byte[] createBranchResponse;
   byte[] getUserReposResponse;
   byte[] getListBranchesWithDefaultResponse;
+  byte[] getUserRepoResponse;
 }

@@ -9,6 +9,7 @@ package io.harness.pms.pipeline.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -43,10 +44,13 @@ import io.harness.pms.governance.ExpansionRequest;
 import io.harness.pms.governance.ExpansionRequestsExtractor;
 import io.harness.pms.governance.ExpansionsMerger;
 import io.harness.pms.governance.JsonExpander;
+import io.harness.pms.instrumentaion.PipelineInstrumentationConstants;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
+import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.serializer.JsonUtils;
+import io.harness.telemetry.TelemetryReporter;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -54,6 +58,7 @@ import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -77,6 +82,13 @@ public class PMSPipelineServiceHelper {
   @Inject private final ExpansionRequestsExtractor expansionRequestsExtractor;
   @Inject private final PmsFeatureFlagService pmsFeatureFlagService;
   @Inject private final PmsGitSyncHelper gitSyncHelper;
+  @Inject private final TelemetryReporter telemetryReporter;
+
+  public static String PIPELINE_SAVE = "pipeline_save";
+  public static String PIPELINE_SAVE_ACTION_TYPE = "action";
+  public static String PIPELINE_NAME = "pipelineName";
+  public static String ORG_ID = "orgId";
+  public static String PROJECT_ID = "projectId";
 
   public static void validatePresenceOfRequiredFields(Object... fields) {
     Lists.newArrayList(fields).forEach(field -> Objects.requireNonNull(field, "One of the required fields is null."));
@@ -276,5 +288,18 @@ public class PMSPipelineServiceHelper {
     criteria.andOperator(moduleCriteria, searchCriteria);
 
     return criteria;
+  }
+
+  // TODO(Brijesh): Make this async.
+  public void sendPipelineSaveTelemetryEvent(PipelineEntity entity, String actionType) {
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put(PIPELINE_NAME, entity.getName());
+    properties.put(ORG_ID, entity.getOrgIdentifier());
+    properties.put(PROJECT_ID, entity.getProjectIdentifier());
+    properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
+    properties.put(PipelineInstrumentationConstants.MODULE_NAME,
+        PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
+    telemetryReporter.sendTrackEvent(PIPELINE_SAVE, null, entity.getAccountId(), properties,
+        Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }
 }

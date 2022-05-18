@@ -16,6 +16,7 @@ import io.harness.exception.UnknownEnumTypeException;
 import io.harness.ng.core.variable.VariableValueType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
 import javax.annotation.RegEx;
 import lombok.AccessLevel;
@@ -35,9 +36,9 @@ import org.checkerframework.checker.regex.RegexUtil;
 @FieldNameConstants(innerTypeName = "StringVariableConfigDTOKeys")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class StringVariableConfigDTO extends VariableConfigDTO {
-  String fixedValue;
-  String defaultValue;
-  Set<String> allowedValues;
+  @Schema(description = VariableConstants.FIXED_VALUE) String fixedValue;
+  @Schema(description = VariableConstants.DEFAULT_VALUE) String defaultValue;
+  @Schema(description = VariableConstants.ALLOWED_VALUES) Set<String> allowedValues;
   @RegEx String regex;
 
   @Override

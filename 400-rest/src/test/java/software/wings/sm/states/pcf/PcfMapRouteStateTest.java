@@ -62,6 +62,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -134,6 +135,7 @@ import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateType;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -183,6 +185,9 @@ public class PcfMapRouteStateTest extends WingsBaseTest {
   @InjectMocks @Inject PcfStateHelper pcfStateHelper;
 
   @Mock private MainConfiguration configuration;
+
+  // Initiated in setup.
+  private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   private ExecutionContext context;
 
@@ -297,12 +302,6 @@ public class PcfMapRouteStateTest extends WingsBaseTest {
     EmbeddedUser currentUser = EmbeddedUser.builder().name("test").email("test@harness.io").build();
     workflowStandardParams.setCurrentUser(currentUser);
 
-    on(workflowStandardParams).set("appService", appService);
-    on(workflowStandardParams).set("environmentService", environmentService);
-    on(workflowStandardParams).set("artifactService", artifactService);
-    on(workflowStandardParams).set("serviceTemplateService", serviceTemplateService);
-    on(workflowStandardParams).set("configuration", configuration);
-
     when(artifactService.get(any())).thenReturn(artifact);
     when(artifactStreamService.get(any())).thenReturn(artifactStream);
     when(infrastructureMappingService.get(APP_ID, INFRA_MAPPING_ID))
@@ -358,6 +357,15 @@ public class PcfMapRouteStateTest extends WingsBaseTest {
                  .name(SetupSweepingOutputPcf.SWEEPING_OUTPUT_NAME + phaseElement.getPhaseName().trim())
                  .build()))
         .thenReturn(setupSweepingOutputPcf);
+
+    workflowStandardParamsExtensionService = spy(
+        new WorkflowStandardParamsExtensionService(appService, null, artifactService, environmentService, null, null));
+
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    FieldUtils.writeField(
+        pcfRouteSwapState, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
+    FieldUtils.writeField(pcfSwitchBlueGreenRoutes, "workflowStandardParamsExtensionService",
+        workflowStandardParamsExtensionService, true);
   }
 
   @Test
@@ -428,8 +436,8 @@ public class PcfMapRouteStateTest extends WingsBaseTest {
     WorkflowStandardParams workflowStandardParams = mock(WorkflowStandardParams.class);
     doReturn(workflowStandardParams).when(mockContext).getContextElement(any());
 
-    doReturn(anApplication().build()).when(workflowStandardParams).getApp();
-    doReturn(null).when(workflowStandardParams).getEnv();
+    doReturn(anApplication().build()).when(workflowStandardParamsExtensionService).getApp(workflowStandardParams);
+    doReturn(null).when(workflowStandardParamsExtensionService).getEnv(workflowStandardParams);
     try {
       pcfRouteSwapState.execute(mockContext);
       fail("Expecting Exception");

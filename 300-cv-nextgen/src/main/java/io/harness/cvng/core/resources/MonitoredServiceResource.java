@@ -29,6 +29,7 @@ import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.monitoredService.HealthScoreDTO;
 import io.harness.cvng.core.beans.monitoredService.HistoricalTrend;
 import io.harness.cvng.core.beans.monitoredService.MetricDTO;
+import io.harness.cvng.core.beans.monitoredService.MonitoredServiceChangeDetailSLO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
@@ -41,6 +42,7 @@ import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.logsFilterParams.LiveMonitoringLogsFilter;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
+import io.harness.cvng.notification.beans.NotificationRuleResponse;
 import io.harness.cvng.utils.NGAccessControlClientCheck;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
@@ -93,7 +95,7 @@ public class MonitoredServiceResource {
   @Timed
   @ExceptionMetered
   @ApiOperation(value = "saves monitored service from yaml or template", nickname = "saveMonitoredServiceFromYaml")
-  @NGAccessControlClientCheck
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = EDIT_PERMISSION)
   public RestResponse<MonitoredServiceResponse> saveMonitoredServiceFromYaml(
       @ApiParam(required = true) @NotNull @BeanParam ProjectParams projectParam, @NotNull @Valid @Body String yaml) {
     return new RestResponse<>(monitoredServiceService.createFromYaml(projectParam, yaml));
@@ -144,6 +146,19 @@ public class MonitoredServiceResource {
         String.format(
             "Identifier %s does not match with path identifier %s", monitoredServiceDTO.getIdentifier(), identifier));
     return new RestResponse<>(monitoredServiceService.update(accountId, monitoredServiceDTO));
+  }
+
+  @PUT
+  @Path("/{identifier}/yaml")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "update monitored service from yaml or template", nickname = "updateMonitoredServiceFromYaml")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = EDIT_PERMISSION)
+  public RestResponse<MonitoredServiceResponse> updateMonitoredServiceFromYaml(
+      @ApiParam(required = true) @NotNull @BeanParam ProjectParams projectParam,
+      @ApiParam(required = true) @NotNull @PathParam("identifier") String identifier,
+      @NotNull @Valid @Body String yaml) {
+    return new RestResponse<>(monitoredServiceService.updateFromYaml(projectParam, identifier, yaml));
   }
 
   @PUT
@@ -440,5 +455,35 @@ public class MonitoredServiceResource {
                                                 .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                 .build(),
             liveMonitoringLogsFilter, pageParams));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{monitoredServiceIdentifier}/change-details")
+  @ApiOperation(value = "get monitored service change details", nickname = "getMonitoredServiceChangeDetails")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
+  public RestResponse<List<MonitoredServiceChangeDetailSLO>> getMonitoredServiceChangeDetails(
+      @NotNull @Valid @BeanParam ProjectParams projectParams,
+      @ApiParam(required = true) @NotNull @PathParam("monitoredServiceIdentifier")
+      @ResourceIdentifier String monitoredServiceIdentifier, @QueryParam("sloIdentifiers") List<String> sloIdentifiers,
+      @QueryParam("startTime") Long startTime, @QueryParam("endTime") Long endTime) {
+    return new RestResponse<>(monitoredServiceService.getMonitoredServiceChangeDetails(
+        projectParams, monitoredServiceIdentifier, startTime, endTime));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{identifier}/notification-rules")
+  @ApiOperation(
+      value = "get notification rules for MonitoredService", nickname = "getNotificationRulesForMonitoredService")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
+  public ResponseDTO<PageResponse<NotificationRuleResponse>>
+  getNotificationRulesForMonitoredService(@NotNull @BeanParam ProjectParams projectParams,
+      @ApiParam(required = true) @NotNull @PathParam("identifier")
+      @ResourceIdentifier String monitoredServiceIdentifier, @BeanParam PageParams pageParams) {
+    return ResponseDTO.newResponse(
+        monitoredServiceService.getNotificationRules(projectParams, monitoredServiceIdentifier, pageParams));
   }
 }

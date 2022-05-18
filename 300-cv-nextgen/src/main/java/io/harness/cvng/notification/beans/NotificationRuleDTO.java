@@ -32,7 +32,6 @@ public class NotificationRuleDTO implements YamlDTO {
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String identifier;
   @ApiModelProperty(required = true) @NotNull @NGEntityName String name;
 
-  boolean enabled;
   @NotNull NotificationRuleType type;
   @Valid @NotNull List<NotificationRuleCondition> conditions;
   @Valid @NotNull CVNGNotificationChannel notificationMethod;

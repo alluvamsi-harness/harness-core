@@ -11,6 +11,7 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.beans.SearchPageParams;
+import io.harness.ng.core.dto.EmbeddedUserDetailsDTO;
 import io.harness.ng.core.dto.filestore.filter.FilesFilterPropertiesDTO;
 import io.harness.ng.core.dto.filestore.node.FolderNodeDTO;
 import io.harness.ng.core.entitysetupusage.dto.EntitySetupUsageDTO;
@@ -134,7 +135,8 @@ public interface FileStoreService {
    * @param projectIdentifier the project identifier
    * @return the list of created by principals.
    */
-  Set<String> getCreatedByList(String accountIdentifier, String orgIdentifier, String projectIdentifier);
+  Set<EmbeddedUserDetailsDTO> getCreatedByList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier);
 
   List<EntityType> getSupportedEntityTypes();
 }

@@ -43,4 +43,5 @@ public class ResourceTypeConstants {
   public static final String GOVERNANCE_POLICY_SET = "GOVERNANCE_POLICY_SET";
   public static final String FILE = "FILE";
   public static final String VARIABLE = "VARIABLE";
+  public static final String CHAOS_HUB = "CHAOS_HUB";
 }

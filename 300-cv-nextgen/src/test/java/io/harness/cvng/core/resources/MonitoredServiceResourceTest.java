@@ -35,7 +35,7 @@ import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.notification.beans.NotificationRuleDTO;
-import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
+import io.harness.cvng.notification.beans.NotificationRuleResponse;
 import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.services.api.NotificationRuleService;
 import io.harness.rest.RestResponse;
@@ -74,6 +74,7 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private CVConfigService cvConfigService;
   @Inject NotificationRuleService notificationRuleService;
+
   private MonitoredServiceDTO monitoredServiceDTO;
 
   @ClassRule
@@ -87,6 +88,91 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
         builderFactory.getContext().getOrgIdentifier(), builderFactory.getContext().getProjectIdentifier());
     monitoredServiceDTO = builderFactory.monitoredServiceDTOBuilder().build();
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testCreateFromYaml() throws IOException {
+    String yaml = "monitoredService:\n"
+        + "  identifier: <+monitoredService.serviceRef>\n"
+        + "  type: Application\n"
+        + "  description: description\n"
+        + "  name: <+monitoredService.identifier>\n"
+        + "  serviceRef: service1\n"
+        + "  environmentRefList:\n"
+        + "   - env1\n"
+        + "  tags: {}\n"
+        + "  sources:\n"
+        + "    healthSources:\n"
+        + "    changeSources: \n";
+    Response createResponse = RESOURCES.client()
+                                  .target("http://localhost:9998/monitored-service/yaml")
+                                  .queryParam("accountId", builderFactory.getContext().getAccountId())
+                                  .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                                  .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
+                                  .request(MediaType.APPLICATION_JSON_TYPE)
+                                  .post(Entity.text(yaml));
+
+    assertThat(createResponse.getStatus()).isEqualTo(200);
+    RestResponse<MonitoredServiceResponse> restResponse =
+        createResponse.readEntity(new GenericType<RestResponse<MonitoredServiceResponse>>() {});
+    MonitoredServiceDTO monitoredServiceDTO = restResponse.getResource().getMonitoredServiceDTO();
+    assertThat(monitoredServiceDTO.getIdentifier()).isEqualTo("service1");
+    assertThat(monitoredServiceDTO.getProjectIdentifier())
+        .isEqualTo(builderFactory.getContext().getProjectIdentifier());
+    assertThat(monitoredServiceDTO.getOrgIdentifier()).isEqualTo(builderFactory.getContext().getOrgIdentifier());
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void testUpdateFromYaml() throws IOException {
+    String yaml = "monitoredService:\n"
+        + "  identifier: <+monitoredService.serviceRef>\n"
+        + "  type: Application\n"
+        + "  description: description\n"
+        + "  name: <+monitoredService.identifier>\n"
+        + "  serviceRef: service1\n"
+        + "  environmentRefList:\n"
+        + "   - env1\n"
+        + "  tags: {}\n"
+        + "  sources:\n"
+        + "    healthSources:\n"
+        + "    changeSources: \n";
+    Response createResponse = RESOURCES.client()
+                                  .target("http://localhost:9998/monitored-service/yaml")
+                                  .queryParam("accountId", builderFactory.getContext().getAccountId())
+                                  .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                                  .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
+                                  .request(MediaType.APPLICATION_JSON_TYPE)
+                                  .post(Entity.text(yaml));
+    assertThat(createResponse.getStatus()).isEqualTo(200);
+
+    String updateYaml = "monitoredService:\n"
+        + "  identifier: <+monitoredService.serviceRef>\n"
+        + "  type: Application\n"
+        + "  description: description345\n"
+        + "  name: <+monitoredService.identifier>\n"
+        + "  serviceRef: service1\n"
+        + "  environmentRefList:\n"
+        + "   - env1\n"
+        + "  tags: {}\n"
+        + "  sources:\n"
+        + "    healthSources:\n"
+        + "    changeSources: \n";
+    Response updateResponse = RESOURCES.client()
+                                  .target("http://localhost:9998/monitored-service/service1/yaml")
+                                  .queryParam("accountId", builderFactory.getContext().getAccountId())
+                                  .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                                  .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
+                                  .request(MediaType.APPLICATION_JSON_TYPE)
+                                  .put(Entity.text(updateYaml));
+    assertThat(updateResponse.getStatus()).isEqualTo(200);
+    RestResponse<MonitoredServiceResponse> restResponse =
+        updateResponse.readEntity(new GenericType<RestResponse<MonitoredServiceResponse>>() {});
+    MonitoredServiceDTO monitoredServiceDTO = restResponse.getResource().getMonitoredServiceDTO();
+    assertThat(monitoredServiceDTO.getDescription()).isEqualTo("description345");
   }
 
   @Test
@@ -407,8 +493,8 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
   public void testCreate_withNotificationRules() throws IOException {
     NotificationRuleDTO notificationRuleDTO =
         builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.MONITORED_SERVICE).build();
-    List<NotificationRuleRefDTO> notificationRuleRefs = notificationRuleService.create(
-        builderFactory.getContext().getProjectParams(), Arrays.asList(notificationRuleDTO));
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
 
     String monitoredServiceYaml = getResource("monitoredservice/monitored-service-with-notification-rule.yaml");
     monitoredServiceYaml =
@@ -416,9 +502,8 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
     monitoredServiceYaml =
         monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
     monitoredServiceYaml =
-        monitoredServiceYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
-    monitoredServiceYaml =
-        monitoredServiceYaml.replace("$enabled", String.valueOf(notificationRuleRefs.get(0).isEnabled()));
+        monitoredServiceYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    monitoredServiceYaml = monitoredServiceYaml.replace("$enabled", "false");
     Response response = RESOURCES.client()
                             .target("http://localhost:9998/monitored-service/")
                             .queryParam("accountId", builderFactory.getContext().getAccountId())
@@ -435,17 +520,16 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
   public void testUpdateMonitoredServiceData_withNotificationRules() throws IOException {
     NotificationRuleDTO notificationRuleDTO =
         builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.MONITORED_SERVICE).build();
-    List<NotificationRuleRefDTO> notificationRuleRefs = notificationRuleService.create(
-        builderFactory.getContext().getProjectParams(), Arrays.asList(notificationRuleDTO));
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
     String monitoredServiceYaml = getResource("monitoredservice/monitored-service-with-notification-rule.yaml");
     monitoredServiceYaml =
         monitoredServiceYaml.replace("$orgIdentifier", builderFactory.getContext().getOrgIdentifier());
     monitoredServiceYaml =
         monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
     monitoredServiceYaml =
-        monitoredServiceYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
-    monitoredServiceYaml =
-        monitoredServiceYaml.replace("$enabled", String.valueOf(notificationRuleRefs.get(0).isEnabled()));
+        monitoredServiceYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    monitoredServiceYaml = monitoredServiceYaml.replace("$enabled", "false");
 
     Response response = RESOURCES.client()
                             .target("http://localhost:9998/monitored-service/")
@@ -462,9 +546,8 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
     monitoredServiceYaml =
         monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
     monitoredServiceYaml =
-        monitoredServiceYaml.replace("$identifier", notificationRuleRefs.get(0).getNotificationRuleRef());
-    monitoredServiceYaml =
-        monitoredServiceYaml.replace("$enabled", String.valueOf(!notificationRuleRefs.get(0).isEnabled()));
+        monitoredServiceYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    monitoredServiceYaml = monitoredServiceYaml.replace("$enabled", "true");
 
     response = RESOURCES.client()
                    .target("http://localhost:9998/monitored-service/"
@@ -475,6 +558,47 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
     assertThat(response.getStatus()).isEqualTo(200);
     assertThat(response.readEntity(String.class))
         .contains("\"notificationRuleRefs\":[{\"notificationRuleRef\":\"rule\",\"enabled\":true}]");
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetNotificationRules() throws IOException {
+    NotificationRuleDTO notificationRuleDTO =
+        builderFactory.getNotificationRuleDTOBuilder(NotificationRuleType.MONITORED_SERVICE).build();
+    NotificationRuleResponse notificationRuleResponse =
+        notificationRuleService.create(builderFactory.getContext().getProjectParams(), notificationRuleDTO);
+
+    String monitoredServiceYaml = getResource("monitoredservice/monitored-service-with-notification-rule.yaml");
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$orgIdentifier", builderFactory.getContext().getOrgIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
+    monitoredServiceYaml =
+        monitoredServiceYaml.replace("$identifier", notificationRuleResponse.getNotificationRule().getIdentifier());
+    monitoredServiceYaml = monitoredServiceYaml.replace("$enabled", "false");
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/monitored-service/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(monitoredServiceYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class))
+        .contains("\"notificationRuleRefs\":[{\"notificationRuleRef\":\"rule\",\"enabled\":false}]");
+
+    response = RESOURCES.client()
+                   .target("http://localhost:9998/monitored-service/"
+                       + "MSIdentifier"
+                       + "/notification-rules")
+                   .queryParam("accountId", builderFactory.getContext().getAccountId())
+                   .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
+                   .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                   .queryParam("pageNumber", 0)
+                   .queryParam("pageSize", 10)
+                   .request(MediaType.APPLICATION_JSON_TYPE)
+                   .get();
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class)).contains("\"totalItems\":1");
   }
 
   private static String convertToJson(String yamlString) {

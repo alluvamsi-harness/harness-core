@@ -99,7 +99,7 @@ public abstract class GenericStagePlanCreator extends ChildrenPlanCreator<StageE
   }
 
   /**
-   * Adds the nextStepAdviser to the given node if it is not the end stage
+   * Adds the nextStageAdviser to the given node if it is not the end stage
    */
   private List<AdviserObtainment> getAdviserObtainmentFromMetaData(YamlField stageField) {
     List<AdviserObtainment> adviserObtainments = new ArrayList<>();
@@ -113,7 +113,7 @@ public abstract class GenericStagePlanCreator extends ChildrenPlanCreator<StageE
       if (siblingField != null && siblingField.getNode().getUuid() != null) {
         adviserObtainments.add(
             AdviserObtainment.newBuilder()
-                .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.NEXT_STEP.name()).build())
+                .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.NEXT_STAGE.name()).build())
                 .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
                     NextStepAdviserParameters.builder().nextNodeId(siblingField.getNode().getUuid()).build())))
                 .build());

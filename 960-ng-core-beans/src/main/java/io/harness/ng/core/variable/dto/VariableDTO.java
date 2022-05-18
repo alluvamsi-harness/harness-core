@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.variable.dto;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
@@ -15,6 +16,7 @@ import io.harness.ng.core.variable.VariableType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -29,12 +31,12 @@ import org.hibernate.validator.constraints.NotBlank;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VariableDTO {
-  @NotNull @NotBlank @EntityIdentifier String identifier;
-  @NotNull @NotBlank @NGEntityName String name;
-  String description;
-  String orgIdentifier;
-  String projectIdentifier;
-  @NotNull VariableType type;
+  @Schema(description = VariableConstants.VARIABLE_IDENTIFIER) @NotNull @NotBlank @EntityIdentifier String identifier;
+  @Schema(description = VariableConstants.VARIABLE_NAME) @NotNull @NotBlank @NGEntityName String name;
+  @Schema(description = NGCommonEntityConstants.DESCRIPTION) String description;
+  @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier;
+  @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier;
+  @Schema(description = VariableConstants.VARIABLE_TYPE) @NotNull VariableType type;
   @JsonProperty("spec")
   @JsonTypeInfo(
       use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXTERNAL_PROPERTY, visible = true)

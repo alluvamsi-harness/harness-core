@@ -15,11 +15,9 @@ import io.harness.context.ContextElementType;
 
 import software.wings.beans.container.AwsAutoScalarConfig;
 import software.wings.sm.ContextElement;
-import software.wings.sm.ExecutionContext;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 
@@ -55,11 +53,6 @@ public class ContainerRollbackRequestElement implements ContextElement, Sweeping
   @Override
   public String getName() {
     return CONTAINER_ROLLBACK_REQUEST_PARAM;
-  }
-
-  @Override
-  public Map<String, Object> paramMap(ExecutionContext context) {
-    return null;
   }
 
   @Override

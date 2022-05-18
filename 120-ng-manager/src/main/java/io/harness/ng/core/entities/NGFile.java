@@ -7,9 +7,12 @@
 
 package io.harness.ng.core.entities;
 
+import static io.harness.beans.EmbeddedUser.EmbeddedUserKeys;
+
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.EmbeddedUser;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.delegate.beans.ChecksumType;
 import io.harness.mongo.CollationLocale;
@@ -23,7 +26,9 @@ import io.harness.ng.core.NGProjectAccess;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.filestore.FileUsage;
 import io.harness.ng.core.filestore.NGFileType;
+import io.harness.persistence.CreatedByAware;
 import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.UpdatedByAware;
 import io.harness.persistence.UuidAware;
 
 import com.google.common.collect.ImmutableList;
@@ -36,6 +41,7 @@ import lombok.Data;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
+import lombok.experimental.UtilityClass;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
@@ -57,12 +63,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("ngFiles")
 @HarnessEntity(exportable = true)
 @OwnedBy(HarnessTeam.CDP)
-public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess {
+public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGOrgAccess, NGProjectAccess,
+                               CreatedByAware, UpdatedByAware {
   @org.springframework.data.annotation.Id @Id String uuid;
   @CreatedDate private Long createdAt;
   @LastModifiedDate private Long lastModifiedAt;
-  @CreatedBy private String createdBy;
-  @LastModifiedBy private String lastModifiedBy;
+  @CreatedBy private EmbeddedUser createdBy;
+  @LastModifiedBy private EmbeddedUser lastUpdatedBy;
 
   @NotEmpty String accountIdentifier;
   @EntityIdentifier(allowBlank = true) String orgIdentifier;
@@ -119,5 +126,11 @@ public class NGFile implements PersistentEntity, UuidAware, NGAccountAccess, NGO
   @JsonIgnore
   public boolean isDraft() {
     return draft != null && draft;
+  }
+
+  @UtilityClass
+  public static final class NGFiles {
+    public static final String CREATED_BY_NAME = NGFiles.createdBy + "." + EmbeddedUserKeys.name;
+    public static final String CREATED_BY_EMAIL = NGFiles.createdBy + "." + EmbeddedUserKeys.email;
   }
 }

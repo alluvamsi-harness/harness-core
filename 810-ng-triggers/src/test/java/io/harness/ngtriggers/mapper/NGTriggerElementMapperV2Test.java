@@ -24,6 +24,7 @@ import static io.harness.ngtriggers.conditionchecker.ConditionOperator.STARTS_WI
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.MATT;
 import static io.harness.rule.OwnerRule.NAMAN;
+import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
 
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.USE_NATIVE_TYPE_ID;
@@ -49,6 +50,7 @@ import io.harness.ngtriggers.beans.source.WebhookTriggerType;
 import io.harness.ngtriggers.beans.source.artifact.ArtifactTriggerConfig;
 import io.harness.ngtriggers.beans.source.artifact.ArtifactType;
 import io.harness.ngtriggers.beans.source.artifact.ArtifactTypeSpec;
+import io.harness.ngtriggers.beans.source.artifact.ArtifactoryRegistrySpec;
 import io.harness.ngtriggers.beans.source.artifact.BuildAware;
 import io.harness.ngtriggers.beans.source.artifact.BuildStoreTypeSpec;
 import io.harness.ngtriggers.beans.source.artifact.DockerRegistrySpec;
@@ -123,6 +125,8 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
   private String ngTriggerYaml_helm_gcs;
   private String ngTriggerYaml_helm_http;
   private String ngTriggerYaml_artifact_dockerregistry;
+  private String ngTriggerYaml_artifact_artifactorygenericregistry;
+  private String ngTriggerYaml_artifact_artifactorydockerregistry;
   private String ngTriggerYaml_manifest;
 
   private List<TriggerEventDataCondition> payloadConditions;
@@ -185,6 +189,12 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
     ngTriggerYaml_artifact_dockerregistry =
         Resources.toString(Objects.requireNonNull(classLoader.getResource("ng-trigger-artifact-dockerregistry.yaml")),
             StandardCharsets.UTF_8);
+    ngTriggerYaml_artifact_artifactorygenericregistry =
+        Resources.toString(Objects.requireNonNull(classLoader.getResource("ng-trigger-artifact-artifactory.yaml")),
+            StandardCharsets.UTF_8);
+    ngTriggerYaml_artifact_artifactorydockerregistry = Resources.toString(
+        Objects.requireNonNull(classLoader.getResource("ng-trigger-artifact-artifactory-docker.yaml")),
+        StandardCharsets.UTF_8);
 
     ngTriggerYaml_manifest = Resources.toString(
         Objects.requireNonNull(classLoader.getResource("ng-trigger-manifest.yaml")), StandardCharsets.UTF_8);
@@ -621,6 +631,48 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
     DockerRegistrySpec dockerRegistrySpec = (DockerRegistrySpec) artifactTypeSpec;
     assertThat(dockerRegistrySpec.getImagePath()).isEqualTo("test1");
     assertThat(dockerRegistrySpec.getTag()).isEqualTo("<+trigger.artifact.build>");
+  }
+
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void testArtifactArtifactoryGenericRegistry() throws Exception {
+    NGTriggerConfigV2 ngTriggerConfigV2 =
+        ngTriggerElementMapper.toTriggerConfigV2(ngTriggerYaml_artifact_artifactorygenericregistry);
+
+    assertRootLevelPropertiesForBuildTriggers(ngTriggerConfigV2);
+
+    NGTriggerSourceV2 ngTriggerSourceV2 = ngTriggerConfigV2.getSource();
+    assertCommonPathForArtifactTriggers(ngTriggerSourceV2, ArtifactType.ARTIFACTORY_REGISTRY);
+
+    ArtifactTriggerConfig artifactTriggerConfig = (ArtifactTriggerConfig) ngTriggerSourceV2.getSpec();
+    ArtifactTypeSpec artifactTypeSpec = artifactTriggerConfig.getSpec();
+    ArtifactoryRegistrySpec artifactoryRegistrySpec = (ArtifactoryRegistrySpec) artifactTypeSpec;
+    assertThat(artifactoryRegistrySpec.getArtifactDirectory()).isEqualTo("artifactstest");
+    assertThat(artifactoryRegistrySpec.getArtifactPath()).isEqualTo("<+trigger.artifact.build>");
+    assertThat(artifactoryRegistrySpec.getRepository()).isEqualTo("automation-repo-do-not-delete");
+    assertThat(artifactoryRegistrySpec.getRepositoryFormat()).isEqualTo("generic");
+  }
+
+  @Test
+  @Owner(developers = PIYUSH_BHUWALKA)
+  @Category(UnitTests.class)
+  public void testArtifactArtifactoryDockerRegistry() throws Exception {
+    NGTriggerConfigV2 ngTriggerConfigV2 =
+        ngTriggerElementMapper.toTriggerConfigV2(ngTriggerYaml_artifact_artifactorydockerregistry);
+
+    assertRootLevelPropertiesForBuildTriggers(ngTriggerConfigV2);
+
+    NGTriggerSourceV2 ngTriggerSourceV2 = ngTriggerConfigV2.getSource();
+    assertCommonPathForArtifactTriggers(ngTriggerSourceV2, ArtifactType.ARTIFACTORY_REGISTRY);
+
+    ArtifactTriggerConfig artifactTriggerConfig = (ArtifactTriggerConfig) ngTriggerSourceV2.getSpec();
+    ArtifactTypeSpec artifactTypeSpec = artifactTriggerConfig.getSpec();
+    ArtifactoryRegistrySpec artifactoryRegistrySpec = (ArtifactoryRegistrySpec) artifactTypeSpec;
+    assertThat(artifactoryRegistrySpec.getRepositoryUrl()).isEqualTo("url");
+    assertThat(artifactoryRegistrySpec.getArtifactPath()).isEqualTo("path");
+    assertThat(artifactoryRegistrySpec.getRepository()).isEqualTo("automation-repo-do-not-delete");
+    assertThat(artifactoryRegistrySpec.getRepositoryFormat()).isEqualTo("docker");
   }
 
   private void assertCommonPathForArtifactTriggers(NGTriggerSourceV2 ngTriggerSourceV2, ArtifactType artifactType) {

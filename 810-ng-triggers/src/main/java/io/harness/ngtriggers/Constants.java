@@ -87,7 +87,6 @@ public interface Constants {
   String DOCKER_REGISTRY = "DockerRegistry";
   String NEXUS3_REGISTRY = "Nexus3Registry";
   String ARTIFACTORY_REGISTRY = "ArtifactoryRegistry";
-  String ARTIFACTORY_GENERIC_REGISTRY = "ArtifactoryGenericRegistry";
   String GCR = "Gcr";
   String ECR = "Ecr";
   String HELM_CHART = "HelmChart";

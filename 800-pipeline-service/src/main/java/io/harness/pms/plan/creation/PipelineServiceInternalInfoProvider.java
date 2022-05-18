@@ -51,6 +51,7 @@ import io.harness.steps.approval.step.jira.JiraApprovalStepVariableCreator;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepPlanCreator;
 import io.harness.steps.approval.step.servicenow.ServiceNowApprovalStepVariableCreator;
 import io.harness.steps.cf.FlagConfigurationStep;
+import io.harness.steps.customstage.CustomStageFilterCreator;
 import io.harness.steps.jira.JiraStepVariableCreator;
 import io.harness.steps.jira.JiraUpdateStepVariableCreator;
 import io.harness.steps.jira.create.JiraCreateStepPlanCreator;
@@ -115,6 +116,7 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     filterJsonCreators.add(new ExecutionPMSFilterJsonCreator());
     filterJsonCreators.add(new StepGroupPmsFilterJsonCreator());
     filterJsonCreators.add(new FeatureFlagStageFilterJsonCreator());
+    filterJsonCreators.add(new CustomStageFilterCreator());
     injectorUtils.injectMembers(filterJsonCreators);
     return filterJsonCreators;
   }

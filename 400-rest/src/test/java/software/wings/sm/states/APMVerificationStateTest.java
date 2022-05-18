@@ -37,6 +37,7 @@ import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 import io.harness.serializer.YamlUtils;
 
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.HostElement;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
@@ -45,6 +46,7 @@ import software.wings.beans.ApmMetricCollectionInfo;
 import software.wings.beans.ApmResponseMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.apm.Method;
+import software.wings.helpers.ext.url.SubdomainUrlHelperIntfc;
 import software.wings.service.impl.apm.APMMetricInfo;
 import software.wings.service.impl.apm.CustomAPMDataCollectionInfo;
 import software.wings.service.intfc.MetricDataAnalysisService;
@@ -52,6 +54,7 @@ import software.wings.service.intfc.SettingsService;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Charsets;
@@ -74,6 +77,7 @@ import org.mockito.MockitoAnnotations;
 public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Inject private Injector injector;
   @Mock private WorkflowStandardParams workflowStandardParameters;
+  @Mock private WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService;
 
   private ExecutionContextImpl context;
   private String accountId;
@@ -94,19 +98,29 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     apmVerificationState = new APMVerificationState("dummy");
     StateExecutionInstance stateExecutionInstance =
         aStateExecutionInstance().displayName("healthCheck1").uuid(STATE_EXECUTION_ID).build();
-    when(workflowStandardParameters.getApp()).thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
-    when(workflowStandardParameters.getEnv())
+    when(workflowStandardParamsExtensionService.getApp(any()))
+        .thenReturn(anApplication().uuid(APP_ID).name(APP_NAME).build());
+    when(workflowStandardParamsExtensionService.getEnv(any()))
         .thenReturn(anEnvironment().uuid(ENV_ID).name(ENV_NAME).environmentType(EnvironmentType.NON_PROD).build());
     when(workflowStandardParameters.getAppId()).thenReturn(APP_ID);
     when(workflowStandardParameters.getEnvId()).thenReturn(ENV_ID);
 
+    ContextElementParamMapperFactory contextElementParamMapperFactory = new ContextElementParamMapperFactory(
+        injector.getInstance(SubdomainUrlHelperIntfc.class), workflowExecutionService, null, null, null,
+        featureFlagService, null, workflowStandardParamsExtensionService);
+
     when(workflowStandardParameters.getElementType()).thenReturn(ContextElementType.STANDARD);
     context = new ExecutionContextImpl(stateExecutionInstance, null, injector);
+    FieldUtils.writeField(
+        context, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
+    FieldUtils.writeField(context, "contextElementParamMapperFactory", contextElementParamMapperFactory, true);
     context.pushContextElement(workflowStandardParameters);
     context.pushContextElement(HostElement.builder().hostName("localhost").build());
     FieldUtils.writeField(apmVerificationState, "featureFlagService", featureFlagService, true);
     FieldUtils.writeField(apmVerificationState, "metricAnalysisService", metricAnalysisService, true);
     FieldUtils.writeField(apmVerificationState, "settingsService", settingsService, true);
+    FieldUtils.writeField(
+        apmVerificationState, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
     when(featureFlagService.isEnabled(FeatureName.CUSTOM_APM_CV_TASK, accountId)).thenReturn(true);
     setupCvActivityLogService(apmVerificationState);
   }
@@ -144,7 +158,7 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   @Test
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
-  public void testBuildMetricInfoMap_withExpressions() throws IOException {
+  public void testBuildMetricInfoMap_withExpressions() throws IOException, IllegalAccessException {
     YamlUtils yamlUtils = new YamlUtils();
     String yamlStr =
         Resources.toString(APMVerificationStateTest.class.getResource("/apm/apm_config.yml"), Charsets.UTF_8);
@@ -153,6 +167,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
     mcInfo.get(2).getResponseMapping().setTxnNameJsonPath("${workflow.variable.jsonPath}");
     apmVerificationState.setMetricCollectionInfos(mcInfo);
     ExecutionContextImpl executionContext = mock(ExecutionContextImpl.class);
+    FieldUtils.writeField(
+        executionContext, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
     when(executionContext.renderExpression(anyString()))
         .thenAnswer(invocation -> invocation.getArgumentAt(0, String.class));
     when(executionContext.renderExpression("${workflow.variable.jsonPath}")).thenReturn("$.rendered.jsonPath");
@@ -506,6 +522,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   public void testCreateDataCollectionInfo_withoutExpressions() throws Exception {
     Map<String, String> hosts = new HashMap<>();
     ExecutionContextImpl executionContext = mock(ExecutionContextImpl.class);
+    FieldUtils.writeField(
+        context, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
 
     hosts.put("host1", "default");
     String analysisServerConfigId = generateUuid();
@@ -541,6 +559,8 @@ public class APMVerificationStateTest extends APMStateVerificationTestBase {
   public void testCreateDataCollectionInfo_withoutResolvedExpression() throws Exception {
     Map<String, String> hosts = new HashMap<>();
     ExecutionContextImpl executionContext = mock(ExecutionContextImpl.class);
+    FieldUtils.writeField(
+        executionContext, "workflowStandardParamsExtensionService", workflowStandardParamsExtensionService, true);
 
     hosts.put("host1", "default");
     String analysisServerConfigId = "${workflow.variables.APM_Server}";

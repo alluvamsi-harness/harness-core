@@ -141,10 +141,10 @@ public class EventJobScheduler {
   }
 
   private void runCloudEfficiencyEventJobs(BatchJobBucket batchJobBucket, boolean runningMode) {
-    accountShardService.getCeEnabledAccounts().forEach(account
+    accountShardService.getCeEnabledAccountIds().forEach(account
         -> jobs.stream()
                .filter(job -> BatchJobType.fromJob(job).getBatchJobBucket() == batchJobBucket)
-               .forEach(job -> runJob(account.getUuid(), job, runningMode)));
+               .forEach(job -> runJob(account, job, runningMode)));
   }
 
   @Scheduled(cron = "0 0 */6 ? * *")
@@ -161,8 +161,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "0 * * ? * *")
   public void runGcpScheduledQueryJobs() {
-    accountShardService.getCeEnabledAccounts().forEach(
-        account -> gcpScheduledQueryTriggerAction.execute(account.getUuid()));
+    accountShardService.getCeEnabledAccountIds().forEach(account -> gcpScheduledQueryTriggerAction.execute(account));
   }
 
   @Scheduled(cron = "0 0 8 * * ?")
@@ -331,8 +330,8 @@ public class EventJobScheduler {
     if (cfClient == null) {
       return;
     }
-    accountShardService.getCeEnabledAccounts().forEach(account -> {
-      Target target = Target.builder().name(account.getAccountName()).identifier(account.getUuid()).build();
+    accountShardService.getCeEnabledAccountIds().forEach(account -> {
+      Target target = Target.builder().name(account).identifier(account).build();
       boolean result = cfClient.boolVariation("cf_sample_flag", target, false);
       log.info(format(
           "The feature flag cf_sample_flag resolves to %s for account %s", Boolean.toString(result), target.getName()));

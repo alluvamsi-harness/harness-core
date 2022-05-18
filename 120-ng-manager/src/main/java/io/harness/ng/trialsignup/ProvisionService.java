@@ -84,7 +84,7 @@ public class ProvisionService {
       "Kubernetes Cluster Connector created by Harness for connecting to Harness Builds environment";
   private static final String K8S_CONNECTOR_IDENTIFIER = "Harness_Kubernetes_Cluster";
 
-  private static final String K8S_DELEGATE_NAME = "Harness Kubernetes Delegate";
+  private static final String K8S_DELEGATE_NAME = "harness-kubernetes-delegate";
   private static final String K8S_DELEGATE_DESC =
       "Kubernetes Delegate created by Harness for communication with Harness Kubernetes Cluster";
 
@@ -92,7 +92,7 @@ public class ProvisionService {
 
   private static final String GENERATE_SAMPLE_DELEGATE_CURL_COMMAND_FORMAT_STRING =
       "curl -s -X POST -H 'content-type: application/json' "
-      + "--url https://app.harness.io/gateway/api/webhooks/WLwBdpY6scP0G9oNsGcX2BHrY4xH44W7r7HWYC94 "
+      + "--url https://app.harness.io/gateway/api/webhooks/WLwBdpY6scP0G9oNsGcX2BHrY4xH44W7r7HWYC94?accountId=gz4oUAlfSgONuOrWmphHif "
       + "-d '{\"application\":\"4qPkwP5dQI2JduECqGZpcg\","
       + "\"parameters\":{\"Environment\":\"%s\",\"delegate\":\"delegate-ci\","
       + "\"account_id\":\"%s\",\"account_id_short\":\"%s\",\"account_secret\":\"%s\"}}'";
@@ -248,7 +248,7 @@ public class ProvisionService {
    */
   public DelegateStatus getDelegateInstallStatus(String accountId) {
     try {
-      String url = format(SAMPLE_DELEGATE_STATUS_ENDPOINT_FORMAT_STRING, configuration.getSignupTargetEnv(),
+      String url = format(SAMPLE_DELEGATE_STATUS_ENDPOINT_FORMAT_STRING, configuration.getDelegateStatusEndpoint(),
           getAccountIdentifier(accountId));
       log.info("Fetching delegate provisioning progress for account {} from {}", accountId, url);
       String result = Http.getResponseStringFromUrl(url, 30, 10).trim();
@@ -282,7 +282,8 @@ public class ProvisionService {
     }
   }
 
-  public ScmConnectorResponse createDefaultScm(ScmConnectorDTO scmConnectorDTO, String accountIdentifier) {
+  public ScmConnectorResponse createDefaultScm(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, ScmConnectorDTO scmConnectorDTO) {
     ConnectorResponseDTO connectorResponseDTO = null;
     SecretResponseWrapper secretResponseWrapper = null;
     ScmConnectorResponse scmConnectorResponse = null;
@@ -303,27 +304,28 @@ public class ProvisionService {
     }
 
     Optional<SecretResponseWrapper> secretResponseWrapperOptional =
-        ngSecretService.get(accountIdentifier, null, null, secretDTOV2.getIdentifier());
+        ngSecretService.get(accountIdentifier, orgIdentifier, projectIdentifier, secretDTOV2.getIdentifier());
 
     if (secretResponseWrapperOptional.isPresent()) {
-      secretResponseWrapper =
-          ngSecretService.update(accountIdentifier, null, null, secretDTOV2.getIdentifier(), secretDTOV2);
+      secretResponseWrapper = ngSecretService.update(
+          accountIdentifier, orgIdentifier, projectIdentifier, secretDTOV2.getIdentifier(), secretDTOV2);
     } else {
       secretResponseWrapper = ngSecretService.create(accountIdentifier, secretDTOV2);
     }
 
     Optional<ConnectorResponseDTO> connectorResponseDTOOptional =
-        connectorService.get(accountIdentifier, null, null, connectorInfoDTO.getIdentifier());
+        connectorService.get(accountIdentifier, orgIdentifier, projectIdentifier, connectorInfoDTO.getIdentifier());
 
     if (!connectorResponseDTOOptional.isPresent()) {
       connectorResponseDTO =
           connectorService.create(ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build(), accountIdentifier);
     } else {
-      connectorService.update(ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build(), accountIdentifier);
+      connectorResponseDTO =
+          connectorService.update(ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build(), accountIdentifier);
     }
 
-    ConnectorValidationResult connectorValidationResult =
-        connectorService.testConnection(accountIdentifier, null, null, connectorInfoDTO.getIdentifier());
+    ConnectorValidationResult connectorValidationResult = connectorService.testConnection(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorInfoDTO.getIdentifier());
 
     return ScmConnectorResponse.builder()
         .connectorResponseDTO(connectorResponseDTO)
@@ -332,8 +334,10 @@ public class ProvisionService {
         .build();
   }
 
-  public List<UserRepoResponse> getAllUserRepos(String accountId, String repoRef) {
-    Optional<ConnectorResponseDTO> connector = connectorService.getByRef(accountId, null, null, repoRef);
+  public List<UserRepoResponse> getAllUserRepos(
+      String accountId, String orgIdentifier, String projectIdentifier, String repoRef) {
+    Optional<ConnectorResponseDTO> connector =
+        connectorService.getByRef(accountId, orgIdentifier, projectIdentifier, repoRef);
     connector.orElseThrow(
         () -> new InvalidArgumentsException(format("connector %s was not found in account %s", repoRef, accountId)));
     ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(

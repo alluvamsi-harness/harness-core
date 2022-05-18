@@ -21,7 +21,7 @@ public enum TimeSeriesCustomThresholdActions {
     this.displayName = displayName;
   }
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static TimeSeriesCustomThresholdActions fromDisplayName(String displayName) {
     for (TimeSeriesCustomThresholdActions timeSeriesCustomThresholdActions :
         TimeSeriesCustomThresholdActions.values()) {
