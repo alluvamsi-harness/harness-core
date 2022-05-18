@@ -44,6 +44,7 @@ import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.beans.Environment.EnvironmentKeys;
+import io.harness.ng.core.environment.beans.EnvironmentFilterPropertiesDTO;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
@@ -66,6 +67,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -304,11 +306,14 @@ public class EnvironmentResourceV2 {
       @Parameter(
           description =
               "Specifies sorting criteria of the list. Like sorting based on the last updated entity, alphabetical sorting in an ascending or descending order")
-      @QueryParam("sort") List<String> sort) {
+      @QueryParam("sort") List<String> sort,
+      @RequestBody(description = "This is the body for the filter properties for listing environments.")
+      EnvironmentFilterPropertiesDTO filterProperties,
+      @QueryParam(NGResourceFilterConstants.FILTER_KEY) String filterIdentifier) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgIdentifier, projectIdentifier),
         Resource.of(ENVIRONMENT, null), ENVIRONMENT_VIEW_PERMISSION, "Unauthorized to list environments");
     Criteria criteria = EnvironmentFilterHelper.createCriteriaForGetList(
-        accountId, orgIdentifier, projectIdentifier, false, searchTerm);
+        accountId, orgIdentifier, projectIdentifier, false, searchTerm, filterIdentifier, filterProperties);
     Pageable pageRequest;
 
     if (isNotEmpty(envIdentifiers)) {
