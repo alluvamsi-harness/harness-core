@@ -110,16 +110,19 @@ ciExecutionServiceConfig:
   defaultInternalImageConnector: ''
   pvcDefaultStorageSize: 25600
   delegateServiceEndpointVariableValue: "delegate-service:8080"
-  addonImage: harness/ci-addon:1.14.0
-  liteEngineImage: harness/ci-lite-engine:1.14.0
+  addonImage: harness/ci-addon
+  liteEngineImage: harness/ci-lite-engine
   isLocal: false
   stepConfig:
     # The below config is for K8 steps
     gitCloneConfig:
       # Use rootless image only for K8 git clone
-      image: harness/drone-git:1.0.6-rootless-linux-amd64
+      image: harness/drone-git:latest-rootless
       entrypoint:
         - /usr/local/bin/clone
+      windowsEntrypoint:
+        - "pwsh"
+        - "C:\\bin\\clone.ps1"
     buildAndPushDockerRegistryConfig:
       image: plugins/kaniko:1.3.1
       entrypoint:
@@ -136,10 +139,14 @@ ciExecutionServiceConfig:
       image: plugins/gcs:1.2.4
       entrypoint:
         - /bin/drone-gcs
+      windowsEntrypoint:
+        - "C:\\drone-gcs.exe"
     s3UploadConfig:
-      image: plugins/s3:1.0.4
+      image: plugins/s3
       entrypoint:
         - /bin/drone-s3
+      windowsEntrypoint:
+        - "C:\\drone-s3.exe"
     securityConfig:
       image: zeronorth/sto_plugin:dev
       entrypoint:
@@ -150,15 +157,20 @@ ciExecutionServiceConfig:
       image: plugins/artifactory:1.0.6
       entrypoint:
         - /bin/plugin
+      windowsEntrypoint:
+        - "C:\\bin\\drone-artifactory.exe"
     cacheGCSConfig:
       image: plugins/cache:1.3.7
       entrypoint:
         - /bin/drone-cache
+      windowsEntrypoint:
+        - "C:\\drone-cache.exe"
     cacheS3Config:
       image: plugins/cache:1.3.7
       entrypoint:
         - /bin/drone-cache
-
+      windowsEntrypoint:
+        - "C:\\drone-cache.exe"
     vmImageConfig:
       # Use root image for VM git clone
       gitClone: harness/drone-git:1.0.6
