@@ -11,10 +11,12 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.sweepingoutputs.StageInfraDetails;
 import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.NGAccess;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.stateutils.buildstate.ConnectorUtils;
@@ -41,7 +43,11 @@ public class HarnessImageEvaluator {
     return harnessInternalImageConnector == null ? Optional.empty() : Optional.of(harnessInternalImageConnector);
   }
 
-  public Optional<ConnectorDetails> evaluate(NGAccess ngAccess, VmStageInfraDetails vmStageInfraDetails) {
+  public Optional<ConnectorDetails> evaluate(NGAccess ngAccess, StageInfraDetails stageInfraDetails) {
+    if (!(stageInfraDetails instanceof VmStageInfraDetails)) {
+      throw new InvalidRequestException("Harness image step evaluation only allowed for VM.");
+    }
+    VmStageInfraDetails vmStageInfraDetails = (VmStageInfraDetails) stageInfraDetails;
     ConnectorDetails harnessInternalImageConnector = null;
     if (!ParameterField.isNull(vmStageInfraDetails.getHarnessImageConnectorRef())) {
       harnessInternalImageConnector =
