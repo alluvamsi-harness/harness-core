@@ -36,11 +36,14 @@ import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.gitsync.GitSyncTestBase;
 import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
+import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetUserRepoResponse;
@@ -48,6 +51,7 @@ import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.Repository;
+import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.rule.Owner;
 import io.harness.service.ScmClient;
 import io.harness.tasks.DecryptGitApiAccessHelper;
@@ -89,6 +93,7 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
   FileContent fileContent = FileContent.newBuilder().build();
   GithubConnectorDTO githubConnector;
   ConnectorInfoDTO connectorInfo;
+  Scope scope;
   final ListBranchesResponse listBranchesResponse =
       ListBranchesResponse.newBuilder().addBranches("master").addBranches("feature").build();
 
@@ -101,6 +106,7 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
     when(scmClient.listBranches(any())).thenReturn(listBranchesResponse);
     githubConnector = GithubConnectorDTO.builder().apiAccess(GithubApiAccessDTO.builder().build()).build();
     connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
+    scope = Scope.of(accountIdentifier, orgIdentifier, projectIdentifier);
     doReturn(Optional.of(ConnectorResponseDTO.builder().connector(connectorInfo).build()))
         .when(connectorService)
         .get(anyString(), anyString(), anyString(), anyString());
@@ -255,10 +261,46 @@ public class ScmManagerFacilitatorServiceImplTest extends GitSyncTestBase {
   public void testCreateNewBranch() {
     when(scmClient.createNewBranchV2(any(), any(), any()))
         .thenReturn(CreateBranchResponse.newBuilder().setStatus(200).setError("").build());
-    final CreateBranchResponse createBranchResponse =
-        scmManagerFacilitatorService.createNewBranch(Scope.of(accountIdentifier, orgIdentifier, projectIdentifier),
-            (ScmConnector) connectorInfo.getConnectorConfig(), branch, defaultBranch);
+    final CreateBranchResponse createBranchResponse = scmManagerFacilitatorService.createNewBranch(
+        scope, (ScmConnector) connectorInfo.getConnectorConfig(), branch, defaultBranch);
     assertThat(createBranchResponse.getStatus()).isEqualTo(200);
     assertThat(createBranchResponse.getError()).isEmpty();
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreateFile() {
+    when(scmClient.createFile(any(), any()))
+        .thenReturn(CreateFileResponse.newBuilder().setStatus(200).setCommitId(commitId).build());
+    ScmCreateFileRequestDTO scmCreateFileRequestDTO = ScmCreateFileRequestDTO.builder()
+                                                          .scope(scope)
+                                                          .branchName(branch)
+                                                          .filePath(filePath)
+                                                          .fileContent("content")
+                                                          .build();
+    final CreateFileResponse createFileResponse = scmManagerFacilitatorService.createFile(
+        scmCreateFileRequestDTO, (ScmConnector) connectorInfo.getConnectorConfig());
+    assertThat(createFileResponse.getStatus()).isEqualTo(200);
+    assertThat(createFileResponse.getCommitId()).isEqualTo(commitId);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testUpdateFile() {
+    when(scmClient.updateFile(any(), any()))
+        .thenReturn(UpdateFileResponse.newBuilder().setStatus(200).setCommitId(commitId).build());
+    ScmUpdateFileRequestDTO scmupdateFileRequestDTO = ScmUpdateFileRequestDTO.builder()
+                                                          .scope(scope)
+                                                          .branchName(branch)
+                                                          .filePath(filePath)
+                                                          .fileContent("content")
+                                                          .oldCommitId("commit1")
+                                                          .build();
+    final UpdateFileResponse updateFileResponse = scmManagerFacilitatorService.updateFile(
+        scmupdateFileRequestDTO, (ScmConnector) connectorInfo.getConnectorConfig());
+    assertThat(updateFileResponse.getStatus()).isEqualTo(200);
+    assertThat(updateFileResponse.getCommitId()).isEqualTo(commitId);
   }
 }

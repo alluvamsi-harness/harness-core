@@ -15,6 +15,7 @@ import io.harness.beans.FileContentBatchResponse;
 import io.harness.beans.IdentifierRef;
 import io.harness.beans.PageRequestDTO;
 import io.harness.beans.Scope;
+import io.harness.beans.gitsync.GitFileDetails;
 import io.harness.beans.gitsync.GitFileDetails.GitFileDetailsBuilder;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
@@ -29,10 +30,7 @@ import io.harness.exception.ExplanationException;
 import io.harness.exception.ScmException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.beans.InfoForGitPush;
-import io.harness.gitsync.common.dtos.CreatePRDTO;
-import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
-import io.harness.gitsync.common.dtos.GitFileChangeDTO;
-import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.dtos.*;
 import io.harness.gitsync.common.helper.FileBatchResponseMapper;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.PRFileListMapper;
@@ -307,6 +305,24 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmConnector);
     return scmClient.createNewBranchV2(decryptedConnector, newBranchName, baseBranchName);
+  }
+
+  @Override
+  public CreateFileResponse createFile(ScmCreateFileRequestDTO scmCreateFileRequestDTO, ScmConnector scmConnector) {
+    Scope scope = scmCreateFileRequestDTO.getScope();
+    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmConnector);
+    GitFileDetails gitFileDetails = getGitFileDetails(scmCreateFileRequestDTO);
+    return scmClient.createFile(decryptedConnector, gitFileDetails);
+  }
+
+  @Override
+  public UpdateFileResponse updateFile(ScmUpdateFileRequestDTO scmUpdateFileRequestDTO, ScmConnector scmConnector) {
+    Scope scope = scmUpdateFileRequestDTO.getScope();
+    final ScmConnector decryptedConnector = gitSyncConnectorHelper.getDecryptedConnector(
+        scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), scmConnector);
+    GitFileDetails gitFileDetails = getGitFileDetails(scmUpdateFileRequestDTO);
+    return scmClient.updateFile(decryptedConnector, gitFileDetails);
   }
 
   private CreateBranchResponse createBranch(String branch, String baseBranch, ScmConnector scmConnector) {

@@ -8,6 +8,7 @@
 package io.harness.gitsync.common.impl;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -25,6 +26,8 @@ import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.ScmClientFacilitatorService;
@@ -172,5 +175,33 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
       log.error("Error occurred while getting scm user", ex);
     }
     return scmUserName;
+  }
+
+  GitFileDetails getGitFileDetails(ScmCreateFileRequestDTO scmCreateFileRequestDTO) {
+    final EmbeddedUser currentUser = ScmUserHelper.getCurrentUser();
+    return GitFileDetails.builder()
+        .branch(scmCreateFileRequestDTO.getBranchName())
+        .commitMessage(isEmpty(scmCreateFileRequestDTO.getCommitMessage()) ? GitSyncConstants.COMMIT_MSG
+                                                                           : scmCreateFileRequestDTO.getCommitMessage())
+        .fileContent(scmCreateFileRequestDTO.getFileContent())
+        .filePath(scmCreateFileRequestDTO.getFilePath())
+        .userEmail(currentUser.getEmail())
+        .userName(currentUser.getName())
+        .build();
+  }
+
+  GitFileDetails getGitFileDetails(ScmUpdateFileRequestDTO scmUpdateFileRequestDTO) {
+    final EmbeddedUser currentUser = ScmUserHelper.getCurrentUser();
+    return GitFileDetails.builder()
+        .branch(scmUpdateFileRequestDTO.getBranchName())
+        .commitMessage(isEmpty(scmUpdateFileRequestDTO.getCommitMessage()) ? GitSyncConstants.COMMIT_MSG
+                                                                           : scmUpdateFileRequestDTO.getCommitMessage())
+        .fileContent(scmUpdateFileRequestDTO.getFileContent())
+        .filePath(scmUpdateFileRequestDTO.getFilePath())
+        .commitId(scmUpdateFileRequestDTO.getOldCommitId())
+        .oldFileSha(scmUpdateFileRequestDTO.getOldFileSha())
+        .userEmail(currentUser.getEmail())
+        .userName(currentUser.getName())
+        .build();
   }
 }

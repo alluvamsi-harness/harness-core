@@ -21,6 +21,8 @@ import io.harness.gitsync.common.dtos.CreatePRDTO;
 import io.harness.gitsync.common.dtos.GitDiffResultFileListDTO;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
 import io.harness.gitsync.common.dtos.GitFileContent;
+import io.harness.gitsync.common.dtos.ScmCreateFileRequestDTO;
+import io.harness.gitsync.common.dtos.ScmUpdateFileRequestDTO;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.webhook.UpsertWebhookRequestDTO;
 import io.harness.product.ci.scm.proto.Commit;
@@ -96,4 +98,8 @@ public interface ScmClientFacilitatorService {
 
   CreateBranchResponse createNewBranch(
       Scope scope, ScmConnector scmConnector, String newBranchName, String baseBranchName);
+
+  CreateFileResponse createFile(ScmCreateFileRequestDTO scmCreateFileRequestDTO, ScmConnector scmConnector);
+
+  UpdateFileResponse updateFile(ScmUpdateFileRequestDTO scmUpdateFileRequestDTO, ScmConnector scmConnector);
 }
