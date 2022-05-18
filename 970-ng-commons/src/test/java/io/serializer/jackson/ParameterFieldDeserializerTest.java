@@ -129,10 +129,12 @@ public class ParameterFieldDeserializerTest extends CategoryTest implements Mult
     assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
     text = "<+input>.default(\"value\").executionInput()";
     assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
+    // testing all InputSetValidator patterns after .default construct
     for (InputSetValidatorType validatorType : InputSetValidatorType.values()) {
       text = "<+input>.default(\"value\")." + validatorType.getYamlName() + "(\"random\")";
       assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
     }
+    // testing .executionInput() patterns after .default construct
     text = "<+input>.default(\"value\").allowedValues(\"random\").executionInput()";
     assertEquals("\"value\"", parameterFieldDeserializer.extractDefaultValue(text));
     text = "<+input>.allowedValues(\"random\").default(\"value\").executionInput()";

@@ -172,17 +172,22 @@ public class ParameterFieldDeserializer extends StdDeserializer<ParameterField<?
 
   protected String extractDefaultValue(String text) {
     String defaultValueString = null;
+    // Checking the pattern when field ends with .default(*)
     Matcher matcher = Pattern.compile("\\.default\\((.*?)\\)$").matcher(text);
     if (matcher.find()) {
       defaultValueString = matcher.group(1);
+      // when any inputSetValidator is present after .default() construct
       List<Pattern> patterns = Arrays.stream(InputSetValidatorType.values())
                                    .map(o -> Pattern.compile("\\.default\\((.*?)\\)." + o.getYamlName() + "\\(.*?\\)$"))
                                    .collect(Collectors.toList());
+      // when .executionInput() is present after .default construct.
       patterns.add(Pattern.compile("\\.default\\((.*?)\\).executionInput\\(.*?\\)$"));
       for (Pattern pattern : patterns) {
         Matcher m = pattern.matcher(text);
         if (m.find()) {
           String defaultValue = m.group(1);
+          // Take the smallest match as default value. <+input>.default("abc").executionInput() can match to "abc" and
+          // "abc").executionInput(). We need to take the "abc"
           if (defaultValueString == null || defaultValue.length() < defaultValueString.length()) {
             defaultValueString = defaultValue;
           }
