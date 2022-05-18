@@ -34,11 +34,13 @@ import io.harness.cdng.infra.beans.InfraMapping;
 import io.harness.cdng.infra.beans.K8sDirectInfraMapping;
 import io.harness.cdng.infra.beans.K8sGcpInfraMapping;
 import io.harness.cdng.infra.beans.PdcInfraMapping;
+import io.harness.cdng.infra.beans.SshWinRmAzureInfraMapping;
 import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure.K8SDirectInfrastructureBuilder;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
+import io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
@@ -266,6 +268,41 @@ public class InfrastructureStepTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testCreateSshWinRmAzureInfraMapping() {
+    String connectorRef = "some-connector-ref";
+    String credentialsRef = "some-credentials-ref";
+    String subscriptionId = "some-sub-id";
+    String resourceGroup = "some-resource-group";
+    Boolean usePublicDns = true;
+    Map<String, String> tags = new HashMap<>();
+    tags.put("some-tag", "some-value");
+    tags.put("another-tag", "another-value");
+
+    Infrastructure infrastructureSpec = SshWinRmAzureInfrastructure.builder()
+                                            .connectorRef(ParameterField.createValueField(connectorRef))
+                                            .credentialsRef(ParameterField.createValueField(credentialsRef))
+                                            .subscriptionId(ParameterField.createValueField(subscriptionId))
+                                            .resourceGroup(ParameterField.createValueField(resourceGroup))
+                                            .tags(ParameterField.createValueField(tags))
+                                            .usePublicDns(ParameterField.createValueField(usePublicDns))
+                                            .build();
+
+    InfraMapping expectedInfraMapping = SshWinRmAzureInfraMapping.builder()
+                                            .credentialsRef(credentialsRef)
+                                            .connectorRef(connectorRef)
+                                            .subscriptionId(subscriptionId)
+                                            .resourceGroup(resourceGroup)
+                                            .tags(tags)
+                                            .usePublicDns(usePublicDns)
+                                            .build();
+
+    InfraMapping infraMapping = infrastructureStep.createInfraMappingObject(infrastructureSpec);
+    assertThat(infraMapping).isEqualTo(expectedInfraMapping);
+  }
+
+  @Test
   @Owner(developers = VAIBHAV_SI)
   @Category(UnitTests.class)
   public void testProcessEnvironment() {
@@ -354,6 +391,88 @@ public class InfrastructureStepTest extends CategoryTest {
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expressions : [expression1] , [expression2]");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidateSshWinRmAzureInfrastructure() {
+    SshWinRmAzureInfrastructure infrastructure = SshWinRmAzureInfrastructure.builder()
+                                                     .credentialsRef(ParameterField.createValueField("credentials-ref"))
+                                                     .connectorRef(ParameterField.createValueField("connector-ref"))
+                                                     .subscriptionId(ParameterField.createValueField("subscription-id"))
+                                                     .resourceGroup(ParameterField.createValueField("resource-group"))
+                                                     .build();
+
+    infrastructureStep.validateInfrastructure(infrastructure);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidateSshWinRmAzureInfrastructureCredentialsIsExpression() {
+    SshWinRmAzureInfrastructure infrastructure =
+        SshWinRmAzureInfrastructure.builder()
+            .credentialsRef(new ParameterField<>(null, true, "expression1", null, true))
+            .connectorRef(ParameterField.createValueField("connector-ref"))
+            .subscriptionId(ParameterField.createValueField("subscription-id"))
+            .resourceGroup(ParameterField.createValueField("resource-group"))
+            .build();
+
+    assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Unresolved Expression : [expression1]");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidateSshWinRmAzureInfrastructureConnectorIsExpression() {
+    SshWinRmAzureInfrastructure infrastructure =
+        SshWinRmAzureInfrastructure.builder()
+            .credentialsRef(ParameterField.createValueField("credentials-ref"))
+            .connectorRef(new ParameterField<>(null, true, "expression1", null, true))
+            .subscriptionId(ParameterField.createValueField("subscription-id"))
+            .resourceGroup(ParameterField.createValueField("resource-group"))
+            .build();
+
+    assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Unresolved Expression : [expression1]");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidateSshWinRmAzureInfrastructureSubscriptionIsExpression() {
+    SshWinRmAzureInfrastructure infrastructure =
+        SshWinRmAzureInfrastructure.builder()
+            .credentialsRef(ParameterField.createValueField("credentials-ref"))
+            .connectorRef(ParameterField.createValueField("connector-ref"))
+            .subscriptionId(new ParameterField<>(null, true, "expression2", null, true))
+            .resourceGroup(ParameterField.createValueField("resource-group"))
+            .build();
+
+    assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Unresolved Expression : [expression2]");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidateSshWinRmAzureInfrastructureResourceGroupIsExpression() {
+    SshWinRmAzureInfrastructure infrastructure =
+        SshWinRmAzureInfrastructure.builder()
+            .credentialsRef(ParameterField.createValueField("credentials-ref"))
+            .connectorRef(ParameterField.createValueField("connector-ref"))
+            .subscriptionId(ParameterField.createValueField("subscription-id"))
+            .resourceGroup(new ParameterField<>(null, true, "expression2", null, true))
+            .build();
+
+    assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Unresolved Expression : [expression2]");
   }
 
   @Test
