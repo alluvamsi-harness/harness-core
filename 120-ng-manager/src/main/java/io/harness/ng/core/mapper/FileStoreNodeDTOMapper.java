@@ -23,18 +23,21 @@ public class FileStoreNodeDTOMapper {
   public FileNodeDTO getFileNodeDTO(NGFile ngFile) {
     return FileNodeDTO.builder()
         .identifier(ngFile.getIdentifier())
+        .parentIdentifier(ngFile.getParentIdentifier())
         .name(ngFile.getName())
         .fileUsage(ngFile.getFileUsage())
         .description(ngFile.getDescription())
         .tags(ngFile.getTags())
         .lastModifiedAt(ngFile.getLastModifiedAt())
         .lastModifiedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))
+        .mimeType(ngFile.getMimeType())
         .build();
   }
 
   public FolderNodeDTO getFolderNodeDTO(NGFile ngFile) {
     return FolderNodeDTO.builder()
         .identifier(ngFile.getIdentifier())
+        .parentIdentifier(ngFile.getParentIdentifier())
         .name(ngFile.getName())
         .lastModifiedAt(ngFile.getLastModifiedAt())
         .lastModifiedBy(fromEmbeddedUser(ngFile.getLastUpdatedBy()))

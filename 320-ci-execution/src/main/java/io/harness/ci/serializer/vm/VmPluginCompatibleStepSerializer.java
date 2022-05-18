@@ -46,7 +46,7 @@ public class VmPluginCompatibleStepSerializer {
     String connectorRef = PluginSettingUtils.getConnectorRef(pluginCompatibleStep);
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     Map<EnvVariableEnum, String> connectorSecretEnvMap =
-        PluginSettingUtils.getConnectorSecretEnvMap(pluginCompatibleStep);
+        PluginSettingUtils.getConnectorSecretEnvMap(pluginCompatibleStep.getNonYamlInfo().getStepInfoType());
     ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(ngAccess, connectorRef);
     connectorDetails.setEnvToSecretsMap(connectorSecretEnvMap);
 

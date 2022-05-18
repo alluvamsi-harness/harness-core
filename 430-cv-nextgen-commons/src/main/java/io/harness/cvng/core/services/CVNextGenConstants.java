@@ -44,4 +44,5 @@ public interface CVNextGenConstants {
       + PROJECT_IDENTIFIER_KEY + "}";
   String CHANGE_EVENT_PATH = PROJECT_PATH + "/change-event";
   String VERIFY_STEP_PATH = PROJECT_PATH + "/verify-step";
+  String MONITORED_SERVICE_YAML_ROOT = "monitoredService";
 }

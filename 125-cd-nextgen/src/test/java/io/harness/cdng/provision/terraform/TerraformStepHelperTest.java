@@ -34,6 +34,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
+import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.fileservice.FileServiceClientFactory;
 import io.harness.cdng.k8s.K8sStepHelper;
@@ -124,6 +125,7 @@ public class TerraformStepHelperTest extends CategoryTest {
   @Mock private FileServiceClientFactory mockFileService;
   @Mock private SecretManagerClientService mockSecretManagerClientService;
   @Mock private TerraformConfigDAL terraformConfigDAL;
+  @Mock private CDStepHelper cdStepHelper;
   @Mock private CDFeatureFlagHelper cdFeatureFlagHelper;
   @InjectMocks private TerraformStepHelper helper;
 
@@ -355,6 +357,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     RemoteTerraformVarFileSpec remoteVarFiles =
         TerraformStepDataGenerator.generateRemoteVarFileSpec(StoreConfigType.GIT, gitStoreVarFiles);
     Map<String, TerraformVarFile> varFilesMap = TerraformStepDataGenerator.generateVarFileSpecs(remoteVarFiles, true);
+    doNothing().when(cdStepHelper).validateGitStoreConfig(any());
     doReturn(
         ConnectorInfoDTO.builder().connectorConfig(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).build()).build())
         .when(mockK8sStepHelper)
@@ -366,6 +369,7 @@ public class TerraformStepHelperTest extends CategoryTest {
         .when(mockGitConfigAuthenticationInfoHelper)
         .getEncryptedDataDetails(any(), any(), any());
     List<TerraformVarFileInfo> terraformVarFileInfos = helper.toTerraformVarFileInfo(varFilesMap, ambiance);
+    verify(cdStepHelper, times(1)).validateGitStoreConfig(any());
     assertThat(terraformVarFileInfos).isNotNull();
     assertThat(terraformVarFileInfos.size()).isEqualTo(2);
     TerraformVarFileInfo terraformVarFileInfo = terraformVarFileInfos.get(1);
@@ -505,12 +509,14 @@ public class TerraformStepHelperTest extends CategoryTest {
                                             .name("connectorName")
                                             .connectorConfig(artifactoryConnectorDTO)
                                             .build();
+    doNothing().when(cdStepHelper).validateGitStoreConfig(any());
     when(mockK8sStepHelper.getConnector(anyString(), any()))
         .thenReturn(connectorInfoDTO, connectorInfoDTO,
             ConnectorInfoDTO.builder()
                 .connectorConfig(GitConfigDTO.builder().gitAuthType(GitAuthType.SSH).build())
                 .build());
     List<TerraformVarFileInfo> terraformVarFileInfos = helper.toTerraformVarFileInfo(varFilesMap, ambiance);
+    verify(cdStepHelper, times(1)).validateGitStoreConfig(any());
     assertThat(terraformVarFileInfos).isNotNull();
     assertThat(terraformVarFileInfos.size()).isEqualTo(4);
     TerraformVarFileInfo terraformVarFileInfo = terraformVarFileInfos.get(1);
@@ -594,6 +600,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     doReturn(Collections.emptyList())
         .when(mockGitConfigAuthenticationInfoHelper)
         .getEncryptedDataDetails(any(), any(), any());
+    doNothing().when(cdStepHelper).validateGitStoreConfig(any());
 
     List<TerraformVarFileConfig> varFileConfigs = new LinkedList<>();
 
@@ -614,6 +621,7 @@ public class TerraformStepHelperTest extends CategoryTest {
     varFileConfigs.add(remoteFileConfig);
 
     List<TerraformVarFileInfo> terraformVarFileInfos = helper.prepareTerraformVarFileInfo(varFileConfigs, ambiance);
+    verify(cdStepHelper, times(1)).validateGitStoreConfig(any());
     assertThat(terraformVarFileInfos.size()).isEqualTo(2);
     for (TerraformVarFileInfo terraformVarFileInfo : terraformVarFileInfos) {
       if (terraformVarFileInfo instanceof InlineTerraformVarFileInfo) {

@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.GITOPS;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.gitops.entity.Cluster;
 
+import com.mongodb.client.result.DeleteResult;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.constraints.NotNull;
@@ -61,6 +62,16 @@ public interface ClusterService {
    */
   boolean delete(@NotEmpty String accountId, @NotEmpty String orgIdentifier, @NotEmpty String projectIdentifier,
       @NotEmpty String envIdentifier, @NotEmpty String identifier);
+
+  /**
+   * @param accountId
+   * @param orgIdentifier
+   * @param projectIdentifier
+   * @param identifier
+   * @return
+   */
+  DeleteResult deleteFromAllEnv(@NotEmpty String accountId, @NotEmpty String orgIdentifier,
+      @NotEmpty String projectIdentifier, @NotEmpty String identifier);
 
   /**
    * @param page

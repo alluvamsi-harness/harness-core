@@ -22,6 +22,7 @@ import io.harness.cdng.infra.beans.PdcInfraMapping;
 import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfraMapping;
 import io.harness.cdng.infra.steps.InfraStepParameters;
 import io.harness.cdng.pipeline.executions.CDAccountExecutionMetadata;
+import io.harness.cdng.provision.cloudformation.beans.CloudformationConfig;
 import io.harness.cdng.provision.terraform.TerraformConfig;
 import io.harness.cdng.service.steps.ServiceStepParameters;
 import io.harness.morphia.MorphiaRegistrar;
@@ -42,6 +43,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     set.add(DockerArtifactSource.class);
     set.add(ArtifactSource.class);
     set.add(TerraformConfig.class);
+    set.add(CloudformationConfig.class);
     set.add(PollingDocument.class);
     set.add(CDAccountExecutionMetadata.class);
     set.add(EnvironmentGroupEntity.class);
@@ -56,6 +58,7 @@ public class NGMorphiaRegistrar implements MorphiaRegistrar {
     h.put("cdng.infra.beans.InfraUseFromStage", InfraUseFromStage.class);
     h.put("cdng.infra.steps.InfraStepParameters", InfraStepParameters.class);
     h.put("io.harness.cdng.provision.terraform.TerraformConfig", TerraformConfig.class);
+    h.put("io.harness.cdng.provision.cloudformation.beans.CloudformationConfig", CloudformationConfig.class);
     h.put("io.harness.polling.bean.PollingDocument", PollingDocument.class);
   }
 }

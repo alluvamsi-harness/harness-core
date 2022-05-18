@@ -75,7 +75,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   public static String UPDATING_PIPELINE = "updating existing pipeline";
 
   private static final String DUP_KEY_EXP_FORMAT_STRING =
-      "Pipeline [%s] under Project[%s], Organization [%s] already exists";
+      "Pipeline [%s] under Project[%s], Organization [%s] already exists or has been deleted.";
 
   @Override
   public PipelineEntity create(PipelineEntity pipelineEntity) {

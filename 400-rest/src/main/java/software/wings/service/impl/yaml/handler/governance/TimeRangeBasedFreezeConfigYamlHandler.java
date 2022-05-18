@@ -85,12 +85,14 @@ public class TimeRangeBasedFreezeConfigYamlHandler
       return null;
     }
     if (BlackoutWindowFilterType.ALL.equals(userGroupSelection.getFilterType())) {
-      return AllUserGroupFilter.Yaml.builder().filterType(BlackoutWindowFilterType.ALL).build();
-    } else {
-      return CustomUserGroupFilter.Yaml.builder()
+      return UserGroupFilterYaml.builder().filterType(BlackoutWindowFilterType.ALL).build();
+    } else if (BlackoutWindowFilterType.CUSTOM.equals(userGroupSelection.getFilterType())) {
+      return UserGroupFilterYaml.builder()
           .userGroupNames(getUserGroupNames(((CustomUserGroupFilter) userGroupSelection).getUserGroups(), accountId))
           .filterType(BlackoutWindowFilterType.CUSTOM)
           .build();
+    } else {
+      throw new InvalidRequestException("User group filter type can be CUSTOM or ALL");
     }
   }
 
@@ -129,7 +131,10 @@ public class TimeRangeBasedFreezeConfigYamlHandler
     return userGroupNames;
   }
 
-  private List<String> getUserGroupIds(List<String> userGroupNames, String accountId) {
+  private List<String> getUserGroupIds(List<String> userGroupNames, String accountId, boolean isEmptyUserGroupAllowed) {
+    if (isEmptyUserGroupAllowed) {
+      return Collections.emptyList();
+    }
     if (EmptyPredicate.isEmpty(userGroupNames)) {
       throw new InvalidRequestException("User Groups cannot be empty");
     }
@@ -157,7 +162,7 @@ public class TimeRangeBasedFreezeConfigYamlHandler
     bean.name(yaml.getName());
     bean.applicable(yaml.isApplicable());
     bean.description(yaml.getDescription());
-    bean.userGroups(getUserGroupIds(yaml.getUserGroups(), accountId));
+    bean.userGroups(getUserGroupIds(yaml.getUserGroups(), accountId, yaml.getUserGroupSelection() != null));
     bean.userGroupSelection(convertSelectionToBean(yaml.getUserGroupSelection(), accountId));
 
     ApplicationFilterYamlHandler applicationFilterYamlHandler;
@@ -182,7 +187,7 @@ public class TimeRangeBasedFreezeConfigYamlHandler
     } else {
       return CustomUserGroupFilter.builder()
           .userGroupFilterType(BlackoutWindowFilterType.CUSTOM)
-          .userGroups(getUserGroupIds(((CustomUserGroupFilter.Yaml) userGroupSelection).getUserGroupNames(), accountId))
+          .userGroups(getUserGroupIds(userGroupSelection.getUserGroupNames(), accountId, false))
           .build();
     }
   }

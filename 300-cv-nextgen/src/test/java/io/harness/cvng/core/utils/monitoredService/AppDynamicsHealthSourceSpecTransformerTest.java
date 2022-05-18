@@ -158,7 +158,11 @@ public class AppDynamicsHealthSourceSpecTransformerTest extends CvNextGenTestBas
                    .getAnalysis()
                    .getDeploymentVerification()
                    .getServiceInstanceMetricPath())
-        .isEqualTo("serviceInstancePath1");
+        .isEqualTo("Individual Nodes|*|serviceInstancePath1");
+    assertThat(appDynamicsHealthSourceSpec.getMetricDefinitions().get(0).getCompleteServiceInstanceMetricPath())
+        .isEqualTo("baseFolder|" + tierName + "|Individual Nodes|*|serviceInstancePath1");
+    assertThat(appDynamicsHealthSourceSpec.getMetricDefinitions().get(0).getCompleteMetricPath())
+        .isEqualTo("baseFolder|" + tierName + "|path");
     assertThat(appDynamicsHealthSourceSpec.getMetricDefinitions()
                    .get(0)
                    .getAnalysis()
@@ -191,7 +195,7 @@ public class AppDynamicsHealthSourceSpecTransformerTest extends CvNextGenTestBas
                     .metricType(TimeSeriesMetricType.INFRA)
                     .baseFolder("baseFolder")
                     .deploymentVerification(DeploymentVerification.builder()
-                                                .serviceInstanceMetricPath("serviceInstancePath1")
+                                                .serviceInstanceMetricPath("Individual Nodes|*|serviceInstancePath1")
                                                 .enabled(true)
                                                 .build())
                     .build()))

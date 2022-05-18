@@ -57,6 +57,7 @@ java_library(
         "@maven//:com_esotericsoftware_yamlbeans_yamlbeans",
         "@maven//:com_fasterxml_jackson_core_jackson_core",
         "@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+        "@maven//:com_github_allbegray_slack_api",
         "@maven//:com_google_api_client_google_api_client",
         "@maven//:com_google_apis_google_api_services_compute",
         "@maven//:com_google_apis_google_api_services_container",
@@ -80,6 +81,7 @@ java_library(
         "@maven//:com_sun_mail_javax_mail",
         "@maven//:commons_collections_commons_collections",
         "@maven//:commons_io_commons_io",
+        "@maven//:de_danielbechler_java_object_diff",
         "@maven//:io_cloudsoft_windows_winrm4j",
         "@maven//:io_cloudsoft_windows_winrm4j_client",
         "@maven//:io_fabric8_fabric8_utils",
@@ -124,6 +126,7 @@ java_library(
     deps = [
         "module",
         "//:lombok",
+        "//932-connector-task:module",
         "//950-delegate-tasks-beans:module",
         "//952-scm-java-client:module",
         "//953-events-api:module",

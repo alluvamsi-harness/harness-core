@@ -84,7 +84,7 @@ public class ProvisionService {
       "Kubernetes Cluster Connector created by Harness for connecting to Harness Builds environment";
   private static final String K8S_CONNECTOR_IDENTIFIER = "Harness_Kubernetes_Cluster";
 
-  private static final String K8S_DELEGATE_NAME = "Harness Kubernetes Delegate";
+  private static final String K8S_DELEGATE_NAME = "harness-kubernetes-delegate";
   private static final String K8S_DELEGATE_DESC =
       "Kubernetes Delegate created by Harness for communication with Harness Kubernetes Cluster";
 
@@ -92,7 +92,7 @@ public class ProvisionService {
 
   private static final String GENERATE_SAMPLE_DELEGATE_CURL_COMMAND_FORMAT_STRING =
       "curl -s -X POST -H 'content-type: application/json' "
-      + "--url https://app.harness.io/gateway/api/webhooks/WLwBdpY6scP0G9oNsGcX2BHrY4xH44W7r7HWYC94 "
+      + "--url https://app.harness.io/gateway/api/webhooks/WLwBdpY6scP0G9oNsGcX2BHrY4xH44W7r7HWYC94?accountId=gz4oUAlfSgONuOrWmphHif "
       + "-d '{\"application\":\"4qPkwP5dQI2JduECqGZpcg\","
       + "\"parameters\":{\"Environment\":\"%s\",\"delegate\":\"delegate-ci\","
       + "\"account_id\":\"%s\",\"account_id_short\":\"%s\",\"account_secret\":\"%s\"}}'";
@@ -248,7 +248,7 @@ public class ProvisionService {
    */
   public DelegateStatus getDelegateInstallStatus(String accountId) {
     try {
-      String url = format(SAMPLE_DELEGATE_STATUS_ENDPOINT_FORMAT_STRING, configuration.getSignupTargetEnv(),
+      String url = format(SAMPLE_DELEGATE_STATUS_ENDPOINT_FORMAT_STRING, configuration.getDelegateStatusEndpoint(),
           getAccountIdentifier(accountId));
       log.info("Fetching delegate provisioning progress for account {} from {}", accountId, url);
       String result = Http.getResponseStringFromUrl(url, 30, 10).trim();
@@ -320,7 +320,8 @@ public class ProvisionService {
       connectorResponseDTO =
           connectorService.create(ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build(), accountIdentifier);
     } else {
-      connectorService.update(ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build(), accountIdentifier);
+      connectorResponseDTO =
+          connectorService.update(ConnectorDTO.builder().connectorInfo(connectorInfoDTO).build(), accountIdentifier);
     }
 
     ConnectorValidationResult connectorValidationResult = connectorService.testConnection(

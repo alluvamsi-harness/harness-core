@@ -51,6 +51,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DecryptableEntity;
 import io.harness.chartmuseum.ChartMuseumServer;
+import io.harness.chartmuseum.ChartmuseumClient;
 import io.harness.delegate.beans.connector.helm.HttpHelmAuthType;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmUsernamePasswordDTO;
@@ -58,7 +59,7 @@ import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
-import io.harness.delegate.chartmuseum.NGChartMuseumService;
+import io.harness.delegate.chartmuseum.NgChartmuseumClientFactory;
 import io.harness.delegate.exception.ManifestCollectionException;
 import io.harness.delegate.task.k8s.HelmChartManifestDelegateConfig;
 import io.harness.exception.ExceptionUtils;
@@ -66,6 +67,7 @@ import io.harness.exception.HelmClientException;
 import io.harness.exception.HelmClientRuntimeException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.helm.HelmCliCommandType;
 import io.harness.helm.HelmCommandFlagsUtils;
 import io.harness.helm.HelmCommandTemplateFactory;
@@ -79,7 +81,6 @@ import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
 import software.wings.beans.LogColor;
 import software.wings.beans.LogWeight;
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -120,9 +121,10 @@ public class HelmTaskHelperBase {
   public static final String RESOURCE_DIR_BASE = "./repository/helm/resources/";
   public static final String VERSION_KEY = "version:";
   public static final String NAME_KEY = "name:";
+  public static final String REGISTRY_URL = "${REGISTRY_URL}";
 
   @Inject private K8sGlobalConfigService k8sGlobalConfigService;
-  @Inject private NGChartMuseumService ngChartMuseumService;
+  @Inject private NgChartmuseumClientFactory ngChartmuseumClientFactory;
   @Inject private SecretDecryptionService decryptionService;
   private String randPrefix;
 
@@ -144,6 +146,39 @@ public class HelmTaskHelperBase {
             "Failed to init helm. Executed command " + helmInitCommand + ". " + processResult.getOutput().getUTF8(),
             USER, HelmCliCommandType.INIT);
       }
+    }
+  }
+
+  public void loginOciRegistry(String repoUrl, String userName, char[] password, HelmVersion helmVersion,
+      long timeoutInMillis, String destinationDirectory) {
+    if (!HelmVersion.isHelmV3(helmVersion)) {
+      throw new HelmClientException(
+          "OCI Registry is supported only for Helm V3", USER, HelmCliCommandType.OCI_REGISTRY_LOGIN);
+    }
+
+    Map<String, String> environment = new HashMap<>();
+    String registryLoginCmd =
+        HelmCommandTemplateFactory.getHelmCommandTemplate(HelmCliCommandType.OCI_REGISTRY_LOGIN, helmVersion)
+            .replace(HELM_PATH_PLACEHOLDER, getHelmPath(helmVersion))
+            .replace(REGISTRY_URL, repoUrl)
+            .replace(USERNAME, getUsername(userName))
+            .replace(PASSWORD, getPassword(password));
+
+    String evaluatedPassword = isEmpty(getPassword(password)) ? StringUtils.EMPTY : "--password *******";
+    String registryLoginCmdForLogging =
+        HelmCommandTemplateFactory.getHelmCommandTemplate(HelmCliCommandType.OCI_REGISTRY_LOGIN, helmVersion)
+            .replace(HELM_PATH_PLACEHOLDER, getHelmPath(helmVersion))
+            .replace(REGISTRY_URL, repoUrl)
+            .replace(USERNAME, getUsername(userName))
+            .replace(PASSWORD, evaluatedPassword);
+
+    ProcessResult processResult = executeCommand(environment, registryLoginCmd, destinationDirectory,
+        "Attempt Login to OCI Registry. Command Executed: " + registryLoginCmdForLogging, timeoutInMillis,
+        HelmCliCommandType.OCI_REGISTRY_LOGIN);
+    if (processResult.getExitValue() != 0) {
+      throw new HelmClientException("Failed to login to the helm OCI Registry repo. Executed command "
+              + registryLoginCmdForLogging + " " + processResult.getOutput().getUTF8(),
+          USER, HelmCliCommandType.OCI_REGISTRY_LOGIN);
     }
   }
 
@@ -259,11 +294,11 @@ public class HelmTaskHelperBase {
     return encloseWithQuotesIfNeeded(k8sGlobalConfigService.getHelmPath(helmVersion));
   }
 
-  private String getUsername(String username) {
+  public String getUsername(String username) {
     return isBlank(username) ? "" : "--username " + username;
   }
 
-  private String getPassword(char[] password) {
+  public String getPassword(char[] password) {
     if (password == null) {
       return "";
     }
@@ -528,6 +563,7 @@ public class HelmTaskHelperBase {
   public void downloadChartFilesUsingChartMuseum(
       HelmChartManifestDelegateConfig manifest, String destinationDirectory, long timeoutInMillis) throws Exception {
     String resourceDirectory = null;
+    ChartmuseumClient chartmuseumClient = null;
     ChartMuseumServer chartMuseumServer = null;
     String repoName = null;
     String repoDisplayName = null;
@@ -563,8 +599,8 @@ public class HelmTaskHelperBase {
 
     try {
       resourceDirectory = createNewDirectoryAtPath(RESOURCE_DIR_BASE);
-      chartMuseumServer =
-          ngChartMuseumService.startChartMuseumServer(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartmuseumClient = ngChartmuseumClientFactory.createClient(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartMuseumServer = chartmuseumClient.start();
 
       addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), destinationDirectory,
           manifest.getHelmVersion(), timeoutInMillis, cacheDir);
@@ -573,8 +609,8 @@ public class HelmTaskHelperBase {
           cacheDir);
 
     } finally {
-      if (chartMuseumServer != null) {
-        ngChartMuseumService.stopChartMuseumServer(chartMuseumServer);
+      if (chartmuseumClient != null && chartMuseumServer != null) {
+        chartmuseumClient.stop(chartMuseumServer);
       }
 
       if (repoName != null) {
@@ -993,6 +1029,7 @@ public class HelmTaskHelperBase {
   private List<String> fetchVersionsUsingChartMuseumServer(
       HelmChartManifestDelegateConfig manifest, String destinationDirectory, long timeoutInMillis) throws Exception {
     String resourceDirectory = null;
+    ChartmuseumClient chartmuseumClient = null;
     ChartMuseumServer chartMuseumServer = null;
     String repoName = null;
     String repoDisplayName = null;
@@ -1009,8 +1046,8 @@ public class HelmTaskHelperBase {
 
     try {
       resourceDirectory = createNewDirectoryAtPath(RESOURCE_DIR_BASE);
-      chartMuseumServer =
-          ngChartMuseumService.startChartMuseumServer(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartmuseumClient = ngChartmuseumClientFactory.createClient(manifest.getStoreDelegateConfig(), resourceDirectory);
+      chartMuseumServer = chartmuseumClient.start();
 
       addChartMuseumRepo(repoName, repoDisplayName, chartMuseumServer.getPort(), destinationDirectory,
           manifest.getHelmVersion(), timeoutInMillis, "");
@@ -1022,8 +1059,8 @@ public class HelmTaskHelperBase {
       String commandOutput = processResult.getOutput().getUTF8();
       return parseHelmVersionsFromOutput(commandOutput, manifest);
     } finally {
-      if (chartMuseumServer != null) {
-        ngChartMuseumService.stopChartMuseumServer(chartMuseumServer);
+      if (chartmuseumClient != null && chartMuseumServer != null) {
+        chartmuseumClient.stop(chartMuseumServer);
       }
     }
   }

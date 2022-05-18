@@ -176,7 +176,7 @@
 5026:software.wings.beans.PhaseStepType
 5027:software.wings.beans.ElementExecutionSummary
 5028:software.wings.beans.ServiceInstance
-5029:software.wings.beans.command.Command
+5029:software.wings.beans.dto.Command
 5030:software.wings.beans.command.AbstractCommandUnit
 5031:software.wings.beans.command.CleanupSshCommandUnit
 5032:software.wings.beans.command.CodeDeployCommandExecutionData
@@ -297,7 +297,7 @@
 5157:software.wings.api.ContainerServiceData
 5158:software.wings.beans.command.EcsSetupCommandUnit
 5159:software.wings.beans.command.EcsSetupParams
-5160:software.wings.beans.container.EcsContainerTask
+5160:software.wings.beans.dto.EcsContainerTask
 5162:software.wings.beans.container.ContainerDefinition
 5163:software.wings.beans.container.LogConfiguration
 5164:software.wings.beans.container.StorageConfiguration
@@ -314,7 +314,7 @@
 5176:software.wings.beans.config.LogzConfig
 5177:software.wings.beans.SplunkConfig
 5178:software.wings.beans.SumoConfig
-5179:software.wings.beans.container.KubernetesContainerTask
+5179:software.wings.beans.dto.KubernetesContainerTask
 5180:software.wings.beans.command.KubernetesResizeParams
 5181:software.wings.beans.command.EcsResizeParams
 5182:software.wings.beans.UserInvite
@@ -383,6 +383,7 @@
 5253:io.harness.shell.ScriptType
 5254:software.wings.beans.ConnectionType
 5255:software.wings.beans.WinRmConnectionAttributes
+5256:software.wings.beans.WinRmCommandParameter
 5257:software.wings.api.BarrierStepExecutionSummary
 5258:software.wings.api.BarrierExecutionData
 5259:software.wings.helpers.ext.helm.request.HelmInstallCommandRequest
@@ -394,7 +395,7 @@
 5266:software.wings.helpers.ext.helm.response.HelmReleaseHistoryCommandResponse
 5267:software.wings.api.HelmSetupExecutionSummary
 5268:software.wings.helpers.ext.helm.request.HelmRollbackCommandRequest
-5269:software.wings.beans.container.HelmChartSpecification
+5269:software.wings.beans.dto.HelmChartSpecification
 5270:io.harness.git.model.GitRepositoryType
 5271:io.harness.waiter.StringNotifyResponseData
 5272:software.wings.beans.command.InitPowerShellCommandUnit
@@ -585,7 +586,7 @@
 5492:software.wings.service.impl.analysis.CustomLogDataCollectionInfo
 5493:software.wings.delegatetasks.cv.beans.CustomLogResponseMapper
 5494:software.wings.service.impl.cloudwatch.CloudWatchSetupTestNodeData
-5495:software.wings.beans.sso.LdapSettings
+5495:software.wings.beans.dto.LdapSettings
 5496:software.wings.beans.sso.LdapConnectionSettings
 5497:software.wings.beans.sso.LdapUserSettings
 5498:software.wings.beans.sso.LdapGroupSettings
@@ -621,14 +622,14 @@
 5531:software.wings.service.impl.appdynamics.AppdynamicsSetupTestNodeData
 5537:software.wings.beans.GcpKubernetesCluster
 5538:software.wings.beans.AzureKubernetesCluster
-5539:software.wings.beans.appmanifest.ManifestFile
+5539:software.wings.beans.dto.ManifestFile
 5540:software.wings.beans.appmanifest.StoreType
 5541:software.wings.service.impl.aws.model.AwsElbListElbsRequest
 5542:software.wings.service.impl.aws.model.AwsElbListNetworkElbsRequest
 5543:software.wings.service.impl.aws.model.AwsAmiSwitchRoutesRequest
 5544:software.wings.service.impl.aws.model.AwsAmiSwitchRoutesResponse
 5545:software.wings.api.AwsAmiSwitchRoutesStateExecutionData
-5546:software.wings.beans.container.EcsServiceSpecification
+5546:software.wings.beans.dto.EcsServiceSpecification
 5547:software.wings.yaml.gitSync.YamlGitConfig
 5548:software.wings.yaml.gitSync.YamlGitConfig$SyncMode
 5549:io.harness.shell.KerberosConfig
@@ -851,7 +852,6 @@
 7259:software.wings.api.jira.JiraExecutionData$JiraIssueData
 7260:software.wings.api.k8s.K8sSwapServiceElement
 7261:software.wings.beans.SlackMessage
-7262:software.wings.service.impl.SlackMessageSenderImpl
 7263:software.wings.beans.SlackMessageJSON
 7264:software.wings.api.pcf.PcfPluginExecutionSummary
 7265:software.wings.api.pcf.PcfPluginStateExecutionData
@@ -1774,6 +1774,7 @@
 50009:software.wings.sm.states.rancher.RancherStateExecutionData
 50010:software.wings.beans.UserGroupEntityReference
 50011:software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse
+50012:software.wings.beans.settings.helm.OciHelmRepoConfig
 54320:io.harness.ng.core.entities.Organization
 54321:io.harness.ng.core.entities.Project
 54322:io.harness.ng.core.entities.SampleEncryptableSettingImplementation
@@ -1860,6 +1861,7 @@
 97111:software.wings.helpers.ext.jenkins.BuildDetails$BuildStatus
 97112:io.harness.delegate.beans.artifact.ArtifactFileMetadata
 97113:io.harness.servicenow.ServiceNowTemplate
+97114:io.harness.aws.AwsCFTemplatesType
 98399:io.harness.delegate.task.helm.HelmCommandRequestNG
 98400:io.harness.delegate.task.helm.HelmCommandRequestNG$HelmCommandType
 98401:io.harness.delegate.task.helm.HelmInstallCommandRequestNG
@@ -2169,6 +2171,20 @@
 543502:io.harness.delegate.beans.azure.response.AzureClustersResponse
 543503:io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams
 543504:io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse
+543505:io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters
+543506:io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse
+543507:io.harness.delegate.task.cloudformation.CloudformationCommandUnit
+543508:io.harness.delegate.task.cloudformation.CloudformationTaskType
+543509:io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse
+543510:io.harness.delegate.beans.connector.awsconnector.AwsCFTaskParamsRequest
+543511:io.harness.delegate.task.cloudformation.CloudFormationCreateStackNGResponse
+543512:io.harness.delegate.task.cloudformation.CloudFormationCommandNGResponse
+543513:io.harness.delegate.beans.aws.s3.AwsS3FetchFileDelegateConfig
+543514:io.harness.delegate.beans.aws.s3.AwsS3FetchFilesResponse
+543515:io.harness.delegate.beans.aws.s3.AwsS3FetchFilesTaskParams
+543516:io.harness.delegate.beans.aws.s3.S3FileDetailRequest
+543517:io.harness.delegate.beans.aws.s3.S3FileDetailResponse
+543518:io.harness.delegate.beans.connector.awsconnector.AwsCFTaskResponse
 543526:io.harness.delegate.beans.WinRmTaskParams
 549966:io.harness.secretmanagerclient.dto.EncryptedDataMigrationDTO
 553286:io.harness.delegate.task.scm.ScmPushTaskParams

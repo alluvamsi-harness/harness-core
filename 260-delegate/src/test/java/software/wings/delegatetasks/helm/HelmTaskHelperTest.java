@@ -20,6 +20,7 @@ import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.PRATYUSH;
 import static io.harness.rule.OwnerRule.RAGHVENDRA;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
+import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 import static io.harness.rule.OwnerRule.YOGESH;
 
 import static software.wings.delegatetasks.helm.HelmTestConstants.ACCOUNT_ID;
@@ -49,7 +50,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -59,7 +59,9 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.FileData;
 import io.harness.category.element.UnitTests;
 import io.harness.chartmuseum.ChartMuseumServer;
+import io.harness.chartmuseum.ChartmuseumClient;
 import io.harness.delegate.beans.DelegateFileManagerBase;
+import io.harness.delegate.chartmuseum.CgChartmuseumClientFactory;
 import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmTaskHelperBase;
@@ -78,12 +80,12 @@ import software.wings.beans.AwsConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.command.ExecutionLogCallback;
-import software.wings.beans.container.HelmChartSpecification;
+import software.wings.beans.dto.HelmChartSpecification;
 import software.wings.beans.settings.helm.AmazonS3HelmRepoConfig;
 import software.wings.beans.settings.helm.GCSHelmRepoConfig;
 import software.wings.beans.settings.helm.HelmRepoConfig;
 import software.wings.beans.settings.helm.HttpHelmRepoConfig;
-import software.wings.helpers.ext.chartmuseum.ChartMuseumClient;
+import software.wings.beans.settings.helm.OciHelmRepoConfig;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
@@ -130,18 +132,26 @@ public class HelmTaskHelperTest extends WingsBaseTest {
   @Mock private ProcessExecutor processExecutor;
   @Mock K8sGlobalConfigService k8sGlobalConfigService;
   @Mock EncryptionService encryptionService;
-  @Mock ChartMuseumClient chartMuseumClient;
+  @Mock private CgChartmuseumClientFactory cgChartmuseumClientFactory;
+  @Mock private ChartmuseumClient chartmuseumClient;
   @Mock DelegateFileManagerBase delegateFileManagerBase;
+  @Mock private StartedProcess startedProcess;
   @Spy @InjectMocks private HelmTaskHelper helmTaskHelper;
   @Spy @InjectMocks private HelmTaskHelperBase helmTaskHelperBase;
 
+  private ChartMuseumServer testChartMuseumServer;
+
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     doReturn(processExecutor)
         .when(helmTaskHelperBase)
         .createProcessExecutor(anyString(), anyString(), anyLong(), anyMap());
     doReturn("v3/helm").when(k8sGlobalConfigService).getHelmPath(V3);
     doReturn("v2/helm").when(k8sGlobalConfigService).getHelmPath(V2);
+
+    testChartMuseumServer = ChartMuseumServer.builder().port(1234).startedProcess(startedProcess).build();
+
+    doReturn(testChartMuseumServer).when(chartmuseumClient).start();
   }
 
   @Test
@@ -158,6 +168,53 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     verify(helmTaskHelperBase)
         .addRepo("vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3,
             LONG_TIMEOUT_INTERVAL, "");
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void loginOciRegistryTest() {
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+
+    doReturn(new ProcessResult(0, new ProcessOutput(new byte[1])))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), any(HelmCliCommandType.class));
+    helmTaskHelper.loginOciRegistry(OciHelmRepoConfig.builder()
+                                        .chartRepoUrl("localhost:5005/test-charts")
+                                        .username("admin")
+                                        .password("admin".toCharArray())
+                                        .build(),
+        V3, LONG_TIMEOUT_INTERVAL, "/home");
+    verify(helmTaskHelperBase, times(1))
+        .executeCommand(anyMap(), captor.capture(), captor.capture(), captor.capture(), eq(LONG_TIMEOUT_INTERVAL),
+            eq(HelmCliCommandType.OCI_REGISTRY_LOGIN));
+    String command = captor.getAllValues().get(0);
+    String directoryPath = captor.getAllValues().get(1);
+    String errorMsg = captor.getAllValues().get(2);
+    assertThat(command).isEqualTo(
+        "v3/helm registry login localhost:5005/test-charts --username admin --password admin");
+    assertThat(directoryPath).isEqualTo("/home");
+    assertThat(errorMsg).isEqualTo(
+        "Attempt Login to OCI Registry. Command Executed: v3/helm registry login localhost:5005/test-charts --username admin --password *******");
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void loginOciRegistryFailedTest() {
+    doReturn(new ProcessResult(1, new ProcessOutput(new byte[1])))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), any(HelmCliCommandType.class));
+    assertThatExceptionOfType(HelmClientException.class)
+        .isThrownBy(()
+                        -> helmTaskHelper.loginOciRegistry(OciHelmRepoConfig.builder()
+                                                               .chartRepoUrl("localhost:5005/test-charts")
+                                                               .username("admin")
+                                                               .password("admin".toCharArray())
+                                                               .build(),
+                            V3, LONG_TIMEOUT_INTERVAL, "/home"))
+        .withMessageContaining(
+            "Failed to login to the helm OCI Registry repo. Executed command v3/helm registry login localhost:5005/test-charts --username admin --password *******");
   }
 
   @Test
@@ -297,7 +354,6 @@ public class HelmTaskHelperTest extends WingsBaseTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testDownloadChartFilesForGCSHelmRepo() throws Exception {
-    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
     GCSHelmRepoConfig gcsHelmRepoConfig =
         GCSHelmRepoConfig.builder().accountId("accountId").bucketName("bucketName").build();
 
@@ -306,9 +362,9 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     Path outputTemporaryDir = Files.createTempDirectory("chartFile");
     ProcessResult successfulResult = new ProcessResult(0, null);
 
-    doReturn(chartMuseumServer)
-        .when(chartMuseumClient)
-        .startChartMuseumServer(eq(gcsHelmRepoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
+    doReturn(chartmuseumClient)
+        .when(cgChartmuseumClientFactory)
+        .createClient(eq(gcsHelmRepoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
     doReturn(successfulResult).when(processExecutor).execute();
     helmTaskHelper.downloadChartFiles(gcsConfigParams, outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, null);
     verifyFetchChartFilesProcessExecutor(outputTemporaryDir.toString());
@@ -319,7 +375,6 @@ public class HelmTaskHelperTest extends WingsBaseTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testDownloadChartFilesForAwsS3HelmRepo() throws Exception {
-    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
     AmazonS3HelmRepoConfig s3HelmRepoConfig =
         AmazonS3HelmRepoConfig.builder().accountId("accountId").bucketName("bucketName").build();
 
@@ -328,9 +383,9 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     Path outputTemporaryDir = Files.createTempDirectory("chartFile");
     ProcessResult successfulResult = new ProcessResult(0, null);
 
-    doReturn(chartMuseumServer)
-        .when(chartMuseumClient)
-        .startChartMuseumServer(eq(s3HelmRepoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
+    doReturn(chartmuseumClient)
+        .when(cgChartmuseumClientFactory)
+        .createClient(eq(s3HelmRepoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
     doReturn(successfulResult).when(processExecutor).execute();
     helmTaskHelper.downloadChartFiles(awsConfigParams, outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, null);
     verifyFetchChartFilesProcessExecutor(outputTemporaryDir.toString());
@@ -354,7 +409,6 @@ public class HelmTaskHelperTest extends WingsBaseTest {
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testDownloadChartFilesForHttpHelmRepo() throws Exception {
-    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
     HttpHelmRepoConfig httpHelmRepoConfig =
         HttpHelmRepoConfig.builder().accountId("accountId").chartRepoUrl("http://127.0.0.1:1234").build();
 
@@ -363,9 +417,9 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     Path outputTemporaryDir = Files.createTempDirectory("chartFile");
     ProcessResult successfulResult = new ProcessResult(0, null);
 
-    doReturn(chartMuseumServer)
-        .when(chartMuseumClient)
-        .startChartMuseumServer(eq(httpHelmRepoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
+    doReturn(chartmuseumClient)
+        .when(cgChartmuseumClientFactory)
+        .createClient(eq(httpHelmRepoConfig), any(SettingValue.class), anyString(), anyString(), eq(false));
     doReturn(successfulResult).when(processExecutor).execute();
     helmTaskHelper.downloadChartFiles(httpHelmChartConfig, outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, null);
     verify(helmTaskHelperBase, times(1))
@@ -375,6 +429,28 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .createProcessExecutor("v3/helm repo add repoName http://127.0.0.1:1234  ", outputTemporaryDir.toString(),
             LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
     verify(processExecutor, times(2)).execute();
+    deleteDirectoryAndItsContentIfExists(outputTemporaryDir.toString());
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void testDownloadChartFilesForOciHelmRepo() throws Exception {
+    OciHelmRepoConfig repoConfig =
+        OciHelmRepoConfig.builder().accountId("accountId").chartRepoUrl("localhost:5005/test-charts").build();
+
+    HelmChartConfigParams configParams = getHelmChartConfigParams(repoConfig);
+    configParams.setChartVersion("0.1.0");
+
+    Path outputTemporaryDir = Files.createTempDirectory("chartFile");
+    ProcessResult successfulResult = new ProcessResult(0, null);
+
+    doReturn(successfulResult).when(processExecutor).execute();
+    helmTaskHelper.downloadChartFiles(configParams, outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, null);
+    verify(helmTaskHelperBase, times(1))
+        .createProcessExecutor("v3/helm pull oci://localhost:5005/test-charts/chartName  --untar --version 0.1.0",
+            outputTemporaryDir.toString(), LONG_TIMEOUT_INTERVAL, Collections.emptyMap());
+    verify(processExecutor, times(1)).execute();
     deleteDirectoryAndItsContentIfExists(outputTemporaryDir.toString());
   }
 
@@ -916,19 +992,21 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .when(helmTaskHelperBase)
         .executeCommand(
             anyMap(), contains("helm repo add"), anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
+    doReturn(chartmuseumClient)
+        .when(cgChartmuseumClientFactory)
+        .createClient(helmRepoConfig, connector, workingDir, basePath, false);
+
     if (museumServer != null) {
-      doReturn(museumServer)
-          .when(chartMuseumClient)
-          .startChartMuseumServer(helmRepoConfig, connector, workingDir, basePath, false);
+      doReturn(museumServer).when(chartmuseumClient).start();
     } else {
       doThrow(new InvalidRequestException("Something went wrong"))
-          .when(chartMuseumClient)
-          .startChartMuseumServer(helmRepoConfig, connector, workingDir, basePath, false);
+          .when(cgChartmuseumClientFactory)
+          .createClient(helmRepoConfig, connector, workingDir, basePath, false);
     }
 
     helmTaskHelper.addHelmRepo(helmRepoConfig, connector, repo, repo, workingDir, basePath, V2, false);
     if (museumServer != null) {
-      verify(chartMuseumClient, times(1)).stopChartMuseumServer(chartMuseumProcess);
+      verify(chartmuseumClient, times(1)).stop(museumServer);
     }
   }
 
@@ -1058,11 +1136,10 @@ public class HelmTaskHelperTest extends WingsBaseTest {
                                                               .serviceId(SERVICE_ID)
                                                               .helmChartConfigParams(helmChartConfigParams)
                                                               .build();
-    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
 
-    doReturn(chartMuseumServer)
-        .when(chartMuseumClient)
-        .startChartMuseumServer(gcsHelmRepoConfig, helmChartConfigParams.getConnectorConfig(), RESOURCE_DIR_BASE,
+    doReturn(chartmuseumClient)
+        .when(cgChartmuseumClientFactory)
+        .createClient(gcsHelmRepoConfig, helmChartConfigParams.getConnectorConfig(), RESOURCE_DIR_BASE,
             helmChartConfigParams.getBasePath(), false);
     doReturn(new ProcessResult(0, null)).when(processExecutor).execute();
     doAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class))
@@ -1081,9 +1158,8 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     assertThat(helmCharts.get(0).getVersion()).isEqualTo("1.0.2");
     assertThat(helmCharts.get(1).getVersion()).isEqualTo("1.0.1");
     verify(processExecutor, times(1)).execute();
-    verify(chartMuseumClient, times(1))
-        .startChartMuseumServer(gcsHelmRepoConfig, helmChartConfigParams.getConnectorConfig(), RESOURCE_DIR_BASE,
-            helmChartConfigParams.getBasePath(), false);
+    verify(chartmuseumClient, times(1)).start();
+    verify(chartmuseumClient, times(1)).stop(testChartMuseumServer);
   }
 
   @NotNull
@@ -1148,11 +1224,10 @@ public class HelmTaskHelperTest extends WingsBaseTest {
                                                               .serviceId(SERVICE_ID)
                                                               .helmChartConfigParams(helmChartConfigParams)
                                                               .build();
-    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
 
-    doReturn(chartMuseumServer)
-        .when(chartMuseumClient)
-        .startChartMuseumServer(gcsHelmRepoConfig, helmChartConfigParams.getConnectorConfig(), RESOURCE_DIR_BASE,
+    doReturn(chartmuseumClient)
+        .when(cgChartmuseumClientFactory)
+        .createClient(gcsHelmRepoConfig, helmChartConfigParams.getConnectorConfig(), RESOURCE_DIR_BASE,
             helmChartConfigParams.getBasePath(), false);
     doAnswer(invocationOnMock -> invocationOnMock.getArgumentAt(0, String.class))
         .when(helmTaskHelper)
@@ -1177,7 +1252,7 @@ public class HelmTaskHelperTest extends WingsBaseTest {
         .isInstanceOf(HelmClientException.class)
         .hasMessage("[Timed out] Helm chart fetch versions command failed ");
 
-    verify(chartMuseumClient).stopChartMuseumServer(chartMuseumServer.getStartedProcess());
+    verify(chartmuseumClient).stop(testChartMuseumServer);
   }
 
   @Test
@@ -1194,16 +1269,13 @@ public class HelmTaskHelperTest extends WingsBaseTest {
                                                               .serviceId(SERVICE_ID)
                                                               .helmChartConfigParams(helmChartConfigParams)
                                                               .build();
-    ChartMuseumServer chartMuseumServer = ChartMuseumServer.builder().port(1234).build();
 
-    doNothing().when(chartMuseumClient).stopChartMuseumServer(chartMuseumServer.getStartedProcess());
     doReturn(new ProcessResult(0, null)).when(processExecutor).execute();
     doNothing().when(helmTaskHelper).cleanup("dir");
 
     helmTaskHelper.cleanupAfterCollection(helmChartCollectionParams, "dir", 10000);
     verify(helmTaskHelper, times(1)).cleanup("dir");
     verify(processExecutor, times(1)).execute();
-    verify(chartMuseumClient, never()).stopChartMuseumServer(chartMuseumServer.getStartedProcess());
   }
 
   @Test

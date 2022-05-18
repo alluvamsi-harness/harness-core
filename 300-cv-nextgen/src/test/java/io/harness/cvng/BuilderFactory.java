@@ -351,7 +351,7 @@ public class BuilderFactory {
         .metricInfos(
             Arrays.asList(AppDynamicsCVConfig.MetricInfo.builder().identifier("identifier").metricName("name").build()))
         .applicationName(generateUuid())
-        .tierName(generateUuid())
+        .tierName("tier-name")
         .connectorIdentifier("AppDynamics Connector")
         .category(CVMonitoringCategory.PERFORMANCE)
         .enabled(true)
