@@ -58,8 +58,4 @@ public class VmPoolYaml implements VmInfraSpec {
     private ParameterField<OSType> os;
     @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> harnessImageConnectorRef;
   }
-
-  public ParameterField<String> getHarnessImageConnectorRef() {
-    return this.spec.getHarnessImageConnectorRef();
-  }
 }

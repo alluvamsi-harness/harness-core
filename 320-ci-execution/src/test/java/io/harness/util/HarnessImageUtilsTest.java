@@ -44,7 +44,7 @@ import org.mockito.Mock;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CI)
-public class HarnessImageEvaluatorTest extends CIExecutionTestBase {
+public class HarnessImageUtilsTest extends CIExecutionTestBase {
   private final Ambiance ambiance = Ambiance.newBuilder()
                                         .putAllSetupAbstractions(Maps.of("accountId", "accountId", "projectIdentifier",
                                             "projectIdentifier", "orgIdentifier", "orgIdentifier"))
@@ -52,17 +52,17 @@ public class HarnessImageEvaluatorTest extends CIExecutionTestBase {
 
   @Mock private ConnectorUtils connectorUtils;
   @Mock private ConnectorDetails connectorDetails;
-  @Inject private HarnessImageEvaluator harnessImageEvaluator;
+  @Inject private HarnessImageUtils harnessImageUtils;
 
   @Before
   public void setUp() {
-    on(harnessImageEvaluator).set("connectorUtils", connectorUtils);
+    on(harnessImageUtils).set("connectorUtils", connectorUtils);
   }
 
   @Test
   @Owner(developers = RAGHAV_GUPTA)
   @Category(UnitTests.class)
-  public void testHarnessImageEvaluateForK8() {
+  public void testGetHarnessImageConnectorForK8() {
     String connectorRefValue = "docker";
     Infrastructure infrastructure =
         K8sDirectInfraYaml.builder()
@@ -73,7 +73,7 @@ public class HarnessImageEvaluatorTest extends CIExecutionTestBase {
     when(connectorUtils.getConnectorDetails(any(), matches(connectorRefValue))).thenReturn(connectorDetails);
     when(connectorDetails.getIdentifier()).thenReturn(connectorRefValue);
     Optional<ConnectorDetails> optionalHarnessImageConnector =
-        harnessImageEvaluator.evaluate(AmbianceUtils.getNgAccess(ambiance), infrastructure);
+        harnessImageUtils.getHarnessImageConnectorDetails(AmbianceUtils.getNgAccess(ambiance), infrastructure);
     assertThat(true).isEqualTo(optionalHarnessImageConnector.isPresent());
     assertThat(connectorRefValue).isEqualTo(optionalHarnessImageConnector.get().getIdentifier());
   }
@@ -81,17 +81,17 @@ public class HarnessImageEvaluatorTest extends CIExecutionTestBase {
   @Test
   @Owner(developers = RAGHAV_GUPTA)
   @Category(UnitTests.class)
-  public void testHarnessImageEvaluateForK8WithoutConnectorRef() {
+  public void testGetHarnessImageConnectorForK8WithoutConnectorRef() {
     Infrastructure infrastructure = K8sDirectInfraYaml.builder().spec(K8sDirectInfraYamlSpec.builder().build()).build();
     Optional<ConnectorDetails> optionalHarnessImageConnector =
-        harnessImageEvaluator.evaluate(AmbianceUtils.getNgAccess(ambiance), infrastructure);
+        harnessImageUtils.getHarnessImageConnectorDetails(AmbianceUtils.getNgAccess(ambiance), infrastructure);
     assertThat(false).isEqualTo(optionalHarnessImageConnector.isPresent());
   }
 
   @Test
   @Owner(developers = RAGHAV_GUPTA)
   @Category(UnitTests.class)
-  public void testHarnessImageEvaluateForVM() {
+  public void testGetHarnessImageConnectorForVM() {
     String connectorRefValue = "docker";
     VmStageInfraDetails vmStageInfraDetails =
         VmStageInfraDetails.builder()
@@ -100,7 +100,7 @@ public class HarnessImageEvaluatorTest extends CIExecutionTestBase {
     when(connectorUtils.getConnectorDetails(any(), matches(connectorRefValue))).thenReturn(connectorDetails);
     when(connectorDetails.getIdentifier()).thenReturn(connectorRefValue);
     Optional<ConnectorDetails> optionalHarnessImageConnector =
-        harnessImageEvaluator.evaluate(AmbianceUtils.getNgAccess(ambiance), vmStageInfraDetails);
+        harnessImageUtils.getHarnessImageConnectorDetails(AmbianceUtils.getNgAccess(ambiance), vmStageInfraDetails);
     assertThat(true).isEqualTo(optionalHarnessImageConnector.isPresent());
     assertThat(connectorRefValue).isEqualTo(optionalHarnessImageConnector.get().getIdentifier());
   }
@@ -108,19 +108,21 @@ public class HarnessImageEvaluatorTest extends CIExecutionTestBase {
   @Test
   @Owner(developers = RAGHAV_GUPTA)
   @Category(UnitTests.class)
-  public void testHarnessImageEvaluateForVMWithoutConnectorRef() {
+  public void testGetHarnessImageConnectorForVMWithoutConnectorRef() {
     VmStageInfraDetails vmStageInfraDetails = VmStageInfraDetails.builder().build();
     Optional<ConnectorDetails> optionalHarnessImageConnector =
-        harnessImageEvaluator.evaluate(AmbianceUtils.getNgAccess(ambiance), vmStageInfraDetails);
+        harnessImageUtils.getHarnessImageConnectorDetails(AmbianceUtils.getNgAccess(ambiance), vmStageInfraDetails);
     assertThat(false).isEqualTo(optionalHarnessImageConnector.isPresent());
   }
 
   @Test
   @Owner(developers = RAGHAV_GUPTA)
   @Category(UnitTests.class)
-  public void testHarnessImageEvaluateFork8InfraDetails() {
+  public void testGetHarnessImageConnectorFork8InfraDetails() {
     K8StageInfraDetails k8StageInfraDetails = K8StageInfraDetails.builder().build();
-    assertThatThrownBy(() -> harnessImageEvaluator.evaluate(AmbianceUtils.getNgAccess(ambiance), k8StageInfraDetails))
+    assertThatThrownBy(()
+                           -> harnessImageUtils.getHarnessImageConnectorDetails(
+                               AmbianceUtils.getNgAccess(ambiance), k8StageInfraDetails))
         .isInstanceOf(InvalidRequestException.class);
   }
 }

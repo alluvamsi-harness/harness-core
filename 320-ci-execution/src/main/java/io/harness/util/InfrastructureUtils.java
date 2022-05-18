@@ -11,7 +11,9 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmInfraSpec;
 import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
 import io.harness.pms.yaml.ParameterField;
 
 import java.util.Optional;
@@ -24,10 +26,13 @@ public class InfrastructureUtils {
     ParameterField<String> harnessImageConnector = null;
     switch (infrastructure.getType()) {
       case KUBERNETES_DIRECT:
-        harnessImageConnector = ((K8sDirectInfraYaml) infrastructure).getHarnessImageConnectorRef();
+        harnessImageConnector = ((K8sDirectInfraYaml) infrastructure).getSpec().getHarnessImageConnectorRef();
         break;
       case VM:
-        harnessImageConnector = ((VmInfraYaml) infrastructure).getHarnessImageConnectorRef();
+        VmInfraSpec vmInfraSpec = ((VmInfraYaml) infrastructure).getSpec();
+        if (vmInfraSpec instanceof VmPoolYaml) {
+          harnessImageConnector = ((VmPoolYaml) vmInfraSpec).getSpec().getHarnessImageConnectorRef();
+        }
         break;
       default:
         break;

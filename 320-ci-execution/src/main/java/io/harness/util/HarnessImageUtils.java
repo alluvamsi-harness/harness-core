@@ -27,10 +27,10 @@ import java.util.Optional;
 
 @Singleton
 @OwnedBy(HarnessTeam.CI)
-public class HarnessImageEvaluator {
+public class HarnessImageUtils {
   @Inject private ConnectorUtils connectorUtils;
   @Inject private CIExecutionServiceConfig ciExecutionServiceConfig;
-  public Optional<ConnectorDetails> evaluate(NGAccess ngAccess, Infrastructure infrastructure) {
+  public Optional<ConnectorDetails> getHarnessImageConnectorDetails(NGAccess ngAccess, Infrastructure infrastructure) {
     ConnectorDetails harnessInternalImageConnector = null;
     Optional<ParameterField<String>> optionalHarnessImageConnector =
         InfrastructureUtils.getHarnessImageConnector(infrastructure);
@@ -43,7 +43,8 @@ public class HarnessImageEvaluator {
     return harnessInternalImageConnector == null ? Optional.empty() : Optional.of(harnessInternalImageConnector);
   }
 
-  public Optional<ConnectorDetails> evaluate(NGAccess ngAccess, StageInfraDetails stageInfraDetails) {
+  public Optional<ConnectorDetails> getHarnessImageConnectorDetails(
+      NGAccess ngAccess, StageInfraDetails stageInfraDetails) {
     if (!(stageInfraDetails instanceof VmStageInfraDetails)) {
       throw new InvalidRequestException("Harness image step evaluation only allowed for VM.");
     }

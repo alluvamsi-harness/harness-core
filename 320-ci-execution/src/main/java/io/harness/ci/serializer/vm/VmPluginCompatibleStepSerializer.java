@@ -22,7 +22,7 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.stateutils.buildstate.ConnectorUtils;
 import io.harness.stateutils.buildstate.PluginSettingUtils;
 import io.harness.steps.CIStepInfoUtils;
-import io.harness.util.HarnessImageEvaluator;
+import io.harness.util.HarnessImageUtils;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
@@ -35,7 +35,7 @@ import java.util.Optional;
 public class VmPluginCompatibleStepSerializer {
   @Inject private CIExecutionConfigService ciExecutionConfigService;
   @Inject private ConnectorUtils connectorUtils;
-  @Inject private HarnessImageEvaluator harnessImageEvaluator;
+  @Inject private HarnessImageUtils harnessImageUtils;
 
   public VmPluginStep serialize(Ambiance ambiance, PluginCompatibleStep pluginCompatibleStep,
       VmStageInfraDetails vmStageInfraDetails, String identifier, ParameterField<Timeout> parameterFieldTimeout,
@@ -54,7 +54,7 @@ public class VmPluginCompatibleStepSerializer {
     connectorDetails.setEnvToSecretsMap(connectorSecretEnvMap);
 
     Optional<ConnectorDetails> optionalHarnessInternalImageConnector =
-        harnessImageEvaluator.evaluate(ngAccess, vmStageInfraDetails);
+        harnessImageUtils.getHarnessImageConnectorDetails(ngAccess, vmStageInfraDetails);
     ConnectorDetails harnessInternalImageConnector = null;
     if (optionalHarnessInternalImageConnector.isPresent()) {
       harnessInternalImageConnector = optionalHarnessInternalImageConnector.get();

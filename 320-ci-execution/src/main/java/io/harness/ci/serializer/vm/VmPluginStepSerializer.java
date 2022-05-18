@@ -29,7 +29,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.stateutils.buildstate.ConnectorUtils;
-import io.harness.util.HarnessImageEvaluator;
+import io.harness.util.HarnessImageUtils;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
@@ -46,7 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 public class VmPluginStepSerializer {
   @Inject CIExecutionServiceConfig ciExecutionServiceConfig;
   @Inject ConnectorUtils connectorUtils;
-  @Inject HarnessImageEvaluator harnessImageEvaluator;
+  @Inject HarnessImageUtils harnessImageUtils;
 
   public VmPluginStep serialize(PluginStepInfo pluginStepInfo, VmStageInfraDetails vmStageInfraDetails,
       String identifier, ParameterField<Timeout> parameterFieldTimeout, String stepName, Ambiance ambiance) {
@@ -80,7 +80,7 @@ public class VmPluginStepSerializer {
       String gitImage = ciExecutionServiceConfig.getStepConfig().getVmImageConfig().getGitClone();
       NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
       Optional<ConnectorDetails> optionalHarnessInternalImageConnector =
-          harnessImageEvaluator.evaluate(ngAccess, vmStageInfraDetails);
+          harnessImageUtils.getHarnessImageConnectorDetails(ngAccess, vmStageInfraDetails);
       ConnectorDetails harnessInternalImageConnector = null;
       if (optionalHarnessInternalImageConnector.isPresent()) {
         harnessInternalImageConnector = optionalHarnessInternalImageConnector.get();

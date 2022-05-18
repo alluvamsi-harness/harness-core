@@ -110,7 +110,7 @@ import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 import io.harness.util.GithubApiFunctor;
 import io.harness.util.GithubApiTokenEvaluator;
-import io.harness.util.HarnessImageEvaluator;
+import io.harness.util.HarnessImageUtils;
 import io.harness.util.LiteEngineSecretEvaluator;
 import io.harness.utils.IdentifierRefHelper;
 import io.harness.yaml.core.timeout.Timeout;
@@ -147,7 +147,7 @@ public class K8BuildSetupUtils {
   @Inject CodebaseUtils codebaseUtils;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
-  @Inject private HarnessImageEvaluator harnessImageEvaluator;
+  @Inject private HarnessImageUtils harnessImageUtils;
   private final Duration RETRY_SLEEP_DURATION = Duration.ofSeconds(2);
   private final int MAX_ATTEMPTS = 3;
   private static String RUNTIME_CLASS_NAME = "gvisor";
@@ -295,7 +295,7 @@ public class K8BuildSetupUtils {
       throw new CIStageExecutionException("Input infrastructure can not be empty");
     }
     Optional<ConnectorDetails> optionalHarnessInternalImageConnector =
-        harnessImageEvaluator.evaluate(ngAccess, infrastructure);
+        harnessImageUtils.getHarnessImageConnectorDetails(ngAccess, infrastructure);
     ConnectorDetails harnessInternalImageConnector = null;
     if (optionalHarnessInternalImageConnector.isPresent()) {
       harnessInternalImageConnector = optionalHarnessInternalImageConnector.get();

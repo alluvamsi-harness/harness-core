@@ -2198,9 +2198,6 @@
             "type"
           ],
           "properties": {
-            "harnessImageConnectorRef": {
-              "$ref": "#/definitions/ParameterFieldString"
-            },
             "spec": {
               "$ref": "#/definitions/K8sDirectInfraYamlSpec"
             },
@@ -3023,33 +3020,6 @@
           "additionalProperties": {
             "$ref": "#/definitions/JsonNode"
           }
-        }
-      },
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
-    "ParameterFieldString": {
-      "type": "object",
-      "properties": {
-        "expression": {
-          "type": "boolean"
-        },
-        "expressionValue": {
-          "type": "string"
-        },
-        "inputSetValidator": {
-          "$ref": "#/definitions/InputSetValidator"
-        },
-        "jsonResponseField": {
-          "type": "boolean"
-        },
-        "responseField": {
-          "type": "string"
-        },
-        "typeString": {
-          "type": "boolean"
-        },
-        "value": {
-          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -6110,9 +6080,6 @@
       "type": "object",
       "discriminator": "type",
       "properties": {
-        "harnessImageConnectorRef": {
-          "$ref": "#/definitions/ParameterFieldString"
-        },
         "type": {
           "type": "string",
           "enum": [
@@ -6134,9 +6101,6 @@
             "type"
           ],
           "properties": {
-            "harnessImageConnectorRef": {
-              "$ref": "#/definitions/ParameterFieldString"
-            },
             "spec": {
               "oneOf": [
                 {

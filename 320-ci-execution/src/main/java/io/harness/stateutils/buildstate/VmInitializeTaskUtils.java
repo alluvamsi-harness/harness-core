@@ -103,7 +103,7 @@ public class VmInitializeTaskUtils {
             .poolId(poolId)
             .workDir(vmBuildJobInfo.getWorkDir())
             .volToMountPathMap(vmBuildJobInfo.getVolToMountPath())
-            .harnessImageConnectorRef(vmInfraYaml.getHarnessImageConnectorRef())
+            .harnessImageConnectorRef(vmPoolYaml.getSpec().getHarnessImageConnectorRef())
             .build(),
         STAGE_INFRA_DETAILS);
 
