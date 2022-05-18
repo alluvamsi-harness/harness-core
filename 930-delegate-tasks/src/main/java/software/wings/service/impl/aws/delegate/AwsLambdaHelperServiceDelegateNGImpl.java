@@ -63,6 +63,7 @@ public class AwsLambdaHelperServiceDelegateNGImpl
       awsLambdaFunctionDetailsBuilder.handler(functionConfiguration.getHandler());
       awsLambdaFunctionDetailsBuilder.runTime(functionConfiguration.getRuntime());
       awsLambdaFunctionDetailsBuilder.timeout(functionConfiguration.getTimeout());
+      awsLambdaFunctionDetailsBuilder.memorySize(functionConfiguration.getMemorySize().toString());
     }
 
     return awsLambdaFunctionDetailsBuilder.build();

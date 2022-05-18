@@ -76,9 +76,7 @@ public class ServerlessAwsLambdaInstanceSyncPerpetualTaskExecutor implements Per
   private List<ServerInstanceInfo> getServerInstanceInfoList(
       ServerlessAwsLambdaDeploymentReleaseData deploymentReleaseData) {
     try {
-      List<ServerInstanceInfo> serverInstanceInfos =
-          serverlessTaskHelperBase.getServerlessAwsLambdaServerInstanceInfos(deploymentReleaseData);
-      return serverInstanceInfos;
+      return serverlessTaskHelperBase.getServerlessAwsLambdaServerInstanceInfos(deploymentReleaseData);
     } catch (Exception ex) {
       log.warn("Unable to get list of server instances", ex);
       return Collections.emptyList();
