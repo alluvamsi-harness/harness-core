@@ -7,7 +7,7 @@
 
 package io.harness.ci.app;
 
-import io.harness.app.CIManagerConfiguration;
+import io.harness.app.STOManagerConfiguration;
 import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
@@ -58,7 +58,7 @@ public class InspectCommand<T extends io.dropwizard.Configuration> extends Confi
   }
 
   protected void run(Bootstrap<T> bootstrap, Namespace namespace, T configuration) {
-    CIManagerConfiguration mainConfiguration = (CIManagerConfiguration) configuration;
+    STOManagerConfiguration mainConfiguration = (STOManagerConfiguration) configuration;
     mainConfiguration.setHarnessCIMongo(
         mainConfiguration.getHarnessCIMongo().toBuilder().indexManagerMode(IndexManager.Mode.INSPECT).build());
 

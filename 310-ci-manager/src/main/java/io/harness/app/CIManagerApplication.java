@@ -281,11 +281,6 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
 
     modules.add(YamlSdkModule.getInstance());
 
-    // Pipeline Service Modules
-    PmsSdkConfiguration stoPmsSdkConfiguration = getPmsSdkConfiguration(
-        configuration, ModuleType.STO, STOExecutionRegistrar.getEngineSteps(), STOPipelineServiceInfoProvider.class);
-    modules.add(PmsSdkModule.getNewInstance(stoPmsSdkConfiguration));
-
     PmsSdkConfiguration ciPmsSdkConfiguration = getPmsSdkConfiguration(
         configuration, ModuleType.CI, ExecutionRegistrar.getEngineSteps(), CIPipelineServiceInfoProvider.class);
     modules.add(PmsSdkModule.getNewInstance(ciPmsSdkConfiguration));
@@ -361,16 +356,6 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
         PmsSdkInitHelper.initializeSDKInstance(injector, ciSDKConfig);
       } catch (Exception e) {
         throw new GeneralException("Fail to start ci manager because pms sdk registration failed", e);
-      }
-    }
-
-    PmsSdkConfiguration stoSDKConfig = getPmsSdkConfiguration(
-        config, ModuleType.STO, STOExecutionRegistrar.getEngineSteps(), STOPipelineServiceInfoProvider.class);
-    if (stoSDKConfig.getDeploymentMode().equals(SdkDeployMode.REMOTE)) {
-      try {
-        PmsSdkInitHelper.initializeSDKInstance(injector, stoSDKConfig);
-      } catch (Exception e) {
-        throw new GeneralException("Fail to start STO manager because pms sdk registration failed", e);
       }
     }
   }

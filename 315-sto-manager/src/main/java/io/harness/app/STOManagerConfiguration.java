@@ -61,7 +61,7 @@ import org.reflections.Reflections;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @Slf4j
-public class CIManagerConfiguration extends Configuration implements AssetsBundleConfiguration {
+public class STOManagerConfiguration extends Configuration implements AssetsBundleConfiguration {
   public static final String BASE_PACKAGE = "io.harness.app.resources";
   @JsonProperty
   private AssetsConfiguration assetsConfiguration =

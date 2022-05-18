@@ -22,11 +22,9 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.CacheModule;
 import io.harness.ci.app.InspectCommand;
 import io.harness.ci.plan.creator.CIModuleInfoProvider;
-import io.harness.ci.plan.creator.CIPipelineServiceInfoProvider;
 import io.harness.ci.plan.creator.STOPipelineServiceInfoProvider;
 import io.harness.ci.plan.creator.filter.CIFilterCreationResponseMerger;
 import io.harness.controller.PrimaryVersionChangeScheduler;
-import io.harness.core.ci.services.CIActiveCommitterUsageImpl;
 import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
@@ -74,14 +72,10 @@ import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.queue.QueueListenerController;
 import io.harness.queue.QueuePublisher;
 import io.harness.registrars.ExecutionAdvisers;
-import io.harness.registrars.ExecutionRegistrar;
 import io.harness.registrars.STOExecutionRegistrar;
 import io.harness.resource.VersionInfoResource;
 import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.NextGenManagerAuth;
-import io.harness.serializer.CiBeansRegistrars;
-import io.harness.serializer.CiExecutionRegistrars;
-import io.harness.serializer.ConnectorNextGenRegistrars;
 import io.harness.serializer.KryoModule;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.OrchestrationRegistrars;
@@ -166,7 +160,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
       log.info("Shutdown hook, entering maintenance...");
       MaintenanceController.forceMaintenance(true);
     }));
-    new CIManagerApplication().run(args);
+    new STOManagerApplication().run(args);
   }
 
   public static Collection<Class<?>> getResourceClasses() {
@@ -191,7 +185,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
   }
 
   @Override
-  public void run(CIManagerConfiguration configuration, Environment environment) {
+  public void run(STOManagerConfiguration configuration, Environment environment) {
     log.info("Starting sto manager app ...");
 
     log.info("Entering startup maintenance mode");
@@ -207,8 +201,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
       Set<Class<? extends KryoRegistrar>> registrars() {
         return ImmutableSet.<Class<? extends KryoRegistrar>>builder()
             .addAll(YamlBeansModuleRegistrars.kryoRegistrars)
-            .addAll(StoBeansRegistrars.kryoRegistrars)
-            .addAll(STOExecutionRegistrar.kryoRegistrars)
+
             .build();
       }
 
@@ -216,7 +209,6 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
       @Singleton
       Set<Class<? extends MorphiaRegistrar>> morphiaRegistrars() {
         return ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
-            .addAll(STOExecutionRegistrar.morphiaRegistrars)
             .addAll(PrimaryVersionManagerRegistrars.morphiaRegistrars)
             .build();
       }
@@ -272,7 +264,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
 
     modules.add(new CIPersistenceModule());
     addGuiceValidationModule(modules);
-    modules.add(new CIManagerServiceModule(configuration));
+    modules.add(new STOManagerServiceModule(configuration));
     modules.add(new CacheModule(configuration.getCacheConfig()));
 
     modules.add(YamlSdkModule.getInstance());
@@ -281,10 +273,6 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
     PmsSdkConfiguration stoPmsSdkConfiguration = getPmsSdkConfiguration(
         configuration, ModuleType.STO, STOExecutionRegistrar.getEngineSteps(), STOPipelineServiceInfoProvider.class);
     modules.add(PmsSdkModule.getNewInstance(stoPmsSdkConfiguration));
-
-    PmsSdkConfiguration ciPmsSdkConfiguration = getPmsSdkConfiguration(
-        configuration, ModuleType.CI, ExecutionRegistrar.getEngineSteps(), CIPipelineServiceInfoProvider.class);
-    modules.add(PmsSdkModule.getNewInstance(ciPmsSdkConfiguration));
 
     modules.add(PipelineServiceUtilityModule.getInstance());
 
@@ -308,7 +296,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
     LogManager.shutdown();
   }
 
-  private void registerOasResource(CIManagerConfiguration appConfig, Environment environment, Injector injector) {
+  private void registerOasResource(STOManagerConfiguration appConfig, Environment environment, Injector injector) {
     OpenApiResource openApiResource = injector.getInstance(OpenApiResource.class);
     openApiResource.setOpenApiConfiguration(appConfig.getOasConfig());
     environment.jersey().register(openApiResource);
@@ -321,7 +309,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
   }
 
   @Override
-  public void initialize(Bootstrap<CIManagerConfiguration> bootstrap) {
+  public void initialize(Bootstrap<STOManagerConfiguration> bootstrap) {
     initializeLogging();
     log.info("bootstrapping ...");
     bootstrap.addCommand(new InspectCommand<>(this));
@@ -331,9 +319,9 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
         bootstrap.getConfigurationSourceProvider(), new EnvironmentVariableSubstitutor(false)));
 
     configureObjectMapper(bootstrap.getObjectMapper());
-    bootstrap.addBundle(new SwaggerBundle<CIManagerConfiguration>() {
+    bootstrap.addBundle(new SwaggerBundle<STOManagerConfiguration>() {
       @Override
-      protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(CIManagerConfiguration appConfig) {
+      protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(STOManagerConfiguration appConfig) {
         return appConfig.getSwaggerBundleConfiguration();
       }
     });
@@ -349,17 +337,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
     environment.jersey().register(injector.getInstance(VersionInfoResource.class));
   }
 
-  private void registerPMSSDK(CIManagerConfiguration config, Injector injector) {
-    PmsSdkConfiguration ciSDKConfig = getPmsSdkConfiguration(
-        config, ModuleType.CI, ExecutionRegistrar.getEngineSteps(), CIPipelineServiceInfoProvider.class);
-    if (ciSDKConfig.getDeploymentMode().equals(SdkDeployMode.REMOTE)) {
-      try {
-        PmsSdkInitHelper.initializeSDKInstance(injector, ciSDKConfig);
-      } catch (Exception e) {
-        throw new GeneralException("Fail to start ci manager because pms sdk registration failed", e);
-      }
-    }
-
+  private void registerPMSSDK(STOManagerConfiguration config, Injector injector) {
     PmsSdkConfiguration stoSDKConfig = getPmsSdkConfiguration(
         config, ModuleType.STO, STOExecutionRegistrar.getEngineSteps(), STOPipelineServiceInfoProvider.class);
     if (stoSDKConfig.getDeploymentMode().equals(SdkDeployMode.REMOTE)) {
@@ -371,7 +349,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
     }
   }
 
-  private PmsSdkConfiguration getPmsSdkConfiguration(CIManagerConfiguration config, ModuleType moduleType,
+  private PmsSdkConfiguration getPmsSdkConfiguration(STOManagerConfiguration config, ModuleType moduleType,
       Map<StepType, Class<? extends Step>> engineSteps,
       Class<? extends io.harness.pms.sdk.core.plan.creation.creators.PipelineServiceInfoProvider>
           pipelineServiceInfoProviderClass) {
@@ -412,7 +390,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
     return jsonExpansionHandlers;
   }
 
-  private void scheduleJobs(Injector injector, CIManagerConfiguration config) {
+  private void scheduleJobs(Injector injector, STOManagerConfiguration config) {
     injector.getInstance(PrimaryVersionChangeScheduler.class).registerExecutors();
     injector.getInstance(NotifierScheduledExecutorService.class)
         .scheduleWithFixedDelay(
@@ -464,7 +442,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
     modules.add(new ValidationModule(validatorFactory));
   }
 
-  private static void registerStores(CIManagerConfiguration config, Injector injector) {
+  private static void registerStores(STOManagerConfiguration config, Injector injector) {
     final String ciMongo = config.getHarnessCIMongo().getUri();
     if (isNotEmpty(ciMongo) && !ciMongo.equals(config.getHarnessMongo().getUri())) {
       final HPersistence hPersistence = injector.getInstance(HPersistence.class);
@@ -481,7 +459,7 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
         NG_ORCHESTRATION, payload -> publisher.send(singletonList(NG_ORCHESTRATION), payload));
   }
 
-  private void registerAuthFilters(CIManagerConfiguration configuration, Environment environment, Injector injector) {
+  private void registerAuthFilters(STOManagerConfiguration configuration, Environment environment, Injector injector) {
     if (configuration.isEnableAuth()) {
       Predicate<Pair<ResourceInfo, ContainerRequestContext>> predicate = resourceInfoAndRequest
           -> resourceInfoAndRequest.getKey().getResourceMethod().getAnnotation(NextGenManagerAuth.class) != null
@@ -524,7 +502,6 @@ public class STOManagerApplication extends Application<STOManagerConfiguration> 
         RestrictionUsageRegisterConfiguration.builder()
             .restrictionNameClassMap(
                 ImmutableMap.<FeatureRestrictionName, Class<? extends RestrictionUsageInterface>>builder()
-                    .put(FeatureRestrictionName.ACTIVE_COMMITTERS, CIActiveCommitterUsageImpl.class)
                     .put(FeatureRestrictionName.MAX_TOTAL_BUILDS, TotalBuildsRestrictionUsageImpl.class)
                     .put(FeatureRestrictionName.MAX_BUILDS_PER_MONTH, BuildsPerMonthRestrictionUsageImpl.class)
                     .build())

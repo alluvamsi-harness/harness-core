@@ -15,9 +15,7 @@ import io.harness.CIExecutionServiceModule;
 import io.harness.account.AccountClientModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.app.impl.CIYamlSchemaServiceImpl;
 import io.harness.app.impl.STOYamlSchemaServiceImpl;
-import io.harness.app.intfc.CIYamlSchemaService;
 import io.harness.app.intfc.STOYamlSchemaService;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
@@ -26,8 +24,6 @@ import io.harness.concurrent.HTimeLimiter;
 import io.harness.connector.ConnectorResourceClientModule;
 import io.harness.core.ci.services.BuildNumberService;
 import io.harness.core.ci.services.BuildNumberServiceImpl;
-import io.harness.core.ci.services.CIOverviewDashboardService;
-import io.harness.core.ci.services.CIOverviewDashboardServiceImpl;
 import io.harness.enforcement.client.EnforcementClientModule;
 import io.harness.entitysetupusageclient.EntitySetupUsageClientModule;
 import io.harness.ff.CIFeatureFlagService;
@@ -83,12 +79,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 
 @Slf4j
-@OwnedBy(HarnessTeam.PIPELINE)
-public class CIManagerServiceModule extends AbstractModule {
-  private final CIManagerConfiguration ciManagerConfiguration;
+@OwnedBy(HarnessTeam.CI)
+public class STOManagerServiceModule extends AbstractModule {
+  private final STOManagerConfiguration stoManagerConfiguration;
 
-  public CIManagerServiceModule(CIManagerConfiguration ciManagerConfiguration) {
-    this.ciManagerConfiguration = ciManagerConfiguration;
+  public STOManagerServiceModule(STOManagerConfiguration stoManagerConfiguration) {
+    this.stoManagerConfiguration = stoManagerConfiguration;
   }
 
   @Provides
@@ -96,7 +92,7 @@ public class CIManagerServiceModule extends AbstractModule {
   Supplier<DelegateCallbackToken> getDelegateCallbackTokenSupplier(
       DelegateServiceGrpcClient delegateServiceGrpcClient) {
     return (Supplier<DelegateCallbackToken>) Suppliers.memoize(
-        () -> getDelegateCallbackToken(delegateServiceGrpcClient, ciManagerConfiguration));
+        () -> getDelegateCallbackToken(delegateServiceGrpcClient, stoManagerConfiguration));
   }
 
   // Final url returned from this fn would be: https://pr.harness.io/ci-delegate-upgrade/ng/#
@@ -104,7 +100,7 @@ public class CIManagerServiceModule extends AbstractModule {
   @Singleton
   @Named("ngBaseUrl")
   String getNgBaseUrl() {
-    String apiUrl = ciManagerConfiguration.getApiUrl();
+    String apiUrl = stoManagerConfiguration.getApiUrl();
     if (apiUrl.endsWith("/")) {
       return apiUrl.substring(0, apiUrl.length() - 1);
     }
@@ -112,7 +108,7 @@ public class CIManagerServiceModule extends AbstractModule {
   }
 
   private DelegateCallbackToken getDelegateCallbackToken(
-      DelegateServiceGrpcClient delegateServiceClient, CIManagerConfiguration appConfig) {
+      DelegateServiceGrpcClient delegateServiceClient, STOManagerConfiguration appConfig) {
     log.info("Generating Delegate callback token");
     final DelegateCallbackToken delegateCallbackToken = delegateServiceClient.registerCallback(
         DelegateCallback.newBuilder()
@@ -130,7 +126,7 @@ public class CIManagerServiceModule extends AbstractModule {
   @Singleton
   public ObjectMapper getYamlSchemaObjectMapper() {
     ObjectMapper objectMapper = Jackson.newObjectMapper();
-    CIManagerApplication.configureObjectMapper(objectMapper);
+    STOManagerApplication.configureObjectMapper(objectMapper);
     return objectMapper;
   }
 
@@ -162,31 +158,29 @@ public class CIManagerServiceModule extends AbstractModule {
   @Named("lock")
   @Singleton
   RedisConfig redisConfig() {
-    return ciManagerConfiguration.getEventsFrameworkConfiguration().getRedisConfig();
+    return stoManagerConfiguration.getEventsFrameworkConfiguration().getRedisConfig();
   }
 
   @Override
   protected void configure() {
     install(PrimaryVersionManagerModule.getInstance());
-    bind(CIManagerConfiguration.class).toInstance(ciManagerConfiguration);
+    bind(STOManagerConfiguration.class).toInstance(stoManagerConfiguration);
     bind(HPersistence.class).to(MongoPersistence.class).in(Singleton.class);
     bind(BuildNumberService.class).to(BuildNumberServiceImpl.class);
-    bind(CIYamlSchemaService.class).to(CIYamlSchemaServiceImpl.class).in(Singleton.class);
     bind(STOYamlSchemaService.class).to(STOYamlSchemaServiceImpl.class).in(Singleton.class);
     bind(CIFeatureFlagService.class).to(CIFeatureFlagServiceImpl.class).in(Singleton.class);
-    bind(CIOverviewDashboardService.class).to(CIOverviewDashboardServiceImpl.class);
     try {
       bind(TimeScaleDBService.class)
           .toConstructor(TimeScaleDBServiceImpl.class.getConstructor(TimeScaleDBConfig.class));
     } catch (NoSuchMethodException e) {
       log.error("TimeScaleDbServiceImpl Initialization Failed in due to missing constructor", e);
     }
-    if (ciManagerConfiguration.getEnableDashboardTimescale() != null
-        && ciManagerConfiguration.getEnableDashboardTimescale()) {
+    if (stoManagerConfiguration.getEnableDashboardTimescale() != null
+        && stoManagerConfiguration.getEnableDashboardTimescale()) {
       bind(TimeScaleDBConfig.class)
           .annotatedWith(Names.named("TimeScaleDBConfig"))
-          .toInstance(ciManagerConfiguration.getTimeScaleDBConfig() != null
-                  ? ciManagerConfiguration.getTimeScaleDBConfig()
+          .toInstance(stoManagerConfiguration.getTimeScaleDBConfig() != null
+                  ? stoManagerConfiguration.getTimeScaleDBConfig()
                   : TimeScaleDBConfig.builder().build());
     } else {
       bind(TimeScaleDBConfig.class)
@@ -206,7 +200,7 @@ public class CIManagerServiceModule extends AbstractModule {
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("async-taskPollExecutor"))
         .toInstance(new ScheduledThreadPoolExecutor(
-            ciManagerConfiguration.getAsyncDelegateResponseConsumption().getCorePoolSize(),
+            stoManagerConfiguration.getAsyncDelegateResponseConsumption().getCorePoolSize(),
             new ThreadFactoryBuilder()
                 .setNameFormat("async-taskPollExecutor-Thread-%d")
                 .setPriority(Thread.NORM_PRIORITY)
@@ -217,21 +211,21 @@ public class CIManagerServiceModule extends AbstractModule {
         .toInstance(new ManagedScheduledExecutorService("TaskPoll-Thread"));
 
     install(new CIExecutionServiceModule(
-        ciManagerConfiguration.getCiExecutionServiceConfig(), ciManagerConfiguration.getShouldConfigureWithPMS()));
+        stoManagerConfiguration.getCiExecutionServiceConfig(), stoManagerConfiguration.getShouldConfigureWithPMS()));
     install(DelegateServiceDriverModule.getInstance(false, true));
-    install(new DelegateServiceDriverGrpcClientModule(ciManagerConfiguration.getManagerServiceSecret(),
-        ciManagerConfiguration.getManagerTarget(), ciManagerConfiguration.getManagerAuthority(), true));
+    install(new DelegateServiceDriverGrpcClientModule(stoManagerConfiguration.getManagerServiceSecret(),
+        stoManagerConfiguration.getManagerTarget(), stoManagerConfiguration.getManagerAuthority(), true));
 
-    install(new TokenClientModule(ciManagerConfiguration.getNgManagerClientConfig(),
-        ciManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.getServiceId()));
+    install(new TokenClientModule(stoManagerConfiguration.getNgManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.getServiceId()));
     install(PersistentLockModule.getInstance());
 
     install(new AbstractManagerGrpcClientModule() {
       @Override
       public ManagerGrpcClientModule.Config config() {
         return ManagerGrpcClientModule.Config.builder()
-            .target(ciManagerConfiguration.getManagerTarget())
-            .authority(ciManagerConfiguration.getManagerAuthority())
+            .target(stoManagerConfiguration.getManagerTarget())
+            .authority(stoManagerConfiguration.getManagerAuthority())
             .build();
       }
 
@@ -242,29 +236,29 @@ public class CIManagerServiceModule extends AbstractModule {
     });
 
     install(AccessControlClientModule.getInstance(
-        ciManagerConfiguration.getAccessControlClientConfiguration(), CI_MANAGER.getServiceId()));
-    install(new EntitySetupUsageClientModule(ciManagerConfiguration.getNgManagerClientConfig(),
-        ciManagerConfiguration.getNgManagerServiceSecret(), "CIManager"));
-    install(new ConnectorResourceClientModule(ciManagerConfiguration.getNgManagerClientConfig(),
-        ciManagerConfiguration.getNgManagerServiceSecret(), "CIManager", ClientMode.PRIVILEGED));
-    install(new SecretNGManagerClientModule(ciManagerConfiguration.getNgManagerClientConfig(),
-        ciManagerConfiguration.getNgManagerServiceSecret(), "CIManager"));
-    install(new CILogServiceClientModule(ciManagerConfiguration.getLogServiceConfig()));
+        stoManagerConfiguration.getAccessControlClientConfiguration(), CI_MANAGER.getServiceId()));
+    install(new EntitySetupUsageClientModule(stoManagerConfiguration.getNgManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), "STOManager"));
+    install(new ConnectorResourceClientModule(stoManagerConfiguration.getNgManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), "STOManager", ClientMode.PRIVILEGED));
+    install(new SecretNGManagerClientModule(stoManagerConfiguration.getNgManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), "STOManager"));
+    install(new CILogServiceClientModule(stoManagerConfiguration.getLogServiceConfig()));
     install(new OpaClientModule(
-        ciManagerConfiguration.getOpaServerConfig().getBaseUrl(), ciManagerConfiguration.getJwtAuthSecret()));
-    install(UserClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),
-        ciManagerConfiguration.getManagerServiceSecret(), CI_MANAGER.getServiceId()));
-    install(new TIServiceClientModule(ciManagerConfiguration.getTiServiceConfig()));
-    install(new STOServiceClientModule(ciManagerConfiguration.getStoServiceConfig()));
-    install(new AccountClientModule(ciManagerConfiguration.getManagerClientConfig(),
-        ciManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.toString()));
-    install(EnforcementClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),
-        ciManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.getServiceId(),
-        ciManagerConfiguration.getEnforcementClientConfiguration()));
+        stoManagerConfiguration.getOpaServerConfig().getBaseUrl(), stoManagerConfiguration.getJwtAuthSecret()));
+    install(UserClientModule.getInstance(stoManagerConfiguration.getManagerClientConfig(),
+        stoManagerConfiguration.getManagerServiceSecret(), CI_MANAGER.getServiceId()));
+    install(new TIServiceClientModule(stoManagerConfiguration.getTiServiceConfig()));
+    install(new STOServiceClientModule(stoManagerConfiguration.getStoServiceConfig()));
+    install(new AccountClientModule(stoManagerConfiguration.getManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.toString()));
+    install(EnforcementClientModule.getInstance(stoManagerConfiguration.getManagerClientConfig(),
+        stoManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.getServiceId(),
+        stoManagerConfiguration.getEnforcementClientConfiguration()));
     install(new AbstractTelemetryModule() {
       @Override
       public TelemetryConfiguration telemetryConfiguration() {
-        return ciManagerConfiguration.getSegmentConfiguration();
+        return stoManagerConfiguration.getSegmentConfiguration();
       }
     });
   }

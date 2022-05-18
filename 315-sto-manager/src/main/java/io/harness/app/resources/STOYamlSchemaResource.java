@@ -14,7 +14,6 @@ import static java.lang.String.format;
 import io.harness.EntityType;
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.app.intfc.CIYamlSchemaService;
 import io.harness.app.intfc.STOYamlSchemaService;
 import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
 import io.harness.common.EntityTypeConstants;
@@ -60,8 +59,7 @@ import lombok.AllArgsConstructor;
       @ApiResponse(code = 400, response = FailureDTO.class, message = "Bad Request")
       , @ApiResponse(code = 500, response = ErrorDTO.class, message = "Internal server error")
     })
-public class CIYamlSchemaResource implements YamlSchemaResource {
-  CIYamlSchemaService ciYamlSchemaService;
+public class STOYamlSchemaResource implements YamlSchemaResource {
   STOYamlSchemaService stoYamlSchemaService;
 
   @GET
@@ -71,8 +69,6 @@ public class CIYamlSchemaResource implements YamlSchemaResource {
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier, @QueryParam("scope") Scope scope) {
     List<PartialSchemaDTO> partialSchemaDTOList = new ArrayList<>();
-    partialSchemaDTOList.add(
-        ciYamlSchemaService.getStageYamlSchema(accountIdentifier, orgIdentifier, projectIdentifier, scope));
     partialSchemaDTOList.add(
         stoYamlSchemaService.getStageYamlSchema(accountIdentifier, orgIdentifier, projectIdentifier, scope));
 
@@ -113,7 +109,7 @@ public class CIYamlSchemaResource implements YamlSchemaResource {
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier, @QueryParam("scope") Scope scope) {
     List<YamlSchemaWithDetails> ciSchemaWithDetails =
-        ciYamlSchemaService.getStageYamlSchemaWithDetails(accountIdentifier, orgIdentifier, projectIdentifier, scope);
+        stoYamlSchemaService.getStageYamlSchemaWithDetails(accountIdentifier, orgIdentifier, projectIdentifier, scope);
     return ResponseDTO.newResponse(
         YamlSchemaDetailsWrapper.builder().yamlSchemaWithDetailsList(ciSchemaWithDetails).build());
   }
@@ -127,14 +123,11 @@ public class CIYamlSchemaResource implements YamlSchemaResource {
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier, @QueryParam("scope") Scope scope,
       @RequestBody(required = true,
           description = "Step Schema with details") YamlSchemaDetailsWrapper yamlSchemaDetailsWrapper) {
-    PartialSchemaDTO ciSchema = ciYamlSchemaService.getMergedStageYamlSchema(accountIdentifier, projectIdentifier,
-        orgIdentifier, scope, yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList());
 
     PartialSchemaDTO securitySchema = stoYamlSchemaService.getMergedStageYamlSchema(accountIdentifier,
         projectIdentifier, orgIdentifier, scope, yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList());
 
     List<PartialSchemaDTO> partialSchemaDTOList = new ArrayList<>();
-    partialSchemaDTOList.add(ciSchema);
     partialSchemaDTOList.add(securitySchema);
     return ResponseDTO.newResponse(partialSchemaDTOList);
   }
@@ -150,13 +143,7 @@ public class CIYamlSchemaResource implements YamlSchemaResource {
           description = "Step Schema with details") YamlSchemaDetailsWrapper yamlSchemaDetailsWrapper) {
     if (yamlGroup.equals(StepCategory.STAGE.toString())) {
       // Add more cases when ci module contains more stages.
-      if (entityType.getYamlName().equals(EntityTypeConstants.INTEGRATION_STAGE)) {
-        return ResponseDTO.newResponse(
-            ciYamlSchemaService
-                .getMergedStageYamlSchema(accountIdentifier, projectIdentifier, orgIdentifier, scope,
-                    yamlSchemaDetailsWrapper.getYamlSchemaWithDetailsList())
-                .getSchema());
-      } else if (entityType.getYamlName().equals(EntityTypeConstants.SECURITY_STAGE)) {
+      if (entityType.getYamlName().equals(EntityTypeConstants.SECURITY_STAGE)) {
         return ResponseDTO.newResponse(
             stoYamlSchemaService
                 .getMergedStageYamlSchema(accountIdentifier, projectIdentifier, orgIdentifier, scope,
@@ -167,6 +154,6 @@ public class CIYamlSchemaResource implements YamlSchemaResource {
       }
     }
     return ResponseDTO.newResponse(
-        ciYamlSchemaService.getIndividualYamlSchema(entityType, orgIdentifier, projectIdentifier, scope));
+        stoYamlSchemaService.getIndividualYamlSchema(entityType, orgIdentifier, projectIdentifier, scope));
   }
 }

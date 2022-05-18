@@ -1,7 +1,7 @@
 server:
   applicationConnectors:
     - type: https
-      port: 7171
+      port: 7172
       keyStorePath: keystore.jks
       keyStorePassword: password
       trustStorePath: ${JAVA_HOME}/jre/lib/security/cacerts
@@ -13,7 +13,7 @@ server:
       maxRequestHeaderSize: 100KiB
   adminConnectors:
     - type: https
-      port: 7071
+      port: 7072
       keyStorePath: keystore.jks
       keyStorePassword: password
       trustStorePath: ${JAVA_HOME}/jre/lib/security/cacerts
@@ -122,11 +122,11 @@ asyncDelegateResponseConsumption:
 
 pmsSdkGrpcServerConfig:
   connectors:
-    - port: 12301
+    - port: 14301
       secure: true
       keyFilePath: key.pem
       certFilePath: cert.pem
-    - port: 12302
+    - port: 14302
 
 pmsGrpcClientConfig:
   target: localhost:12011

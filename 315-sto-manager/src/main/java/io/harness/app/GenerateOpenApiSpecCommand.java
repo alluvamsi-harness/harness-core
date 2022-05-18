@@ -28,7 +28,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 
 @Slf4j
-public class GenerateOpenApiSpecCommand extends ConfiguredCommand<CIManagerConfiguration> {
+public class GenerateOpenApiSpecCommand extends ConfiguredCommand<STOManagerConfiguration> {
   public static final String OUTPUT_FILE_PATH = "outputFilePath";
   public static final String LEADING_AND_TRAILING_QUOTES = "^\"|\"$";
   public static final String NEW_LINE = "\\n";
@@ -52,8 +52,8 @@ public class GenerateOpenApiSpecCommand extends ConfiguredCommand<CIManagerConfi
   }
 
   @Override
-  protected void run(Bootstrap<CIManagerConfiguration> bootstrap, Namespace namespace,
-      CIManagerConfiguration configuration) throws Exception {
+  protected void run(Bootstrap<STOManagerConfiguration> bootstrap, Namespace namespace,
+      STOManagerConfiguration configuration) throws Exception {
     String outputFilePath = namespace.getString(OUTPUT_FILE_PATH);
 
     LocalOpenAPIResource localOpenAPIResource = new LocalOpenAPIResource();

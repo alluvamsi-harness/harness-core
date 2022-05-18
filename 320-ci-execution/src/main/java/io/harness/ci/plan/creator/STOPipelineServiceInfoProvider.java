@@ -15,7 +15,7 @@ import io.harness.ci.creator.variables.STOStageVariableCreator;
 import io.harness.ci.creator.variables.STOStepVariableCreator;
 import io.harness.ci.creator.variables.SecurityStepVariableCreator;
 import io.harness.ci.plan.creator.filter.STOStageFilterJsonCreator;
-import io.harness.ci.plan.creator.stage.SecurityStagePMSPlanCreator;
+import io.harness.ci.plan.creator.stage.IntegrationStagePMSPlanCreator;
 import io.harness.ci.plan.creator.step.STOPMSStepFilterJsonCreator;
 import io.harness.ci.plan.creator.step.STOPMSStepPlanCreator;
 import io.harness.ci.plan.creator.step.STOStepFilterJsonCreatorV2;
@@ -47,7 +47,7 @@ public class STOPipelineServiceInfoProvider implements PipelineServiceInfoProvid
   @Override
   public List<PartialPlanCreator<?>> getPlanCreators() {
     List<PartialPlanCreator<?>> planCreators = new LinkedList<>();
-    planCreators.add(new SecurityStagePMSPlanCreator());
+    planCreators.add(new IntegrationStagePMSPlanCreator());
     planCreators.add(new STOPMSStepPlanCreator());
 
     planCreators.add(new SecurityStepPlanCreator());
