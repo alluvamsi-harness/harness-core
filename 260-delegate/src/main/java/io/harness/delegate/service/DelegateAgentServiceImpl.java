@@ -162,10 +162,10 @@ import io.harness.version.VersionInfoManager;
 
 import software.wings.beans.DelegateTaskFactory;
 import software.wings.beans.TaskType;
-import software.wings.beans.command.Command;
 import software.wings.beans.command.CommandExecutionContext;
 import software.wings.beans.delegation.CommandParameters;
 import software.wings.beans.delegation.ShellScriptParameters;
+import software.wings.beans.dto.Command;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
 import software.wings.delegatetasks.ActivityBasedLogSanitizer;
 import software.wings.delegatetasks.DelegateLogService;

@@ -176,7 +176,7 @@
 5026:software.wings.beans.PhaseStepType
 5027:software.wings.beans.ElementExecutionSummary
 5028:software.wings.beans.ServiceInstance
-5029:software.wings.beans.command.Command
+5029:software.wings.beans.dto.Command
 5030:software.wings.beans.command.AbstractCommandUnit
 5031:software.wings.beans.command.CleanupSshCommandUnit
 5032:software.wings.beans.command.CodeDeployCommandExecutionData
@@ -297,7 +297,7 @@
 5157:software.wings.api.ContainerServiceData
 5158:software.wings.beans.command.EcsSetupCommandUnit
 5159:software.wings.beans.command.EcsSetupParams
-5160:software.wings.beans.container.EcsContainerTask
+5160:software.wings.beans.dto.EcsContainerTask
 5162:software.wings.beans.container.ContainerDefinition
 5163:software.wings.beans.container.LogConfiguration
 5164:software.wings.beans.container.StorageConfiguration
@@ -314,7 +314,7 @@
 5176:software.wings.beans.config.LogzConfig
 5177:software.wings.beans.SplunkConfig
 5178:software.wings.beans.SumoConfig
-5179:software.wings.beans.container.KubernetesContainerTask
+5179:software.wings.beans.dto.KubernetesContainerTask
 5180:software.wings.beans.command.KubernetesResizeParams
 5181:software.wings.beans.command.EcsResizeParams
 5182:software.wings.beans.UserInvite
@@ -629,7 +629,7 @@
 5543:software.wings.service.impl.aws.model.AwsAmiSwitchRoutesRequest
 5544:software.wings.service.impl.aws.model.AwsAmiSwitchRoutesResponse
 5545:software.wings.api.AwsAmiSwitchRoutesStateExecutionData
-5546:software.wings.beans.container.EcsServiceSpecification
+5546:software.wings.beans.dto.EcsServiceSpecification
 5547:software.wings.yaml.gitSync.YamlGitConfig
 5548:software.wings.yaml.gitSync.YamlGitConfig$SyncMode
 5549:io.harness.shell.KerberosConfig
@@ -852,7 +852,6 @@
 7259:software.wings.api.jira.JiraExecutionData$JiraIssueData
 7260:software.wings.api.k8s.K8sSwapServiceElement
 7261:software.wings.beans.SlackMessage
-7262:software.wings.service.impl.SlackMessageSenderImpl
 7263:software.wings.beans.SlackMessageJSON
 7264:software.wings.api.pcf.PcfPluginExecutionSummary
 7265:software.wings.api.pcf.PcfPluginStateExecutionData

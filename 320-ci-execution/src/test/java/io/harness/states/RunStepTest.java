@@ -313,7 +313,7 @@ public class RunStepTest extends CIExecutionTestBase {
 
     assertThat(stepResponse)
         .isEqualTo(StepResponse.builder()
-                       .status(Status.ERRORED)
+                       .status(Status.FAILED)
                        .failureInfo(FailureInfo.newBuilder()
                                         .setErrorMessage("Delegate is not able to connect to created build farm")
                                         .addFailureData(FailureData.newBuilder()

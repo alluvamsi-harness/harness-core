@@ -39,6 +39,7 @@ import io.harness.exception.WingsException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -181,7 +182,9 @@ public class CloudformationRollbackStep extends TaskExecutableWithRollbackAndRba
     return StepUtils.prepareCDTaskRequest(ambiance, taskData, kryoSerializer,
         Collections.singletonList(cloudformationTaskNGParameters.getCfCommandUnit().name()),
         TaskType.CLOUDFORMATION_TASK_NG.getDisplayName(),
-        StepUtils.getTaskSelectors(stepParameters.getDelegateSelectors()), stepHelper.getEnvironmentType(ambiance));
+        TaskSelectorYaml.toTaskSelector(
+            ((CloudformationRollbackStepParameters) stepParameters.getSpec()).getDelegateSelectors()),
+        stepHelper.getEnvironmentType(ambiance));
   }
 
   @Override
