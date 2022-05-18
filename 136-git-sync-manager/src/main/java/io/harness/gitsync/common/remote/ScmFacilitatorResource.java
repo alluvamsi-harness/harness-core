@@ -223,10 +223,8 @@ public class ScmFacilitatorResource {
   @Operation(operationId = "createPR", summary = "creates a Pull Request",
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Successfully created a PR") })
   public ResponseDTO<CreatePRDTO>
-  createPR(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
-               NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @RequestBody(description = "Details to create a PR",
-          required = true) @Valid @NotNull GitPRCreateRequest gitCreatePRRequest) {
+  createPR(@RequestBody(
+      description = "Details to create a PR", required = true) @Valid @NotNull GitPRCreateRequest gitCreatePRRequest) {
     return ResponseDTO.newResponse(scmOrchestratorService.processScmRequest(scmClientFacilitatorService
         -> scmClientFacilitatorService.createPullRequest(gitCreatePRRequest),
         gitCreatePRRequest.getProjectIdentifier(), gitCreatePRRequest.getOrgIdentifier(),

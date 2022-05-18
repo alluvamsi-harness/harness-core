@@ -16,7 +16,6 @@ import static io.harness.NGCommonEntityConstants.INTERNAL_SERVER_ERROR_CODE;
 import static io.harness.NGCommonEntityConstants.INTERNAL_SERVER_ERROR_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
-import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
@@ -47,7 +46,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import org.hibernate.validator.constraints.NotBlank;
 import retrofit2.http.Body;
 
 @OwnedBy(PL)
@@ -102,9 +100,7 @@ public class SourceCodeManagerResource {
         ApiResponse(description = "This contains details of the newly created Source Code Manager")
       })
   public ResponseDTO<SourceCodeManagerDTO>
-  save(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
-           NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @RequestBody(description = "This contains details of Source Code Manager") @NotNull @Body
+  save(@RequestBody(description = "This contains details of Source Code Manager") @NotNull @Body
       @Valid SourceCodeManagerDTO sourceCodeManagerDTO) {
     return ResponseDTO.newResponse(sourceCodeManagerService.save(sourceCodeManagerDTO));
   }
@@ -121,10 +117,8 @@ public class SourceCodeManagerResource {
                 "This contains details of the updated Source Code Manager for the specific Source Code Manager Id")
       })
   public ResponseDTO<SourceCodeManagerDTO>
-  update(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
-             NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @Parameter(description = "Source Code manager Identifier") @NotNull @PathParam(
-          "identifier") String sourceCodeManagerIdentifier,
+  update(@Parameter(description = "Source Code manager Identifier") @NotNull @PathParam(
+             "identifier") String sourceCodeManagerIdentifier,
       @RequestBody(description = "This contains details of Source Code Manager") @NotNull @Body
       @Valid SourceCodeManagerDTO sourceCodeManagerDTO) {
     return ResponseDTO.newResponse(sourceCodeManagerService.update(sourceCodeManagerIdentifier, sourceCodeManagerDTO));

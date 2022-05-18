@@ -1,2 +1,7 @@
+endpoint-exclusion: io.harness.connector.apis.resource.ConnectorResource.getCEAwsTemplate
+endpoint-exclusion: io.harness.ng.userprofile.resource.SourceCodeManagerResource.update
+endpoint-exclusion: io.harness.ng.userprofile.resource.SourceCodeManagerResource.save
+endpoint-exclusion: io.harness.ng.core.remote.ApiKeyResource.updateApiKey
+endpoint-exclusion: io.harness.gitsync.common.remote.ScmFacilitatorResource.createPR
 endpoint-exclusion: io.harness.ng.core.filestore.remote.FileStoreResource.getSupportedEntityTypes
 endpoint-exclusion: io.harness.ng.core.filestore.remote.FileStoreResource.update

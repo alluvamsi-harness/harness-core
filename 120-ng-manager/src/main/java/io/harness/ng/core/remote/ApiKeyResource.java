@@ -126,8 +126,7 @@ public class ApiKeyResource {
         ApiResponse(responseCode = "default", description = "Returns the updated API key")
       })
   public ResponseDTO<ApiKeyDTO>
-  updateApiKey(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank
-               @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier, @Valid ApiKeyDTO apiKeyDTO,
+  updateApiKey(@Valid ApiKeyDTO apiKeyDTO,
       @Parameter(description = "This is the API key ID") @NotNull @PathParam("identifier") String identifier) {
     apiKeyService.validateParentIdentifier(apiKeyDTO.getAccountIdentifier(), apiKeyDTO.getOrgIdentifier(),
         apiKeyDTO.getProjectIdentifier(), apiKeyDTO.getApiKeyType(), apiKeyDTO.getParentIdentifier());

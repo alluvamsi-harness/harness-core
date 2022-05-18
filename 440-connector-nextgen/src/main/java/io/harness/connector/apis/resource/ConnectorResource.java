@@ -527,10 +527,8 @@ public class ConnectorResource {
       })
   @Deprecated
   public ResponseDTO<String>
-  getCEAwsTemplate(@Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
-                       NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
-      @Parameter(description = "Specify whether or not to enable events") @QueryParam(
-          NGCommonEntityConstants.IS_EVENTS_ENABLED) Boolean eventsEnabled,
+  getCEAwsTemplate(@Parameter(description = "Specify whether or not to enable events") @QueryParam(
+                       NGCommonEntityConstants.IS_EVENTS_ENABLED) Boolean eventsEnabled,
       @Parameter(description = "Specify whether or not to enable CUR") @QueryParam(
           NGCommonEntityConstants.IS_CUR_ENABLED) Boolean curEnabled,
       @Parameter(description = "Specify whether or not to enable optimization") @QueryParam(
