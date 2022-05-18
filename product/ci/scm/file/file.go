@@ -67,8 +67,10 @@ func FindFile(ctx context.Context, fileRequest *pb.GetFileRequest, log *zap.Suga
         }
         response, err := git.GetLatestCommitOnFile(ctx, request, log)
         if err != nil {
+        	log.Errorw("GetLatest Commit Failed", "slug", fileRequest.GetSlug(), "path", fileRequest.GetPath(), "ref", ref, "commit id",
+        		content.Sha, "blob id", content.BlobID, "elapsed_time_ms", utils.TimeSince(start))
             out = &pb.FileContent{
-                Error:  err.Error(),
+                Error:  "Could not fetch the file content",
                 Path:   fileRequest.GetPath(),
             }
             return out, nil
