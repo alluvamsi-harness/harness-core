@@ -370,6 +370,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final AtomicInteger maxValidatingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingFuturesCount = new AtomicInteger();
+  private final AtomicInteger heartbeatSuccessCalls = new AtomicInteger();
 
   private final AtomicLong lastHeartbeatSentAt = new AtomicLong(System.currentTimeMillis());
   private final AtomicLong frozenAt = new AtomicLong(-1);
@@ -1429,9 +1430,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     healthMonitorExecutor.scheduleAtFixedRate(() -> {
       try {
         sendHeartbeat(builder);
+        if (heartbeatSuccessCalls.incrementAndGet() > 100) {
+          log.info("Sent {} calls to manager", heartbeatSuccessCalls.getAndSet(0));
+        }
       } catch (Exception ex) {
         log.error("Exception while sending heartbeat", ex);
       }
+      // Log delegate performance after every 60 sec i.e. heartbeat interval.
+      logCurrentTasks();
     }, 0, delegateConfiguration.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
   }
 
@@ -1447,19 +1453,19 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void startLocalHeartbeat() {
+    log.debug("Starting local heartbeat");
     healthMonitorExecutor.scheduleAtFixedRate(() -> {
       try {
-        log.debug("Starting local heartbeat.");
+        log.debug("Sending local heartbeat");
         sendLocalHeartBeat();
       } catch (Exception e) {
         log.error("Exception while scheduling local heartbeat and filling status data", e);
       }
-      logCurrentTasks();
     }, 0, LOCAL_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
   }
 
   private void sendLocalHeartBeat() {
-    log.debug("Filling status data.");
+    log.debug("Filling status data");
     Map<String, Object> statusData = new HashMap<>();
     if (selfDestruct.get()) {
       statusData.put(DELEGATE_SELF_DESTRUCT, true);
@@ -1681,7 +1687,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
-    log.info("Sending heartbeat...");
+    log.debug("Sending heartbeat...");
     try {
       updateBuilderIfEcsDelegate(builder);
       DelegateParams delegateParams =

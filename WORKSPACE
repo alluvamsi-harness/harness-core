@@ -5224,6 +5224,18 @@ maven_install(
 )
 
 maven_install(
+    name = "ce-nextgen",
+    artifacts = [
+        "com.azure:azure-core:1.25.0",
+    ],
+    repositories = [
+        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
+        "https://harness.jfrog.io/harness/thirdparty-annonymous",
+    ],
+    version_conflict_policy = "pinned",
+)
+
+maven_install(
     name = "maven_checkstyle",
     artifacts = [
         "antlr:antlr:2.7.2",
