@@ -78,7 +78,7 @@ public class HelmValuesFetchTaskNG extends AbstractDelegateRunnableTask {
     try {
       helmTaskHelperBase.decryptEncryptedDetails(helmChartManifestDelegateConfig);
       List<HelmFetchFileConfig> helmFetchFileConfigList = helmValuesFetchRequest.getHelmFetchFileConfigList();
-      Map<String, List<String>> helmChartValuesFileMapContents = helmTaskHelperBase.fetchValuesYamlFromChart(
+      Map<String, HelmFetchFileResult> helmChartValuesFileMapContents = helmTaskHelperBase.fetchValuesYamlFromChart(
           helmChartManifestDelegateConfig, helmValuesFetchRequest.getTimeout(), logCallback, helmFetchFileConfigList);
 
       logCallback.saveExecutionLog("\nFetching helm values completed successfully.", INFO);

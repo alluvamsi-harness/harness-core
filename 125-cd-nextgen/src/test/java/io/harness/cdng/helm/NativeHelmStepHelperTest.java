@@ -89,6 +89,7 @@ import io.harness.delegate.task.git.GitFetchRequest;
 import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.delegate.task.git.TaskStatus;
 import io.harness.delegate.task.helm.HelmFetchFileConfig;
+import io.harness.delegate.task.helm.HelmFetchFileResult;
 import io.harness.delegate.task.helm.HelmInstallCommandRequestNG;
 import io.harness.delegate.task.helm.HelmValuesFetchRequest;
 import io.harness.delegate.task.helm.HelmValuesFetchResponse;
@@ -839,9 +840,10 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(HelmDeployStepParams.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload"));
-    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
-    inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
+    HelmFetchFileResult valuesYamlList =
+        HelmFetchFileResult.builder().helmValuesFileContents(new ArrayList<>(asList("values yaml payload"))).build();
+    Map<String, HelmFetchFileResult> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put(manifestIdentifier, valuesYamlList);
     NativeHelmStepPassThroughData passThroughData =
         NativeHelmStepPassThroughData.builder()
             .helmChartManifestOutcome(HelmChartManifestOutcome.builder().identifier(manifestIdentifier).build())
@@ -849,12 +851,11 @@ public class NativeHelmStepHelperTest extends CategoryTest {
             .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
-    HelmValuesFetchResponse helmValuesFetchResponse =
-        HelmValuesFetchResponse.builder()
-            .helmChartValuesFileMapContent(inheritFromManifestFileMapContent)
-            .commandExecutionStatus(SUCCESS)
-            .unitProgressData(unitProgressData)
-            .build();
+    HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
+                                                          .helmChartValuesFileMapContent(helmChartValuesFileMapContent)
+                                                          .commandExecutionStatus(SUCCESS)
+                                                          .unitProgressData(unitProgressData)
+                                                          .build();
     Map<String, ResponseData> responseDataMap = ImmutableMap.of("helm-value-fetch-response", helmValuesFetchResponse);
     ThrowingSupplier responseDataSuplier = StrategyHelper.buildResponseDataSupplier(responseDataMap);
 
@@ -884,10 +885,14 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(HelmDeployStepParams.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload", "values yaml payload"));
-    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
-    inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
-    inheritFromManifestFileMapContent.put("helmOverride2", asList("values yaml payload"));
+    HelmFetchFileResult valuesYamlList =
+        HelmFetchFileResult.builder()
+            .helmValuesFileContents(new ArrayList<>(asList("values yaml payload", "values yaml payload")))
+            .build();
+    Map<String, HelmFetchFileResult> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put(manifestIdentifier, valuesYamlList);
+    helmChartValuesFileMapContent.put("helmOverride2",
+        HelmFetchFileResult.builder().helmValuesFileContents(new ArrayList<>(asList("values yaml payload"))).build());
 
     HttpStoreConfig httpStore =
         HttpStoreConfig.builder().connectorRef(ParameterField.createValueField("http-connector")).build();
@@ -927,17 +932,16 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         NativeHelmStepPassThroughData.builder()
             .helmChartManifestOutcome(HelmChartManifestOutcome.builder().identifier(manifestIdentifier).build())
             .infrastructure(K8sDirectInfrastructureOutcome.builder().build())
-            .valuesManifestOutcomes(aggregatedValuesManifests)
-            .helmValuesFileMapContents(inheritFromManifestFileMapContent)
+            .manifestOutcomeList(new ArrayList<>(aggregatedValuesManifests))
+            .helmValuesFileMapContents(helmChartValuesFileMapContent)
             .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
-    HelmValuesFetchResponse helmValuesFetchResponse =
-        HelmValuesFetchResponse.builder()
-            .helmChartValuesFileMapContent(inheritFromManifestFileMapContent)
-            .commandExecutionStatus(SUCCESS)
-            .unitProgressData(unitProgressData)
-            .build();
+    HelmValuesFetchResponse helmValuesFetchResponse = HelmValuesFetchResponse.builder()
+                                                          .helmChartValuesFileMapContent(helmChartValuesFileMapContent)
+                                                          .commandExecutionStatus(SUCCESS)
+                                                          .unitProgressData(unitProgressData)
+                                                          .build();
     Map<String, ResponseData> responseDataMap = ImmutableMap.of("helm-value-fetch-response", helmValuesFetchResponse);
     ThrowingSupplier responseDataSuplier = StrategyHelper.buildResponseDataSupplier(responseDataMap);
 
@@ -945,7 +949,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     TaskChainResponse taskChainResponse = TaskChainResponse.builder().chainEnd(false).taskRequest(taskRequest).build();
     doReturn(taskChainResponse)
         .when(nativeHelmStepHelper)
-        .executeValuesFetchTask(any(), any(), any(), any(), any(), any(), any());
+        .executeValuesFetchTask(any(), any(), any(), any(), any(), any());
     nativeHelmStepHelper.executeNextLink(
         nativeHelmStepExecutor, ambiance, stepElementParams, passThroughData, responseDataSuplier);
 
@@ -953,11 +957,11 @@ public class NativeHelmStepHelperTest extends CategoryTest {
     verify(nativeHelmStepHelper, times(1))
         .executeValuesFetchTask(eq(ambiance), eq(stepElementParams), eq(passThroughData.getInfrastructure()),
             eq(passThroughData.getHelmChartManifestOutcome()), eq(passThroughData.getValuesManifestOutcomes()),
-            valuesFilesContentCaptor.capture(), any());
+            valuesFilesContentCaptor.capture());
 
-    Map<String, List<String>> duplicateInheritFromManifestFileMapContent = valuesFilesContentCaptor.getValue();
-    assertThat(duplicateInheritFromManifestFileMapContent).isNotEmpty();
-    assertThat(duplicateInheritFromManifestFileMapContent).isEqualTo(inheritFromManifestFileMapContent);
+    Map<String, HelmFetchFileResult> duplicatehelmChartValuesFileMapContent = valuesFilesContentCaptor.getValue();
+    assertThat(duplicatehelmChartValuesFileMapContent).isNotEmpty();
+    assertThat(duplicatehelmChartValuesFileMapContent).isEqualTo(helmChartValuesFileMapContent);
   }
 
   @Test
@@ -968,10 +972,14 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         StepElementParameters.builder().spec(HelmDeployStepParams.infoBuilder().build()).build();
 
     String manifestIdentifier = "manifest-identifier";
-    List<String> valuesYamlList = new ArrayList<>(asList("values yaml payload", "values yaml payload"));
-    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
-    inheritFromManifestFileMapContent.put(manifestIdentifier, valuesYamlList);
-    inheritFromManifestFileMapContent.put("helmOverride2", asList("values yaml payload"));
+    HelmFetchFileResult valuesYamlList =
+        HelmFetchFileResult.builder()
+            .helmValuesFileContents(new ArrayList<>(asList("values yaml payload", "values yaml payload")))
+            .build();
+    Map<String, HelmFetchFileResult> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put(manifestIdentifier, valuesYamlList);
+    helmChartValuesFileMapContent.put("helmOverride2",
+        HelmFetchFileResult.builder().helmValuesFileContents(new ArrayList<>(asList("values yaml payload"))).build());
 
     Map<String, FetchFilesResult> filesFromMultipleRepo = new HashMap<>();
     filesFromMultipleRepo.put("helmOverride",
@@ -1018,8 +1026,8 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         NativeHelmStepPassThroughData.builder()
             .helmChartManifestOutcome(HelmChartManifestOutcome.builder().identifier(manifestIdentifier).build())
             .infrastructure(K8sDirectInfrastructureOutcome.builder().build())
-            .valuesManifestOutcomes(aggregatedValuesManifests)
-            .helmValuesFileMapContents(inheritFromManifestFileMapContent)
+            .manifestOutcomeList(new ArrayList<>(aggregatedValuesManifests))
+            .helmValuesFileMapContents(helmChartValuesFileMapContent)
             .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
@@ -1109,7 +1117,7 @@ public class NativeHelmStepHelperTest extends CategoryTest {
         NativeHelmStepPassThroughData.builder()
             .helmChartManifestOutcome(HelmChartManifestOutcome.builder().identifier(manifestIdentifier).build())
             .infrastructure(K8sDirectInfrastructureOutcome.builder().build())
-            .valuesManifestOutcomes(orderedValuesManifests)
+            .manifestOutcomeList(new ArrayList<>(orderedValuesManifests))
             .build();
 
     UnitProgressData unitProgressData = UnitProgressData.builder().build();
@@ -1385,13 +1393,11 @@ public class NativeHelmStepHelperTest extends CategoryTest {
 
     List<ValuesManifestOutcome> aggregatedValuesManifests = new ArrayList<>();
 
-    Map<String, List<String>> helmChartFetchFilesResultMap = new HashMap<>();
-
-    String helmValuesFileMapContent = null;
+    Map<String, HelmFetchFileResult> helmChartFetchFilesResultMap = new HashMap<>();
 
     assertThatCode(
         ()
             -> nativeHelmStepHelper.executeValuesFetchTask(ambiance, stepElementParameters, outcomeBuilder.build(),
-                manifestOutcome, aggregatedValuesManifests, helmChartFetchFilesResultMap, helmValuesFileMapContent));
+                manifestOutcome, aggregatedValuesManifests, helmChartFetchFilesResultMap));
   }
 }

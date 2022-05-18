@@ -98,9 +98,10 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromS3() throws Exception {
     String valuesYaml = "values yaml payload";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
-    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
-    inheritFromManifestFileMapContent.put("manifest-identifier", valuesYamlList);
+    HelmFetchFileResult valuesYamlList =
+        HelmFetchFileResult.builder().helmValuesFileContents(new ArrayList<>(Arrays.asList(valuesYaml))).build();
+    Map<String, HelmFetchFileResult> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
     AwsConnectorDTO connectorDTO =
         AwsConnectorDTO.builder()
             .credential(
@@ -123,7 +124,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
 
     doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(inheritFromManifestFileMapContent)
+    doReturn(helmChartValuesFileMapContent)
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -137,7 +138,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getHelmChartValuesFileMapContent().equals(inheritFromManifestFileMapContent));
+    assertThat(response.getHelmChartValuesFileMapContent().equals(helmChartValuesFileMapContent));
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
@@ -146,9 +147,10 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromGcs() throws Exception {
     String valuesYaml = "values yaml payload";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
-    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
-    inheritFromManifestFileMapContent.put("manifest-identifier", valuesYamlList);
+    HelmFetchFileResult valuesYamlList =
+        HelmFetchFileResult.builder().helmValuesFileContents(new ArrayList<>(Arrays.asList(valuesYaml))).build();
+    Map<String, HelmFetchFileResult> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
     GcpConnectorDTO connectorDTO =
         GcpConnectorDTO.builder()
             .credential(
@@ -169,7 +171,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
 
     doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(inheritFromManifestFileMapContent)
+    doReturn(helmChartValuesFileMapContent)
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -183,7 +185,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getHelmChartValuesFileMapContent().equals(inheritFromManifestFileMapContent));
+    assertThat(response.getHelmChartValuesFileMapContent().equals(helmChartValuesFileMapContent));
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 
@@ -192,9 +194,10 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldExecuteHelmValueFetchFromHttpHelmV380() throws Exception {
     String valuesYaml = "values-file-content";
-    List<String> valuesYamlList = new ArrayList<>(Arrays.asList(valuesYaml));
-    Map<String, List<String>> inheritFromManifestFileMapContent = new HashMap<>();
-    inheritFromManifestFileMapContent.put("manifest-identifier", valuesYamlList);
+    HelmFetchFileResult valuesYamlList =
+        HelmFetchFileResult.builder().helmValuesFileContents(new ArrayList<>(Arrays.asList(valuesYaml))).build();
+    Map<String, HelmFetchFileResult> helmChartValuesFileMapContent = new HashMap<>();
+    helmChartValuesFileMapContent.put("manifest-identifier", valuesYamlList);
     HttpHelmConnectorDTO connectorDTO =
         HttpHelmConnectorDTO.builder()
             .auth(HttpHelmAuthenticationDTO.builder()
@@ -217,7 +220,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
 
     doNothing().when(helmValuesFetchTaskNG).printHelmBinaryPathAndVersion(any(), any());
     doReturn(decryptableEntity).when(decryptionService).decrypt(any(), anyList());
-    doReturn(inheritFromManifestFileMapContent)
+    doReturn(helmChartValuesFileMapContent)
         .when(helmTaskHelperBase)
         .fetchValuesYamlFromChart(eq(manifestDelegateConfig), eq(DEFAULT_ASYNC_CALL_TIMEOUT), any(), any());
 
@@ -232,7 +235,7 @@ public class HelmValuesFetchTaskNGTest extends CategoryTest {
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getValuesFileContent()).isNull();
-    assertThat(response.getHelmChartValuesFileMapContent().equals(inheritFromManifestFileMapContent));
+    assertThat(response.getHelmChartValuesFileMapContent().equals(helmChartValuesFileMapContent));
     assertThat(response.getUnitProgressData()).isNotNull();
   }
 

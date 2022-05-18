@@ -77,8 +77,6 @@ import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
-import software.wings.beans.LogColor;
-import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
@@ -781,10 +779,10 @@ public class HelmTaskHelperBase {
     return Paths.get(parentDir, chartName).toString();
   }
 
-  public Map<String, List<String>> fetchValuesYamlFromChart(
+  public Map<String, HelmFetchFileResult> fetchValuesYamlFromChart(
       HelmChartManifestDelegateConfig helmChartManifestDelegateConfig, long timeoutInMillis, LogCallback logCallback,
       List<HelmFetchFileConfig> helmFetchFileConfigList) throws Exception {
-    logCallback.saveExecutionLog(color("\nStarting fetching Helm values", LogColor.White, LogWeight.Bold));
+    logCallback.saveExecutionLog(color("\nStarting fetching Helm values", White, Bold));
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
 
@@ -794,15 +792,15 @@ public class HelmTaskHelperBase {
       logCallback.saveExecutionLog(color("\nFollowing were fetched successfully :", White, Bold));
 
       String chartDirectory = getChartDirectory(workingDirectory, helmChartManifestDelegateConfig.getChartName());
-      Map<String, List<String>> helmValueFetchFilesResultMap = new HashMap<>();
+      Map<String, HelmFetchFileResult> helmValueFetchFilesResultMap = new HashMap<>();
       if (isNotEmpty(helmFetchFileConfigList)) {
         for (HelmFetchFileConfig helmFetchFileConfig : helmFetchFileConfigList) {
           try {
-            List<String> valuesFileContentList =
+            HelmFetchFileResult valuesFileContentList =
                 readValuesYamlFromChartFiles(chartDirectory, helmFetchFileConfig, logCallback);
             String identifier = helmFetchFileConfig.getIdentifier();
             if (helmValueFetchFilesResultMap.containsKey(identifier)) {
-              helmValueFetchFilesResultMap.get(identifier).addAll(valuesFileContentList);
+              helmValueFetchFilesResultMap.get(identifier).addEverything(valuesFileContentList);
             } else {
               helmValueFetchFilesResultMap.put(identifier, valuesFileContentList);
             }
@@ -829,7 +827,7 @@ public class HelmTaskHelperBase {
     }
   }
 
-  private List<String> readValuesYamlFromChartFiles(
+  private HelmFetchFileResult readValuesYamlFromChartFiles(
       String chartDirectory, HelmFetchFileConfig helmFetchFileConfig, LogCallback logCallback) throws Exception {
     List<String> valueFileContentList = new ArrayList<>();
     try {
@@ -855,7 +853,7 @@ public class HelmTaskHelperBase {
         throw ex;
       }
     }
-    return valueFileContentList;
+    return HelmFetchFileResult.builder().helmValuesFileContents(valueFileContentList).build();
   }
 
   private void downloadHelmChartFiles(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,

@@ -27,6 +27,7 @@ import static software.wings.beans.appmanifest.ManifestFile.VALUES_YAML_KEY;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
@@ -37,19 +38,29 @@ import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sAzureInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
+import io.harness.cdng.k8s.K8sApplyStepParameters;
 import io.harness.cdng.k8s.K8sEntityHelper;
 import io.harness.cdng.k8s.beans.GitFetchResponsePassThroughData;
 import io.harness.cdng.k8s.beans.HelmValuesFetchResponsePassThroughData;
 import io.harness.cdng.k8s.beans.StepExceptionPassThroughData;
 import io.harness.cdng.manifest.ManifestStoreType;
 import io.harness.cdng.manifest.ManifestType;
+import io.harness.cdng.manifest.mappers.ManifestOutcomeMapper;
 import io.harness.cdng.manifest.mappers.ManifestOutcomeValidator;
 import io.harness.cdng.manifest.steps.ManifestsOutcome;
 import io.harness.cdng.manifest.yaml.GcsStoreConfig;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
+import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
 import io.harness.cdng.manifest.yaml.HttpStoreConfig;
 import io.harness.cdng.manifest.yaml.InheritFromManifestStoreConfig;
+import io.harness.cdng.manifest.yaml.InlineStoreConfig;
+import io.harness.cdng.manifest.yaml.K8sManifestOutcome;
+import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
+import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
+import io.harness.cdng.manifest.yaml.ManifestAttributes;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome;
+import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
 import io.harness.cdng.manifest.yaml.S3StoreConfig;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
@@ -91,6 +102,7 @@ import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.helm.HelmFetchFileConfig;
+import io.harness.delegate.task.helm.HelmFetchFileResult;
 import io.harness.delegate.task.k8s.K8sInfraDelegateConfig;
 import io.harness.encryption.SecretRefData;
 import io.harness.eraro.Level;
@@ -99,6 +111,8 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.StepConstants;
 import io.harness.expression.EngineExpressionEvaluator;
+import io.harness.git.model.FetchFilesResult;
+import io.harness.git.model.GitFile;
 import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
@@ -129,8 +143,10 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -328,36 +344,29 @@ public class CDStepHelper {
         .build();
   }
 
-  public GitFetchFilesConfig getOverridePathForGitFetchFileConfig(Ambiance ambiance, String validationMessage,
-      ManifestOutcome overridesManifestOutcome, ManifestOutcome manifestOutcome) {
+  public GitFetchFilesConfig getPathsFromInheritFromManifestStoreConfig(
+      Ambiance ambiance, String validationMessage, ManifestOutcome manifestOutcome, GitStoreConfig gitStoreConfig) {
     InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
-        (InheritFromManifestStoreConfig) overridesManifestOutcome.getStore();
-    StoreConfig store = manifestOutcome.getStore();
-    GitStoreConfig gitStoreConfig = (GitStoreConfig) store;
+        (InheritFromManifestStoreConfig) manifestOutcome.getStore();
     String connectorId = gitStoreConfig.getConnectorRef().getValue();
     ConnectorInfoDTO connectorDTO = getConnector(connectorId, ambiance);
-    validateManifest(store.getKind(), connectorDTO, validationMessage);
+    validateManifest(gitStoreConfig.getKind(), connectorDTO, validationMessage);
     List<String> gitFilePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
 
     GitStoreDelegateConfig gitStoreDelegateConfig =
-        getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, overridesManifestOutcome, gitFilePaths, ambiance);
+        getGitStoreDelegateConfig(gitStoreConfig, connectorDTO, manifestOutcome, gitFilePaths, ambiance);
     return GitFetchFilesConfig.builder()
-        .identifier(overridesManifestOutcome.getIdentifier())
-        .manifestType(overridesManifestOutcome.getType())
+        .identifier(manifestOutcome.getIdentifier())
+        .manifestType(manifestOutcome.getType())
         .gitStoreDelegateConfig(gitStoreDelegateConfig)
         .build();
   }
 
-  public static HelmFetchFileConfig getInheritFromManifestFetchFileConfig(ManifestOutcome manifestOutcome) {
-    InheritFromManifestStoreConfig inheritFromManifestStoreConfig =
-        (InheritFromManifestStoreConfig) manifestOutcome.getStore();
+  public static HelmFetchFileConfig getInheritFromManifestFetchFileConfig(
+      String Identifier, String manifestType, InheritFromManifestStoreConfig inheritFromManifestStoreConfig) {
     List<String> filePaths = new ArrayList<>(getParameterFieldValue(inheritFromManifestStoreConfig.getPaths()));
 
-    return HelmFetchFileConfig.builder()
-        .identifier(manifestOutcome.getIdentifier())
-        .manifestType(manifestOutcome.getType())
-        .filePaths(filePaths)
-        .build();
+    return HelmFetchFileConfig.builder().identifier(Identifier).manifestType(manifestType).filePaths(filePaths).build();
   }
 
   public List<EncryptedDataDetail> getEncryptedDataDetails(
@@ -471,7 +480,9 @@ public class CDStepHelper {
     return aggregatedValuesManifests.stream()
         .filter(valuesManifestOutcome
             -> ManifestStoreType.InheritFromManifest.equals(valuesManifestOutcome.getStore().getKind()))
-        .map(valuesManifestOutcome -> getInheritFromManifestFetchFileConfig(valuesManifestOutcome))
+        .map(valuesManifestOutcome
+            -> getInheritFromManifestFetchFileConfig(valuesManifestOutcome.getIdentifier(),
+                valuesManifestOutcome.getType(), (InheritFromManifestStoreConfig) valuesManifestOutcome.getStore()))
         .collect(Collectors.toList());
   }
 
@@ -743,17 +754,17 @@ public class CDStepHelper {
   }
 
   public static List<HelmFetchFileConfig> mapHelmChartManifestsToHelmFetchFileConfig(
-      String identifier, List<String> valuesPaths) {
+      String identifier, List<String> valuesPaths, String manifestType) {
     List<HelmFetchFileConfig> helmFetchFileConfigList = new ArrayList<>();
     if (isNotEmpty(valuesPaths)) {
-      helmFetchFileConfigList.add(getHelmFetchFileConfigBuilder(identifier, ManifestType.VALUES, valuesPaths, false));
+      helmFetchFileConfigList.add(createHelmFetchFileConfig(identifier, manifestType, valuesPaths, false));
     }
     helmFetchFileConfigList.add(
-        getHelmFetchFileConfigBuilder(identifier, ManifestType.VALUES, Arrays.asList(VALUES_YAML_KEY), true));
+        createHelmFetchFileConfig(identifier, manifestType, Arrays.asList(VALUES_YAML_KEY), true));
     return helmFetchFileConfigList;
   }
 
-  public static HelmFetchFileConfig getHelmFetchFileConfigBuilder(
+  public static HelmFetchFileConfig createHelmFetchFileConfig(
       String identifier, String manifestType, List<String> valuesPaths, boolean succeedIfFileNotFound) {
     return HelmFetchFileConfig.builder()
         .identifier(identifier)
@@ -761,5 +772,87 @@ public class CDStepHelper {
         .filePaths(valuesPaths)
         .succeedIfFileNotFound(succeedIfFileNotFound)
         .build();
+  }
+
+  public List<String> getManifestFilesContents(Map<String, FetchFilesResult> gitFetchFilesResultMap,
+      List<ManifestOutcome> valuesManifests, Map<String, HelmFetchFileResult> helmChartFetchFilesResultMap) {
+    List<String> valuesFileContents = new ArrayList<>();
+
+    for (ManifestOutcome valuesManifest : valuesManifests) {
+      StoreConfig store = extractStoreConfigFromManifestOutcome(valuesManifest);
+      String valuesIdentifier = valuesManifest.getIdentifier();
+      if (ManifestStoreType.INLINE.equals(store.getKind())) {
+        valuesFileContents.add(((InlineStoreConfig) store).extractContent());
+      } else if (gitFetchFilesResultMap.containsKey(valuesIdentifier)) {
+        FetchFilesResult gitFetchFilesResult = gitFetchFilesResultMap.get(valuesIdentifier);
+        if (!isNull(gitFetchFilesResult)) {
+          valuesFileContents.addAll(
+              gitFetchFilesResult.getFiles().stream().map(GitFile::getFileContent).collect(Collectors.toList()));
+        }
+      } else if (helmChartFetchFilesResultMap.containsKey(valuesIdentifier)) {
+        List<String> helmChartValuesFileContent =
+            helmChartFetchFilesResultMap.get(valuesIdentifier).getHelmValuesFileContents();
+        if (isNotEmpty(helmChartValuesFileContent)) {
+          valuesFileContents.addAll(helmChartValuesFileContent);
+        }
+      }
+      // TODO: for local store, add files directly
+    }
+    return valuesFileContents;
+  }
+
+  public StoreConfig extractStoreConfigFromManifestOutcome(ManifestOutcome manifestOutcome) {
+    switch (manifestOutcome.getType()) {
+      case ManifestType.K8Manifest:
+        K8sManifestOutcome k8sManifestOutcome = (K8sManifestOutcome) manifestOutcome;
+        return k8sManifestOutcome.getStore();
+
+      case ManifestType.HelmChart:
+        HelmChartManifestOutcome helmChartManifestOutcome = (HelmChartManifestOutcome) manifestOutcome;
+        return helmChartManifestOutcome.getStore();
+
+      case ManifestType.VALUES:
+        ValuesManifestOutcome valuesManifestOutcome = (ValuesManifestOutcome) manifestOutcome;
+        return valuesManifestOutcome.getStore();
+
+      case ManifestType.KustomizePatches:
+        KustomizePatchesManifestOutcome kustomizePatchesManifestOutcome =
+            (KustomizePatchesManifestOutcome) manifestOutcome;
+        return kustomizePatchesManifestOutcome.getStore();
+
+      case ManifestType.OpenshiftParam:
+        OpenshiftParamManifestOutcome openshiftParamManifestOutcome = (OpenshiftParamManifestOutcome) manifestOutcome;
+        return openshiftParamManifestOutcome.getStore();
+
+      case ManifestType.OpenshiftTemplate:
+        OpenshiftManifestOutcome openshiftManifestOutcome = (OpenshiftManifestOutcome) manifestOutcome;
+        return openshiftManifestOutcome.getStore();
+
+      case ManifestType.Kustomize:
+        KustomizeManifestOutcome kustomizeManifestOutcome = (KustomizeManifestOutcome) manifestOutcome;
+        return kustomizeManifestOutcome.getStore();
+
+      default:
+        throw new UnsupportedOperationException(format("Unsupported Manifest type: [%s]", manifestOutcome.getType()));
+    }
+  }
+
+  public List<ManifestOutcome> getStepLevelManifestOutcomes(StepElementParameters stepElementParameters) {
+    if (!(stepElementParameters.getSpec() instanceof K8sApplyStepParameters)) {
+      return Collections.emptyList();
+    }
+    List<ManifestOutcome> manifestOutcomes = new ArrayList<>();
+    List<ManifestAttributes> manifestAttributesList =
+        ((K8sApplyStepParameters) stepElementParameters.getSpec())
+            .getOverrides()
+            .stream()
+            .map(manifestConfigWrapper -> manifestConfigWrapper.getManifest().getSpec())
+            .collect(Collectors.toList());
+
+    for (int i = 0; i < manifestAttributesList.size(); i++) {
+      ManifestAttributes manifestAttributes = manifestAttributesList.get(i);
+      manifestOutcomes.add(ManifestOutcomeMapper.toManifestOutcome(manifestAttributes, i));
+    }
+    return manifestOutcomes;
   }
 }

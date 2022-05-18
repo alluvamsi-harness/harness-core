@@ -769,7 +769,7 @@ public class CDStepHelperTest extends CategoryTest {
   @Test
   @Owner(developers = PRATYUSH)
   @Category(UnitTests.class)
-  public void testGetOverridePathForGitFetchFileConfig() {
+  public void testGetPathsFromInheritFromManifestStoreConfig() {
     Ambiance ambiance = getAmbiance();
     GithubConnectorDTO githubConnectorDTO = GithubConnectorDTO.builder().build();
     ConnectorInfoDTO connectorDTO =
@@ -786,8 +786,8 @@ public class CDStepHelperTest extends CategoryTest {
     ManifestOutcome kustomizeManifestOutcome = KustomizeManifestOutcome.builder().store(githubStore).build();
     ManifestOutcome patchesManifestOutcome =
         KustomizePatchesManifestOutcome.builder().identifier(id).store(inheritFromManifestStoreConfig).build();
-    GitFetchFilesConfig patchesGitFetchFilesConfig = CDStepHelper.getOverridePathForGitFetchFileConfig(
-        ambiance, "passed", patchesManifestOutcome, kustomizeManifestOutcome);
+    GitFetchFilesConfig patchesGitFetchFilesConfig = CDStepHelper.getPathsFromInheritFromManifestStoreConfig(
+        ambiance, "passed", patchesManifestOutcome, (GitStoreConfig) kustomizeManifestOutcome.getStore());
     List<String> finalPaths = new ArrayList<>();
     for (String path : paths) {
       finalPaths.add(folderPath.getValue() + path);
