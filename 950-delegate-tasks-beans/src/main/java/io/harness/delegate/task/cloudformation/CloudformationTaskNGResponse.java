@@ -26,7 +26,7 @@ import lombok.experimental.NonFinal;
 public class CloudformationTaskNGResponse implements DelegateTaskNotifyResponseData {
   CloudFormationCommandNGResponse cloudFormationCommandNGResponse;
   CommandExecutionStatus commandExecutionStatus;
-  boolean stackSkipped;
+  boolean updatedNotPerformed;
   String errorMessage;
   @NonFinal @Setter UnitProgressData unitProgressData;
   @NonFinal @Setter DelegateMetaInfo delegateMetaInfo;

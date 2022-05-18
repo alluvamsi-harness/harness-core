@@ -54,7 +54,6 @@ import software.wings.service.intfc.aws.delegate.AwsCFHelperServiceDelegate;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.cloudformation.model.CreateStackResult;
 import com.amazonaws.services.cloudformation.model.Stack;
-import com.amazonaws.services.cloudformation.model.UpdateStackResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,7 +102,7 @@ public class CloudformationCreateStackTaskHandlerTest {
                      .parameters(new HashMap<String, String>() {
                        { put("parameterName", "parameterValue"); }
                      })
-                     .timeoutInMs(100000)
+                     .timeoutInMs(10000)
                      .capabilities(Collections.singletonList("capability-1"));
 
     doReturn(AwsInternalConfig.builder().build()).when(awsNgConfigMapper).createAwsInternalConfig(any());
@@ -373,7 +372,7 @@ public class CloudformationCreateStackTaskHandlerTest {
 
     assertThat(response).isNotNull();
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
-    assertThat(response.isStackSkipped()).isTrue();
+    assertThat(response.isUpdatedNotPerformed()).isTrue();
     verify(cloudformationBaseHelper, times(1)).getCloudformationTags(anyString());
     verify(cloudformationBaseHelper, times(1)).getCapabilities(any(), anyString(), anyString(), any(), any());
     verify(awsCloudformationClient, times(1)).deployStack(anyString(), any(), any(), any(), any());

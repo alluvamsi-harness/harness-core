@@ -28,11 +28,10 @@ import io.harness.delegate.task.cloudformation.CloudformationTaskNGParameters;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse;
 import io.harness.delegate.task.cloudformation.CloudformationTaskNGResponse.CloudformationTaskNGResponseBuilder;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidRequestException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
-
-import software.wings.service.mappers.artifact.AwsConfigToInternalMapper;
 
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
 import com.amazonaws.services.cloudformation.model.CreateStackResult;
@@ -41,7 +40,6 @@ import com.amazonaws.services.cloudformation.model.Output;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.amazonaws.services.cloudformation.model.StackStatus;
 import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
-import com.amazonaws.services.cloudformation.model.UpdateStackResult;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -53,14 +51,12 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CDP)
 public class CloudformationCreateStackTaskHandler extends CloudformationAbstractTaskHandler {
   private long remainingTimeoutMs;
-  static final int DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
   @Override
   public CloudformationTaskNGResponse executeTaskInternal(
       CloudformationTaskNGParameters taskNGParameters, String delegateId, String taskId, LogCallback logCallback)
       throws IOException, TimeoutException, InterruptedException {
-    remainingTimeoutMs = taskNGParameters.getTimeoutInMs() > 0
-        ? System.currentTimeMillis() + taskNGParameters.getTimeoutInMs()
-        : System.currentTimeMillis() + DEFAULT_TIMEOUT_MS;
+    remainingTimeoutMs = System.currentTimeMillis() + taskNGParameters.getTimeoutInMs();
+
     AwsInternalConfig awsInternalConfig = cloudformationBaseHelper.getAwsInternalConfig(
         taskNGParameters.getAwsConnector(), taskNGParameters.getRegion(), taskNGParameters.getEncryptedDataDetails());
 
@@ -210,7 +206,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
         awsCloudformationClient.createStack(createRequest.getRegion(), createStackRequest, awsInternalConfig);
     logCallback.saveExecutionLog(format(
         "# Create Stack request submitted for stack: %s. Now polling for status.", createStackRequest.getStackName()));
-    long endTime = remainingTimeoutMs + System.currentTimeMillis();
+    long endTime = remainingTimeoutMs;
     String errorMsg;
     Stack stack = null;
     while (System.currentTimeMillis() < endTime) {
@@ -304,15 +300,11 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
     long stackEventsTs = System.currentTimeMillis();
 
     DeployStackRequest deployStackRequest = cloudformationBaseHelper.transformToDeployStackRequest(updateStackRequest);
-    long endTime = remainingTimeoutMs + System.currentTimeMillis();
+    long endTime = remainingTimeoutMs;
     DeployStackResult deployStackResult = awsCloudformationClient.deployStack(
         request.getRegion(), deployStackRequest, awsInternalConfig, Duration.ofMillis(endTime), logCallback);
     if (deployStackResult.getStatus() == Status.FAILURE) {
-      String errorMessage = format("# Error creating changeSet: %s", deployStackResult.getStatusReason());
-      logCallback.saveExecutionLog(errorMessage, LogLevel.ERROR);
-      populateCloudformationTaskNGResponse(builder, null, false);
-      builder.errorMessage(errorMessage).commandExecutionStatus(CommandExecutionStatus.FAILURE);
-      return;
+      throw new InvalidRequestException(format("# Error creating changeSet: %s", deployStackResult.getStatusReason()));
     }
     logCallback.saveExecutionLog(
         format("# Update Stack Request submitted for stack: %s. Now polling for status", originalStack.getStackName()));
@@ -339,7 +331,7 @@ public class CloudformationCreateStackTaskHandler extends CloudformationAbstract
             logCallback.saveExecutionLog(format("# Stack is already in %s state.", stack.getStackStatus()));
             populateCloudformationTaskNGResponse(builder, stack, true);
             builder.commandExecutionStatus(SUCCESS);
-            builder.stackSkipped(true);
+            builder.updatedNotPerformed(true);
             cloudformationBaseHelper.printStackResources(awsInternalConfig, request.getRegion(), stack, logCallback);
             return;
           }
