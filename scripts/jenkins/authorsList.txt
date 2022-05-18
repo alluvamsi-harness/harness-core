@@ -271,3 +271,4 @@ Miloš Vasić milos.vasic@harness.io
 James Cox james.cox@harness.io
 Soumyajit Das soumyajit.das@harness.io
 smjt-h soumyajit.das@harness.io
+Avinash Madhwani avinash.m@harness.io

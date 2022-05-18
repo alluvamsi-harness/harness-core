@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.visitor.YamlTypes;
-import io.harness.data.structure.UUIDGenerator;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
@@ -29,9 +28,10 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(CDP)
 public class EnvironmentPlanCreatorHelper {
-  public PlanNode getPlanNode(StepParameters infraSectionStepParameters, ByteString advisorParameters) {
+  public PlanNode getPlanNode(
+      String envNodeUuid, StepParameters infraSectionStepParameters, ByteString advisorParameters) {
     return PlanNode.builder()
-        .uuid(UUIDGenerator.generateUuid())
+        .uuid(envNodeUuid)
         .stepType(EnvironmentStep.STEP_TYPE)
         .name(PlanCreatorConstants.ENVIRONMENT_NODE_NAME)
         .identifier(YamlTypes.ENVIRONMENT_YAML)

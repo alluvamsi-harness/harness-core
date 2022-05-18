@@ -4658,7 +4658,7 @@ plain_artifacts = [
     "io.grpc:grpc-stub:1.33.1",
     "io.gsonfire:gson-fire:1.8.3",
     "io.harness.cv:data-collection-dsl:0.34-RELEASE",
-    "io.harness:ff-java-server-sdk:1.0.5.1",
+    "io.harness:ff-java-server-sdk:1.1.5",
     "io.jsonwebtoken:jjwt:0.9.1",
     "io.kubernetes:client-java-api:11.0.2",
     "io.kubernetes:client-java-extended:11.0.2",
@@ -5215,6 +5215,18 @@ maven_install(
     name = "batch",
     artifacts = [
         "com.fasterxml.jackson.core:jackson-databind:2.13.1",
+    ],
+    repositories = [
+        "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",
+        "https://harness.jfrog.io/harness/thirdparty-annonymous",
+    ],
+    version_conflict_policy = "pinned",
+)
+
+maven_install(
+    name = "ce-nextgen",
+    artifacts = [
+        "com.azure:azure-core:1.25.0",
     ],
     repositories = [
         "http://jfrogdev.dev.harness.io:80/artifactory/portal-maven",

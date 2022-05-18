@@ -341,7 +341,7 @@ public abstract class AbstractStepExecutable implements AsyncExecutableWithRbac<
                 .build();
 
         return StepResponse.builder()
-            .status(Status.ERRORED)
+            .status(Status.FAILED)
             .failureInfo(FailureInfo.newBuilder()
                              .setErrorMessage("Delegate is not able to connect to created build farm")
                              .addFailureData(failureData)

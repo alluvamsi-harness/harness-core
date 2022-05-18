@@ -185,30 +185,36 @@ public class ConnectorUtils {
       StageInfraDetails stageInfraDetails = (StageInfraDetails) optionalSweepingOutput.getOutput();
       if (stageInfraDetails.getType() == StageInfraDetails.Type.K8) {
         K8StageInfraDetails k8StageInfraDetails = (K8StageInfraDetails) stageInfraDetails;
-        if (k8StageInfraDetails.getInfrastructure() == null
-            || ((K8sDirectInfraYaml) k8StageInfraDetails.getInfrastructure()).getSpec() == null) {
+        String clusterConnectorRef;
+
+        if (k8StageInfraDetails.getInfrastructure() == null) {
           throw new CIStageExecutionException("Input infrastructure can not be empty");
         }
 
         if (k8StageInfraDetails.getInfrastructure().getType() == Infrastructure.Type.KUBERNETES_DIRECT) {
           K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) k8StageInfraDetails.getInfrastructure();
 
-          final String clusterConnectorRef = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
-          BaseNGAccess ngAccess = BaseNGAccess.builder()
-                                      .accountIdentifier(AmbianceUtils.getAccountId(ambiance))
-                                      .orgIdentifier(AmbianceUtils.getOrgIdentifier(ambiance))
-                                      .projectIdentifier(AmbianceUtils.getProjectIdentifier(ambiance))
-                                      .build();
+          clusterConnectorRef = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
+        } else if (k8StageInfraDetails.getInfrastructure().getType() == Infrastructure.Type.KUBERNETES_HOSTED) {
+          clusterConnectorRef = "account.Harness_Kubernetes_Cluster";
+        } else {
+          throw new CIStageExecutionException("Wrong k8s type");
+        }
 
-          ConnectorDetails connectorDetails = getConnectorDetails(ngAccess, clusterConnectorRef);
-          if (connectorDetails != null) {
-            taskSelectors =
-                TaskSelectorYaml.toTaskSelector(((KubernetesClusterConfigDTO) connectorDetails.getConnectorConfig())
-                                                    .getDelegateSelectors()
-                                                    .stream()
-                                                    .map(TaskSelectorYaml::new)
-                                                    .collect(Collectors.toList()));
-          }
+        BaseNGAccess ngAccess = BaseNGAccess.builder()
+                                    .accountIdentifier(AmbianceUtils.getAccountId(ambiance))
+                                    .orgIdentifier(AmbianceUtils.getOrgIdentifier(ambiance))
+                                    .projectIdentifier(AmbianceUtils.getProjectIdentifier(ambiance))
+                                    .build();
+
+        ConnectorDetails connectorDetails = getConnectorDetails(ngAccess, clusterConnectorRef);
+        if (connectorDetails != null) {
+          taskSelectors =
+              TaskSelectorYaml.toTaskSelector(((KubernetesClusterConfigDTO) connectorDetails.getConnectorConfig())
+                                                  .getDelegateSelectors()
+                                                  .stream()
+                                                  .map(TaskSelectorYaml::new)
+                                                  .collect(Collectors.toList()));
         }
       }
     } catch (Exception ex) {

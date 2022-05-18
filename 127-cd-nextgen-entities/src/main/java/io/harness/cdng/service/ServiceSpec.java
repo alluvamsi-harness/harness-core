@@ -24,6 +24,7 @@ import java.util.List;
 @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
 @OwnedBy(CDC)
 public interface ServiceSpec {
+  @JsonIgnore String getUuid();
   ArtifactListConfig getArtifacts();
   List<ManifestConfigWrapper> getManifests();
   List<NGVariable> getVariables();

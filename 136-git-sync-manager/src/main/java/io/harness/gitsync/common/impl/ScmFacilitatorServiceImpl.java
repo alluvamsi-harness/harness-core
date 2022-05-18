@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.PageRequestDTO;
+import io.harness.beans.Scope;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.gitsync.beans.GitRepositoryDTO;
 import io.harness.gitsync.common.beans.ScmApis;
@@ -24,10 +25,12 @@ import io.harness.gitsync.common.scmerrorhandling.ScmApiErrorHandlingHelper;
 import io.harness.gitsync.common.service.ScmFacilitatorService;
 import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.ng.beans.PageRequest;
+import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.GetUserRepoResponse;
 import io.harness.product.ci.scm.proto.GetUserReposResponse;
 import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -138,5 +141,20 @@ public class ScmFacilitatorServiceImpl implements ScmFacilitatorService {
 
   private boolean isFailureResponse(int statusCode) {
     return statusCode >= 300;
+  }
+
+  @VisibleForTesting
+  protected void createNewBranch(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      ScmConnector scmConnector, String newBranchName, String baseBranchName) {
+    CreateBranchResponse createBranchResponse = scmOrchestratorService.processScmRequestUsingConnectorSettings(
+        scmClientFacilitatorService
+        -> scmClientFacilitatorService.createNewBranch(
+            Scope.of(accountIdentifier, orgIdentifier, projectIdentifier), scmConnector, newBranchName, baseBranchName),
+        scmConnector);
+
+    if (isFailureResponse(createBranchResponse.getStatus())) {
+      ScmApiErrorHandlingHelper.processAndThrowError(ScmApis.CREATE_BRANCH, scmConnector.getConnectorType(),
+          createBranchResponse.getStatus(), createBranchResponse.getError());
+    }
   }
 }

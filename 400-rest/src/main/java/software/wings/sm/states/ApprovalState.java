@@ -49,6 +49,7 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.FeatureName;
 import io.harness.beans.SweepingOutputInstance;
 import io.harness.beans.SweepingOutputInstance.Scope;
 import io.harness.beans.TriggeredBy;
@@ -64,6 +65,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.expression.ExpressionReflectionUtils;
+import io.harness.ff.FeatureFlagService;
 import io.harness.logging.Misc;
 import io.harness.scheduler.PersistentScheduler;
 import io.harness.serializer.KryoSerializer;
@@ -207,6 +209,7 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
   @Inject private UserGroupService userGroupService;
   @Inject private ServiceResourceService serviceResourceService;
   @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
+  @Inject private FeatureFlagService featureFlagService;
 
   @Inject @Transient private TemplateExpressionProcessor templateExpressionProcessor;
   @Transient @Inject KryoSerializer kryoSerializer;
@@ -338,6 +341,9 @@ public class ApprovalState extends State implements SweepingOutputStateMixin {
 
   @VisibleForTesting
   void resolveUserGroupFromExpression(ExecutionContext context) {
+    if (featureFlagService.isNotEnabled(FeatureName.USER_GROUP_AS_EXPRESSION, context.getAccountId())) {
+      return;
+    }
     if (isEmpty(getUserGroupExpression())) {
       throw new InvalidRequestException("User group expression is set but value is not provided", USER);
     }

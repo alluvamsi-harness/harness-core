@@ -23,6 +23,7 @@ import static io.harness.delegate.message.ManagerMessageConstants.USE_STORAGE_PR
 import static io.harness.delegate.message.MessageConstants.DELEGATE_DASH;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_GO_AHEAD;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_HEARTBEAT;
+import static io.harness.delegate.message.MessageConstants.DELEGATE_ID;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_IS_NEW;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_JRE_VERSION;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_MIGRATE;
@@ -41,6 +42,7 @@ import static io.harness.delegate.message.MessageConstants.DELEGATE_UPGRADE_PEND
 import static io.harness.delegate.message.MessageConstants.DELEGATE_UPGRADE_STARTED;
 import static io.harness.delegate.message.MessageConstants.DELEGATE_VERSION;
 import static io.harness.delegate.message.MessageConstants.MIGRATE_TO_JRE_VERSION;
+import static io.harness.delegate.message.MessageConstants.UNREGISTERED;
 import static io.harness.delegate.message.MessageConstants.UPGRADING_DELEGATE;
 import static io.harness.delegate.message.MessageConstants.WATCHER_DATA;
 import static io.harness.delegate.message.MessageConstants.WATCHER_HEARTBEAT;
@@ -160,10 +162,10 @@ import io.harness.version.VersionInfoManager;
 
 import software.wings.beans.DelegateTaskFactory;
 import software.wings.beans.TaskType;
-import software.wings.beans.command.Command;
 import software.wings.beans.command.CommandExecutionContext;
 import software.wings.beans.delegation.CommandParameters;
 import software.wings.beans.delegation.ShellScriptParameters;
+import software.wings.beans.dto.Command;
 import software.wings.beans.shellscript.provisioner.ShellScriptProvisionParameters;
 import software.wings.delegatetasks.ActivityBasedLogSanitizer;
 import software.wings.delegatetasks.DelegateLogService;
@@ -368,6 +370,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private final AtomicInteger maxValidatingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingTasksCount = new AtomicInteger();
   private final AtomicInteger maxExecutingFuturesCount = new AtomicInteger();
+  private final AtomicInteger heartbeatSuccessCalls = new AtomicInteger();
 
   private final AtomicLong lastHeartbeatSentAt = new AtomicLong(System.currentTimeMillis());
   private final AtomicLong frozenAt = new AtomicLong(-1);
@@ -1427,9 +1430,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     healthMonitorExecutor.scheduleAtFixedRate(() -> {
       try {
         sendHeartbeat(builder);
+        if (heartbeatSuccessCalls.incrementAndGet() > 100) {
+          log.info("Sent {} calls to manager", heartbeatSuccessCalls.getAndSet(0));
+        }
       } catch (Exception ex) {
         log.error("Exception while sending heartbeat", ex);
       }
+      // Log delegate performance after every 60 sec i.e. heartbeat interval.
+      logCurrentTasks();
     }, 0, delegateConfiguration.getHeartbeatIntervalMs(), TimeUnit.MILLISECONDS);
   }
 
@@ -1445,19 +1453,19 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void startLocalHeartbeat() {
+    log.debug("Starting local heartbeat");
     healthMonitorExecutor.scheduleAtFixedRate(() -> {
       try {
-        log.debug("Starting local heartbeat.");
+        log.debug("Sending local heartbeat");
         sendLocalHeartBeat();
       } catch (Exception e) {
         log.error("Exception while scheduling local heartbeat and filling status data", e);
       }
-      logCurrentTasks();
     }, 0, LOCAL_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
   }
 
   private void sendLocalHeartBeat() {
-    log.debug("Filling status data.");
+    log.debug("Filling status data");
     Map<String, Object> statusData = new HashMap<>();
     if (selfDestruct.get()) {
       statusData.put(DELEGATE_SELF_DESTRUCT, true);
@@ -1469,6 +1477,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       statusData.put(DELEGATE_UPGRADE_NEEDED, upgradeNeeded.get());
       statusData.put(DELEGATE_UPGRADE_PENDING, upgradePending.get());
       statusData.put(DELEGATE_SHUTDOWN_PENDING, !acquireTasks.get());
+      // dont pass null delegateId, instead pass "Unregistered" as delegateId
+      statusData.put(DELEGATE_ID, getDelegateId().orElse(UNREGISTERED));
       if (switchStorage.get() && !switchStorageMsgSent) {
         statusData.put(DELEGATE_SWITCH_STORAGE, TRUE);
         log.info("Switch storage message sent");
@@ -1677,7 +1687,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       return;
     }
 
-    log.info("Sending heartbeat...");
+    log.debug("Sending heartbeat...");
     try {
       updateBuilderIfEcsDelegate(builder);
       DelegateParams delegateParams =
