@@ -163,6 +163,11 @@ public class GitClientHelper {
     return host.equals("bitbucket.org") || host.equals("www.bitbucket.org");
   }
 
+  public static boolean isAzureRepoSAAS(String url) {
+    String host = getGitSCM(url);
+    return host.equals("dev.azure.com") || host.equals("www.dev.azure.com");
+  }
+
   public static String getGithubApiURL(String url) {
     if (GitClientHelper.isGithubSAAS(url)) {
       return "https://api.github.com/";
@@ -190,10 +195,15 @@ public class GitClientHelper {
   }
 
   public static String getAzureRepoApiURL(String url) {
-    return "https://dev.azure.com/";
+    if (isAzureRepoSAAS(url)) {
+      return "https://dev.azure.com/";
+    } else {
+      String domain = GitClientHelper.getGitSCM(url);
+      return "https://" + domain + "/";
+    }
   }
 
-  public static String getAzureRepoOrgAndProject(String url) {
+  public static String getAzureRepoOrgAndProjectHTTP(String url) {
     String temp = StringUtils.substringBeforeLast(url, "/_git/");
     return StringUtils.substringAfter(temp, "dev.azure.com/");
   }
@@ -204,6 +214,11 @@ public class GitClientHelper {
 
   public static String getAzureRepoProject(String orgAndProject) {
     return StringUtils.substringAfter(orgAndProject, "/");
+  }
+
+  public static String getAzureRepoOrgAndProjectSSH(String url) {
+    String temp = StringUtils.substringBeforeLast(url, "/");
+    return StringUtils.substringAfter(temp, "/");
   }
 
   private static String getGitSCMHost(String url) {

@@ -56,6 +56,7 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.FileCreationException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.runtime.serverless.ServerlessCommandExecutionException;
+import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.filesystem.FileIo;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -64,7 +65,6 @@ import io.harness.serverless.model.AwsLambdaFunctionDetails;
 import io.harness.serverless.model.ServerlessDelegateTaskParams;
 import io.harness.shell.SshSessionConfig;
 
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
 import software.wings.service.intfc.aws.delegate.AwsLambdaHelperServiceDelegateNG;
 
 import com.google.inject.Inject;

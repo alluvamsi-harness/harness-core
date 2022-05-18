@@ -42,6 +42,7 @@ import io.harness.exception.UnexpectedException;
 import io.harness.product.ci.scm.proto.Commit;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
+import io.harness.product.ci.scm.proto.CreatePRResponse;
 import io.harness.product.ci.scm.proto.CreateWebhookRequest;
 import io.harness.product.ci.scm.proto.CreateWebhookResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
@@ -295,6 +296,20 @@ public class ScmServiceClientImplTest extends CategoryTest {
         scmServiceClient.createNewBranchV2(scmConnector, branch, baseBranchName, scmBlockingStub);
 
     assertThat(createBranchResponse.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testCreatePullRequestV2() {
+    when(scmGitProviderHelper.getSlug(any())).thenReturn(slug);
+    when(scmGitProviderMapper.mapToSCMGitProvider(any())).thenReturn(getGitProviderDefault());
+    when(scmBlockingStub.createPR(any())).thenReturn(CreatePRResponse.newBuilder().setStatus(200).setError("").build());
+
+    CreatePRResponse createPRResponse =
+        scmServiceClient.createPullRequestV2(scmConnector, baseBranchName, branch, "pr title", scmBlockingStub);
+
+    assertThat(createPRResponse.getStatus()).isEqualTo(200);
   }
 
   private GitFileDetails getGitFileDetailsDefault() {

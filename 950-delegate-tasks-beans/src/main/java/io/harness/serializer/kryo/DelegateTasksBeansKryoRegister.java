@@ -552,6 +552,7 @@ import io.harness.serializer.KryoRegistrar;
 
 import software.wings.api.terraform.TfVarGitSource;
 import software.wings.beans.AwsConfig;
+import software.wings.beans.AwsElbConfig;
 import software.wings.beans.EcrConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
@@ -565,8 +566,12 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.SpotInstConfig;
 import software.wings.beans.TaskType;
 import software.wings.beans.command.CodeDeployParams;
+import software.wings.beans.command.ContainerSetupCommandUnitExecutionData;
+import software.wings.beans.command.EcsResizeParams;
 import software.wings.beans.command.GcbTaskParams;
 import software.wings.beans.command.JenkinsTaskParams;
+import software.wings.beans.command.KubernetesResizeParams;
+import software.wings.beans.container.AwsAutoScalarConfig;
 import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
 import software.wings.beans.infrastructure.instance.info.KubernetesContainerInfo;
 import software.wings.beans.s3.FetchS3FilesCommandParams;
@@ -607,13 +612,17 @@ import software.wings.helpers.ext.cloudformation.response.CloudFormationListStac
 import software.wings.helpers.ext.cloudformation.response.CloudFormationRollbackInfo;
 import software.wings.helpers.ext.cloudformation.response.ExistingStackInfo;
 import software.wings.helpers.ext.cloudformation.response.StackSummaryInfo;
+import software.wings.helpers.ext.ecs.request.EcsBGListenerUpdateRequest;
 import software.wings.helpers.ext.ecs.request.EcsCommandRequest;
 import software.wings.helpers.ext.ecs.request.EcsRunTaskDeployRequest;
+import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsDeployRollbackDataFetchResponse;
+import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
 import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
+import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.helpers.ext.helm.response.ReleaseInfo;
 import software.wings.helpers.ext.ldap.LdapResponse;
@@ -673,6 +682,9 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(ListNotifyResponseData.class, 5133);
     kryo.register(JenkinsExecutionResponse.class, 5146);
 
+    kryo.register(ContainerSetupCommandUnitExecutionData.class, 5154);
+    kryo.register(KubernetesResizeParams.class, 5180);
+    kryo.register(EcsResizeParams.class, 5181);
     kryo.register(software.wings.beans.yaml.GitCommand.GitCommandType.class, 5190);
     kryo.register(GitConfig.class, 5191);
     kryo.register(software.wings.beans.yaml.GitCommandExecutionResponse.class, 5192);
@@ -690,6 +702,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(GitDiffResult.class, 5208);
     kryo.register(GitPushResult.class, 5210);
     kryo.register(GitPushResult.RefUpdate.class, 5215);
+    kryo.register(InstanceUnitType.class, 5221);
     kryo.register(JenkinsTaskParams.class, 5234);
     kryo.register(AwsLambdaFunctionParams.class, 5449);
     kryo.register(AwsCodeDeployS3LocationData.class, 5436);
@@ -697,8 +710,13 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(GitFetchFilesResult.class, 5471);
     kryo.register(JenkinsSubTaskType.class, 5515);
     kryo.register(GitFilesBetweenCommitsRequest.class, 5558);
+    kryo.register(AwsAutoScalarConfig.class, 5559);
     kryo.register(ConnectivityValidationAttributes.class, 5567);
     kryo.register(AwsElbListener.class, 5600);
+    kryo.register(EcsBGListenerUpdateRequest.class, 5605);
+    kryo.register(EcsListenerUpdateCommandResponse.class, 5613);
+    kryo.register(EcsBGRoute53ServiceSetupResponse.class, 7102);
+    kryo.register(EcsServiceSetupResponse.class, 7122);
     kryo.register(ShellScriptProvisionParameters.class, 7151);
     kryo.register(CCMConfig.class, 7248);
     kryo.register(GitConfig.UrlType.class, 7460);
@@ -709,6 +727,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(FetchS3FilesCommandParams.class, 8069);
     kryo.register(FetchS3FilesExecutionResponse.FetchS3FilesCommandStatus.class, 8070);
     kryo.register(TfVarGitSource.class, 8097);
+    kryo.register(AwsElbConfig.class, 8500);
     kryo.register(GitConfig.ProviderType.class, 40022);
     kryo.register(AlwaysFalseValidationCapability.class, 19036);
     kryo.register(AppDynamicsConnectionTaskParams.class, 19107);
@@ -1369,7 +1388,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(LdapResponse.Status.class, 5505);
     kryo.register(EcsRunTaskDeployRequest.class, 7501);
     kryo.register(EcsRunTaskDeployResponse.class, 7502);
-    kryo.register(InstanceUnitType.class, 5221);
     kryo.register(EcsDeployRollbackDataFetchResponse.class, 8087);
   }
 }
