@@ -90,6 +90,7 @@ public interface Constants {
   String GCR = "Gcr";
   String ECR = "Ecr";
   String HELM_CHART = "HelmChart";
+  String ACR = "Acr";
 
   String MANIFEST_VERSION = "<+trigger.manifest.version>";
   String ARTIFACT_VERSION = "<+trigger.artifact.build>";

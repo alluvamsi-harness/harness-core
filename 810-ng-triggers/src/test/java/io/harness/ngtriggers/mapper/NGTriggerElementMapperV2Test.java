@@ -22,6 +22,7 @@ import static io.harness.ngtriggers.conditionchecker.ConditionOperator.NOT_EQUAL
 import static io.harness.ngtriggers.conditionchecker.ConditionOperator.NOT_IN;
 import static io.harness.ngtriggers.conditionchecker.ConditionOperator.STARTS_WITH;
 import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.BUHA;
 import static io.harness.rule.OwnerRule.MATT;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
@@ -47,6 +48,7 @@ import io.harness.ngtriggers.beans.source.ManifestType;
 import io.harness.ngtriggers.beans.source.NGTriggerSourceV2;
 import io.harness.ngtriggers.beans.source.NGTriggerSpecV2;
 import io.harness.ngtriggers.beans.source.WebhookTriggerType;
+import io.harness.ngtriggers.beans.source.artifact.AcrSpec;
 import io.harness.ngtriggers.beans.source.artifact.ArtifactTriggerConfig;
 import io.harness.ngtriggers.beans.source.artifact.ArtifactType;
 import io.harness.ngtriggers.beans.source.artifact.ArtifactTypeSpec;
@@ -121,6 +123,7 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
   private String ngTriggerYaml_cron;
   private String ngTriggerYaml_artifact_gcr;
   private String ngTriggerYaml_artifact_ecr;
+  private String ngTriggerYaml_artifact_acr;
   private String ngTriggerYaml_helm_S3;
   private String ngTriggerYaml_helm_gcs;
   private String ngTriggerYaml_helm_http;
@@ -179,6 +182,8 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
         Objects.requireNonNull(classLoader.getResource("ng-trigger-artifact-gcr.yaml")), StandardCharsets.UTF_8);
     ngTriggerYaml_artifact_ecr = Resources.toString(
         Objects.requireNonNull(classLoader.getResource("ng-trigger-artifact-ecr.yaml")), StandardCharsets.UTF_8);
+    ngTriggerYaml_artifact_acr = Resources.toString(
+        Objects.requireNonNull(classLoader.getResource("ng-trigger-artifact-acr.yaml")), StandardCharsets.UTF_8);
 
     ngTriggerYaml_helm_S3 = Resources.toString(
         Objects.requireNonNull(classLoader.getResource("ng-trigger-manifest-helm-s3.yaml")), StandardCharsets.UTF_8);
@@ -673,6 +678,26 @@ public class NGTriggerElementMapperV2Test extends CategoryTest {
     assertThat(artifactoryRegistrySpec.getArtifactPath()).isEqualTo("path");
     assertThat(artifactoryRegistrySpec.getRepository()).isEqualTo("automation-repo-do-not-delete");
     assertThat(artifactoryRegistrySpec.getRepositoryFormat()).isEqualTo("docker");
+  }
+
+  @Test
+  @Owner(developers = BUHA)
+  @Category(UnitTests.class)
+  public void testArtifactAcr() throws Exception {
+    NGTriggerConfigV2 ngTriggerConfigV2 = ngTriggerElementMapper.toTriggerConfigV2(ngTriggerYaml_artifact_acr);
+
+    assertRootLevelPropertiesForBuildTriggers(ngTriggerConfigV2);
+
+    NGTriggerSourceV2 ngTriggerSourceV2 = ngTriggerConfigV2.getSource();
+    assertCommonPathForArtifactTriggers(ngTriggerSourceV2, ArtifactType.ACR);
+
+    ArtifactTriggerConfig artifactTriggerConfig = (ArtifactTriggerConfig) ngTriggerSourceV2.getSpec();
+    ArtifactTypeSpec artifactTypeSpec = artifactTriggerConfig.getSpec();
+    AcrSpec acrSpec = (AcrSpec) artifactTypeSpec;
+    assertThat(acrSpec.getSubscriptionId()).isEqualTo("test-subscriptionId");
+    assertThat(acrSpec.getRegistry()).isEqualTo("test-registry");
+    assertThat(acrSpec.getRepository()).isEqualTo("test-repository");
+    assertThat(acrSpec.getTag()).isEqualTo("<+trigger.artifact.build>");
   }
 
   private void assertCommonPathForArtifactTriggers(NGTriggerSourceV2 ngTriggerSourceV2, ArtifactType artifactType) {

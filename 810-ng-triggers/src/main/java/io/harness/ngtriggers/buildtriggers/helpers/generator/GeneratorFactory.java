@@ -12,6 +12,7 @@ import static io.harness.ngtriggers.beans.source.ManifestType.HELM_MANIFEST;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.ARTIFACT;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.MANIFEST;
 import static io.harness.ngtriggers.beans.source.artifact.ArtifactType.ARTIFACTORY_REGISTRY;
+import static io.harness.ngtriggers.beans.source.artifact.ArtifactType.ACR;
 import static io.harness.ngtriggers.beans.source.artifact.ArtifactType.DOCKER_REGISTRY;
 import static io.harness.ngtriggers.beans.source.artifact.ArtifactType.ECR;
 import static io.harness.ngtriggers.beans.source.artifact.ArtifactType.GCR;
@@ -38,6 +39,7 @@ public class GeneratorFactory {
   private final EcrPollingItemGenerator ecrPollingItemGenerator;
   private final DockerRegistryPollingItemGenerator dockerRegistryPollingItemGenerator;
   private final ArtifactoryRegistryPollingItemGenerator artifactoryRegistryPollingItemGenerator;
+  private final AcrPollingItemGenerator acrPollingItemGenerator;
 
   public PollingItemGenerator retrievePollingItemGenerator(BuildTriggerOpsData buildTriggerOpsData) {
     NGTriggerEntity ngTriggerEntity = buildTriggerOpsData.getTriggerDetails().getNgTriggerEntity();
@@ -60,6 +62,8 @@ public class GeneratorFactory {
       return dockerRegistryPollingItemGenerator;
     } else if (ARTIFACTORY_REGISTRY.getValue().equals(buildType)) {
       return artifactoryRegistryPollingItemGenerator;
+    } else if (ACR.getValue().equals(buildType)) {
+      return acrPollingItemGenerator;
     }
 
     return null;

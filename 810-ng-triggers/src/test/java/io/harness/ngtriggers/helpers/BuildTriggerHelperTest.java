@@ -13,6 +13,7 @@ import static io.harness.ngtriggers.beans.source.NGTriggerType.ARTIFACT;
 import static io.harness.ngtriggers.beans.source.NGTriggerType.MANIFEST;
 import static io.harness.polling.contracts.HelmVersion.V2;
 import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.BUHA;
 import static io.harness.rule.OwnerRule.PIYUSH_BHUWALKA;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,6 +33,7 @@ import io.harness.ngtriggers.beans.source.artifact.EcrSpec;
 import io.harness.ngtriggers.beans.source.artifact.HelmManifestSpec;
 import io.harness.ngtriggers.beans.source.artifact.ManifestTriggerConfig;
 import io.harness.ngtriggers.buildtriggers.helpers.BuildTriggerHelper;
+import io.harness.polling.contracts.AcrPayload;
 import io.harness.polling.contracts.ArtifactoryRegistryPayload;
 import io.harness.polling.contracts.DockerHubPayload;
 import io.harness.polling.contracts.EcrPayload;
@@ -540,6 +542,71 @@ public class BuildTriggerHelperTest extends CategoryTest {
                                TriggerDetails.builder().ngTriggerConfigV2(ngTriggerConfigV2).build(), "artifactRef"))
         .isInstanceOf(InvalidArgumentsException.class)
         .hasMessage("stageIdentifier can not be blank/missing. artifactRef can not be blank/missing. ");
+  }
+
+  @Test
+  @Owner(developers = BUHA)
+  @Category(UnitTests.class)
+  public void testValidatePollingItemForArtifact_Acr() {
+    PollingItem pollingItem = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setAcrPayload(AcrPayload.newBuilder()
+                               .setSubscriptionId("test-subscriptionId")
+                               .setRegistry("test-registry")
+                               .setRepository("test-repository")
+                               .build())
+            .build());
+
+    validatePollingItemForArtifact(pollingItem);
+
+    final PollingItem pollingItemNoConn = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setAcrPayload(AcrPayload.newBuilder()
+                               .setSubscriptionId("test-subscriptionId")
+                               .setRegistry("test-registry")
+                               .setRepository("test-repository")
+                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoConn))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("ConnectorRef can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoSubscription = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setAcrPayload(
+                AcrPayload.newBuilder().setRegistry("test-registry").setRepository("test-repository").build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoSubscription))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("subscriptionId can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoRegistry = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setAcrPayload(AcrPayload.newBuilder()
+                               .setSubscriptionId("test-subscriptionId")
+                               .setRepository("test-repository")
+                               .build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoRegistry))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("registry can not be blank. Needs to have concrete value");
+
+    final PollingItem pollingItemNoRepository = generatePollingItem(io.harness.polling.contracts.Category.ARTIFACT,
+        PollingPayloadData.newBuilder()
+            .setConnectorRef("conn")
+            .setAcrPayload(
+                AcrPayload.newBuilder().setSubscriptionId("test-subscriptionId").setRegistry("test-registry").build())
+            .build());
+
+    assertThatThrownBy(() -> buildTriggerHelper.validatePollingItemForArtifact(pollingItemNoRepository))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("repository can not be blank. Needs to have concrete value");
   }
 
   private void validatePollingItemForArtifact(PollingItem pollingItem) {
