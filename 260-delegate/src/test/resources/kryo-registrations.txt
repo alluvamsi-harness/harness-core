@@ -2186,6 +2186,7 @@
 543517:io.harness.delegate.beans.aws.s3.S3FileDetailResponse
 543518:io.harness.delegate.beans.connector.awsconnector.AwsCFTaskResponse
 543519:io.harness.delegate.task.helm.HelmFetchFileConfig
+543520:io.harness.delegate.task.helm.HelmFetchFileResult
 543526:io.harness.delegate.beans.WinRmTaskParams
 549966:io.harness.secretmanagerclient.dto.EncryptedDataMigrationDTO
 553286:io.harness.delegate.task.scm.ScmPushTaskParams

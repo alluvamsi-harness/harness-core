@@ -394,6 +394,7 @@ import io.harness.delegate.task.helm.HelmCommandRequestNG;
 import io.harness.delegate.task.helm.HelmCommandResponse;
 import io.harness.delegate.task.helm.HelmCommandResponseNG;
 import io.harness.delegate.task.helm.HelmFetchFileConfig;
+import io.harness.delegate.task.helm.HelmFetchFileResult;
 import io.harness.delegate.task.helm.HelmInstallCmdResponseNG;
 import io.harness.delegate.task.helm.HelmInstallCommandRequestNG;
 import io.harness.delegate.task.helm.HelmListReleaseResponseNG;
@@ -1406,5 +1407,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(NotificationProcessingResponse.class, 55217);
     kryo.register(SmtpConfigResponse.class, 55219);
     kryo.register(io.harness.notification.SmtpConfig.class, 55299);
+    kryo.register(HelmFetchFileResult.class, 543520);
   }
 }
