@@ -207,15 +207,17 @@ public class NativeHelmStepHelper extends CDStepHelper {
       InfrastructureOutcome infrastructure, ManifestOutcome helmChartManifestOutcome,
       List<ValuesManifestOutcome> aggregatedValuesManifests) {
     StoreConfig storeConfig = extractStoreConfigFromHelmChartManifestOutcome(helmChartManifestOutcome);
-    ValuesManifestOutcome valuesManifestOutcome =
-        ValuesManifestOutcome.builder().identifier(helmChartManifestOutcome.getIdentifier()).store(storeConfig).build();
     if (ManifestStoreType.isInGitSubset(storeConfig.getKind())) {
+      ValuesManifestOutcome valuesManifestOutcome = ValuesManifestOutcome.builder()
+                                                        .identifier(helmChartManifestOutcome.getIdentifier())
+                                                        .store(storeConfig)
+                                                        .build();
       return prepareGitFetchValuesTaskChainResponse(storeConfig, ambiance, stepElementParameters, infrastructure,
           helmChartManifestOutcome, valuesManifestOutcome, aggregatedValuesManifests);
     }
 
-    return prepareHelmFetchValuesTaskChainResponse(ambiance, stepElementParameters, infrastructure,
-        helmChartManifestOutcome, aggregatedValuesManifests, valuesManifestOutcome);
+    return prepareHelmFetchValuesTaskChainResponse(
+        ambiance, stepElementParameters, infrastructure, helmChartManifestOutcome, aggregatedValuesManifests);
   }
 
   private TaskChainResponse prepareGitFetchValuesTaskChainResponse(StoreConfig storeConfig, Ambiance ambiance,
@@ -293,10 +295,8 @@ public class NativeHelmStepHelper extends CDStepHelper {
 
   private TaskChainResponse prepareHelmFetchValuesTaskChainResponse(Ambiance ambiance,
       StepElementParameters stepElementParameters, InfrastructureOutcome infrastructure,
-      ManifestOutcome helmChartManifestOutcome, List<ValuesManifestOutcome> aggregatedValuesManifests,
-      ValuesManifestOutcome valuesManifestOutcome) {
+      ManifestOutcome helmChartManifestOutcome, List<ValuesManifestOutcome> aggregatedValuesManifests) {
     String accountId = AmbianceUtils.getAccountId(ambiance);
-    LinkedList<ValuesManifestOutcome> orderedValuesManifests = new LinkedList<>(aggregatedValuesManifests);
     HelmChartManifestDelegateConfig helmManifest =
         (HelmChartManifestDelegateConfig) getManifestDelegateConfig(helmChartManifestOutcome, ambiance);
 
@@ -304,14 +304,13 @@ public class NativeHelmStepHelper extends CDStepHelper {
         mapHelmChartManifestsToHelmFetchFileConfig(helmChartManifestOutcome.getIdentifier(),
             getParameterFieldValue(((HelmChartManifestOutcome) helmChartManifestOutcome).getValuesPaths()),
             helmChartManifestOutcome.getType());
-    orderedValuesManifests.addFirst(valuesManifestOutcome);
 
     helmFetchFileConfigList.addAll(mapValuesManifestsToHelmFetchFileConfig(aggregatedValuesManifests));
     HelmValuesFetchRequest helmValuesFetchRequest = HelmValuesFetchRequest.builder()
                                                         .accountId(accountId)
                                                         .helmChartManifestDelegateConfig(helmManifest)
                                                         .timeout(CDStepHelper.getTimeoutInMillis(stepElementParameters))
-                                                        .closeLogStream(!isAnyRemoteStore(orderedValuesManifests))
+                                                        .closeLogStream(!isAnyRemoteStore(aggregatedValuesManifests))
                                                         .helmFetchFileConfigList(helmFetchFileConfigList)
                                                         .build();
 
@@ -333,7 +332,7 @@ public class NativeHelmStepHelper extends CDStepHelper {
     NativeHelmStepPassThroughData nativeHelmStepPassThroughData =
         NativeHelmStepPassThroughData.builder()
             .helmChartManifestOutcome(helmChartManifestOutcome)
-            .manifestOutcomeList(new ArrayList<>(orderedValuesManifests))
+            .manifestOutcomeList(new ArrayList<>(aggregatedValuesManifests))
             .infrastructure(infrastructure)
             .build();
 
@@ -540,6 +539,8 @@ public class NativeHelmStepHelper extends CDStepHelper {
     Map<String, FetchFilesResult> gitFetchFilesResultMap = gitFetchResponse.getFilesFromMultipleRepo();
     Map<String, HelmFetchFileResult> helmChartValuesFetchFilesResultMap =
         nativeHelmStepPassThroughData.getHelmValuesFileMapContents();
+    addValuesFileFromHelmChartManifest(
+        helmChartValuesFetchFilesResultMap, valuesFileContents, helmChartManifest.getIdentifier());
 
     if (isNotEmpty(gitFetchFilesResultMap) || isNotEmpty(helmChartValuesFetchFilesResultMap)) {
       valuesFileContents.addAll(getManifestFilesContents(gitFetchFilesResultMap,
