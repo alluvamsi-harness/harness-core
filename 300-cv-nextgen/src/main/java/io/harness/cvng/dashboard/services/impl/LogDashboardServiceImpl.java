@@ -431,6 +431,12 @@ public class LogDashboardServiceImpl implements LogDashboardService {
 
     sortedAnalyzedRadarChartLogDataDTOS =
         filterDataByAngle(sortedAnalyzedRadarChartLogDataDTOS, monitoredServiceLogAnalysisFilter);
+
+    sortedAnalyzedRadarChartLogDataDTOS = sortedAnalyzedRadarChartLogDataDTOS.stream()
+                                              .sorted(Comparator.comparing(x -> x.getClusterType()))
+                                              .collect(Collectors.toList());
+    Collections.reverse(sortedAnalyzedRadarChartLogDataDTOS);
+
     PageResponse<AnalyzedRadarChartLogDataDTO> analyzedRadarChartLogDataDTOs =
         PageUtils.offsetAndLimit(sortedAnalyzedRadarChartLogDataDTOS, page, size);
 

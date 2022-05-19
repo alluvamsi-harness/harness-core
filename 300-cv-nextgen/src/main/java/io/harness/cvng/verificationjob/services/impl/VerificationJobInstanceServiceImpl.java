@@ -34,6 +34,7 @@ import io.harness.cvng.beans.activity.ActivityVerificationStatus;
 import io.harness.cvng.beans.job.VerificationJobType;
 import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.beans.TimeRange;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.entities.DataCollectionTask.Type;
@@ -201,9 +202,14 @@ public class VerificationJobInstanceServiceImpl implements VerificationJobInstan
       monitoringSourceFilter = null;
     }
 
-    return cvConfigService.listByMonitoringSources(verificationJob.getAccountId(), verificationJob.getOrgIdentifier(),
-        verificationJob.getProjectIdentifier(), verificationJob.getServiceIdentifier(),
-        verificationJob.getEnvIdentifier(), monitoringSourceFilter);
+    return cvConfigService.listByMonitoringSources(
+        MonitoredServiceParams.builder()
+            .accountIdentifier(verificationJob.getAccountId())
+            .orgIdentifier(verificationJob.getOrgIdentifier())
+            .projectIdentifier(verificationJob.getProjectIdentifier())
+            .monitoredServiceIdentifier(verificationJob.getMonitoredServiceIdentifier())
+            .build(),
+        monitoringSourceFilter);
   }
   @Override
   public void markTimedOutIfNoProgress(VerificationJobInstance verificationJobInstance) {

@@ -7,7 +7,6 @@
 
 package io.harness.cvng.notification.entities;
 
-import io.harness.Team;
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.HarnessTeam;
@@ -19,6 +18,7 @@ import io.harness.cvng.notification.channelDetails.CVNGNotificationChannelUtils;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
+import io.harness.notification.Team;
 import io.harness.notification.channeldetails.EmailChannel;
 import io.harness.notification.channeldetails.MSTeamChannel;
 import io.harness.notification.channeldetails.NotificationChannel;

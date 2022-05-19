@@ -1,7 +1,6 @@
 environmentRef: envId
 name: envId
 identifier: envId
-tags: []
 description: ""
 orgIdentifier: my_org
 projectIdentifier: my_proj
@@ -32,4 +31,3 @@ infrastructureDefinitions:
         connectorRef: org.KubernetesConnectorForAutomationTest
         namespace: cdp-k8s-qa-sanity
         releaseName: releasename-681406
-

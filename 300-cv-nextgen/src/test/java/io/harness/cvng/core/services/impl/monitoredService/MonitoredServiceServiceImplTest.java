@@ -424,20 +424,15 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testCreate_monitoredServiceHealthSourcesConfigAlreadyPresent() {
     CVConfig cvConfig =
-        AppDynamicsCVConfig.builder()
+        builderFactory.appDynamicsCVConfigBuilder()
             .identifier(HealthSourceService.getNameSpacedIdentifier(monitoredServiceIdentifier, healthSourceIdentifier))
             .accountId(accountId)
             .orgIdentifier(orgIdentifier)
             .projectIdentifier(projectIdentifier)
             .connectorIdentifier(connectorIdentifier)
-            .serviceIdentifier(serviceIdentifier)
-            .envIdentifier(environmentIdentifier)
             .monitoringSourceName(healthSourceName)
             .productName(feature)
             .category(CVMonitoringCategory.ERRORS)
-            .applicationName(applicationName)
-            .tierName(appTierName)
-            .metricPack(MetricPack.builder().build())
             .build();
     cvConfigService.save(cvConfig);
     MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTO();
@@ -2438,8 +2433,7 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     assertThat(cvConfig.getAccountId()).isEqualTo(accountId);
     assertThat(cvConfig.getOrgIdentifier()).isEqualTo(orgIdentifier);
     assertThat(cvConfig.getProjectIdentifier()).isEqualTo(projectIdentifier);
-    assertThat(cvConfig.getEnvIdentifier()).isEqualTo(environmentIdentifier);
-    assertThat(cvConfig.getServiceIdentifier()).isEqualTo(serviceIdentifier);
+    assertThat(cvConfig.getMonitoredServiceIdentifier()).isEqualTo(monitoredServiceIdentifier);
     assertThat(cvConfig.getProductName()).isEqualTo(feature);
     assertThat(cvConfig.getMonitoringSourceName()).isEqualTo(healthSourceName);
     assertThat(cvConfig.getConnectorIdentifier()).isEqualTo(connectorIdentifier);

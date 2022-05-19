@@ -9,11 +9,11 @@ package io.harness.cdng.creator.plan.environment;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.UUIDGenerator;
-import io.harness.ng.core.environment.yaml.NGEnvironmentInfoConfig;
-import io.harness.pms.plan.creation.PlanCreatorUtils;
+import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.pms.sdk.core.adviser.success.OnSuccessAdviserParameters;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
@@ -23,27 +23,30 @@ import io.harness.serializer.KryoSerializer;
 
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.CDC)
-public class EnvironmentPlanCreator implements PartialPlanCreator<NGEnvironmentInfoConfig> {
+public class EnvironmentPlanCreator implements PartialPlanCreator<EnvironmentPlanCreatorConfig> {
   @Inject KryoSerializer kryoSerializer;
 
   @Override
-  public Class<NGEnvironmentInfoConfig> getFieldClass() {
-    return NGEnvironmentInfoConfig.class;
+  public Class<EnvironmentPlanCreatorConfig> getFieldClass() {
+    return EnvironmentPlanCreatorConfig.class;
   }
 
   @Override
   public Map<String, Set<String>> getSupportedTypes() {
-    return Collections.singletonMap(YamlTypes.ENVIRONMENT_YAML, Collections.singleton(PlanCreatorUtils.ANY_TYPE));
+    return Collections.singletonMap(YamlTypes.ENVIRONMENT_YAML,
+        new HashSet<>(Arrays.asList(EnvironmentType.PreProduction.name(), EnvironmentType.Production.name())));
   }
 
   @Override
   public PlanCreationResponse createPlanForField(
-      PlanCreationContext ctx, NGEnvironmentInfoConfig environmentInfoConfig) {
+      PlanCreationContext ctx, EnvironmentPlanCreatorConfig environmentPlanCreatorConfig) {
     /*
     EnvironmentPlanCreator is dependent on infraSectionStepParameters and serviceSpecNodeUuid which is used as advisor
      */

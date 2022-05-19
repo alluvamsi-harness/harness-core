@@ -1018,6 +1018,11 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
+  public List<String> getWatcherVersion(String accountId) {
+    return delegateVersionService.getWatcherJarVersions(accountId);
+  }
+
+  @Override
   public String getAccountPrimaryDelegateVersion(String accountId) {
     if (licenseService.isAccountDeleted(accountId)) {
       throw new InvalidRequestException("Deleted AccountId: " + accountId);

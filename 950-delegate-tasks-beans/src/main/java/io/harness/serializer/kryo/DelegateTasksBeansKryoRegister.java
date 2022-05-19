@@ -32,8 +32,14 @@ import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskRank;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
+import io.harness.delegate.beans.MailTaskParams;
+import io.harness.delegate.beans.MicrosoftTeamsTaskParams;
+import io.harness.delegate.beans.NotificationProcessingResponse;
+import io.harness.delegate.beans.NotificationTaskResponse;
+import io.harness.delegate.beans.PagerDutyTaskParams;
 import io.harness.delegate.beans.RemoteMethodReturnValueData;
 import io.harness.delegate.beans.SecretDetail;
+import io.harness.delegate.beans.SlackTaskParams;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.artifactory.ArtifactoryFetchBuildsResponse;
 import io.harness.delegate.beans.artifactory.ArtifactoryFetchRepositoriesResponse;
@@ -545,6 +551,7 @@ import io.harness.ng.core.dto.secrets.TGTKeyTabFilePathSpecDTO;
 import io.harness.ng.core.dto.secrets.TGTPasswordSpecDTO;
 import io.harness.ng.core.dto.secrets.WinRmAuthDTO;
 import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
+import io.harness.notification.remote.SmtpConfigResponse;
 import io.harness.secretmanagerclient.SSHAuthScheme;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
@@ -1391,5 +1398,13 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsRunTaskDeployRequest.class, 7501);
     kryo.register(EcsRunTaskDeployResponse.class, 7502);
     kryo.register(EcsDeployRollbackDataFetchResponse.class, 8087);
+    kryo.register(SlackTaskParams.class, 55210);
+    kryo.register(MailTaskParams.class, 55211);
+    kryo.register(PagerDutyTaskParams.class, 55212);
+    kryo.register(MicrosoftTeamsTaskParams.class, 55213);
+    kryo.register(NotificationTaskResponse.class, 55216);
+    kryo.register(NotificationProcessingResponse.class, 55217);
+    kryo.register(SmtpConfigResponse.class, 55219);
+    kryo.register(io.harness.notification.SmtpConfig.class, 55299);
   }
 }

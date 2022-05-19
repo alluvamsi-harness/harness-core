@@ -200,6 +200,7 @@ public class CVNGStep extends AsyncExecutableWithRollback {
     Instant verificationStartTime = clock.instant();
     VerificationJob verificationJob =
         stepParameters.getVerificationJobBuilder()
+            .monitoredServiceIdentifier(monitoredService.getIdentifier())
             .serviceIdentifier(RuntimeParameter.builder().value(stepParameters.getServiceIdentifier()).build())
             .envIdentifier(RuntimeParameter.builder().value(stepParameters.getEnvIdentifier()).build())
             .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())

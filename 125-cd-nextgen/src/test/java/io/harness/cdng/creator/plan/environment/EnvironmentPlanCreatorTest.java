@@ -16,12 +16,12 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.CDNGTestBase;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
+import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.visitor.YamlTypes;
-import io.harness.ng.core.environment.yaml.NGEnvironmentInfoConfig;
+import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.pms.contracts.plan.Dependency;
-import io.harness.pms.plan.creation.PlanCreatorUtils;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
@@ -51,7 +51,7 @@ public class EnvironmentPlanCreatorTest extends CDNGTestBase {
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testGetFieldClass() {
-    assertThat(environmentPlanCreator.getFieldClass()).isEqualTo(NGEnvironmentInfoConfig.class);
+    assertThat(environmentPlanCreator.getFieldClass()).isEqualTo(EnvironmentPlanCreatorConfig.class);
   }
 
   @Test
@@ -60,8 +60,11 @@ public class EnvironmentPlanCreatorTest extends CDNGTestBase {
   public void testGetSupportedTypes() {
     Map<String, Set<String>> supportedTypes = environmentPlanCreator.getSupportedTypes();
     assertThat(supportedTypes.containsKey(YamlTypes.ENVIRONMENT_YAML)).isEqualTo(true);
-    assertThat(supportedTypes.get(YamlTypes.ENVIRONMENT_YAML).size()).isEqualTo(1);
-    assertThat(supportedTypes.get(YamlTypes.ENVIRONMENT_YAML).contains(PlanCreatorUtils.ANY_TYPE)).isEqualTo(true);
+    assertThat(supportedTypes.get(YamlTypes.ENVIRONMENT_YAML).size()).isEqualTo(2);
+    assertThat(supportedTypes.get(YamlTypes.ENVIRONMENT_YAML).contains(EnvironmentType.PreProduction.name()))
+        .isEqualTo(true);
+    assertThat(supportedTypes.get(YamlTypes.ENVIRONMENT_YAML).contains(EnvironmentType.Production.name()))
+        .isEqualTo(true);
   }
 
   @Test
@@ -86,7 +89,7 @@ public class EnvironmentPlanCreatorTest extends CDNGTestBase {
                                   .build();
 
     PlanCreationResponse planForField =
-        environmentPlanCreator.createPlanForField(ctx, NGEnvironmentInfoConfig.builder().build());
+        environmentPlanCreator.createPlanForField(ctx, EnvironmentPlanCreatorConfig.builder().build());
     assertThat(planForField).isNotNull();
     assertThat(planForField.getPlanNode()).isNotNull();
     PlanNode planNode = planForField.getPlanNode();

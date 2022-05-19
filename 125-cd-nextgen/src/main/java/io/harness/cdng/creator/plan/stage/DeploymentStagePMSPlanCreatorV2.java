@@ -54,6 +54,7 @@ import io.harness.utils.YamlPipelineUtils;
 import io.harness.when.utils.RunInfoUtils;
 import io.harness.yaml.core.failurestrategy.FailureStrategyConfig;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
@@ -166,8 +167,11 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
         // TODO: need to fetch gitOpsEnabled from serviceDefinition for gitOps cluster. Currently  passing hard coded
         // value as false
         boolean gitOpsEnabled = false;
-        resolveRefs(ctx.getMetadata().getAccountIdentifier(), ctx.getMetadata().getOrgIdentifier(),
-            ctx.getMetadata().getProjectIdentifier(), environmentV2, gitOpsEnabled);
+        EnvironmentPlanCreatorConfig environmentPlanCreatorConfig =
+            resolveRefs(ctx.getMetadata().getAccountIdentifier(), ctx.getMetadata().getOrgIdentifier(),
+                ctx.getMetadata().getProjectIdentifier(), environmentV2, gitOpsEnabled);
+        addEnvironmentV2Dependency(planCreationResponseMap, environmentPlanCreatorConfig,
+            specField.getNode().getField(YamlTypes.ENVIRONMENT_YAML));
       }
 
       // Adding infrastructure node
@@ -204,6 +208,39 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
     } catch (IOException e) {
       throw new InvalidRequestException(
           "Invalid yaml for Deployment stage with identifier - " + field.getIdentifier(), e);
+    }
+  }
+
+  @VisibleForTesting
+  void addEnvironmentV2Dependency(LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap,
+      EnvironmentPlanCreatorConfig environmentPlanCreatorConfig, YamlField originalEnvironmentField)
+      throws IOException {
+    YamlField updatedEnvironmentYamlField =
+        fetchEnvironmentPlanCreatorConfigYaml(environmentPlanCreatorConfig, originalEnvironmentField);
+    Map<String, YamlField> environmentYamlFieldMap = new HashMap<>();
+    String environmentUuid = updatedEnvironmentYamlField.getNode().getUuid();
+    environmentYamlFieldMap.put(environmentUuid, updatedEnvironmentYamlField);
+    planCreationResponseMap.put(updatedEnvironmentYamlField.getNode().getUuid(),
+        PlanCreationResponse.builder()
+            .dependencies(DependenciesUtils.toDependenciesProto(environmentYamlFieldMap))
+            .yamlUpdates(YamlUpdates.newBuilder()
+                             .putFqnToYaml(updatedEnvironmentYamlField.getYamlPath(),
+                                 YamlUtils.writeYamlString(updatedEnvironmentYamlField).replace("---\n", ""))
+                             .build())
+            .build());
+  }
+
+  @VisibleForTesting
+  YamlField fetchEnvironmentPlanCreatorConfigYaml(
+      EnvironmentPlanCreatorConfig environmentPlanCreatorConfig, YamlField originalEnvironmentField) {
+    try {
+      String yamlString = YamlPipelineUtils.getYamlString(environmentPlanCreatorConfig);
+      YamlField yamlField = YamlUtils.injectUuidInYamlField(yamlString);
+      return new YamlField(YamlTypes.ENVIRONMENT_YAML,
+          new YamlNode(YamlTypes.ENVIRONMENT_YAML, yamlField.getNode().getCurrJsonNode(),
+              originalEnvironmentField.getNode().getParentNode()));
+    } catch (IOException e) {
+      throw new InvalidRequestException("Invalid environment yaml", e);
     }
   }
 
