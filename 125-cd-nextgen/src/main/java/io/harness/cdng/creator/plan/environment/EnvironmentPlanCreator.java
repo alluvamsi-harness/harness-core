@@ -9,11 +9,20 @@ package io.harness.cdng.creator.plan.environment;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.creator.plan.PlanCreatorConstants;
+import io.harness.cdng.environment.steps.EnvironmentStepParameters;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
+import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.ng.core.environment.beans.EnvironmentType;
+import io.harness.pms.contracts.advisers.AdviserObtainment;
+import io.harness.pms.contracts.advisers.AdviserType;
+import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
+import io.harness.pms.contracts.facilitators.FacilitatorType;
+import io.harness.pms.execution.OrchestrationFacilitatorType;
+import io.harness.pms.sdk.core.adviser.OrchestrationAdviserTypes;
 import io.harness.pms.sdk.core.adviser.success.OnSuccessAdviserParameters;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
@@ -50,17 +59,32 @@ public class EnvironmentPlanCreator implements PartialPlanCreator<EnvironmentPla
     /*
     EnvironmentPlanCreator is dependent on infraSectionStepParameters and serviceSpecNodeUuid which is used as advisor
      */
-    InfraSectionStepParameters infraSectionStepParameters =
-        (InfraSectionStepParameters) kryoSerializer.asInflatedObject(
-            ctx.getDependency().getMetadataMap().get(YamlTypes.INFRASTRUCTURE_STEP_PARAMETERS).toByteArray());
+    EnvironmentStepParameters environmentStepParameters =
+        EnvironmentPlanCreatorConfigHelper.toEnvironmentStepParameters(environmentPlanCreatorConfig);
 
     String serviceSpecNodeUuid = (String) kryoSerializer.asInflatedObject(
         ctx.getDependency().getMetadataMap().get(YamlTypes.SERVICE_SPEC).toByteArray());
 
     ByteString advisorParameters = ByteString.copyFrom(
         kryoSerializer.asBytes(OnSuccessAdviserParameters.builder().nextNodeId(serviceSpecNodeUuid).build()));
-    PlanNode planNode = EnvironmentPlanCreatorHelper.getPlanNode(
-        UUIDGenerator.generateUuid(), infraSectionStepParameters, advisorParameters);
+    PlanNode planNode =
+        PlanNode.builder()
+            .uuid(ctx.getCurrentField().getNode().getUuid())
+            .stepType(EnvironmentStep.STEP_TYPE)
+            .name(PlanCreatorConstants.ENVIRONMENT_NODE_NAME)
+            .identifier(YamlTypes.ENVIRONMENT_YAML)
+            .stepParameters(environmentStepParameters)
+            .facilitatorObtainment(
+                FacilitatorObtainment.newBuilder()
+                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
+                    .build())
+            .adviserObtainment(
+                AdviserObtainment.newBuilder()
+                    .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.ON_SUCCESS.name()).build())
+                    .setParameters(advisorParameters)
+                    .build())
+            .skipExpressionChain(false)
+            .build();
     return PlanCreationResponse.builder().planNode(planNode).build();
   }
 }
