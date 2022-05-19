@@ -29,5 +29,7 @@ public class UserGroupFilterDTO {
   @Schema(description = "Filter by organization using account identifier") String orgIdentifier;
   @Schema(description = "Filter by project using account identifier") String projectIdentifier;
   @Schema(description = "Filter by search term matching entities by name/identifier") String searchTerm;
-  @Builder.Default UserGroupFilterType filterType = UserGroupFilterType.EXCLUDE_INHERITED_GROUPS;
+  @Schema(description = "Filter by user group filterType")
+  @Builder.Default
+  UserGroupFilterType filterType = UserGroupFilterType.EXCLUDE_INHERITED_GROUPS;
 }
