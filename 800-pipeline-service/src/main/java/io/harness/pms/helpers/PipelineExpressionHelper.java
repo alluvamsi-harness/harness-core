@@ -34,6 +34,7 @@ public class PipelineExpressionHelper {
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String orgId = AmbianceUtils.getOrgIdentifier(ambiance);
     String projectId = AmbianceUtils.getProjectIdentifier(ambiance);
+    String planExecutionId = ambiance.getPlanExecutionId();
     String moduleName = "cd";
     Optional<PipelineEntity> pipelineEntity =
         pmsPipelineService.get(accountId, orgId, projectId, ambiance.getMetadata().getPipelineIdentifier(), false);
