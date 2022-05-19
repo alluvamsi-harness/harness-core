@@ -11,7 +11,6 @@ import static io.harness.filter.FilterConstants.ENVIRONMENT;
 
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterPropertiesDTO;
-import io.harness.ng.core.common.beans.NGTag;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -35,11 +34,10 @@ import lombok.experimental.FieldDefaults;
 @ApiModel("EnvironmentFilterProperties")
 @JsonTypeName(ENVIRONMENT)
 public class EnvironmentFilterPropertiesDTO extends FilterPropertiesDTO {
-  private List<String> environmentNames;
-  private List<String> environmentIdentifiers;
-  private String description;
-  private List<NGTag> environmentTags;
-  private List<EnvironmentType> environmentTypes;
+  List<String> environmentNames;
+  List<String> environmentIdentifiers;
+  String description;
+  List<EnvironmentType> environmentTypes;
 
   @Override
   public FilterType getFilterType() {

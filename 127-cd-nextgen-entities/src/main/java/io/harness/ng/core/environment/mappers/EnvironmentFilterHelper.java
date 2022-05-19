@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
@@ -85,7 +84,7 @@ public class EnvironmentFilterHelper {
         filterService.get(accountIdentifier, orgIdentifier, projectIdentifier, filterIdentifier, ENVIRONMENT);
     if (envFilterDTO == null) {
       throw new InvalidRequestException(
-          String.format("Could not find a environment filter with the identifier %s, in %s",
+          String.format("Could not find a environment filter with the identifier %s, in %s", filterIdentifier,
               ScopeHelper.getScopeMessageForLogs(accountIdentifier, orgIdentifier, projectIdentifier)));
     }
     populateEnvironmentFiltersInTheCriteria(

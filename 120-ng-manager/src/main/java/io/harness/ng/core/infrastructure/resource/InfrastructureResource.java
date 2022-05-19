@@ -185,10 +185,10 @@ public class InfrastructureResource {
     orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
         infrastructureRequestDTO.getOrgIdentifier(), infrastructureRequestDTO.getProjectIdentifier(), accountId);
     environmentValidationHelper.checkThatEnvExists(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier());
+        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef());
     // access for updating Environment
     checkForAccessOrThrow(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier(),
+        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef(),
         ENVIRONMENT_UPDATE_PERMISSION, "create");
 
     InfrastructureEntity infrastructureEntity =
@@ -215,7 +215,7 @@ public class InfrastructureResource {
       orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
           infrastructureRequestDTO.getOrgIdentifier(), infrastructureRequestDTO.getProjectIdentifier(), accountId);
       environmentValidationHelper.checkThatEnvExists(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-          infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier());
+          infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef());
     });
 
     checkForAccessBatch(accountId, infrastructureRequestDTOS, ENVIRONMENT_UPDATE_PERMISSION);
@@ -276,10 +276,10 @@ public class InfrastructureResource {
     orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
         infrastructureRequestDTO.getOrgIdentifier(), infrastructureRequestDTO.getProjectIdentifier(), accountId);
     environmentValidationHelper.checkThatEnvExists(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier());
+        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef());
 
     checkForAccessOrThrow(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier(),
+        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef(),
         ENVIRONMENT_UPDATE_PERMISSION, "update");
 
     InfrastructureEntity requestInfrastructure =
@@ -304,10 +304,10 @@ public class InfrastructureResource {
     orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
         infrastructureRequestDTO.getOrgIdentifier(), infrastructureRequestDTO.getProjectIdentifier(), accountId);
     environmentValidationHelper.checkThatEnvExists(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier());
+        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef());
 
     checkForAccessOrThrow(accountId, infrastructureRequestDTO.getOrgIdentifier(),
-        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvIdentifier(),
+        infrastructureRequestDTO.getProjectIdentifier(), infrastructureRequestDTO.getEnvironmentRef(),
         ENVIRONMENT_UPDATE_PERMISSION, "upsert");
 
     InfrastructureEntity requestInfra =
@@ -404,14 +404,14 @@ public class InfrastructureResource {
       StringJoiner joiner = new StringJoiner("|");
       joiner.add(infrastructureRequestDTO.getOrgIdentifier())
           .add(infrastructureRequestDTO.getProjectIdentifier())
-          .add(infrastructureRequestDTO.getEnvIdentifier());
+          .add(infrastructureRequestDTO.getEnvironmentRef());
       String key = joiner.toString();
 
       accessMap.computeIfAbsent(key,
           k
           -> accessControlClient.hasAccess(ResourceScope.of(accountId, infrastructureRequestDTO.getOrgIdentifier(),
                                                infrastructureRequestDTO.getProjectIdentifier()),
-              Resource.of(NGResourceType.ENVIRONMENT, infrastructureRequestDTO.getEnvIdentifier()), permission));
+              Resource.of(NGResourceType.ENVIRONMENT, infrastructureRequestDTO.getEnvironmentRef()), permission));
 
       if (!accessMap.get(key)) {
         throw new NGAccessDeniedException(

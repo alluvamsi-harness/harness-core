@@ -23,11 +23,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Value;
 import lombok.experimental.FieldDefaults;
 
 @OwnedBy(PIPELINE)
 @Value
+@Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(NON_NULL)
