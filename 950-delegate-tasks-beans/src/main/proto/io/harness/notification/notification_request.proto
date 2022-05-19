@@ -4,7 +4,7 @@
 // https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
 
 syntax = "proto3";
-package io.harness;
+package io.harness.notification;
 option java_multiple_files = true;
 
 enum Team {

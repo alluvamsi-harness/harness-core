@@ -15,6 +15,7 @@ import io.harness.cvng.notification.beans.NotificationRuleResponse;
 import io.harness.cvng.notification.entities.NotificationRule;
 import io.harness.ng.beans.PageResponse;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface NotificationRuleService {
@@ -26,7 +27,8 @@ public interface NotificationRuleService {
   Boolean delete(ProjectParams projectParams, String identifier);
   void delete(ProjectParams projectParams, List<String> identifiers);
   PageResponse<NotificationRuleResponse> get(ProjectParams projectParams, Integer pageNumber, Integer pageSize);
-  List<NotificationRuleRef> getNotificationRuleRefs(List<NotificationRuleRefDTO> notificationRuleRefDTOS);
+  List<NotificationRuleRef> getNotificationRuleRefs(
+      List<NotificationRuleRefDTO> notificationRuleRefDTOS, Instant lastSuccessfullNotificationTime);
   List<NotificationRuleRefDTO> getNotificationRuleRefDTOs(List<NotificationRuleRef> notificationRuleRefs);
   List<NotificationRuleResponse> getNotificationRuleResponse(
       ProjectParams projectParams, List<NotificationRuleRef> notificationRuleRefList);

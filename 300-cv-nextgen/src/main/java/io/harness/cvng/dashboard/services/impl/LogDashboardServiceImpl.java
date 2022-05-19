@@ -262,7 +262,7 @@ public class LogDashboardServiceImpl implements LogDashboardService {
   }
 
   private double getRandomRadiusInExpectedRange(RadarChartTag tag, Random random) {
-    if (tag.equals(LogAnalysisTag.KNOWN) || tag.equals(LogAnalysisTag.UNEXPECTED)) {
+    if (tag.equals(RadarChartTag.KNOWN_EVENT) || tag.equals(RadarChartTag.UNEXPECTED_FREQUENCY)) {
       return random.nextDouble() + 1;
     } else {
       return random.nextDouble() + 2;
@@ -431,6 +431,12 @@ public class LogDashboardServiceImpl implements LogDashboardService {
 
     sortedAnalyzedRadarChartLogDataDTOS =
         filterDataByAngle(sortedAnalyzedRadarChartLogDataDTOS, monitoredServiceLogAnalysisFilter);
+
+    sortedAnalyzedRadarChartLogDataDTOS = sortedAnalyzedRadarChartLogDataDTOS.stream()
+                                              .sorted(Comparator.comparing(x -> x.getClusterType()))
+                                              .collect(Collectors.toList());
+    Collections.reverse(sortedAnalyzedRadarChartLogDataDTOS);
+
     PageResponse<AnalyzedRadarChartLogDataDTO> analyzedRadarChartLogDataDTOs =
         PageUtils.offsetAndLimit(sortedAnalyzedRadarChartLogDataDTOS, page, size);
 

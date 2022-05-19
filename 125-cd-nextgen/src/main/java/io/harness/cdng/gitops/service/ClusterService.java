@@ -26,12 +26,12 @@ public interface ClusterService {
    * @param projectIdentifier
    * @param accountId
    * @param envIdentifier
-   * @param identifier
+   * @param clusterRef
    * @param deleted
    * @return
    */
   Optional<Cluster> get(@NotEmpty String orgIdentifier, @NotEmpty String projectIdentifier, @NotEmpty String accountId,
-      String envIdentifier, @NotEmpty String identifier, boolean deleted);
+      String envIdentifier, @NotEmpty String clusterRef, boolean deleted);
 
   /**
    * @param Cluster
@@ -57,21 +57,21 @@ public interface ClusterService {
    * @param orgIdentifier
    * @param projectIdentifier
    * @param envIdentifier
-   * @param identifier
+   * @param clusterRef
    * @return
    */
   boolean delete(@NotEmpty String accountId, @NotEmpty String orgIdentifier, @NotEmpty String projectIdentifier,
-      @NotEmpty String envIdentifier, @NotEmpty String identifier);
+      @NotEmpty String envIdentifier, @NotEmpty String clusterRef);
 
   /**
    * @param accountId
    * @param orgIdentifier
    * @param projectIdentifier
-   * @param identifier
+   * @param clusterRef
    * @return
    */
   DeleteResult deleteFromAllEnv(@NotEmpty String accountId, @NotEmpty String orgIdentifier,
-      @NotEmpty String projectIdentifier, @NotEmpty String identifier);
+      @NotEmpty String projectIdentifier, @NotEmpty String clusterRef);
 
   /**
    * @param page
@@ -81,10 +81,10 @@ public interface ClusterService {
    * @param projectIdentifier
    * @param envRef
    * @param searchTerm
-   * @param identifiers
+   * @param clusterRefs
    * @return
    */
   Page<Cluster> list(int page, int size, @NotEmpty String accountIdentifier, @NotEmpty String orgIdentifier,
-      @NotEmpty String projectIdentifier, @NotEmpty String envRef, String searchTerm, List<String> identifiers,
+      @NotEmpty String projectIdentifier, @NotEmpty String envRef, String searchTerm, List<String> clusterRefs,
       List<String> sort);
 }

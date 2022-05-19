@@ -8,10 +8,14 @@
 package io.harness.cdng.creator.plan.stage;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.infrastructure.InfrastructurePmsPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
+import io.harness.cdng.environment.helper.EnvironmentPlanCreatorConfigMapper;
+import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
+import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.pipeline.beans.DeploymentStageStepParameters;
 import io.harness.cdng.pipeline.steps.CdStepParametersUtils;
@@ -20,6 +24,10 @@ import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.environment.beans.Environment;
+import io.harness.ng.core.environment.services.EnvironmentService;
+import io.harness.ng.core.infrastructure.entity.InfrastructureEntity;
+import io.harness.ng.core.infrastructure.services.InfrastructureEntityService;
 import io.harness.plancreator.stages.AbstractStagePlanCreator;
 import io.harness.plancreator.steps.GenericStepPMSPlanCreator;
 import io.harness.plancreator.steps.common.SpecParameters;
@@ -50,12 +58,15 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 
 @OwnedBy(CDC)
@@ -63,6 +74,8 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
   @Inject private KryoSerializer kryoSerializer;
   @Inject private ServicePlanCreator servicePlanCreator;
 
+  @Inject private EnvironmentService environmentService;
+  @Inject private InfrastructureEntityService infrastructure;
   @Override
   public Set<String> getSupportedStageTypes() {
     return Collections.singleton("Deployment");
@@ -145,6 +158,16 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
       YamlField infraField = specField.getNode().getField(YamlTypes.PIPELINE_INFRASTRUCTURE);
       if (infraField == null) {
         throw new InvalidRequestException("Infrastructure section cannot be absent in a pipeline");
+      }
+
+      // EnvironmentYamlV2
+      EnvironmentYamlV2 environmentV2 = field.getDeploymentStageConfig().getEnvironment();
+      if (environmentV2 != null) {
+        // TODO: need to fetch gitOpsEnabled from serviceDefinition for gitOps cluster. Currently  passing hard coded
+        // value as false
+        boolean gitOpsEnabled = false;
+        resolveRefs(ctx.getMetadata().getAccountIdentifier(), ctx.getMetadata().getOrgIdentifier(),
+            ctx.getMetadata().getProjectIdentifier(), environmentV2, gitOpsEnabled);
       }
 
       // Adding infrastructure node
@@ -255,6 +278,57 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
             .build());
   }
 
+  private List<InfrastructureEntity> getInfraStructureEntityList(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, EnvironmentYamlV2 environmentV2) {
+    List<InfrastructureEntity> infrastructureEntityList = new ArrayList<>();
+    String envIdentifier = environmentV2.getEnvironmentRef().getValue();
+    if (!environmentV2.getDeployToAll()) {
+      List<String> infraIdentifierList =
+          environmentV2.getInfrastructureDefinitions()
+              .stream()
+              .map(infraStructureDefinitionYaml -> infraStructureDefinitionYaml.getRef().getValue())
+              .collect(Collectors.toList());
+      infrastructureEntityList = infrastructure.getAllInfrastructureFromIdentifierList(
+          accountIdentifier, orgIdentifier, projectIdentifier, envIdentifier, infraIdentifierList);
+    } else {
+      if (isNotEmpty(environmentV2.getInfrastructureDefinitions())) {
+        throw new InvalidRequestException(String.format("DeployToAll is enabled along with specific Infrastructures %s",
+            environmentV2.getInfrastructureDefinitions()));
+      }
+      infrastructureEntityList = infrastructure.getAllInfrastructureFromEnvIdentifier(
+          accountIdentifier, orgIdentifier, projectIdentifier, envIdentifier);
+    }
+    return infrastructureEntityList;
+  }
+  // TODO: currently this function do not handle runtime inputs value in Environment and Infrastructure Entities. Need
+  // to handle this in future
+  private EnvironmentPlanCreatorConfig resolveRefs(String accountIdentifier, String orgIdentifier,
+      String projectIdentifier, EnvironmentYamlV2 environmentV2, boolean gitOpsEnabled) {
+    // TODO: check the case when its a runtime value if its possible for it to have here
+    Optional<Environment> environment = environmentService.get(
+        accountIdentifier, orgIdentifier, projectIdentifier, environmentV2.getEnvironmentRef().getValue(), false);
+
+    String envIdentifier = environmentV2.getEnvironmentRef().getValue();
+    if (!environment.isPresent()) {
+      throw new InvalidRequestException(
+          String.format("No environment found with %s identifier in %s project in %s org and %s account", envIdentifier,
+              projectIdentifier, orgIdentifier, accountIdentifier));
+    }
+
+    if (environment.isPresent()) {
+      // if gitOpsEnabled = false, then  handle infrastructure
+      if (!gitOpsEnabled) {
+        List<InfrastructureEntity> infrastructureEntityList =
+            getInfraStructureEntityList(accountIdentifier, orgIdentifier, projectIdentifier, environmentV2);
+        return EnvironmentPlanCreatorConfigMapper.toEnvironmentPlanCreatorConfig(
+            environment.get(), infrastructureEntityList);
+      }
+      // TODO: need to handle gitOps cluster
+    }
+
+    throw new InvalidRequestException(
+        String.format("Environment with id %s does not exists or has been deleted", envIdentifier));
+  }
   private void validateFailureStrategy(DeploymentStageNode stageNode) {
     // Failure strategy should be present.
     List<FailureStrategyConfig> stageFailureStrategies = stageNode.getFailureStrategies();

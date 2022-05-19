@@ -344,7 +344,8 @@ public enum FeatureName {
   AZURE_REPO_CONNECTOR,
   USER_GROUP_AS_EXPRESSION,
   HELM_OCI_SUPPORT,
-  HELP_PANEL;
+  HELP_PANEL,
+  CHAOS_ENABLED;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;

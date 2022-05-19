@@ -10,12 +10,9 @@ package io.harness.cdng.infra.yaml;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.SwaggerConstants;
 import io.harness.gitsync.beans.YamlDTO;
-import io.harness.pms.yaml.ParameterField;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +23,6 @@ import org.springframework.data.annotation.TypeAlias;
 @Builder
 @TypeAlias("infrastructurePlanCreatorConfig")
 public class InfrastructurePlanCreatorConfig implements YamlDTO {
-  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) private ParameterField<String> ref;
+  @NotNull private String ref;
   @JsonProperty("infrastructureDefinition") InfrastructureDefinitionConfig infrastructureDefinitionConfig;
 }

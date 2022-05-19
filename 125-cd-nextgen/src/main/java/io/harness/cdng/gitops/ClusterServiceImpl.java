@@ -54,9 +54,9 @@ public class ClusterServiceImpl implements ClusterService {
 
   @Override
   public Optional<Cluster> get(String orgIdentifier, String projectIdentifier, String accountId, String envIdentifier,
-      String identifier, boolean deleted) {
+      String clusterRef, boolean deleted) {
     Criteria criteria =
-        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, identifier);
+        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, clusterRef);
     return Optional.ofNullable(clusterRepository.findOne(criteria));
   }
 
@@ -99,27 +99,27 @@ public class ClusterServiceImpl implements ClusterService {
 
   @Override
   public boolean delete(
-      String accountId, String orgIdentifier, String projectIdentifier, String envIdentifier, String identifier) {
+      String accountId, String orgIdentifier, String projectIdentifier, String envIdentifier, String clusterRef) {
     Criteria criteria =
-        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, identifier);
+        getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, envIdentifier, clusterRef);
     DeleteResult delete = clusterRepository.delete(criteria);
     return delete.wasAcknowledged() && delete.getDeletedCount() == 1;
   }
 
   @Override
   public DeleteResult deleteFromAllEnv(
-      String accountId, String orgIdentifier, String projectIdentifier, String identifier) {
-    Criteria criteria = getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, identifier);
+      String accountId, String orgIdentifier, String projectIdentifier, String clusterRef) {
+    Criteria criteria = getClusterEqualityCriteria(accountId, orgIdentifier, projectIdentifier, clusterRef);
     return clusterRepository.delete(criteria);
   }
 
   public Page<Cluster> list(int page, int size, String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, String envRef, String searchTerm, List<String> identifiers, List<String> sort) {
+      String projectIdentifier, String envRef, String searchTerm, List<String> clusterRefs, List<String> sort) {
     Criteria criteria =
         createCriteriaForGetList(accountIdentifier, orgIdentifier, projectIdentifier, envRef, searchTerm);
     Pageable pageRequest;
-    if (isNotEmpty(identifiers)) {
-      criteria.and(ClusterKeys.clusterRef).in(identifiers);
+    if (isNotEmpty(clusterRefs)) {
+      criteria.and(ClusterKeys.clusterRef).in(clusterRefs);
     }
     if (isEmpty(sort)) {
       pageRequest = org.springframework.data.domain.PageRequest.of(
@@ -157,20 +157,20 @@ public class ClusterServiceImpl implements ClusterService {
         .is(orgId)
         .and(ClusterKeys.projectIdentifier)
         .is(projectId)
-        .and(ClusterKeys.identifier)
+        .and(ClusterKeys.clusterRef)
         .is(identifier);
   }
 
   private String getDuplicateExistsErrorMessage(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier, String identifier) {
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String clusterRef) {
     if (isEmpty(orgIdentifier)) {
       return String.format(
-          ClusterServiceConstants.DUP_KEY_EXP_FORMAT_STRING_FOR_ACCOUNT, identifier, accountIdentifier);
+          ClusterServiceConstants.DUP_KEY_EXP_FORMAT_STRING_FOR_ACCOUNT, clusterRef, accountIdentifier);
     } else if (isEmpty(projectIdentifier)) {
       return String.format(
-          ClusterServiceConstants.DUP_KEY_EXP_FORMAT_STRING_FOR_ORG, identifier, orgIdentifier, accountIdentifier);
+          ClusterServiceConstants.DUP_KEY_EXP_FORMAT_STRING_FOR_ORG, clusterRef, orgIdentifier, accountIdentifier);
     }
-    return String.format(ClusterServiceConstants.DUP_KEY_EXP_FORMAT_STRING_FOR_PROJECT, identifier, projectIdentifier,
+    return String.format(ClusterServiceConstants.DUP_KEY_EXP_FORMAT_STRING_FOR_PROJECT, clusterRef, projectIdentifier,
         orgIdentifier, accountIdentifier);
   }
 
@@ -181,9 +181,9 @@ public class ClusterServiceImpl implements ClusterService {
       if (jsonObjectOfDuplicateKey != null) {
         String orgIdentifier = jsonObjectOfDuplicateKey.getString("orgIdentifier");
         String projectIdentifier = jsonObjectOfDuplicateKey.getString("projectIdentifier");
-        String identifier = jsonObjectOfDuplicateKey.getString("identifier");
+        String clusterRef = jsonObjectOfDuplicateKey.getString("clusterRef");
         errorMessageToBeReturned =
-            getDuplicateExistsErrorMessage(accountId, orgIdentifier, projectIdentifier, identifier);
+            getDuplicateExistsErrorMessage(accountId, orgIdentifier, projectIdentifier, clusterRef);
       } else {
         errorMessageToBeReturned = "A Duplicate cluster already exists";
       }

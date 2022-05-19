@@ -73,7 +73,6 @@ import static io.harness.utils.MemoryPerformanceUtils.memoryUsage;
 
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.asList;
@@ -411,7 +410,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       || TRUE.toString().equals(System.getenv().get("MULTI_VERSION"));
   private boolean isImmutableDelegate;
 
-  private double maxRSSThresholdMB;
+  private double maxProcessRSSThresholdMB;
+  private double maxPodRSSThresholdMB;
   private final AtomicBoolean rejectRequest = new AtomicBoolean(false);
 
   public static Optional<String> getDelegateId() {
@@ -544,7 +544,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
       DelegateAgentCommonVariables.setDelegateId(delegateId);
       log.info("[New] Delegate registered in {} ms", clock.millis() - start);
       DelegateStackdriverLogAppender.setDelegateId(delegateId);
-      if (delegateConfiguration.isDynamicHandlingOfRequestEnabled()) {
+      if (delegateConfiguration.isDynamicHandlingOfRequestEnabled()
+          && DeployMode.KUBERNETES.name().equals(System.getenv().get(DeployMode.DEPLOY_MODE))) {
+        // Enable dynamic throttling of requests only for kubernetes pod(s)
         startDynamicHandlingOfTasks();
       }
 
@@ -669,15 +671,29 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void maybeUpdateTaskRejectionStatus() {
     final long currentRSSMB = MemoryHelper.getProcessMemoryMB();
-    if (currentRSSMB >= maxRSSThresholdMB) {
-      log.warn("Reached resource threshold, temporarily reject incoming task request. CurrentRSSMB {} ThresholdMB {}",
-          currentRSSMB, maxRSSThresholdMB);
+    if (currentRSSMB >= maxProcessRSSThresholdMB) {
+      log.warn(
+          "Reached resource threshold, temporarily reject incoming task request. CurrentProcessRSSMB {} ThresholdMB {}",
+          currentRSSMB, maxProcessRSSThresholdMB);
       rejectRequest.compareAndSet(false, true);
       return;
     }
 
+    final long currentPodRSSMB = MemoryHelper.getPodRSSFromCgroupMB();
+    if (currentPodRSSMB >= maxPodRSSThresholdMB) {
+      log.warn(
+          "Reached resource threshold, temporarily reject incoming task request. CurrentPodRSSMB {} ThresholdMB {}",
+          currentPodRSSMB, maxPodRSSThresholdMB);
+      rejectRequest.compareAndSet(false, true);
+      return;
+    }
+    log.debug("Process info CurrentProcessRSSMB {} ThresholdProcessMB {} currentPodRSSMB {} ThresholdPodMemoryMB {}",
+        currentRSSMB, maxProcessRSSThresholdMB, currentPodRSSMB, maxPodRSSThresholdMB);
+
     if (rejectRequest.compareAndSet(true, false)) {
-      log.info("Accepting incoming task request. CurrentRSSMB {} ThresholdMB {}", currentRSSMB, maxRSSThresholdMB);
+      log.info(
+          "Accepting incoming task request. CurrentProcessRSSMB {} ThresholdProcessMB {} currentPodRSSMB {} ThresholdPodMemoryMB {}",
+          currentRSSMB, maxProcessRSSThresholdMB, currentPodRSSMB, maxPodRSSThresholdMB);
     }
   }
 
@@ -1096,7 +1112,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     File profile = new File("profile");
     if (profile.exists()) {
       try {
-        return JsonUtils.asObject(FileUtils.readFileToString(profile, UTF_8), DelegateProfileParams.class);
+        return JsonUtils.asObject(
+            FileUtils.readFileToString(profile, java.nio.charset.StandardCharsets.UTF_8), DelegateProfileParams.class);
       } catch (Exception e) {
         log.error("Error reading profile", e);
       }
@@ -1177,7 +1194,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
         FileUtils.forceDelete(profileFile);
       }
       FileUtils.touch(profileFile);
-      FileUtils.write(profileFile, JsonUtils.asPrettyJson(profile), UTF_8);
+      FileUtils.write(profileFile, JsonUtils.asPrettyJson(profile), java.nio.charset.StandardCharsets.UTF_8);
 
       File resultFile = new File("profile.result");
       if (resultFile.exists()) {
@@ -1390,16 +1407,23 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   private void startDynamicHandlingOfTasks() {
     log.info("Starting dynamic handling of tasks tp {} ms", 1000);
     try {
-      maxRSSThresholdMB = MemoryHelper.getProcessMaxMemoryMB() * RESOURCE_USAGE_THRESHOLD;
+      maxProcessRSSThresholdMB = MemoryHelper.getProcessMaxMemoryMB() * RESOURCE_USAGE_THRESHOLD;
+      maxPodRSSThresholdMB = MemoryHelper.getPodMaxMemoryMB() * RESOURCE_USAGE_THRESHOLD;
+
+      if (maxPodRSSThresholdMB < 1 || maxProcessRSSThresholdMB < 1) {
+        log.error("Error while fetching memory information, will not enable dynamic handling of tasks");
+        return;
+      }
+
       healthMonitorExecutor.scheduleAtFixedRate(() -> {
         try {
           maybeUpdateTaskRejectionStatus();
         } catch (Exception ex) {
           log.error("Exception while determining delegate behaviour", ex);
         }
-      }, 0, 1, TimeUnit.SECONDS);
+      }, 0, 5, TimeUnit.SECONDS);
     } catch (Exception ex) {
-      log.error("Error while fetching maxRSS, will not enable dynamic handling of tasks");
+      log.error("Error while fetching memory information, will not enable dynamic handling of tasks");
     }
   }
 

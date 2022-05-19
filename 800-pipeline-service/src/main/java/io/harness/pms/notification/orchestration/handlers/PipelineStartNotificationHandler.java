@@ -9,6 +9,7 @@ package io.harness.pms.notification.orchestration.handlers;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.annotations.dev.ToBeDeleted;
 import io.harness.engine.observers.beans.OrchestrationStartInfo;
 import io.harness.notification.PipelineEventType;
 import io.harness.observer.AsyncInformObserver;
@@ -19,6 +20,7 @@ import com.google.inject.name.Named;
 import java.util.concurrent.ExecutorService;
 
 @OwnedBy(HarnessTeam.PIPELINE)
+@ToBeDeleted
 public class PipelineStartNotificationHandler implements AsyncInformObserver {
   @Inject @Named("PipelineExecutorService") ExecutorService executorService;
 

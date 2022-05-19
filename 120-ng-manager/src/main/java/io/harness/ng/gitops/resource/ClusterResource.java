@@ -113,7 +113,7 @@ public class ClusterResource {
       responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "The saved Cluster") },
       hidden = true)
   public ResponseDTO<ClusterResponse>
-  get(@Parameter(description = CLUSTER_PARAM_MESSAGE) @PathParam("identifier") @ResourceIdentifier String identifier,
+  get(@Parameter(description = CLUSTER_PARAM_MESSAGE) @PathParam("identifier") @ResourceIdentifier String clusterRef,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
@@ -131,10 +131,10 @@ public class ClusterResource {
         accountId, orgIdentifier, projectIdentifier, environmentIdentifier, ENVIRONMENT_VIEW_PERMISSION, "view");
 
     Optional<Cluster> entity =
-        clusterService.get(orgIdentifier, projectIdentifier, accountId, environmentIdentifier, identifier, deleted);
+        clusterService.get(orgIdentifier, projectIdentifier, accountId, environmentIdentifier, clusterRef, deleted);
     if (!entity.isPresent()) {
-      throw new NotFoundException(String.format("Cluster with identifier [%s] in project [%s], org [%s] not found",
-          identifier, projectIdentifier, orgIdentifier));
+      throw new NotFoundException(String.format("Cluster with clusterRef [%s] in project [%s], org [%s] not found",
+          clusterRef, projectIdentifier, orgIdentifier));
     }
     return ResponseDTO.newResponse(entity.map(ClusterEntityMapper::writeDTO).orElse(null));
   }
@@ -196,7 +196,7 @@ public class ClusterResource {
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns true if the Cluster is deleted") },
       hidden = true)
   public ResponseDTO<Boolean>
-  delete(@Parameter(description = CLUSTER_PARAM_MESSAGE) @PathParam("identifier") @ResourceIdentifier String identifier,
+  delete(@Parameter(description = CLUSTER_PARAM_MESSAGE) @PathParam("identifier") @ResourceIdentifier String clusterRef,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
@@ -210,7 +210,7 @@ public class ClusterResource {
     checkForAccessOrThrow(
         accountId, orgIdentifier, projectIdentifier, environmentIdentifier, ENVIRONMENT_UPDATE_PERMISSION, "delete");
     return ResponseDTO.newResponse(
-        clusterService.delete(accountId, orgIdentifier, projectIdentifier, environmentIdentifier, identifier));
+        clusterService.delete(accountId, orgIdentifier, projectIdentifier, environmentIdentifier, clusterRef));
   }
 
   @PUT
@@ -258,7 +258,7 @@ public class ClusterResource {
           NGCommonEntityConstants.ENVIRONMENT_IDENTIFIER_KEY) @ResourceIdentifier String envIdentifier,
       @Parameter(description = "The word to be searched and included in the list response") @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
-      @Parameter(description = "List of clusterIds") @QueryParam("identifiers") List<String> identifiers,
+      @Parameter(description = "List of cluster identifiers") @QueryParam("identifiers") List<String> identifiers,
       @Parameter(
           description =
               "Specifies the sorting criteria of the list. Like sorting based on the last updated entity, alphabetical sorting in an ascending or descending order")
